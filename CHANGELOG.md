@@ -1,13 +1,12 @@
 # Changelog
 
-## v0.1.3
+## v0.2.0
 
-### BitTube First stable release
+### BitTube first stable release
 
-  * Based on Peertube V2.1.0 (stable)
+  * Based on Peertube V2.1.0 ( https://github.com/Chocobozzz/PeerTube/tree/release/2.1.0 )
   * Fixed default theme for new users
   * Tweaking release script to fit our needings
-
 
 ## v2.1.0
 

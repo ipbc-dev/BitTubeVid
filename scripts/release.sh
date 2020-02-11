@@ -99,17 +99,20 @@ rm -f "./client/dist/embed-stats.json"
 (
   git push origin --tag
 
+# In order to use next commands you will need to install go, and then github-release from https://github.com/aktau/github-release
+# Also, you might need to link the command with the path
   if [ -z "$github_prerelease_option" ]; then
-    github-release release --user "ipbc-dev" --repo BitTubeVid --tag "$version" --name "$version" --description "$changelog"
+    github-release release --user ipbc-dev --repo BitTubeVid --tag "$version" --name "BitTubeVid $version" --description "$changelog"
   else
-    github-release release --user "ipbc-dev" --repo BitTubeVid --tag "$version" --name "$version" --description "$changelog" "$github_prerelease_option"
+    github-release release --user ipbc-dev --repo BitTubeVid --tag "$version" --name "BitTubeVid $version" --description "$changelog" "$github_prerelease_option"
   fi
 
-  github-release upload --user "ipbc-dev" --repo BitTubeVid --tag "$version" --name "$zip_name" --file "$zip_name"
+  github-release upload --user ipbc-dev --repo BitTubeVid --tag "$version" --name "$zip_name" --file "$zip_name"
   # github-release upload --user 'ipbc-dev' --repo BitTubeVid --tag "$version" --name "$zip_name.asc" --file "$zip_name.asc"
-  github-release upload --user "ipbc-dev" --repo BitTubeVid --tag "$version" --name "$tar_name" --file "$tar_name"
+  github-release upload --user ipbc-dev --repo BitTubeVid --tag "$version" --name "$tar_name" --file "$tar_name"
   # github-release upload --user "ipbc-dev" --repo BitTubeVid --tag "$version" --name "$tar_name.asc" --file "$tar_name.asc"
 
+  git push --set-upstream origin "$branch"
   git push origin "$branch"
 
   # Only update master if it is not a pre release
