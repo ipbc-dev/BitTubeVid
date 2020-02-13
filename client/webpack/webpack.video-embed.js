@@ -130,7 +130,7 @@ module.exports = function () {
       new HtmlWebpackPlugin({
         template: 'src/standalone/videos/embed.html',
         filename: 'embed.html',
-        title: 'PeerTube',
+        title: 'BitTube',
         chunksSortMode: 'dependency',
         inject: 'body',
         chunks: ['video-embed']
@@ -139,7 +139,7 @@ module.exports = function () {
       new HtmlWebpackPlugin({
         template: '!!html-loader!src/standalone/videos/test-embed.html',
         filename: 'test-embed.html',
-        title: 'PeerTube',
+        title: 'BitTube',
         chunksSortMode: 'dependency',
         inject: 'body',
         chunks: ['test-embed']

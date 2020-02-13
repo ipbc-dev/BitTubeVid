@@ -227,7 +227,7 @@ async function uploadVideoOnPeerTube (parameters: {
     fixture: videoPath
   })
 
-  log.info('\nUploading on PeerTube video "%s".', videoAttributes.name)
+  log.info('\nUploading on BitTube video "%s".', videoAttributes.name)
 
   let accessToken = await getAccessTokenOrDie(url, user)
 

@@ -70,7 +70,7 @@ class Emailer {
       })
     } else {
       if (!isTestInstance()) {
-        logger.error('Cannot use SMTP server because of lack of configuration. PeerTube will not be able to send mails!')
+        logger.error('Cannot use SMTP server because of lack of configuration. BitTube will not be able to send mails!')
       }
     }
   }
@@ -385,8 +385,8 @@ class Emailer {
   }
 
   addVerifyEmailJob (to: string, verifyEmailUrl: string) {
-    const text = 'Welcome to PeerTube,\n\n' +
-      `To start using PeerTube on ${WEBSERVER.HOST} you must  verify your email! ` +
+    const text = 'Welcome to BitTube,\n\n' +
+      `To start using BitTube on ${WEBSERVER.HOST} you must  verify your email! ` +
       `Please follow this link to verify this email belongs to you: ${verifyEmailUrl}\n\n` +
       'If you are not the person who initiated this request, please ignore this email.\n\n' +
       'Cheers,\n' +
@@ -429,7 +429,7 @@ class Emailer {
       body +
       '\n\n---------------------------------------\n\n' +
       'Cheers,\n' +
-      'PeerTube.'
+      'BitTube.'
 
     const emailPayload: EmailPayload = {
       fromDisplayName: fromEmail,

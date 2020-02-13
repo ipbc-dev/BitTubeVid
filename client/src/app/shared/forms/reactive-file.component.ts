@@ -58,7 +58,7 @@ export class ReactiveFileComponent implements OnInit, ControlValueAccessor {
       const extension = '.' + file.name.split('.').pop()
       if (this.extensions.includes(extension) === false) {
         const message = this.i18n(
-          'PeerTube cannot handle this kind of file. Accepted extensions are {{extensions}}.',
+          'BitTube cannot handle this kind of file. Accepted extensions are {{extensions}}.',
           { extensions: this.allowedExtensionsMessage }
         )
         this.notifier.error(message)

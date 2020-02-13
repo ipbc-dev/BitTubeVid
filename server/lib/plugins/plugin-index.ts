@@ -29,7 +29,7 @@ async function listAvailablePluginsFromIndex (options: PeertubePluginIndexList) 
   try {
     const { body } = await doRequest({ uri, qs, json: true })
 
-    logger.debug('Got result from PeerTube index.', { body })
+    logger.debug('Got result from BitTube index.', { body })
 
     addInstanceInformation(body)
 
