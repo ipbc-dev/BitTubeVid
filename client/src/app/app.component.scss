@@ -55,9 +55,11 @@
 
       .icon.icon-logo {
         display: inline-block;
-        background: url('../assets/images/logo.svg') no-repeat;
-        width: 23px;
-        height: 24px;
+        background: url('../assets/images/logo.svg') no-repeat; 
+        background-size: cover;
+        width: 32px;
+        height: 23px;
+        margin-right: 5px;
       }
     }
 
