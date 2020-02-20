@@ -140,6 +140,7 @@
   },
   "dependencies": {
     "@angular/localize": "^9.0.0",
+    "@leochen1216/videojs-chromecast": "^2.0.0",
     "@ngx-i18nsupport/tooling": "^8.0.3",
     "tslib": "^1.10.0"
   }

@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
-  <head>
+  <head data-cast-api-enabled="true"> <!-- allow chromecast extention -->
     <title>PeerTube</title>
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <meta property="og:platform" content="PeerTube" />
+
+    <!-- add chromecast sdk -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 
     <link rel="icon" type="image/png" href="/client/assets/images/favicon.png" />
   </head>

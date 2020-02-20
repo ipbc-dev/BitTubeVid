@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+  <head data-cast-api-enabled="true"> <!-- allow chromecast extention -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -13,6 +13,11 @@
 
     <!-- base url -->
     <base href="/">
+
+    <!-- add chromecast sdk -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
+    <!-- add plugin -->
+    <script src="../node_modules/@leochen1216/videojs-chromecast/dist/videojs-chromecast.js"></script>
 
     <!-- /!\ The following comment is used by the server to prerender some tags /!\ -->
 

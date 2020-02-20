@@ -29,6 +29,7 @@ import { RedundancyUrlManager } from './p2p-media-loader/redundancy-url-manager'
 import { getStoredP2PEnabled } from './peertube-player-local-storage'
 import { TranslationsManager } from './translations-manager'
 
+
 // For VideoJS
 (window as any).WebVTT = require('vtt.js/lib/vtt.js').WebVTT;
 
@@ -193,6 +194,13 @@ export class PeertubePlayerManager {
     let autoplay = commonOptions.autoplay
     let html5 = {}
 
+    let chromecast:{
+      metadata:{
+        title:'Title display on tech wrapper',
+        subtitle:'Synopsis display on tech wrapper',
+      }
+    } 
+
     const plugins: VideoJSPluginOptions = {
       peertube: {
         mode,
@@ -203,7 +211,13 @@ export class PeertubePlayerManager {
         subtitle: commonOptions.subtitle,
         videoCaptions: commonOptions.videoCaptions,
         stopTime: commonOptions.stopTime
-      }
+      },
+      chromecast:{
+        metadata:{
+          title:'Title display on tech wrapper',
+          subtitle:'Synopsis display on tech wrapper',
+        }
+     } 
     }
 
     if (commonOptions.enableHotkeys === true) {

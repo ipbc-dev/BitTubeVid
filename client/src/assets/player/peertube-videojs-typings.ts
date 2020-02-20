@@ -123,12 +123,19 @@ type P2PMediaLoaderPluginOptions = {
   startTime: number | string
 }
 
+type ChromecastPluginOptions = {
+  metadata?: object,
+  appID?: string
+}
+
 type VideoJSPluginOptions = {
   peertube: PeerTubePluginOptions
 
   webtorrent?: WebtorrentPluginOptions
 
   p2pMediaLoader?: P2PMediaLoaderPluginOptions
+
+  chromecast?: ChromecastPluginOptions
 }
 
 type LoadedQualityData = {

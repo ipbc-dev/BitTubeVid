@@ -1031,6 +1031,15 @@
   resolved "https://registry.yarnpkg.com/@istanbuljs/schema/-/schema-0.1.2.tgz#26520bf09abe4a5644cd5414e37125a8954241dd"
   integrity sha512-tsAQNx32a8CoFhjhijUIhI4kccIAgmGhy8LZMZgGfmXcpMbPRUqn5LWmgRttILi6yeGmBJd2xsPkFMs0PzgPCw==
 
+"@leochen1216/videojs-chromecast@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@leochen1216/videojs-chromecast/-/videojs-chromecast-2.0.0.tgz#fc8e53159634d0b927f9a552c004036055917071"
+  integrity sha512-mhlGuu824OzOttWHcdoJK+FqsGhZJyyZdLTtFlaJUZMOabuJUgcKNKfOBIgYxn0h64BnRQ4WvTEUfc3ABFj1AA==
+  dependencies:
+    global "^4.3.0"
+    object.assign "^4.0.3"
+    video.js "^6.0.0"
+
 "@neos21/bootstrap3-glyphicons@^1.0.1":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@neos21/bootstrap3-glyphicons/-/bootstrap3-glyphicons-1.0.3.tgz#58ecfeed21a959875077f190acc191b2d0e60aa6"
@@ -7873,7 +7882,7 @@ object-visit@^1.0.0:
   dependencies:
     isobject "^3.0.0"
 
-object.assign@^4.1.0:
+object.assign@^4.0.3, object.assign@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/object.assign/-/object.assign-4.1.0.tgz#968bf1100d7956bb3ca086f006f846b3bc4008da"
   integrity sha512-exHJeq6kBKj58mqGyTQ9DFvrZC/eR6OwxzoM9YRoGBqrXYonaFyGiFMuc9VZrXf7DarreEwMpurG3dd+CNyW5w==
@@ -11584,7 +11593,7 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-"video.js@^6 || ^7", "video.js@^6.8.0 || ^7.0.0", video.js@^7, video.js@^7.6.0:
+"video.js@^6 || ^7", video.js@^6.0.0, "video.js@^6.8.0 || ^7.0.0", video.js@^7, video.js@^7.6.0:
   version "7.6.5"
   resolved "https://registry.yarnpkg.com/video.js/-/video.js-7.6.5.tgz#af66a71bc05fd79c581c1673ac5a78a6b31bc831"
   integrity sha512-r0kC9SNJhXz9th/wwbRaLVOIZTvXkF+rhFq9/FWU+e+EJClwClRCgP8STGmfrPHDXrfWiJwH9YY21JZK61vGGQ==
