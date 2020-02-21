@@ -33,21 +33,21 @@
 ## Remote Tools
 
 You need at least 512MB RAM to run the script.
-Scripts can be launched directly from a PeerTube server, or from a separate server, even a desktop PC.
-You need to follow all the following steps even if you are on a PeerTube server (including cloning the git repository in a different directory than your production installation because the scripts utilize non-production dependencies).
+Scripts can be launched directly from a BitTubeVid server, or from a separate server, even a desktop PC.
+You need to follow all the following steps even if you are on a BitTubeVid server (including cloning the git repository in a different directory than your production installation because the scripts utilize non-production dependencies).
 
 ### Dependencies
 
-Install the [PeerTube dependencies](dependencies.md) except PostgreSQL and Redis.
-PeerTube only supports NodeJS 10.x.
+Install the [BitTubeVid dependencies](dependencies.md) except PostgreSQL and Redis.
+BitTubeVid only supports NodeJS 10.x.
 
 ### Installation
 
-Clone the PeerTube repo to get the latest version (even if you are on your PeerTube server):
+Clone the BitTubeVid repo to get the latest version (even if you are on your BitTubeVid server):
 
 ```
-$ git clone https://github.com/Chocobozzz/PeerTube.git
-$ CLONE="$(pwd)/PeerTube"
+$ git clone https://github.com/ipbc-dev/BitTubeVid.git
+$ CLONE="$(pwd)/BitTubeVid"
 $ cd ${CLONE}
 ```
 
@@ -61,10 +61,10 @@ $ npm run setup:cli
 ### CLI wrapper
 
 The wrapper provides a convenient interface to the following scripts.
-You can access it as `peertube` via an alias in your `.bashrc` like `alias peertube="cd /your/peertube/directory/ && node ./dist/server/tools/peertube.js"` (you have to keep the `cd` command):
+You can access it as `bittube` via an alias in your `.bashrc` like `alias bittube="cd /your/bittube/directory/ && node ./dist/server/tools/bittube.js"` (you have to keep the `cd` command):
 
 ```
-  Usage: peertube [command] [options]
+  Usage: bittube [command] [options]
 
   Options:
 
@@ -86,39 +86,39 @@ You can access it as `peertube` via an alias in your `.bashrc` like `alias peert
 The wrapper can keep track of instances you have an account on. We limit to one account per instance for now.
 
 ```bash
-$ peertube auth add -u 'PEERTUBE_URL' -U 'PEERTUBE_USER' --password 'PEERTUBE_PASSWORD'
-$ peertube auth list
+$ bittube auth add -u 'BITTUBE_URL' -U 'BITTUBE_USER' --password 'BITTUBE_PASSWORD'
+$ bittube auth list
 ┌──────────────────────────────┬──────────────────────────────┐
 │ instance                     │ login                        │
 ├──────────────────────────────┼──────────────────────────────┤
-│ 'PEERTUBE_URL'               │ 'PEERTUBE_USER'              │
+│ 'BITTUBE_URL'                │ 'BITTUBE_USER'               │
 └──────────────────────────────┴──────────────────────────────┘
 ```
 
 You can now use that account to upload videos without feeding the same parameters again.
 
 ```bash
-$ peertube up <videoFile>
+$ bittube up <videoFile>
 ```
 
-And now that your video is online, you can watch it from the confort of your terminal (use `peertube watch --help` to see the supported players):
+And now that your video is online, you can watch it from the confort of your terminal (use `bittube watch --help` to see the supported players):
 
 ```bash
-$ peertube watch https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10
+$ bittube watch https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10
 ```
 
 To list, install, uninstall dynamically plugins/themes of an instance:
 
 ```bash
-$ peertube plugins list
-$ peertube plugins install --path /local/plugin/path
-$ peertube plugins install --npm-name peertube-plugin-myplugin
-$ peertube plugins uninstall --npm-name peertube-plugin-myplugin
+$ bittube plugins list
+$ bittube plugins install --path /local/plugin/path
+$ bittube plugins install --npm-name peertube-plugin-myplugin
+$ bittube plugins uninstall --npm-name peertube-plugin-myplugin
 ```
 
 #### peertube-import-videos.js
 
-You can use this script to import videos from all [supported sites of youtube-dl](https://rg3.github.io/youtube-dl/supportedsites.html) into PeerTube.
+You can use this script to import videos from all [supported sites of youtube-dl](https://rg3.github.io/youtube-dl/supportedsites.html) into BitTubeVid.
 Be sure you own the videos or have the author's authorization to do so.
 
 ```sh

@@ -35,7 +35,7 @@
 6. Run:
 
 ```
-sudo apt update
+sudo apt upgrade
 sudo apt install nginx ffmpeg postgresql postgresql-contrib openssl g++ make redis-server git python-dev
 ffmpeg -version # Should be >= 3.x
 g++ -v # Should be >= 5.x
@@ -49,7 +49,7 @@ sudo apt-get update
 sudo apt install ffmpeg
 ```
 
-Now that dependencies are installed, before running PeerTube you should start PostgreSQL and Redis:
+Now that dependencies are installed, before running BitTubeVid you should start PostgreSQL and Redis:
 
 ```
 sudo systemctl start redis postgresql
@@ -63,7 +63,7 @@ sudo systemctl start redis postgresql
 sudo pacman -S nodejs-lts-dubnium yarn ffmpeg postgresql openssl redis git wget unzip python2 base-devel npm nginx
 ```
 
-Now that dependencies are installed, before running PeerTube you should start PostgreSQL and Redis:
+Now that dependencies are installed, before running BitTubeVid you should start PostgreSQL and Redis:
 
 ```
 sudo systemctl start redis postgresql
@@ -100,7 +100,7 @@ sudo scl enable devtoolset-7 bash
 Later when you invoke any node command, please prefix them with `CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++`, such as with:
 
 ```
-sudo -H -u peertube CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ yarn install --production --pure-lockfile
+sudo -H -u bittube CC=/opt/rh/devtoolset-7/root/usr/bin/gcc CXX=/opt/rh/devtoolset-7/root/usr/bin/g++ yarn install --production --pure-lockfile
 ```
 
 Initialize the PostgreSQL database:   
@@ -109,7 +109,7 @@ Initialize the PostgreSQL database:
 sudo postgresql-setup initdb
 ```
 
-Now that dependencies are installed, before running PeerTube you should enable and start PostgreSQL and Redis:    
+Now that dependencies are installed, before running BitTube you should enable and start PostgreSQL and Redis:    
 
 ```
 sudo systemctl enable redis
@@ -129,10 +129,10 @@ dnf upgrade
 2. Add a user with sudoers group access:
 
 ```
-useradd my-peertube-user
-passwd my-peertube-user
-usermod my-peertube-user -a -G wheel	# Add my-peertube-user to sudoers
-su my-peertube-user
+useradd my-bittube-user
+passwd my-bittube-user
+usermod my-bittube-user -a -G wheel	# Add my-bittube-user to sudoers
+su my-bittube-user
 ```
 
 3. (Optional) Install certbot (choose instructions for nginx and your distribution):    
@@ -182,7 +182,7 @@ sudo systemctl start redis.service
 By default, you cannot access your server via public IP. To do so, you must configure firewall:
 
 ```
-# Ports used by peertube dev setup
+# Ports used by bittube dev setup
 sudo firewall-cmd --permanent --zone=public --add-port=3000/tcp
 sudo firewall-cmd --permanent --zone=public --add-port=9000/tcp
 # Optional
@@ -206,7 +206,7 @@ echo fs.inotify.max_user_watches=582222 | sudo tee -a /etc/sysctl.conf && sudo s
 
 On a fresh install of [FreeBSD](https://www.freebsd.org), new system or new jail:
 
-1. bootstrap pkg, initialize db and install peertube's dependencies, always as root (sudo not yet installed):    
+1. bootstrap pkg, initialize db and install bittube's dependencies, always as root (sudo not yet installed):    
 
 ```
 pkg
@@ -260,7 +260,7 @@ brew services run redis
 
 ## Gentoo
 
-1. Add this to ``/etc/portage/sets/peertube``:
+1. Add this to ``/etc/portage/sets/bittube``:
 
 ```
 net-libs/nodejs
@@ -282,16 +282,16 @@ www-servers/nginx
 
 ```
 mkdir -p /etc/portage/package.keywords
-cat << EOF >> /etc/portage/package.keywords/peertube
-# required by yarn (argument) for PeerTube
+cat << EOF >> /etc/portage/package.keywords/bittube
+# required by yarn (argument) for BitTubeVid
 sys-apps/yarn ~amd64
 EOF
 ```
 
-3. Compile the peertube set:
+3. Compile the bittube set:
 
 ```
-emerge -a @peertube
+emerge -a @bittube
 ```
 
 4. Initialize the PostgreSQL database if you just merged it:
