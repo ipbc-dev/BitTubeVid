@@ -6,7 +6,7 @@
 ## Installation
 
 Please don't install BitTubeVid for production on a device behind a low bandwidth connection (example: your ADSL link).
-If you want information about the appropriate hardware to run bittube, please see the [FAQ](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-bittube).
+If you want information about the appropriate hardware to run bittube, please see the [FAQ](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-BitTube).
 
 ### Dependencies
 
