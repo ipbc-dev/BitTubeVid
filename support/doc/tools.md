@@ -61,7 +61,7 @@ $ npm run setup:cli
 ### CLI wrapper
 
 The wrapper provides a convenient interface to the following scripts.
-You can access it as `bittube` via an alias in your `.bashrc` like `alias bittube="cd /your/bittube/directory/ && node ./dist/server/tools/bittube.js"` (you have to keep the `cd` command):
+You can access it as `bittube` adding an alias in your `.bashrc` like `alias bittube="cd /your/bittube/directory/ && node ./dist/server/tools/bittube.js"` (you have to keep the `cd` command):
 
 ```
   Usage: bittube [command] [options]
@@ -116,22 +116,22 @@ $ bittube plugins install --npm-name peertube-plugin-myplugin
 $ bittube plugins uninstall --npm-name peertube-plugin-myplugin
 ```
 
-#### peertube-import-videos.js
+#### bittube-import-videos.js
 
 You can use this script to import videos from all [supported sites of youtube-dl](https://rg3.github.io/youtube-dl/supportedsites.html) into BitTubeVid.
 Be sure you own the videos or have the author's authorization to do so.
 
 ```sh
-$ node dist/server/tools/peertube-import-videos.js \
-    -u 'PEERTUBE_URL' \
-    -U 'PEERTUBE_USER' \
-    --password 'PEERTUBE_PASSWORD' \
+$ node dist/server/tools/bittube-import-videos.js \
+    -u 'BITTUBE_URL' \
+    -U 'BITTUBE_USER' \
+    --password 'BITTUBE_PASSWORD' \
     --target-url 'TARGET_URL'
 ```
 
-* `PEERTUBE_URL` : the full URL of your PeerTube server where you want to import, eg: https://peertube.cpy.re
-* `PEERTUBE_USER` : your PeerTube account where videos will be uploaded
-* `PEERTUBE_PASSWORD` : password of your PeerTube account (if `--password PEERTUBE_PASSWORD` is omitted, you will be prompted for it)
+* `BITTUBE_URL` : the full URL of your BitTubeVid server where you want to import, eg: https://bittube.video
+* `BITTUBE_USER` : your BitTube account where videos will be uploaded
+* `BITTUBE_PASSWORD` : password of your BitTube account (if `--password BITTUBE_PASSWORD` is omitted, you will be prompted for it)
 * `TARGET_URL` : the target url you want to import. Examples:
   * YouTube:
     * Channel: https://www.youtube.com/channel/ChannelId
@@ -140,26 +140,26 @@ $ node dist/server/tools/peertube-import-videos.js \
   * Vimeo: https://vimeo.com/xxxxxx
   * Dailymotion: https://www.dailymotion.com/xxxxx
 
-The script will get all public videos from Youtube, download them and upload to PeerTube.
+The script will get all public videos from Youtube, download them and upload to BitTube.
 Already downloaded videos will not be uploaded twice, so you can run and re-run the script in case of crash, disconnection...
 
 Videos will be publicly available after transcoding (you can see them before that in your account on the web interface).
 
-**NB**: If you want to synchronize a Youtube channel to your PeerTube instance (ensure you have the agreement from the author),
+**NB**: If you want to synchronize a Youtube channel to your BitTube instance (ensure you have the agreement from the author),
 you can add a [crontab rule](https://help.ubuntu.com/community/CronHowto) (or an equivalent of your OS) and insert
 these rules (ensure to customize them to your needs):
 
 ```
 # Update youtube-dl every day at midnight
-0 0 * * * /usr/bin/npm rebuild youtube-dl --prefix /PATH/TO/PEERTUBE/
+0 0 * * * /usr/bin/npm rebuild youtube-dl --prefix /PATH/TO/BITTUBE/
 
 # Synchronize the YT channel every sunday at 22:00 all the videos published since last monday included
-0 22 * * 0 /usr/bin/node /PATH/TO/PEERTUBE/dist/server/tools/peertube-import-videos.js -u '__PEERTUBE_URL__' -U '__USER__' --password '__PASSWORD__' --target-url 'https://www.youtube.com/channel/___CHANNEL__' --since $(date --date="-6 days" +%Y-%m-%d)
+0 22 * * 0 /usr/bin/node /PATH/TO/BITTUBE/dist/server/tools/bittube-import-videos.js -u '__BITTUBE_URL__' -U '__USER__' --password '__PASSWORD__' --target-url 'https://www.youtube.com/channel/___CHANNEL__' --since $(date --date="-6 days" +%Y-%m-%d)
 ```
 
-Also you may want to subscribe to the PeerTube channel in order to manually check the synchronization is successful.
+Also you may want to subscribe to the BitTube channel in order to manually check the synchronization is successful.
 
-#### peertube-upload.js
+#### bittube-upload.js
 
 You can use this script to import videos directly from the CLI.
 
@@ -167,10 +167,10 @@ Videos will be publicly available after transcoding (you can see them before tha
 
 ```
 $ cd ${CLONE}
-$ node dist/server/tools/peertube-upload.js --help
+$ node dist/server/tools/bittube-upload.js --help
 ```
 
-#### peertube-watch.js
+#### bittube-watch.js
 
 You can use this script to play videos directly from the CLI.
 
@@ -188,7 +188,7 @@ It provides support for different players:
 
 #### peertube-plugins.js
 
-Install/update/uninstall or list local or NPM PeerTube plugins:
+Install/update/uninstall or list local or NPM BitTube plugins:
 
 ```
 $ cd ${CLONE}
@@ -202,104 +202,104 @@ $ node dist/server/tools/peertube-plugins.js install --path /my/plugin/path
 $ node dist/server/tools/peertube-plugins.js install --npm-name peertube-theme-example
 ```
 
-#### peertube-redundancy.js
+#### bittube-redundancy.js
 
 Manage (list/add/remove) video redundancies:
 
 To list your videos that are duplicated by remote instances:
 
 ```
-$ node dist/server/tools/peertube.js redundancy list-remote-redundancies
+$ node dist/server/tools/bittube.js redundancy list-remote-redundancies
 ```
 
 To list remote videos that your instance duplicated:
 
 ```
-$ node dist/server/tools/peertube.js redundancy list-my-redundancies
+$ node dist/server/tools/bittube.js redundancy list-my-redundancies
 ```
 
 To duplicate a specific video in your redundancy system:
 
 ```
-$ node dist/server/tools/peertube.js redundancy add --video 823
+$ node dist/server/tools/bittube.js redundancy add --video 823
 ```
 
 To remove a video redundancy:
 
 ```
-$ node dist/server/tools/peertube.js redundancy remove --video 823
+$ node dist/server/tools/bittube.js redundancy remove --video 823
 ```
 
 ## Server tools
 
-These scripts should be run on the server, in `peertube-latest` directory.
+These scripts should be run on the server, in `bittube-latest` directory.
 
 ### parse-log
 
-To parse PeerTube last log file:
+To parse BitTubeVid last log file:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run parse-log -- --level info
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run parse-log -- --level info
 ```
 
 `--level` is optional and could be `info`/`warn`/`error`
 
 ### create-transcoding-job.js
 
-You can use this script to force transcoding of an existing video. PeerTube needs to be running.
+You can use this script to force transcoding of an existing video. BitTubeVid needs to be running.
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run create-transcoding-job -- -v [videoUUID]
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run create-transcoding-job -- -v [videoUUID]
 ```
 
 Or to transcode to a specific resolution:
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run create-transcoding-job -- -v [videoUUID] -r [resolution]
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run create-transcoding-job -- -v [videoUUID] -r [resolution]
 ```
 
 To generate an HLS playlist for a video:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run create-transcoding-job -- --generate-hls -v [videoUUID]
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run create-transcoding-job -- --generate-hls -v [videoUUID]
 ```
 
 ### create-import-video-file-job.js
 
-You can use this script to import a video file to replace an already uploaded file or to add a new resolution to a video. PeerTube needs to be running.
+You can use this script to import a video file to replace an already uploaded file or to add a new resolution to a video. BitTubeVid needs to be running.
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run create-import-video-file-job -- -v [videoUUID] -i [videoFile]
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run create-import-video-file-job -- -v [videoUUID] -i [videoFile]
 ```
 
 ### prune-storage.js
 
 Some transcoded videos or shutdown at a bad time can leave some unused files on your storage.
-Stop PeerTube and delete these files (a confirmation will be demanded first):
+Stop BitTubeVid and delete these files (a confirmation will be demanded first):
 
 ```
-$ sudo systemctl stop peertube && sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run prune-storage
+$ sudo systemctl stop bittube && sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run prune-storage
 ```
 
 ### optimize-old-videos.js
 
-Before version v1.0.0-beta.16, Peertube did not specify a bitrate for the
+Before version v1.0.0-beta.16, BitTubeVid did not specify a bitrate for the
 transcoding of uploaded videos. This means that videos might be encoded into
 very large files that are too large for streaming. This script re-transcodes
 these videos so that they can be watched properly, even on slow connections.
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run optimize-old-videos
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run optimize-old-videos
 ```
 
 
 ### update-host.js
 
-If you started PeerTube with a domain, and then changed it you will have
+If you started BitTubeVid with a domain, and then changed it you will have
 invalid torrent files and invalid URLs in your database. To fix this, you have
 to run:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run update-host
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run update-host
 ```
 
 ### reset-password.js
@@ -307,38 +307,38 @@ $ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production 
 To reset a user password from CLI, run:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run reset-password -- -u target_username
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run reset-password -- -u target_username
 ```
 
 
 ### plugin install/uninstall
 
-The difference with `peertube plugins` CLI is that these scripts can be used even if PeerTube is not running.
-If PeerTube is running, you need to restart it for the changes to take effect (whereas with `peertube plugins` CLI, plugins/themes are dynamically loaded on the server).
+The difference with `bittube plugins` CLI is that these scripts can be used even if BitTubeVid is not running.
+If BitTubeVid is running, you need to restart it for the changes to take effect (whereas with `bittube plugins` CLI, plugins/themes are dynamically loaded on the server).
 
 To install/update a plugin or a theme from the disk:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run plugin:install -- --plugin-path /local/plugin/path
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run plugin:install -- --plugin-path /local/plugin/path
 ```
 
 From NPM:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run plugin:install -- --npm-name peertube-plugin-myplugin
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run plugin:install -- --npm-name peertube-plugin-myplugin
 ```
 
 To uninstall a plugin or a theme:
 
 ```
-$ sudo -u peertube NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run plugin:uninstall -- --npm-name peertube-plugin-myplugin
+$ sudo -u bittube NODE_CONFIG_DIR=/var/www/bittube/config NODE_ENV=production npm run plugin:uninstall -- --npm-name peertube-plugin-myplugin
 ```
 
 ### REPL ([Read Eval Print Loop](https://nodejs.org/docs/latest-v10.x/api/repl.html))
 
-If you want to interact with the application libraries and objects even when PeerTube is not running, there is a REPL for that.
+If you want to interact with the application libraries and objects even when BitTubeVid is not running, there is a REPL for that.
 
-usage: `node ./dist/server/tools/peertube-repl.js`
+usage: `node ./dist/server/tools/bittube-repl.js`
 
 "The default evaluator will, by default, assign the result of the most recently evaluated expression to the special variable `_` (underscore). Explicitly setting `_` to a value will disable this behavior."
 
@@ -354,7 +354,7 @@ usage: `node ./dist/server/tools/peertube-repl.js`
 - type `uuidv5` to access uuid/v5 library
 - type `YoutubeDL` to access youtube-dl library
 - type `cli` to access the cli helpers object
-- type `logger` to access the logger; if you log to it, it will write to stdout and to the peertube.log file
+- type `logger` to access the logger; if you log to it, it will write to stdout and to the bittube.log file
 - type `constants` to access the constants loaded by the server
 - type `coreUtils` to access the core-utils helpers object
 - type `ffmpegUtils` to access the ffmpeg-utils helpers object
@@ -372,7 +372,7 @@ usage: `node ./dist/server/tools/peertube-repl.js`
 #### .help
 
 ```
-PeerTube [1.0.0] (b10eb595)> .help
+BitTubeVid [1.0.0] (b10eb595)> .help
 .break    Sometimes you get stuck, this gets you out
 .clear    Break, and also clear the local context
 .editor   Enter editor mode
@@ -382,13 +382,13 @@ PeerTube [1.0.0] (b10eb595)> .help
 .r        Reset REPL
 .reset    Reset REPL
 .save     Save all evaluated commands in this REPL session to a file
-PeerTube [1.0.0] (b10eb595)>
+BitTubeVid [1.0.0] (b10eb595)>
 ```
 
 #### Lodash example
 
 ```
-PeerTube [1.0.0] (b10eb595)> lodash.keys(context)
+BitTubeVid [1.0.0] (b10eb595)> lodash.keys(context)
 [ 'global',
   'console',
   'DTRACE_NET_SERVER_CONNECTION',
@@ -435,7 +435,7 @@ PeerTube [1.0.0] (b10eb595)> lodash.keys(context)
   'signupUtils',
   'utils',
   'YoutubeDLUtils' ]
-PeerTube [1.0.0] (b10eb595)>
+BitTubeVid [1.0.0] (b10eb595)>
 ```
 
 #### YoutubeDL example
@@ -445,22 +445,22 @@ YoutubeDL.getInfo('https://www.youtube.com/watch?v=I5ZN289jjDo', function(err, d
 
 #### Models examples
 ```
-PeerTube [1.0.0] (b10eb595)> new models.ActorModel({id: 3}).getVideoChannel().then(function(data){console.log(data.dataValues.name)})
+BitTubeVid [1.0.0] (b10eb595)> new models.ActorModel({id: 3}).getVideoChannel().then(function(data){console.log(data.dataValues.name)})
 Promise {
   _bitField: 0,
   _fulfillmentHandler0: undefined,
   _rejectionHandler0: undefined,
   _promise0: undefined,
   _receiver0: undefined }
-PeerTube [1.0.0] (b10eb595)> Main root channel
-PeerTube [1.0.0] (b10eb595)> let out; new models.UserModel({id: 1}).getAccount().then(function (data) {out = data.dataValues.id})
+BitTubeVid [1.0.0] (b10eb595)> Main root channel
+BitTubeVid [1.0.0] (b10eb595)> let out; new models.UserModel({id: 1}).getAccount().then(function (data) {out = data.dataValues.id})
 Promise {
   _bitField: 0,
   _fulfillmentHandler0: undefined,
   _rejectionHandler0: undefined,
   _promise0: undefined,
   _receiver0: undefined }
-PeerTube [1.0.0] (b10eb595)> out
+BitTubeVid [1.0.0] (b10eb595)> out
 2
-PeerTube [1.0.0] (b10eb595)>
+BitTubeVid [1.0.0] (b10eb595)>
 ```
