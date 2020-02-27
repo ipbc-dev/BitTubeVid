@@ -1,9 +1,9 @@
 # Changelog
 
-## BitTube v0.2.1
+## v0.2.1 (BitTube)
   * Bumping PeerTube version to 2.1.1
 
-## BitTube v0.2.0
+## v0.2.0 (BitTube)
 
 ### BitTube first stable release
 
