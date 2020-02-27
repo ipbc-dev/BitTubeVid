@@ -104,7 +104,7 @@ $ bittube up <videoFile>
 And now that your video is online, you can watch it from the confort of your terminal (use `bittube watch --help` to see the supported players):
 
 ```bash
-$ bittube watch https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10
+$ bittube watch https://bittube.video/videos/watch/aedd1c35-ce03-44aa-8fb1-bc4fe45d1023
 ```
 
 To list, install, uninstall dynamically plugins/themes of an instance:

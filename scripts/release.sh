@@ -123,4 +123,13 @@ rm -f "./client/dist/embed-stats.json"
       git push origin master
       git checkout "$branch"
   fi
+
+  # Only update tube if it is not a pre release
+  if [ -z "$github_prerelease_option" ]; then
+      # Update master branch
+      git checkout tube
+      git merge "$branch"
+      git push origin tube
+      git checkout "$branch"
+  fi
 )
