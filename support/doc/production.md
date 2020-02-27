@@ -247,7 +247,7 @@ Now your instance is up you can:
 
 ### BitTubeVid instance
 
-**Check the changelog (in particular BREAKING CHANGES!):** https://github.com/ipbc-dev/BitTubeVid/blob/develop/CHANGELOG.md
+**Check the changelog (in particular BREAKING CHANGES!):** https://github.com/ipbc-dev/BitTubeVid/blob/tube/CHANGELOG.md
 
 #### Auto (minor versions only)
 
