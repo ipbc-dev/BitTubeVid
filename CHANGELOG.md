@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.1-rc.5
+## v0.2.1-rc.7
 
 ### Re-branding documentation, scripts and tools to BitTubeVid
   * Based on Peertube V2.1.0 ( https://github.com/Chocobozzz/PeerTube/tree/release/2.1.0 )
