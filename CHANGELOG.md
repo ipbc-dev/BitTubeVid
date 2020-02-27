@@ -1,12 +1,27 @@
 # Changelog
 
-## v0.2.0
+## BitTube v0.2.0
 
 ### BitTube first stable release
 
   * Based on Peertube V2.1.0 ( https://github.com/Chocobozzz/PeerTube/tree/release/2.1.0 )
   * Fixed default theme for new users
   * Tweaking release script to fit our needings
+
+## PeerTube v2.1.1
+
+### Bug fixes
+
+ * Fix youtube-dl in docker image
+ * Fix playlist creation/update
+ * Fix fetch of instance config in client
+ * Manual approves followers only for the instance (and not accounts/channels)
+ * Fix avatar update
+ * Fix CSP for embeds
+ * Fix scroll of the menu on mobile
+ * Fix CPU usage of PostgreSQL
+ * Fix embed for iOS
+ 
 
 ## v2.1.0
 
