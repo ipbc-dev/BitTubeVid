@@ -192,14 +192,14 @@ Install/update/uninstall or list local or NPM BitTube plugins:
 
 ```
 $ cd ${CLONE}
-$ node dist/server/tools/peertube-plugins.js --help
-$ node dist/server/tools/peertube-plugins.js list --help
-$ node dist/server/tools/peertube-plugins.js install --help
-$ node dist/server/tools/peertube-plugins.js update --help
-$ node dist/server/tools/peertube-plugins.js uninstall --help
+$ node dist/server/tools/bittube-plugins.js --help
+$ node dist/server/tools/bittube-plugins.js list --help
+$ node dist/server/tools/bittube-plugins.js install --help
+$ node dist/server/tools/bittube-plugins.js update --help
+$ node dist/server/tools/bittube-plugins.js uninstall --help
 
-$ node dist/server/tools/peertube-plugins.js install --path /my/plugin/path
-$ node dist/server/tools/peertube-plugins.js install --npm-name peertube-theme-example
+$ node dist/server/tools/bittube-plugins.js install --path /my/plugin/path
+$ node dist/server/tools/bittube-plugins.js install --npm-name peertube-theme-example
 ```
 
 #### bittube-redundancy.js

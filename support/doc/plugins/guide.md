@@ -368,13 +368,13 @@ $ NODE_ENV=test npm start
 
 [comment]: <> (question , javascript)
 ```
-$ node ./dist/server/tools/peertube.js auth add -u 'http://localhost:9000' -U 'root' --password 'test'
+$ node ./dist/server/tools/bittube.js auth add -u 'http://localhost:9000' -U 'root' --password 'test'
 ```
 
 Then, you can install or reinstall your local plugin/theme by running:
 
 ```
-$ node ./dist/server/tools/peertube.js plugins install --path /your/absolute/plugin-or-theme/path
+$ node ./dist/server/tools/bittube.js plugins install --path /your/absolute/plugin-or-theme/path
 ```
 
 ### Publish

@@ -8,7 +8,7 @@
     "node": ">=8.x"
   },
   "bin": {
-    "peertube": "dist/server/tools/peertube.js"
+    "peertube": "dist/server/tools/bittube.js"
   },
   "author": {
     "name": "Chocobozzz",
