@@ -13,12 +13,12 @@ program
   .version(version, '-v, --version')
   .usage('[command] [options]')
 
-/* Subcommands automatically loaded in the directory and beginning by peertube-* */
+/* Subcommands automatically loaded in the directory and beginning by bittube-* */
 program
   .command('auth [action]', 'register your accounts on remote instances to use them with other commands')
   .command('upload', 'upload a video').alias('up')
   .command('import-videos', 'import a video from a streaming platform').alias('import')
-  .command('get-access-token', 'get a peertube access token', { noHelp: true }).alias('token')
+  .command('get-access-token', 'get a bittube access token', { noHelp: true }).alias('token')
   .command('watch', 'watch a video in the terminal ✩°｡⋆').alias('w')
   .command('repl', 'initiate a REPL to access internals')
   .command('plugins [action]', 'manage instance plugins/themes').alias('p')
@@ -75,9 +75,9 @@ getSettings()
         console.log()
         console.log('  Examples:')
         console.log()
-        console.log('    $ peertube auth add -u "PEERTUBE_URL" -U "PEERTUBE_USER" --password "PEERTUBE_PASSWORD"')
-        console.log('    $ peertube up <videoFile>')
-        console.log('    $ peertube watch https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
+        console.log('    $ bittube auth add -u "BITTUBE_URL" -U "BITTUBE_USER" --password "BITTUBE_PASSWORD"')
+        console.log('    $ bittube up <videoFile>')
+        console.log('    $ bittube watch https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
         console.log()
       })
       .parse(process.argv)

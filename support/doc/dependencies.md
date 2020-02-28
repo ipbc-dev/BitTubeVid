@@ -35,7 +35,7 @@
 6. Run:
 
 ```
-sudo apt update
+sudo apt upgrade
 sudo apt install nginx ffmpeg postgresql postgresql-contrib openssl g++ make redis-server git python-dev
 ffmpeg -version # Should be >= 3.x
 g++ -v # Should be >= 5.x
@@ -109,7 +109,7 @@ Initialize the PostgreSQL database:
 sudo postgresql-setup initdb
 ```
 
-Now that dependencies are installed, before running PeerTube you should enable and start PostgreSQL and Redis:    
+Now that dependencies are installed, before running BitTube you should enable and start PostgreSQL and Redis:    
 
 ```
 sudo systemctl enable redis
@@ -283,7 +283,7 @@ www-servers/nginx
 ```
 mkdir -p /etc/portage/package.keywords
 cat << EOF >> /etc/portage/package.keywords/bittube
-# required by yarn (argument) for PeerTube
+# required by yarn (argument) for BitTubeVid
 sys-apps/yarn ~amd64
 EOF
 ```

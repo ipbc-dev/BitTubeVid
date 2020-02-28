@@ -1,18 +1,18 @@
 [Unit]
-Description=PeerTube daemon
+Description=BitTubeVid daemon
 After=network.target postgresql.service redis-server.service
 
 [Service]
 Type=simple
 Environment=NODE_ENV=production
-Environment=NODE_CONFIG_DIR=/var/www/peertube/config
-User=peertube
-Group=peertube
+Environment=NODE_CONFIG_DIR=/var/www/bittube/config
+User=bittube
+Group=bittube
 ExecStart=/usr/bin/npm start
-WorkingDirectory=/var/www/peertube/peertube-latest
+WorkingDirectory=/var/www/bittube/bittube-latest
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=peertube
+SyslogIdentifier=bittube
 Restart=always
 
 ; Some security directives.

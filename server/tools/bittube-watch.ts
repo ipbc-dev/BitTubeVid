@@ -24,9 +24,9 @@ program
     console.log()
     console.log('  Examples:')
     console.log()
-    console.log('    $ peertube watch -g mpv https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
-    console.log('    $ peertube watch --gui stdout https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
-    console.log('    $ peertube watch https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
+    console.log('    $ bittube watch -g mpv https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
+    console.log('    $ bittube watch --gui stdout https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
+    console.log('    $ bittube watch https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
     console.log()
   })
   .action((url, cmd) => {

@@ -5,7 +5,7 @@ import * as program from 'commander'
 import { access, constants } from 'fs-extra'
 import { isAbsolute } from 'path'
 import { getAccessToken } from '../../shared/extra-utils'
-import { uploadVideo } from '../../shared/extra-utils/'
+import { uploadVideo } from '../../shared/extra-utils'
 import { buildCommonVideoOptions, buildVideoAttributesFromCommander, getServerCredentials } from './cli'
 
 let command = program
