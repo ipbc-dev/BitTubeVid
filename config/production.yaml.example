@@ -27,18 +27,18 @@ rates_limit:
     max: 3
 
 # Proxies to trust to get real client IP
-# If you run PeerTube just behind a local proxy (nginx), keep 'loopback'
-# If you run PeerTube behind a remote proxy, add the proxy IP address (or subnet)
+# If you run BitTubeVid just behind a local proxy (nginx), keep 'loopback'
+# If you run BitTubeVid behind a remote proxy, add the proxy IP address (or subnet)
 trust_proxy:
   - 'loopback'
 
-# Your database name will be "peertube"+database.suffix
+# Your database name will be "bittube"+database.suffix
 database:
   hostname: 'localhost'
   port: 5432
   suffix: '_prod'
-  username: 'peertube'
-  password: 'peertube'
+  username: 'bittube'
+  password: 'bittube'
   pool:
     max: 5
 
@@ -64,24 +64,24 @@ smtp:
 
 email:
   body:
-    signature: "PeerTube"
+    signature: "BitTube"
   subject:
-    prefix: "[PeerTube]"
+    prefix: "[BitTube]"
 
 # From the project root directory
 storage:
-  tmp: '/var/www/peertube/storage/tmp/' # Use to download data (imports etc), store uploaded files before processing...
-  avatars: '/var/www/peertube/storage/avatars/'
-  videos: '/var/www/peertube/storage/videos/'
-  streaming_playlists: '/var/www/peertube/storage/streaming-playlists/'
-  redundancy: '/var/www/peertube/storage/redundancy/'
-  logs: '/var/www/peertube/storage/logs/'
-  previews: '/var/www/peertube/storage/previews/'
-  thumbnails: '/var/www/peertube/storage/thumbnails/'
-  torrents: '/var/www/peertube/storage/torrents/'
-  captions: '/var/www/peertube/storage/captions/'
-  cache: '/var/www/peertube/storage/cache/'
-  plugins: '/var/www/peertube/storage/plugins/'
+  tmp: '/var/www/bittube/storage/tmp/' # Use to download data (imports etc), store uploaded files before processing...
+  avatars: '/var/www/bittube/storage/avatars/'
+  videos: '/var/www/bittube/storage/videos/'
+  streaming_playlists: '/var/www/bittube/storage/streaming-playlists/'
+  redundancy: '/var/www/bittube/storage/redundancy/'
+  logs: '/var/www/bittube/storage/logs/'
+  previews: '/var/www/bittube/storage/previews/'
+  thumbnails: '/var/www/bittube/storage/thumbnails/'
+  torrents: '/var/www/bittube/storage/torrents/'
+  captions: '/var/www/bittube/storage/captions/'
+  cache: '/var/www/bittube/storage/cache/'
+  plugins: '/var/www/bittube/storage/plugins/'
 
 log:
   level: 'info' # debug/info/warning/error
@@ -133,7 +133,7 @@ csp:
   report_uri:
 
 tracker:
-  # If you disable the tracker, you disable the P2P aspect of PeerTube
+  # If you disable the tracker, you disable the P2P aspect of BitTubeVid
   enabled: true
   # Only handle requests on your videos.
   # If you set this to false it means you have a public tracker.
@@ -146,21 +146,21 @@ history:
   videos:
     # If you want to limit users videos history
     # -1 means there is no limitations
-    # Other values could be '6 months' or '30 days' etc (PeerTube will periodically delete old entries from database)
+    # Other values could be '6 months' or '30 days' etc (BitTubeVid will periodically delete old entries from database)
     max_age: -1
 
 views:
   videos:
-    # PeerTube creates a database entry every hour for each video to track views over a period of time
+    # BitTubeVid creates a database entry every hour for each video to track views over a period of time
     # This is used in particular by the Trending page
-    # PeerTube could remove old remote video views if you want to reduce your database size (video view counter will not be altered)
+    # BitTubeVid could remove old remote video views if you want to reduce your database size (video view counter will not be altered)
     # -1 means no cleanup
-    # Other values could be '6 months' or '30 days' etc (PeerTube will periodically delete old entries from database)
+    # Other values could be '6 months' or '30 days' etc (BitTubeVid will periodically delete old entries from database)
     remote:
       max_age: -1
 
 plugins:
-  # The website PeerTube will ask for available PeerTube plugins and themes
+  # The website BitTubeVid will ask for available PeerTube plugins and themes
   # This is an unmoderated plugin index, so only install plugins/themes you trust
   index:
     enabled: true
@@ -173,7 +173,7 @@ plugins:
 # From this point, all the following keys can be overridden by the web interface
 # (local-production.json file). If you need to change some values, prefer to
 # use the web interface because the configuration will be automatically
-# reloaded without any need to restart PeerTube.
+# reloaded without any need to restart BitTubeVid.
 #
 # /!\ If you already have a local-production.json file, the modification of the
 # following keys will have no effect /!\.
@@ -216,7 +216,7 @@ transcoding:
   enabled: true
   # Allow your users to upload .mkv, .mov, .avi, .flv videos
   allow_additional_extensions: true
-  # If a user uploads an audio file, PeerTube will create a video by merging the preview file and the audio file
+  # If a user uploads an audio file, BitTubeVid will create a video by merging the preview file and the audio file
   allow_audio_files: true
   threads: 1
   resolutions: # Only created if the original video has a higher resolution, uses more storage!
@@ -263,9 +263,9 @@ auto_blacklist:
 
 # Instance settings
 instance:
-  name: 'PeerTube'
-  short_description: 'PeerTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in the web browser with WebTorrent and Angular.'
-  description: 'Welcome to this PeerTube instance!' # Support markdown
+  name: 'BitTubeVidInstance'
+  short_description: 'BitTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in the web browser with WebTorrent and Angular.'
+  description: 'Welcome to this BitTube instance!' # Support markdown
   terms: 'No terms for now.' # Support markdown
   code_of_conduct: '' # Supports markdown
 
@@ -281,10 +281,10 @@ instance:
   # How long do you plan to maintain this instance?
   maintenance_lifetime: ''
 
-  # How will you pay the PeerTube instance server? With your own funds? With users donations? Advertising?
+  # How will you pay the BitTubeVid instance server? With your own funds? With users donations? Advertising?
   business_model: ''
 
-  # If you want to explain on what type of hardware your PeerTube instance runs
+  # If you want to explain on what type of hardware your BitTubeVid instance runs
   # Example: "2 vCore, 2GB RAM..."
   hardware_information: '' # Supports Markdown
 
@@ -338,14 +338,14 @@ instance:
     Disallow:
   # Security.txt rules. To discourage researchers from testing your instance and disable security.txt integration, set this to an empty string.
   securitytxt:
-    "# If you would like to report a security issue\n# you may report it to:\nContact: https://github.com/Chocobozzz/PeerTube/blob/develop/SECURITY.md\nContact: mailto:"
+    "# If you would like to report a security issue\n# you may report it to:\nContact: https://github.com/ipbc-dev/BitTubeVid/blob/develop/SECURITY.md\nContact: mailto:"
 
 services:
   # Cards configuration to format video in Twitter
   twitter:
     username: '@BitTubeApp' # Indicates the Twitter account for the website or platform on which the content was published
-    # If true, a video player will be embedded in the Twitter feed on PeerTube video share
-    # If false, we use an image link card that will redirect on your PeerTube instance
+    # If true, a video player will be embedded in the Twitter feed on BitTubeVid video share
+    # If false, we use an image link card that will redirect on your BitTubeVid instance
     # Change it to "true", and then test on https://cards-dev.twitter.com/validator to see if you are whitelisted
     whitelisted: false
 

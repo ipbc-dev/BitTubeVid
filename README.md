@@ -160,7 +160,7 @@ Feel free to reach out if you have any questions or ideas! :speech_balloon:
   * **yarn >= 1.x**
   * **FFmpeg >= 3.x**
 
-See the [production guide](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/production.md), which is the recommended way to install or upgrade BitTube. For hardware requirements, see [Should I have a big server to run BitTube?](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-peertube) in the FAQ.
+See the [production guide](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/production.md), which is the recommended way to install or upgrade BitTube. For hardware requirements, see [Should I have a big server to run BitTube?](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-BitTube) in the FAQ.
 
 See the [community packages](https://docs.joinpeertube.org/#/install-unofficial), which cover various platforms (including [YunoHost](https://install-app.yunohost.org/?app=peertube) and [Docker](https://github.com/Chocobozzz/PeerTube/blob/develop/support/doc/docker.md)).
 

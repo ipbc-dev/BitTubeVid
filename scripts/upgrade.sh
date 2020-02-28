@@ -75,9 +75,9 @@ yarn install --production --pure-lockfile
 cp $BITTUBE_PATH/bittube-latest/config/default.yaml $BITTUBE_PATH/config/default.yaml
 
 echo "Differences in configuration files..."
-diff -u $BITTUBE_PATH/config/production.yaml "$BITTUBE_PATH/versions/bittube-${VERSION}/config/production.yaml.example"
+diff -u $BITTUBE_PATH/config/production.yaml "$BITTUBE_PATH/versions/bittubevid-${VERSION}/config/production.yaml.example"
 
 echo ""
 echo "==========================================="
-echo "==   Don’t forget to restart BitTube!   =="
+echo "==   Don’t forget to restart BitTube!    =="
 echo "==========================================="

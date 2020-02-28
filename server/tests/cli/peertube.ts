@@ -25,7 +25,7 @@ describe('Test CLI wrapper', function () {
   let server: ServerInfo
   let userAccessToken: string
 
-  const cmd = 'node ./dist/server/tools/peertube.js'
+  const cmd = 'node ./dist/server/tools/bittube.js'
 
   before(async function () {
     this.timeout(30000)

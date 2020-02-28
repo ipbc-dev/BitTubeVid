@@ -63,7 +63,7 @@ program
         url: {
           description: 'instance url',
           conform: (value) => isURLaPeerTubeInstance(value),
-          message: 'It should be an URL (https://peertube.example.com)',
+          message: 'It should be an URL (https://bittube.example.com)',
           required: true
         },
         username: {
@@ -147,10 +147,10 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ peertube add -u https://peertube.cpy.re -U "PEERTUBE_USER" --password "PEERTUBE_PASSWORD"')
-  console.log('    $ peertube add -u https://peertube.cpy.re -U root')
-  console.log('    $ peertube list')
-  console.log('    $ peertube del https://peertube.cpy.re')
+  console.log('    $ bittube add -u https://bittube.video -U "BITTUBE_USER" --password "BITTUBE_PASSWORD"')
+  console.log('    $ bittube add -u https://bittube.video -U root')
+  console.log('    $ bittube list')
+  console.log('    $ bittube del https://bittube.video')
   console.log()
 })
 

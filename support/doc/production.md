@@ -6,7 +6,7 @@
 ## Installation
 
 Please don't install BitTubeVid for production on a device behind a low bandwidth connection (example: your ADSL link).
-If you want information about the appropriate hardware to run bittube, please see the [FAQ](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-bittube).
+If you want information about the appropriate hardware to run bittube, please see the [FAQ](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-BitTube).
 
 ### Dependencies
 
@@ -256,7 +256,7 @@ Now your instance is up you can:
 
 ### BitTubeVid instance
 
-**Check the changelog (in particular BREAKING CHANGES!):** https://github.com/ipbc-dev/BitTubeVid/blob/develop/CHANGELOG.md
+**Check the changelog (in particular BREAKING CHANGES!):** https://github.com/ipbc-dev/BitTubeVid/blob/tube/CHANGELOG.md
 
 #### Auto (minor versions only)
 

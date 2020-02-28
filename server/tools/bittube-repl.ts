@@ -53,7 +53,7 @@ const start = async () => {
   }
 
   const replServer = repl.start({
-    prompt: `PeerTube [${cli.version}] (${versionCommitHash})> `
+    prompt: `BitTube [${cli.version}] (${versionCommitHash})> `
   })
 
   initContext(replServer)(replServer.context)

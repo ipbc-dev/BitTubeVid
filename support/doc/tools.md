@@ -104,7 +104,7 @@ $ bittube up <videoFile>
 And now that your video is online, you can watch it from the confort of your terminal (use `bittube watch --help` to see the supported players):
 
 ```bash
-$ bittube watch https://bittube.video/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10
+$ bittube watch https://bittube.video/videos/watch/aedd1c35-ce03-44aa-8fb1-bc4fe45d1023
 ```
 
 To list, install, uninstall dynamically plugins/themes of an instance:
@@ -192,14 +192,14 @@ Install/update/uninstall or list local or NPM BitTube plugins:
 
 ```
 $ cd ${CLONE}
-$ node dist/server/tools/peertube-plugins.js --help
-$ node dist/server/tools/peertube-plugins.js list --help
-$ node dist/server/tools/peertube-plugins.js install --help
-$ node dist/server/tools/peertube-plugins.js update --help
-$ node dist/server/tools/peertube-plugins.js uninstall --help
+$ node dist/server/tools/bittube-plugins.js --help
+$ node dist/server/tools/bittube-plugins.js list --help
+$ node dist/server/tools/bittube-plugins.js install --help
+$ node dist/server/tools/bittube-plugins.js update --help
+$ node dist/server/tools/bittube-plugins.js uninstall --help
 
-$ node dist/server/tools/peertube-plugins.js install --path /my/plugin/path
-$ node dist/server/tools/peertube-plugins.js install --npm-name peertube-theme-example
+$ node dist/server/tools/bittube-plugins.js install --path /my/plugin/path
+$ node dist/server/tools/bittube-plugins.js install --npm-name peertube-theme-example
 ```
 
 #### bittube-redundancy.js

@@ -46,4 +46,4 @@ yarn-error.log
 /*.asc
 /server/tools/import-mediacore.ts
 /docker-volume/
-/init.mp4
+/*.mp4

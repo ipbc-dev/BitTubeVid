@@ -18,7 +18,7 @@ const CONFIG = {
     HOSTNAME: config.get<string>('listen.hostname')
   },
   DATABASE: {
-    DBNAME: 'peertube' + config.get<string>('database.suffix'),
+    DBNAME: 'bittube' + config.get<string>('database.suffix'),
     HOSTNAME: config.get<string>('database.hostname'),
     PORT: config.get<number>('database.port'),
     USERNAME: config.get<string>('database.username'),

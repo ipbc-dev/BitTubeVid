@@ -33,13 +33,13 @@ rates_limit:
 trust_proxy:
   - 'loopback'
 
-# Your database name will be "peertube"+database.suffix
+# Your database name will be "bittube"+database.suffix
 database:
   hostname: 'localhost'
   port: 5432
   suffix: '_dev'
-  username: 'peertube'
-  password: 'peertube'
+  username: 'bittube'
+  password: 'bittube'
   pool:
     max: 5
 
@@ -63,9 +63,9 @@ smtp:
 
 email:
   body:
-    signature: "PeerTube"
+    signature: "BitTube"
   subject:
-    prefix: "[PeerTube]"
+    prefix: "[BitTube]"
 
 # From the project root directory
 storage:
@@ -275,7 +275,7 @@ instance:
 
   # What are the main languages of your instance? To interact with your users for example
   # Uncomment or add the languages you want
-  # List of supported languages: https://peertube.cpy.re/api/v1/videos/languages
+  # List of supported languages: https://bittube.video/api/v1/videos/languages
   languages:
 #    - en
 #    - es
@@ -283,7 +283,7 @@ instance:
 
   # You can specify the main categories of your instance (dedicated to music, gaming or politics etc)
   # Uncomment or add the category ids you want
-  # List of supported categories: https://peertube.cpy.re/api/v1/videos/categories
+  # List of supported categories: https://bittube.video/api/v1/videos/categories
   categories:
 #    - 1  # Music
 #    - 2  # Films
