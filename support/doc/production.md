@@ -56,6 +56,15 @@ Fetch the latest tagged version of BitTubeVid
 $ VERSION=$(curl -s https://api.github.com/repos/ipbc-dev/BitTubeVid/releases/latest | grep tag_name | cut -d '"' -f 4) && echo "Latest BitTubeVid version is $VERSION"
 ```
 
+Fetch the latest tagged version of BitTubeVid **On FreeBSD**
+
+First, we need to fetch last version, then, save it into the variable. If you're not a bash expert, you will need to type the [result] in order to save it into the variable "VERSION"
+```
+curl -s https://api.github.com/repos/ipbc-dev/BitTubeVid/releases/latest | grep tag_name | cut -d '"' -f 4
+[result]
+set VERSION = [result]
+```
+
 Open the bittube directory, create a few required directories
 ```
 $ cd /var/www/bittube && sudo -u bittube mkdir config storage versions && cd versions
