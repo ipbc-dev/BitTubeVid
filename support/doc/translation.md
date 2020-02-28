@@ -4,15 +4,15 @@ We use [Weblate](https://weblate.org) as translation platform.
 Please do not edit translation files directly from Git, you have to use Weblate!
 
 If you don't see your locale in the platform you can add it directly in the Weblate interface.
-Then, if you think there are enough translated strings, please [create an issue](https://github.com/Chocobozzz/PeerTube/issues) so we add the new locale in PeerTube!
+Then, if you think there are enough translated strings, please [create an issue](https://github.com/ipbc-dev/BitTubeVid/issues) so we add the new locale in PeerTube!
 
 
 ## How to
 
- * Create an account: https://weblate.framasoft.org/accounts/register/
+ * Create an account: https://translate.bittube.video/accounts/register/
  * Validate your email and follow the link sent
  * Create your password (keep the `Current password` field empty) and setup your account
- * Go to the PeerTube page https://weblate.framasoft.org/projects/peertube/
+ * Go to the BitTubeVid page https://translate.bittube.video/projects/bittubevid/
  * Choose the file and the locale you want to translate
  
 
