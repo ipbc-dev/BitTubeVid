@@ -1,7 +1,19 @@
 # Changelog
 
+## v0.3.1-rc.8 (BitTube)
+
+### BitTube PRE-release
+
+  * Based on BitTube v0.2.1
+  * Tweaking installation, configuration files and tools
+  * Tweaking documentation
+
 ## v0.2.1 (BitTube)
+
+### BitTube stable release
+
   * Bumping PeerTube version to 2.1.1
+  * Enhanced 404 page
 
 ## v0.2.0 (BitTube)
 
