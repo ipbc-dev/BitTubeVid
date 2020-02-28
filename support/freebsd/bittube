@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# PROVIDE: bittube
+# REQUIRE: LOGIN postgresql nginx redis
+# KEYWORD: shutdown
+
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin"
+
+. /etc/rc.subr
+
+desc="BitTubeVid daemon"
+name=bittube
+rcvar=bittube_enable
+
+load_rc_config $name
+
+: ${bittube_enable:=NO}
+
+sig_stop=-KILL
+bittube_chdir="/var/www/bittube/bittube-latest"
+bittube_env="HOME=/var/www/bittube \
+NODE_ENV=production \
+NODE_CONFIG_DIR=/var/www/bittube/config \
+USER=bittube"
+bittube_user=bittube
+
+command="/usr/local/bin/node"
+command_args="dist/server >> /var/log/bittube/${name}.log 2>&1 &"
+
+run_rc_command "$1"
