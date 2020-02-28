@@ -211,7 +211,7 @@ On a fresh install of [FreeBSD](https://www.freebsd.org), new system or new jail
 ```
 pkg
 pkg update
-pkg install -y sudo bash wget git python nginx pkgconf vips postgresql96-server postgresql96-contrib redis openssl node10 npm yarn ffmpeg unzip
+pkg install -y sudo bash wget git python nginx pkgconf vips postgresql96-server postgresql96-contrib redis openssl yarn-node10 npm ffmpeg unzip
 ```
 
 2. Allow users in the wheel group (hope you don't forgot to add your user on wheel group!) to use sudo.   

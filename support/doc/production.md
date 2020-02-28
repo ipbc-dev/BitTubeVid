@@ -82,6 +82,13 @@ $ cd ../ && sudo -u bittube ln -s versions/bittubevid-${VERSION} ./bittube-lates
 $ cd ./bittube-latest && sudo -H -u bittube yarn install --production --pure-lockfile
 ```
 
+Install BitTubeVid **On FreeBSD**
+```
+$ cd ../ && sudo -u bittube ln -s "versions/bittubevid-${VERSION}" ./bittube-latest
+$ cd ./bittube-latest && sudo -H -u bittube yarn install --production --pure-lockfile
+```
+
+
 ### BitTubeVid configuration
 
 Copy example configuration:
