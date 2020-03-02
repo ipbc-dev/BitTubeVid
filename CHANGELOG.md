@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.1-rc.8 (BitTube)
+## v0.3.1-rc.9 (BitTube)
 
 ### BitTube PRE-release
 
