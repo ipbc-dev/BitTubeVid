@@ -310,7 +310,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
     command = command.withFPS(fps)
   }
-
+  console.log("ICEICE command is: ", command)
   return command
 }
 
