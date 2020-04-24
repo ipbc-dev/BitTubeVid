@@ -74,7 +74,7 @@ async function checkFFmpeg (CONFIG: { TRANSCODING: { ENABLED: boolean } }) {
   const Ffmpeg = require('fluent-ffmpeg')
   const getAvailableCodecsPromise = promisify0(Ffmpeg.getAvailableCodecs)
   const codecs = await getAvailableCodecsPromise()
-  const canEncode = [ 'H264_nvenc' ]
+  const canEncode = [ 'libx264' ]
 
   for (const codec of canEncode) {
     if (codecs[codec] === undefined) {
