@@ -320,7 +320,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetH264VeryFast(command, options.audioPath, options.resolution)
 
   command = command.input(options.audioPath)
-                   .videoFilter('scale_npp=trunc(iw/2)*2:trunc(ih/2)*2') // Avoid "height not divisible by 2" error
+                   .videoFilter('fade,hwupload_cuda,scale_npp=trunc(iw/2)*2:trunc(ih/2)*2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
