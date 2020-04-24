@@ -299,8 +299,9 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `${options.resolution}x?` : `?x${options.resolution}`
-    command = command.size(size)
+    const size = options.isPortraitMode === true ? `fade,hwupload_cuda,scale_npp=${options.resolution}:ih` : `fade,hwupload_cuda,scale_npp=iw:${options.resolution}`
+    // command = command.size(size)
+    command = command.videoFilter(size)
   }
 
   if (fps) {
