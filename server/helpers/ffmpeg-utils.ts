@@ -219,7 +219,7 @@ function transcode (options: TranscodeOptions) {
         // if we don't set any threads ffmpeg will chose automatically
         command = command.outputOption('-threads ' + CONFIG.TRANSCODING.THREADS)
       }
-
+      console.log('ICEICE the command for the job is: ', String(command))
       command
         .on('error', (err, stdout, stderr) => {
           logger.error('Error in transcoding job.', { stdout, stderr, err })
