@@ -222,7 +222,7 @@ function transcode (options: TranscodeOptions) {
 
       command
         .on('error', (err, stdout, stderr) => {
-          logger.error('Error in transcoding job.', { stdout, stderr })
+          logger.error('Error in transcoding job.', { stdout, stderr, err })
           return rej(err)
         })
         .on('end', () => {
