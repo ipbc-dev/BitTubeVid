@@ -220,6 +220,8 @@ function transcode (options: TranscodeOptions) {
         command = command.outputOption('-threads ' + CONFIG.TRANSCODING.THREADS)
       }
       console.log('ICEICE the command for the job is: ', JSON.stringify(command))
+      console.log('ICEICE outputs are ', JSON.stringify(command)['_currentOutput'])
+      console.log('ICEICE outputs videofilter is ', JSON.stringify(command)['_currentOutput'].videoFilter)
       command
         .on('error', (err, stdout, stderr) => {
           logger.error('Error in transcoding job.', { stdout, stderr, err })
