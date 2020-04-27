@@ -1,0 +1,17 @@
+/**
+ * @license
+ * Video.js 7.6.5 <http://videojs.com/>
+ * Copyright Brightcove, Inc. <https://www.brightcove.com/>
+ * Available under Apache License Version 2.0
+ * <https://github.com/videojs/video.js/blob/master/LICENSE>
+ *
+ * Includes vtt.js <https://github.com/mozilla/vtt.js>
+ * Available under Apache License Version 2.0
+ * <https://github.com/mozilla/vtt.js/blob/master/LICENSE>
+ */
+
+/*! @name videojs-dock @version 2.1.4 @license Apache-2.0 */
+
+/*! @name videojs-contextmenu-ui @version 5.2.0 @license Apache-2.0 */
+
+/*! @name videojs-contrib-quality-levels @version 2.0.9 @license Apache-2.0 */
