@@ -219,6 +219,7 @@ function transcode (options: TranscodeOptions) {
         // if we don't set any threads ffmpeg will chose automatically
         command = command.outputOption('-threads ' + CONFIG.TRANSCODING.THREADS)
       }
+      command.outputOption('-loglevel verbose')
       console.log('ICEICE command options are: ', options)
       console.log('ICEICE the command for the job is: ', JSON.stringify(command))
       // console.log('ICEICE outputs are ', JSON.stringify(command)['_currentOutput'])
