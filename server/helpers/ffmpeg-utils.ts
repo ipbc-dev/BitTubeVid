@@ -498,7 +498,7 @@ async function presetH264 (command: ffmpeg.FfmpegCommand, input: string, resolut
     //.outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
     //.outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
     .outputOption('-map_metadata -1') // strip all metadata
-    //.outputOption('-movflags faststart')
+    .outputOption('-movflags faststart')
 
   const parsedAudio = await audio.get(input)
 
