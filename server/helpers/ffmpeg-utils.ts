@@ -219,12 +219,7 @@ function transcode (options: TranscodeOptions) {
         // if we don't set any threads ffmpeg will chose automatically
         command = command.outputOption('-threads ' + CONFIG.TRANSCODING.THREADS)
       }
-      command.addOption('-loglevel debug')
-      // command.inputOption('-loglevel debug')
-      console.log('ICEICE command options are: ', options)
-      console.log('ICEICE the command for the job is: ', JSON.stringify(command))
-      // console.log('ICEICE outputs are ', JSON.stringify(command)['_currentOutput'])
-      // console.log('ICEICE outputs videofilter is ', JSON.stringify(command)['_currentOutput'].videoFilter)
+      // command.addOption('-loglevel debug')
       command
         .on('error', (err, stdout, stderr) => {
           logger.error('Error in transcoding job.', { stdout, stderr, err })
@@ -496,7 +491,7 @@ async function presetH264 (command: ffmpeg.FfmpegCommand, input: string, resolut
     // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
     //.outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
     //.outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
-    // .outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
+    .outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
     .outputOption('-map_metadata -1') // strip all metadata
     .outputOption('-movflags faststart')
 
