@@ -189,7 +189,7 @@ function transcode(options) {
             }
             command
                 .on('error', (err, stdout, stderr) => {
-                logger_1.logger.error('Error in transcoding job.', { stdout, stderr });
+                logger_1.logger.error('Error in transcoding job.', { stdout, stderr, err });
                 return rej(err);
             })
                 .on('end', () => {
@@ -243,8 +243,8 @@ function buildx264Command(command, options) {
         }
         command = yield presetH264(command, options.inputPath, options.resolution, fps);
         if (options.resolution !== undefined) {
-            const size = options.isPortraitMode === true ? `${options.resolution}x?` : `?x${options.resolution}`;
-            command = command.size(size);
+            const size = options.isPortraitMode === true ? `fade,hwupload_cuda,scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `fade,hwupload_cuda,scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`;
+            command = command.videoFilter(size);
         }
         if (fps) {
             if (fps > constants_1.VIDEO_TRANSCODING_FPS.MAX)
@@ -261,7 +261,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter('scale=trunc(iw/2)*2:trunc(ih/2)*2')
+            .videoFilter('fade,hwupload_cuda,scale_npp=w=trunc(iw/2)*2:h=trunc(ih/2)*2')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
@@ -380,11 +380,7 @@ function presetH264(command, input, resolution, fps) {
     return __awaiter(this, void 0, void 0, function* () {
         let localCommand = command
             .format('mp4')
-            .videoCodec('libx264')
-            .outputOption('-level 3.1')
-            .outputOption('-b_strategy 1')
-            .outputOption('-bf 16')
-            .outputOption('-pix_fmt yuv420p')
+            .videoCodec('h264_nvenc')
             .outputOption('-map_metadata -1')
             .outputOption('-movflags faststart');
         const parsedAudio = yield audio.get(input);
