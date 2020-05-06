@@ -299,7 +299,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `fade,hwupload_cuda,scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `fade,hwupload_cuda,scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`
+    const size = options.isPortraitMode === true ? `fade,scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `fade,scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
@@ -321,7 +321,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetH264VeryFast(command, options.audioPath, options.resolution)
 
   command = command.input(options.audioPath)
-                   .videoFilter('fade,hwupload_cuda,scale_npp=w=trunc(iw/2)*2:h=trunc(ih/2)*2') // Avoid "height not divisible by 2" error
+                   .videoFilter('fade,scale_npp=w=trunc(ow/2)*2:h=trunc(oh/2)*2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
