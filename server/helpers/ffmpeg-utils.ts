@@ -299,7 +299,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `scale_vaapi=w=${options.resolution}` : `scale_vaapi=h=${options.resolution}`
+    const size = options.isPortraitMode === true ? `scale_vaapi=w=${options.resolution}:h=-1` : `scale_vaapi=h=${options.resolution}:w=-1`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
@@ -321,7 +321,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetH264VeryFast(command, options.audioPath, options.resolution)
 
   command = command.input(options.audioPath)
-                   .videoFilter('scale_vaapi=h=ih') // Avoid "height not divisible by 2" error
+                   .videoFilter('scale_vaapi=h=ih:w=-1') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
