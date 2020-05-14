@@ -299,7 +299,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`
+    const size = options.isPortraitMode === true ? `scale_vaapi=w=${options.resolution}` : `scale_vaapi=h=${options.resolution}`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
@@ -321,7 +321,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetH264VeryFast(command, options.audioPath, options.resolution)
 
   command = command.input(options.audioPath)
-                   .videoFilter('scale_npp=h=ih:force_original_aspect_ratio=1') // Avoid "height not divisible by 2" error
+                   .videoFilter('scale_vaapi=h=ih') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
@@ -487,7 +487,7 @@ namespace audio {
 async function presetH264 (command: ffmpeg.FfmpegCommand, input: string, resolution: VideoResolution, fps?: number) {
   let localCommand = command
     .format('mp4')
-    .videoCodec('h264_nvenc')
+    .videoCodec('h264_vaapi')
     // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
     //.outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
     //.outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
