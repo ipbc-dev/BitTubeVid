@@ -1,0 +1,27 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var UserRight;
+(function (UserRight) {
+    UserRight[UserRight["ALL"] = 0] = "ALL";
+    UserRight[UserRight["MANAGE_USERS"] = 1] = "MANAGE_USERS";
+    UserRight[UserRight["MANAGE_SERVER_FOLLOW"] = 2] = "MANAGE_SERVER_FOLLOW";
+    UserRight[UserRight["MANAGE_LOGS"] = 3] = "MANAGE_LOGS";
+    UserRight[UserRight["MANAGE_DEBUG"] = 4] = "MANAGE_DEBUG";
+    UserRight[UserRight["MANAGE_SERVER_REDUNDANCY"] = 5] = "MANAGE_SERVER_REDUNDANCY";
+    UserRight[UserRight["MANAGE_VIDEO_ABUSES"] = 6] = "MANAGE_VIDEO_ABUSES";
+    UserRight[UserRight["MANAGE_JOBS"] = 7] = "MANAGE_JOBS";
+    UserRight[UserRight["MANAGE_CONFIGURATION"] = 8] = "MANAGE_CONFIGURATION";
+    UserRight[UserRight["MANAGE_ACCOUNTS_BLOCKLIST"] = 9] = "MANAGE_ACCOUNTS_BLOCKLIST";
+    UserRight[UserRight["MANAGE_SERVERS_BLOCKLIST"] = 10] = "MANAGE_SERVERS_BLOCKLIST";
+    UserRight[UserRight["MANAGE_VIDEO_BLACKLIST"] = 11] = "MANAGE_VIDEO_BLACKLIST";
+    UserRight[UserRight["REMOVE_ANY_VIDEO"] = 12] = "REMOVE_ANY_VIDEO";
+    UserRight[UserRight["REMOVE_ANY_VIDEO_CHANNEL"] = 13] = "REMOVE_ANY_VIDEO_CHANNEL";
+    UserRight[UserRight["REMOVE_ANY_VIDEO_PLAYLIST"] = 14] = "REMOVE_ANY_VIDEO_PLAYLIST";
+    UserRight[UserRight["REMOVE_ANY_VIDEO_COMMENT"] = 15] = "REMOVE_ANY_VIDEO_COMMENT";
+    UserRight[UserRight["UPDATE_ANY_VIDEO"] = 16] = "UPDATE_ANY_VIDEO";
+    UserRight[UserRight["UPDATE_ANY_VIDEO_PLAYLIST"] = 17] = "UPDATE_ANY_VIDEO_PLAYLIST";
+    UserRight[UserRight["SEE_ALL_VIDEOS"] = 18] = "SEE_ALL_VIDEOS";
+    UserRight[UserRight["CHANGE_VIDEO_OWNERSHIP"] = 19] = "CHANGE_VIDEO_OWNERSHIP";
+    UserRight[UserRight["MANAGE_PLUGINS"] = 20] = "MANAGE_PLUGINS";
+    UserRight[UserRight["MANAGE_VIDEOS_REDUNDANCIES"] = 21] = "MANAGE_VIDEOS_REDUNDANCIES";
+})(UserRight = exports.UserRight || (exports.UserRight = {}));
