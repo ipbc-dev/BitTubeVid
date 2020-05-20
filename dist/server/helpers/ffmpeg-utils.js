@@ -261,7 +261,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter('fade,hwupload_cuda,scale_npp=w=trunc(iw/2)*2:h=trunc(ih/2)*2')
+            .videoFilter('fade,hwupload_cuda,scale_npp=h=ih:force_original_aspect_ratio=1:force_divisible_by=2')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
