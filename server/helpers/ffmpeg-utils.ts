@@ -321,7 +321,8 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetH264VeryFast(command, options.audioPath, options.resolution)
 
   command = command.input(options.audioPath)
-                   .videoFilter('fade,hwupload_cuda,scale_npp=w=trunc(iw/2)*2:h=trunc(ih/2)*2') // Avoid "height not divisible by 2" error
+                   // tslint:disable-next-line: max-line-length
+                   .videoFilter('fade,hwupload_cuda,scale_npp=w=iw:force_original_aspect_ratio=1:force_divisible_by=2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
@@ -400,7 +401,9 @@ function getVideoStreamFromFile (path: string) {
 async function presetH264VeryFast (command: ffmpeg.FfmpegCommand, input: string, resolution: VideoResolution, fps?: number) {
   let localCommand = await presetH264(command, input, resolution, fps)
 
-  localCommand = localCommand.outputOption('-preset:v veryfast')
+  if (!input.includes('.mp3') && !input.includes('.wav') && !input.includes('.flac')) {
+    localCommand = localCommand.outputOption('-preset:v veryfast')
+  }
 
   /*
   MAIN reference: https://slhck.info/video/2017/03/01/rate-control.html
@@ -489,9 +492,9 @@ async function presetH264 (command: ffmpeg.FfmpegCommand, input: string, resolut
     .format('mp4')
     .videoCodec('h264_nvenc')
     // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
-    //.outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
-    //.outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
-    //.outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
+    // .outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
+    // .outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
+    // .outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
     .outputOption('-map_metadata -1') // strip all metadata
     .outputOption('-movflags faststart')
 
