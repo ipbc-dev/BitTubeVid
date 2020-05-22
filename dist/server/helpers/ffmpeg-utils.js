@@ -261,7 +261,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter('fade,hwupload_cuda,scale_npp=h=ih:force_original_aspect_ratio=1:force_divisible_by=2')
+            .videoFilter('fade,hwupload_cuda,scale_npp=w=iw:force_original_aspect_ratio=1:force_divisible_by=2')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
@@ -326,7 +326,9 @@ function getVideoStreamFromFile(path) {
 function presetH264VeryFast(command, input, resolution, fps) {
     return __awaiter(this, void 0, void 0, function* () {
         let localCommand = yield presetH264(command, input, resolution, fps);
-        localCommand = localCommand.outputOption('-preset:v veryfast');
+        if (!input.includes('.mp3') && !input.includes('.wav') && !input.includes('.flac')) {
+            localCommand = localCommand.outputOption('-preset:v veryfast');
+        }
         return localCommand;
     });
 }
