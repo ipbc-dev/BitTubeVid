@@ -120,7 +120,7 @@ const JOB_CONCURRENCY = {
     'activitypub-http-fetcher': 1,
     'activitypub-follow': 1,
     'video-file-import': 1,
-    'video-transcoding': 12,
+    'video-transcoding': 16,
     'video-import': 1,
     'email': 5,
     'videos-views': 1,
