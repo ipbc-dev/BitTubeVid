@@ -91,6 +91,7 @@ function listVideoPrivacies(req, res) {
 }
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        logger_1.logger.info('Inside addVideo function');
         req.setTimeout(1000 * 60 * 10, () => {
             logger_1.logger.error('Upload video has timed out.');
             return res.sendStatus(408);
@@ -115,8 +116,10 @@ function addVideo(req, res) {
             channelId: res.locals.videoChannel.id,
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
+        logger_1.logger.info('Received video data is: ', videoData);
         const video = new video_1.VideoModel(videoData);
         video.url = activitypub_1.getVideoActivityPubUrl(video);
+        logger_1.logger.info('VideoUrl is: ', video.url);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
             size: videoPhysicalFile.size,
@@ -130,9 +133,11 @@ function addVideo(req, res) {
             videoFile.resolution = (yield ffmpeg_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
+        logger_1.logger.info('Moving the file to destination: ', destination);
         yield fs_extra_1.move(videoPhysicalFile.path, destination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
+        logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false)
@@ -163,6 +168,7 @@ function addVideo(req, res) {
                     privacy: videoInfo.scheduleUpdate.privacy || null
                 }, { transaction: t });
             }
+            logger_1.logger.info('videoInfo is: ', videoInfo);
             yield video_blacklist_1.autoBlacklistVideoIfNeeded({
                 video,
                 user: res.locals.oauth.token.User,
@@ -193,9 +199,12 @@ function addVideo(req, res) {
                     isNewVideo: true
                 };
             }
+            logger_1.logger.info('Sending job to transcoder (optimize) with payload: ', dataInput);
             yield job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput });
         }
+        logger_1.logger.info('action:api.video.uploaded ', videoCreated);
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
+        logger_1.logger.info('Going to return videoCreated is: ', videoCreated);
         return res.json({
             video: {
                 id: videoCreated.id,
