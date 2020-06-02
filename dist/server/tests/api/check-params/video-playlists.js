@@ -433,7 +433,7 @@ describe('Test video playlists API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 videoId3 = (yield extra_utils_1.uploadVideoAndGetId({ server, videoName: 'video 3' })).id;
                 videoId4 = (yield extra_utils_1.uploadVideoAndGetId({ server, videoName: 'video 4' })).id;
-                for (let id of [videoId3, videoId4]) {
+                for (const id of [videoId3, videoId4]) {
                     yield extra_utils_1.addVideoInPlaylist({
                         url: server.url,
                         token: server.accessToken,

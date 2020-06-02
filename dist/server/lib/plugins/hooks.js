@@ -24,7 +24,7 @@ const Hooks = {
         return plugin_manager_1.PluginManager.Instance.runHook(hookName, result, params);
     }),
     runAction: (hookName, params) => {
-        plugin_manager_1.PluginManager.Instance.runHook(hookName, params)
+        plugin_manager_1.PluginManager.Instance.runHook(hookName, undefined, params)
             .catch(err => logger_1.logger.error('Fatal hook error.', { err }));
     }
 };

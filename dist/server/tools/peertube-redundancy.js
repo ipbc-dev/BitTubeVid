@@ -15,10 +15,10 @@ const program = require("commander");
 const cli_1 = require("./cli");
 const redundancy_1 = require("@shared/extra-utils/server/redundancy");
 const validator_1 = require("validator");
-const bytes = require("bytes");
 const CliTable3 = require("cli-table3");
 const url_1 = require("url");
 const lodash_1 = require("lodash");
+const bytes = require("bytes");
 program
     .name('plugins')
     .usage('[command] [options]');
@@ -75,7 +75,7 @@ function listRedundanciesCLI(target) {
             }
             const instances = lodash_1.uniq(webtorrentFiles.concat(streamingPlaylists)
                 .map(r => r.fileUrl)
-                .map(u => url_1.parse(u).host));
+                .map(u => new url_1.URL(u).host));
             table.push([
                 redundancy.id.toString(),
                 redundancy.name,

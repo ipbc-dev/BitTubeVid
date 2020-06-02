@@ -29,7 +29,7 @@ const auditLogger = winston.createLogger({
             level: 'audit',
             maxsize: 5242880,
             maxFiles: 5,
-            format: winston.format.combine(winston.format.timestamp(), logger_1.labelFormatter, winston.format.splat(), logger_1.jsonLoggerFormat)
+            format: winston.format.combine(winston.format.timestamp(), logger_1.labelFormatter(), winston.format.splat(), logger_1.jsonLoggerFormat)
         })
     ],
     exitOnError: true
@@ -248,7 +248,8 @@ class CustomConfigAuditView extends EntityAuditView {
         const infos = customConfig;
         const resolutionsDict = infos.transcoding.resolutions;
         const resolutionsArray = [];
-        Object.entries(resolutionsDict).forEach(([resolution, isEnabled]) => {
+        Object.entries(resolutionsDict)
+            .forEach(([resolution, isEnabled]) => {
             if (isEnabled)
                 resolutionsArray.push(resolution);
         });

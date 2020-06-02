@@ -34,6 +34,7 @@ exports.clientActionHookObject = {
     'action:video-watch.player.loaded': true,
     'action:video-watch.video-threads.loaded': true,
     'action:video-watch.video-thread-replies.loaded': true,
+    'action:login.init': true,
     'action:search.init': true,
     'action:router.navigation-end': true,
     'action:signup.register.init': true

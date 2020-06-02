@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
 function processRejectActivity(options) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -22,7 +22,7 @@ function processRejectActivity(options) {
 exports.processRejectActivity = processRejectActivity;
 function processReject(follower, targetActor) {
     return __awaiter(this, void 0, void 0, function* () {
-        return initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const actorFollow = yield actor_follow_1.ActorFollowModel.loadByActorAndTarget(follower.id, targetActor.id, t);
             if (!actorFollow)
                 throw new Error(`'Unknown actor follow ${follower.id} -> ${targetActor.id}.`);

@@ -19,7 +19,9 @@ const express_utils_1 = require("../../../helpers/express-utils");
 const logger_1 = require("../../../helpers/logger");
 const shared_1 = require("../../../../shared");
 const video_1 = require("../../../models/video/video");
-const activitypub_1 = require("../../../lib/activitypub");
+const video_caption_1 = require("../../../models/video/video-caption");
+const captions_utils_1 = require("../../../helpers/captions-utils");
+const url_1 = require("../../../lib/activitypub/url");
 const tag_1 = require("../../../models/video/tag");
 const video_import_1 = require("../../../models/video/video-import");
 const job_queue_1 = require("../../../lib/job-queue/job-queue");
@@ -94,7 +96,7 @@ function addTorrentImport(req, res, torrentfile) {
             videoImportId: videoImport.id,
             magnetUri
         };
-        yield job_queue_1.JobQueue.Instance.createJob({ type: 'video-import', payload });
+        yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-import', payload });
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoImportAuditView(videoImport.toFormattedJSON()));
         return res.json(videoImport.toFormattedJSON()).end();
     });
@@ -115,8 +117,16 @@ function addYoutubeDLImport(req, res) {
             }).end();
         }
         const video = buildVideo(res.locals.videoChannel.id, body, youtubeDLInfo);
-        const thumbnailModel = yield processThumbnail(req, video);
-        const previewModel = yield processPreview(req, video);
+        let thumbnailModel;
+        thumbnailModel = yield processThumbnail(req, video);
+        if (!thumbnailModel && youtubeDLInfo.thumbnailUrl) {
+            thumbnailModel = yield processThumbnailFromUrl(youtubeDLInfo.thumbnailUrl, video);
+        }
+        let previewModel;
+        previewModel = yield processPreview(req, video);
+        if (!previewModel && youtubeDLInfo.thumbnailUrl) {
+            previewModel = yield processPreviewFromUrl(youtubeDLInfo.thumbnailUrl, video);
+        }
         const tags = body.tags || youtubeDLInfo.tags;
         const videoImportAttributes = {
             targetUrl,
@@ -132,14 +142,34 @@ function addYoutubeDLImport(req, res) {
             videoImportAttributes,
             user
         });
+        try {
+            const subtitles = yield youtube_dl_1.getYoutubeDLSubs(targetUrl);
+            logger_1.logger.info('Will create %s subtitles from youtube import %s.', subtitles.length, targetUrl);
+            for (const subtitle of subtitles) {
+                const videoCaption = new video_caption_1.VideoCaptionModel({
+                    videoId: video.id,
+                    language: subtitle.language
+                });
+                videoCaption.Video = video;
+                yield captions_utils_1.moveAndProcessCaptionFile(subtitle, videoCaption);
+                yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+                    yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, subtitle.language, null, t);
+                }));
+            }
+        }
+        catch (err) {
+            logger_1.logger.warn('Cannot get video subtitles.', { err });
+        }
         const payload = {
             type: 'youtube-dl',
             videoImportId: videoImport.id,
-            thumbnailUrl: youtubeDLInfo.thumbnailUrl,
-            downloadThumbnail: !thumbnailModel,
-            downloadPreview: !previewModel
+            generateThumbnail: !thumbnailModel,
+            generatePreview: !previewModel,
+            fileExt: youtubeDLInfo.fileExt
+                ? `.${youtubeDLInfo.fileExt}`
+                : '.mp4'
         };
-        yield job_queue_1.JobQueue.Instance.createJob({ type: 'video-import', payload });
+        yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-import', payload });
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoImportAuditView(videoImport.toFormattedJSON()));
         return res.json(videoImport.toFormattedJSON()).end();
     });
@@ -150,7 +180,7 @@ function buildVideo(channelId, body, importData) {
         remote: false,
         category: body.category || importData.category,
         licence: body.licence || importData.licence,
-        language: body.language || undefined,
+        language: body.language || importData.language,
         commentsEnabled: body.commentsEnabled !== false,
         downloadEnabled: body.downloadEnabled !== false,
         waitTranscoding: body.waitTranscoding || false,
@@ -161,10 +191,10 @@ function buildVideo(channelId, body, importData) {
         privacy: body.privacy || shared_1.VideoPrivacy.PRIVATE,
         duration: 0,
         channelId: channelId,
-        originallyPublishedAt: importData.originallyPublishedAt
+        originallyPublishedAt: body.originallyPublishedAt || importData.originallyPublishedAt
     };
     const video = new video_1.VideoModel(videoData);
-    video.url = activitypub_1.getVideoActivityPubUrl(video);
+    video.url = url_1.getVideoActivityPubUrl(video);
     return video;
 }
 function processThumbnail(req, video) {
@@ -185,6 +215,28 @@ function processPreview(req, video) {
             return thumbnail_1.createVideoMiniatureFromExisting(previewPhysicalFile.path, video, thumbnail_type_1.ThumbnailType.PREVIEW, false);
         }
         return undefined;
+    });
+}
+function processThumbnailFromUrl(url, video) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
+        }
+        catch (err) {
+            logger_1.logger.warn('Cannot generate video thumbnail %s for %s.', url, video.url, { err });
+            return undefined;
+        }
+    });
+}
+function processPreviewFromUrl(url, video) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.PREVIEW);
+        }
+        catch (err) {
+            logger_1.logger.warn('Cannot generate video preview %s for %s.', url, video.url, { err });
+            return undefined;
+        }
     });
 }
 function insertIntoDB(parameters) {

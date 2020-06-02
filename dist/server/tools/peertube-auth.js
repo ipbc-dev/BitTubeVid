@@ -122,7 +122,7 @@ program
     .description('set an existing entry as default')
     .action((url) => __awaiter(void 0, void 0, void 0, function* () {
     const settings = yield cli_1.getSettings();
-    const instanceExists = settings.remotes.indexOf(url) !== -1;
+    const instanceExists = settings.remotes.includes(url);
     if (instanceExists) {
         settings.default = settings.remotes.indexOf(url);
         yield cli_1.writeSettings(settings);

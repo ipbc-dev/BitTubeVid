@@ -20,9 +20,9 @@ function listVideoRedundancies(options) {
         token: accessToken,
         path,
         query: {
-            start: (start !== null && start !== void 0 ? start : 0),
-            count: (count !== null && count !== void 0 ? count : 5),
-            sort: (sort !== null && sort !== void 0 ? sort : 'name'),
+            start: start !== null && start !== void 0 ? start : 0,
+            count: count !== null && count !== void 0 ? count : 5,
+            sort: sort !== null && sort !== void 0 ? sort : 'name',
             target
         },
         statusCodeExpected: statusCodeExpected || 200

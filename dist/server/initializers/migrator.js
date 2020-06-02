@@ -16,6 +16,7 @@ const database_1 = require("./database");
 const fs_extra_1 = require("fs-extra");
 const sequelize_1 = require("sequelize");
 function migrate() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const tables = yield database_1.sequelizeTypescript.getQueryInterface().showAllTables();
         if (tables.length === 0)
@@ -26,7 +27,7 @@ function migrate() {
             type: sequelize_1.QueryTypes.SELECT
         };
         const rows = yield database_1.sequelizeTypescript.query(query, options);
-        if (rows && rows[0] && rows[0].migrationVersion) {
+        if ((_a = rows === null || rows === void 0 ? void 0 : rows[0]) === null || _a === void 0 ? void 0 : _a.migrationVersion) {
             actualVersion = rows[0].migrationVersion;
         }
         if (actualVersion === null) {

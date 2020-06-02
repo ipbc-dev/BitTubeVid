@@ -173,14 +173,14 @@ describe('Test blocklist API validators', function () {
                         });
                     });
                 });
-                it('Should fail with an unknown server', function () {
+                it('Should succeed with an unknown server', function () {
                     return __awaiter(this, void 0, void 0, function* () {
                         yield extra_utils_1.makePostBodyRequest({
                             url: server.url,
                             token: server.accessToken,
                             path,
                             fields: { host: 'localhost:9003' },
-                            statusCodeExpected: 404
+                            statusCodeExpected: 204
                         });
                     });
                 });
@@ -221,7 +221,7 @@ describe('Test blocklist API validators', function () {
                     return __awaiter(this, void 0, void 0, function* () {
                         yield extra_utils_1.makeDeleteRequest({
                             url: server.url,
-                            path: path + '/localhost:9003',
+                            path: path + '/localhost:9004',
                             token: server.accessToken,
                             statusCodeExpected: 404
                         });
@@ -437,14 +437,14 @@ describe('Test blocklist API validators', function () {
                         });
                     });
                 });
-                it('Should fail with an unknown server', function () {
+                it('Should succeed with an unknown server', function () {
                     return __awaiter(this, void 0, void 0, function* () {
                         yield extra_utils_1.makePostBodyRequest({
                             url: server.url,
                             token: server.accessToken,
                             path,
                             fields: { host: 'localhost:9003' },
-                            statusCodeExpected: 404
+                            statusCodeExpected: 204
                         });
                     });
                 });
@@ -495,7 +495,7 @@ describe('Test blocklist API validators', function () {
                     return __awaiter(this, void 0, void 0, function* () {
                         yield extra_utils_1.makeDeleteRequest({
                             url: server.url,
-                            path: path + '/localhost:9003',
+                            path: path + '/localhost:9004',
                             token: server.accessToken,
                             statusCodeExpected: 404
                         });

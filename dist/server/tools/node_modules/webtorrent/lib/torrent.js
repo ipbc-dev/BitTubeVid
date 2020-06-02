@@ -22,7 +22,6 @@ const pump = require('pump')
 const randomIterate = require('random-iterate')
 const sha1 = require('simple-sha1')
 const speedometer = require('speedometer')
-const uniq = require('uniq')
 const utMetadata = require('ut_metadata')
 const utPex = require('ut_pex') // browser exclude
 const parseRange = require('parse-numeric-range')
@@ -72,6 +71,9 @@ class Torrent extends EventEmitter {
     this.skipVerify = !!opts.skipVerify
     this._store = opts.store || FSChunkStore
     this._getAnnounceOpts = opts.getAnnounceOpts
+
+    // if defined, `opts.private` overrides default privacy of torrent
+    if (typeof opts.private === 'boolean') this.private = opts.private
 
     this.strategy = opts.strategy || 'sequential'
 
@@ -161,7 +163,7 @@ class Torrent extends EventEmitter {
 
   get progress () { return this.length ? this.downloaded / this.length : 0 }
 
-  get ratio () { return this.uploaded / (this.received || 1) }
+  get ratio () { return this.uploaded / (this.received || this.length) }
 
   get numPeers () { return this.wires.length }
 
@@ -252,12 +254,17 @@ class Torrent extends EventEmitter {
   _processParsedTorrent (parsedTorrent) {
     this._debugId = parsedTorrent.infoHash.toString('hex').substring(0, 7)
 
+    if (typeof this.private !== 'undefined') {
+      // `private` option overrides default, only if it's defined
+      parsedTorrent.private = this.private
+    }
+
     if (this.announce) {
       // Allow specifying trackers via `opts` parameter
       parsedTorrent.announce = parsedTorrent.announce.concat(this.announce)
     }
 
-    if (this.client.tracker && global.WEBTORRENT_ANNOUNCE && !this.private) {
+    if (this.client.tracker && global.WEBTORRENT_ANNOUNCE && !parsedTorrent.private) {
       // So `webtorrent-hybrid` can force specific trackers to be used
       parsedTorrent.announce = parsedTorrent.announce.concat(global.WEBTORRENT_ANNOUNCE)
     }
@@ -267,8 +274,9 @@ class Torrent extends EventEmitter {
       parsedTorrent.urlList = parsedTorrent.urlList.concat(this.urlList)
     }
 
-    uniq(parsedTorrent.announce)
-    uniq(parsedTorrent.urlList)
+    // remove duplicates by converting to Set and back
+    parsedTorrent.announce = Array.from(new Set(parsedTorrent.announce))
+    parsedTorrent.urlList = Array.from(new Set(parsedTorrent.urlList))
 
     Object.assign(this, parsedTorrent)
 
@@ -1630,7 +1638,7 @@ class Torrent extends EventEmitter {
 
   _debug () {
     const args = [].slice.call(arguments)
-    args[0] = `[${this.client._debugId}] [${this._debugId}] ${args[0]}`
+    args[0] = `[${this.client ? this.client._debugId : 'No Client'}] [${this._debugId}] ${args[0]}`
     debug(...args)
   }
 

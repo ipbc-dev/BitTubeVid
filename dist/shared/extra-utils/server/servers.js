@@ -20,7 +20,7 @@ function parallelTests() {
 }
 exports.parallelTests = parallelTests;
 function flushAndRunMultipleServers(totalServers, configOverride) {
-    let apps = [];
+    const apps = [];
     let i = 0;
     return new Promise(res => {
         function anotherServerDone(serverNumber, app) {
@@ -226,13 +226,15 @@ function cleanupTests(servers) {
     return Promise.all(p);
 }
 exports.cleanupTests = cleanupTests;
-function waitUntilLog(server, str, count = 1) {
+function waitUntilLog(server, str, count = 1, strictCount = true) {
     return __awaiter(this, void 0, void 0, function* () {
         const logfile = path_1.join(miscs_1.root(), 'test' + server.internalServerNumber, 'logs/peertube.log');
         while (true) {
             const buf = yield fs_extra_1.readFile(logfile);
             const matches = buf.toString().match(new RegExp(str, 'g'));
             if (matches && matches.length === count)
+                return;
+            if (matches && strictCount === false && matches.length >= count)
                 return;
             yield miscs_1.wait(1000);
         }

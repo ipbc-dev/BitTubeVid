@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
-require('tls').DEFAULT_ECDH_CURVE = 'auto';
 const program = require("commander");
 const path_1 = require("path");
 const requests_1 = require("../helpers/requests");
@@ -40,8 +39,9 @@ command
     .option('--first <first>', 'Process first n elements of returned playlist')
     .option('--last <last>', 'Process last n elements of returned playlist')
     .option('-T, --tmpdir <tmpdir>', 'Working directory', __dirname)
+    .usage("[global options] [ -- youtube-dl options]")
     .parse(process.argv);
-let log = cli_1.getLogger(program['verbose']);
+const log = cli_1.getLogger(program['verbose']);
 cli_1.getServerCredentials(command)
     .then(({ url, username, password }) => {
     if (!program['targetUrl']) {
@@ -57,20 +57,19 @@ cli_1.getServerCredentials(command)
     program['targetUrl'] = normalizeTargetUrl(program['targetUrl']);
     const user = { username, password };
     run(url, user)
-        .catch(err => {
-        exitError(err);
-    });
-});
+        .catch(err => exitError(err));
+})
+    .catch(err => console.error(err));
 function run(url, user) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!user.password) {
             user.password = yield promptPassword();
         }
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-        const options = ['-j', '--flat-playlist', '--playlist-reverse'];
+        const options = ['-j', '--flat-playlist', '--playlist-reverse', ...command.args];
         youtubeDL.getInfo(program['targetUrl'], options, processOptions, (err, info) => __awaiter(this, void 0, void 0, function* () {
             if (err) {
-                exitError(err.message);
+                exitError(err.stderr + ' ' + err.message);
             }
             let infoArray;
             infoArray = [].concat(info);
@@ -83,12 +82,17 @@ function run(url, user) {
             infoArray = infoArray.map(i => normalizeObject(i));
             log.info('Will download and upload %d videos.\n', infoArray.length);
             for (const info of infoArray) {
-                yield processVideo({
-                    cwd: program['tmpdir'],
-                    url,
-                    user,
-                    youtubeInfo: info
-                });
+                try {
+                    yield processVideo({
+                        cwd: program['tmpdir'],
+                        url,
+                        user,
+                        youtubeInfo: info
+                    });
+                }
+                catch (err) {
+                    console.error('Cannot process video.', { info, url });
+                }
             }
             log.info('Video/s for user %s imported: %s', user.username, program['targetUrl']);
             process.exit(0);
@@ -121,7 +125,7 @@ function processVideo(parameters) {
         }
         const path = path_1.join(cwd, core_utils_1.sha256(videoInfo.url) + '.mp4');
         log.info('Downloading video "%s"...', videoInfo.title);
-        const options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', '-o', path];
+        const options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', ...command.args, '-o', path];
         try {
             const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
             youtubeDL.exec(videoInfo.url, options, processOptions, (err, output) => __awaiter(this, void 0, void 0, function* () {
@@ -169,9 +173,9 @@ function uploadVideoOnPeerTube(parameters) {
         const originallyPublishedAt = youtube_dl_1.buildOriginallyPublishedAt(videoInfo);
         const defaultAttributes = {
             name: lodash_1.truncate(videoInfo.title, {
-                'length': constants_1.CONSTRAINTS_FIELDS.VIDEOS.NAME.max,
-                'separator': /,? +/,
-                'omission': ' […]'
+                length: constants_1.CONSTRAINTS_FIELDS.VIDEOS.NAME.max,
+                separator: /,? +/,
+                omission: ' […]'
             }),
             category,
             licence,
@@ -227,7 +231,7 @@ function getCategory(categories, url) {
 function getLicence(licence) {
     if (!licence)
         return undefined;
-    if (licence.indexOf('Creative Commons Attribution licence') !== -1)
+    if (licence.includes('Creative Commons Attribution licence'))
         return 1;
     return undefined;
 }
@@ -250,20 +254,20 @@ function fetchObject(info) {
     const url = buildUrl(info);
     return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-        youtubeDL.getInfo(url, undefined, processOptions, (err, videoInfo) => __awaiter(this, void 0, void 0, function* () {
+        youtubeDL.getInfo(url, undefined, processOptions, (err, videoInfo) => {
             if (err)
                 return rej(err);
             const videoInfoWithUrl = Object.assign(videoInfo, { url });
             return res(normalizeObject(videoInfoWithUrl));
-        }));
+        });
     }));
 }
 function buildUrl(info) {
     const webpageUrl = info.webpage_url;
-    if (webpageUrl && webpageUrl.match(/^https?:\/\//))
+    if (webpageUrl === null || webpageUrl === void 0 ? void 0 : webpageUrl.match(/^https?:\/\//))
         return webpageUrl;
     const url = info.url;
-    if (url && url.match(/^https?:\/\//))
+    if (url === null || url === void 0 ? void 0 : url.match(/^https?:\/\//))
         return url;
     return 'https://www.youtube.com/watch?v=' + info.id;
 }

@@ -33,6 +33,6 @@ const userRoleRights = {
 };
 function hasUserRight(userRole, userRight) {
     const userRights = userRoleRights[userRole];
-    return userRights.indexOf(user_right_enum_1.UserRight.ALL) !== -1 || userRights.indexOf(userRight) !== -1;
+    return userRights.includes(user_right_enum_1.UserRight.ALL) || userRights.includes(userRight);
 }
 exports.hasUserRight = hasUserRight;

@@ -1,21 +1,12 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_validator_1 = require("express-validator");
 const users_1 = require("../../helpers/custom-validators/users");
 const logger_1 = require("../../helpers/logger");
-const emailer_1 = require("../../lib/emailer");
 const utils_1 = require("./utils");
 const plugins_1 = require("../../helpers/custom-validators/plugins");
 const theme_utils_1 = require("../../lib/plugins/theme-utils");
+const config_1 = require("@server/initializers/config");
 const customConfigUpdateValidator = [
     express_validator_1.body('instance.name').exists().withMessage('Should have a valid instance name'),
     express_validator_1.body('instance.shortDescription').exists().withMessage('Should have a valid instance short description'),
@@ -52,7 +43,7 @@ const customConfigUpdateValidator = [
     express_validator_1.body('followers.instance.enabled').isBoolean().withMessage('Should have a valid followers of instance boolean'),
     express_validator_1.body('followers.instance.manualApproval').isBoolean().withMessage('Should have a valid manual approval boolean'),
     express_validator_1.body('theme.default').custom(v => plugins_1.isThemeNameValid(v) && theme_utils_1.isThemeRegistered(v)).withMessage('Should have a valid theme'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         logger_1.logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -61,11 +52,11 @@ const customConfigUpdateValidator = [
         if (!checkInvalidTranscodingConfig(req.body, res))
             return;
         return next();
-    })
+    }
 ];
 exports.customConfigUpdateValidator = customConfigUpdateValidator;
 function checkInvalidConfigIfEmailDisabled(customConfig, res) {
-    if (emailer_1.Emailer.isEnabled())
+    if (config_1.isEmailEnabled())
         return true;
     if (customConfig.signup.requiresEmailVerification === true) {
         res.status(400)

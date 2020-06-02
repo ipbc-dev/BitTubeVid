@@ -145,8 +145,8 @@ describe('Test follows', function () {
     it('Should have 1 followers on server 2 and 3', function () {
         return __awaiter(this, void 0, void 0, function* () {
             for (const server of [servers[1], servers[2]]) {
-                let res = yield follows_1.getFollowersListPaginationAndSort({ url: server.url, start: 0, count: 1, sort: 'createdAt' });
-                let follows = res.body.data;
+                const res = yield follows_1.getFollowersListPaginationAndSort({ url: server.url, start: 0, count: 1, sort: 'createdAt' });
+                const follows = res.body.data;
                 expect(res.body.total).to.equal(1);
                 expect(follows).to.be.an('array');
                 expect(follows.length).to.equal(1);
@@ -236,7 +236,7 @@ describe('Test follows', function () {
     it('Should not follow server 3 on server 1 anymore', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield follows_1.getFollowingListPaginationAndSort({ url: servers[0].url, start: 0, count: 2, sort: 'createdAt' });
-            let follows = res.body.data;
+            const follows = res.body.data;
             expect(res.body.total).to.equal(1);
             expect(follows).to.be.an('array');
             expect(follows.length).to.equal(1);
@@ -246,7 +246,7 @@ describe('Test follows', function () {
     it('Should not have server 1 as follower on server 3 anymore', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield follows_1.getFollowersListPaginationAndSort({ url: servers[2].url, start: 0, count: 1, sort: 'createdAt' });
-            let follows = res.body.data;
+            const follows = res.body.data;
             expect(res.body.total).to.equal(0);
             expect(follows).to.be.an('array');
             expect(follows.length).to.equal(0);
@@ -489,7 +489,7 @@ describe('Test follows', function () {
                 this.timeout(5000);
                 yield follows_1.unfollow(servers[0].url, servers[0].accessToken, servers[2]);
                 yield jobs_1.waitJobs(servers);
-                let res = yield index_1.getVideosList(servers[0].url);
+                const res = yield index_1.getVideosList(servers[0].url);
                 expect(res.body.total).to.equal(1);
             });
         });

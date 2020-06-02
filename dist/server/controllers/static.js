@@ -20,7 +20,6 @@ const video_comment_1 = require("../models/video/video-comment");
 const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
 const config_1 = require("../initializers/config");
-const emailer_1 = require("../lib/emailer");
 const lazy_static_1 = require("./lazy-static");
 const video_streaming_playlist_type_1 = require("@shared/models/videos/video-streaming-playlist.type");
 const video_paths_1 = require("@server/lib/video-paths");
@@ -31,12 +30,12 @@ exports.staticRouter = staticRouter;
 staticRouter.use(cors());
 const torrentsPhysicalPath = config_1.CONFIG.STORAGE.TORRENTS_DIR;
 staticRouter.use(constants_1.STATIC_PATHS.TORRENTS, cors(), express.static(torrentsPhysicalPath, { maxAge: 0 }));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+).torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), middlewares_1.asyncMiddleware(downloadTorrent));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+)-hls.torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), middlewares_1.asyncMiddleware(downloadHLSVideoFileTorrent));
+staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+).torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadTorrent);
+staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+)-hls.torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadHLSVideoFileTorrent);
 staticRouter.use(constants_1.STATIC_PATHS.WEBSEED, cors(), express.static(config_1.CONFIG.STORAGE.VIDEOS_DIR, { fallthrough: false }));
 staticRouter.use(constants_1.STATIC_PATHS.REDUNDANCY, cors(), express.static(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, { fallthrough: false }));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.VIDEOS + ':id-:resolution([0-9]+).:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), middlewares_1.asyncMiddleware(downloadVideoFile));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.HLS_VIDEOS + ':id-:resolution([0-9]+)-fragmented.:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), middlewares_1.asyncMiddleware(downloadHLSVideoFile));
+staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.VIDEOS + ':id-:resolution([0-9]+).:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadVideoFile);
+staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.HLS_VIDEOS + ':id-:resolution([0-9]+)-fragmented.:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadHLSVideoFile);
 staticRouter.use(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, cors(), express.static(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, { fallthrough: false }));
 const thumbnailsPhysicalPath = config_1.CONFIG.STORAGE.THUMBNAILS_DIR;
 staticRouter.use(constants_1.STATIC_PATHS.THUMBNAILS, express.static(thumbnailsPhysicalPath, { maxAge: constants_1.STATIC_MAX_AGE.SERVER, fallthrough: false }));
@@ -122,6 +121,12 @@ function generateNodeinfo(req, res) {
                     nodeName: config_1.CONFIG.INSTANCE.NAME,
                     nodeDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
                     nodeConfig: {
+                        search: {
+                            remoteUri: {
+                                users: config_1.CONFIG.SEARCH.REMOTE_URI.USERS,
+                                anonymous: config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+                            }
+                        },
                         plugin: {
                             registered: config_2.getRegisteredPlugins()
                         },
@@ -130,7 +135,7 @@ function generateNodeinfo(req, res) {
                             default: theme_utils_1.getThemeOrDefault(config_1.CONFIG.THEME.DEFAULT, constants_1.DEFAULT_THEME_NAME)
                         },
                         email: {
-                            enabled: emailer_1.Emailer.isEnabled()
+                            enabled: config_1.isEmailEnabled()
                         },
                         contactForm: {
                             enabled: config_1.CONFIG.CONTACT_FORM.ENABLED
@@ -213,47 +218,39 @@ function generateNodeinfo(req, res) {
     });
 }
 function downloadTorrent(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const video = res.locals.videoAll;
-        const videoFile = getVideoFile(req, video.VideoFiles);
-        if (!videoFile)
-            return res.status(404).end();
-        return res.download(video_paths_1.getTorrentFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p.torrent`);
-    });
+    const video = res.locals.videoAll;
+    const videoFile = getVideoFile(req, video.VideoFiles);
+    if (!videoFile)
+        return res.status(404).end();
+    return res.download(video_paths_1.getTorrentFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p.torrent`);
 }
 function downloadHLSVideoFileTorrent(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const video = res.locals.videoAll;
-        const playlist = getHLSPlaylist(video);
-        if (!playlist)
-            return res.status(404).end;
-        const videoFile = getVideoFile(req, playlist.VideoFiles);
-        if (!videoFile)
-            return res.status(404).end();
-        return res.download(video_paths_1.getTorrentFilePath(playlist, videoFile), `${video.name}-${videoFile.resolution}p-hls.torrent`);
-    });
+    const video = res.locals.videoAll;
+    const playlist = getHLSPlaylist(video);
+    if (!playlist)
+        return res.status(404).end;
+    const videoFile = getVideoFile(req, playlist.VideoFiles);
+    if (!videoFile)
+        return res.status(404).end();
+    return res.download(video_paths_1.getTorrentFilePath(playlist, videoFile), `${video.name}-${videoFile.resolution}p-hls.torrent`);
 }
 function downloadVideoFile(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const video = res.locals.videoAll;
-        const videoFile = getVideoFile(req, video.VideoFiles);
-        if (!videoFile)
-            return res.status(404).end();
-        return res.download(video_paths_1.getVideoFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p${videoFile.extname}`);
-    });
+    const video = res.locals.videoAll;
+    const videoFile = getVideoFile(req, video.VideoFiles);
+    if (!videoFile)
+        return res.status(404).end();
+    return res.download(video_paths_1.getVideoFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p${videoFile.extname}`);
 }
 function downloadHLSVideoFile(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const video = res.locals.videoAll;
-        const playlist = getHLSPlaylist(video);
-        if (!playlist)
-            return res.status(404).end;
-        const videoFile = getVideoFile(req, playlist.VideoFiles);
-        if (!videoFile)
-            return res.status(404).end();
-        const filename = `${video.name}-${videoFile.resolution}p-${playlist.getStringType()}${videoFile.extname}`;
-        return res.download(video_paths_1.getVideoFilePath(playlist, videoFile), filename);
-    });
+    const video = res.locals.videoAll;
+    const playlist = getHLSPlaylist(video);
+    if (!playlist)
+        return res.status(404).end;
+    const videoFile = getVideoFile(req, playlist.VideoFiles);
+    if (!videoFile)
+        return res.status(404).end();
+    const filename = `${video.name}-${videoFile.resolution}p-${playlist.getStringType()}${videoFile.extname}`;
+    return res.download(video_paths_1.getVideoFilePath(playlist, videoFile), filename);
 }
 function getVideoFile(req, files) {
     const resolution = parseInt(req.params.resolution, 10);

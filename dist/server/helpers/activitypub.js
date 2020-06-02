@@ -14,15 +14,27 @@ const constants_1 = require("../initializers/constants");
 const peertube_crypto_1 = require("./peertube-crypto");
 const core_utils_1 = require("./core-utils");
 const url_1 = require("url");
-function activityPubContextify(data) {
-    return Object.assign(data, {
-        '@context': [
-            'https://www.w3.org/ns/activitystreams',
-            'https://w3id.org/security/v1',
-            {
-                RsaSignature2017: 'https://w3id.org/security#RsaSignature2017',
-                pt: 'https://joinpeertube.org/ns#',
-                sc: 'http://schema.org#',
+function getContextData(type) {
+    const context = [
+        'https://www.w3.org/ns/activitystreams',
+        'https://w3id.org/security/v1',
+        {
+            RsaSignature2017: 'https://w3id.org/security#RsaSignature2017'
+        }
+    ];
+    if (type !== 'View' && type !== 'Announce') {
+        const additional = {
+            pt: 'https://joinpeertube.org/ns#',
+            sc: 'http://schema.org#'
+        };
+        if (type === 'CacheFile') {
+            Object.assign(additional, {
+                expires: 'sc:expires',
+                CacheFile: 'pt:CacheFile'
+            });
+        }
+        else {
+            Object.assign(additional, {
                 Hashtag: 'as:Hashtag',
                 uuid: 'sc:identifier',
                 category: 'sc:category',
@@ -30,9 +42,9 @@ function activityPubContextify(data) {
                 subtitleLanguage: 'sc:subtitleLanguage',
                 sensitive: 'as:sensitive',
                 language: 'sc:inLanguage',
-                expires: 'sc:expires',
-                CacheFile: 'pt:CacheFile',
                 Infohash: 'pt:Infohash',
+                Playlist: 'pt:Playlist',
+                PlaylistElement: 'pt:PlaylistElement',
                 originallyPublishedAt: 'sc:datePublished',
                 views: {
                     '@type': 'sc:Number',
@@ -77,9 +89,7 @@ function activityPubContextify(data) {
                 support: {
                     '@type': 'sc:Text',
                     '@id': 'pt:support'
-                }
-            },
-            {
+                },
                 likes: {
                     '@id': 'as:likes',
                     '@type': '@id'
@@ -100,9 +110,16 @@ function activityPubContextify(data) {
                     '@id': 'as:comments',
                     '@type': '@id'
                 }
-            }
-        ]
-    });
+            });
+        }
+        context.push(additional);
+    }
+    return {
+        '@context': context
+    };
+}
+function activityPubContextify(data, type = 'All') {
+    return Object.assign({}, data, getContextData(type));
 }
 exports.activityPubContextify = activityPubContextify;
 function activityPubCollectionPagination(baseUrl, handler, page, size = constants_1.ACTIVITY_PUB.COLLECTION_ITEMS_PER_PAGE) {
@@ -139,8 +156,8 @@ function activityPubCollectionPagination(baseUrl, handler, page, size = constant
     });
 }
 exports.activityPubCollectionPagination = activityPubCollectionPagination;
-function buildSignedActivity(byActor, data) {
-    const activity = activityPubContextify(data);
+function buildSignedActivity(byActor, data, contextType) {
+    const activity = activityPubContextify(data, contextType);
     return peertube_crypto_1.signJsonLDObject(byActor, activity);
 }
 exports.buildSignedActivity = buildSignedActivity;
@@ -151,8 +168,13 @@ function getAPId(activity) {
 }
 exports.getAPId = getAPId;
 function checkUrlsSameHost(url1, url2) {
-    const idHost = url_1.parse(url1).host;
-    const actorHost = url_1.parse(url2).host;
+    const idHost = new url_1.URL(url1).host;
+    const actorHost = new url_1.URL(url2).host;
     return idHost && actorHost && idHost.toLowerCase() === actorHost.toLowerCase();
 }
 exports.checkUrlsSameHost = checkUrlsSameHost;
+function buildRemoteVideoBaseUrl(video, path) {
+    const host = video.VideoChannel.Account.Actor.Server.host;
+    return constants_1.REMOTE_SCHEME.HTTP + '://' + host + path;
+}
+exports.buildRemoteVideoBaseUrl = buildRemoteVideoBaseUrl;

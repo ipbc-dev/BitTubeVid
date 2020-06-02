@@ -39,7 +39,7 @@ function generateVideoCommentsFeed(req, res) {
         const name = video ? video.name : config_1.CONFIG.INSTANCE.NAME;
         const description = video ? video.description : config_1.CONFIG.INSTANCE.DESCRIPTION;
         const feed = initFeed(name, description);
-        comments.forEach(comment => {
+        for (const comment of comments) {
             const link = constants_1.WEBSERVER.URL + comment.getCommentStaticPath();
             let title = comment.Video.name;
             const author = [];
@@ -58,7 +58,7 @@ function generateVideoCommentsFeed(req, res) {
                 author,
                 date: comment.createdAt
             });
-        });
+        }
         return sendFeed(feed, req, res);
     });
 }

@@ -16,6 +16,7 @@ const activitypub_http_utils_1 = require("../../../lib/job-queue/handlers/utils/
 const chai = require("chai");
 const activitypub_1 = require("../../../helpers/activitypub");
 const activitypub_2 = require("../../../../shared/extra-utils/requests/activitypub");
+const peertube_crypto_1 = require("@server/helpers/peertube-crypto");
 const expect = chai.expect;
 function setKeysOfServer(onServer, ofServer, publicKey, privateKey) {
     return Promise.all([
@@ -64,7 +65,7 @@ describe('Test ActivityPub security', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
                 const headers = {
-                    Digest: activitypub_http_utils_1.buildDigest({ hello: 'coucou' })
+                    Digest: peertube_crypto_1.buildDigest({ hello: 'coucou' })
                 };
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, body, baseHttpSignature(), headers);
                 expect(response.statusCode).to.equal(403);

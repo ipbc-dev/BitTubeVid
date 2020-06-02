@@ -48,6 +48,7 @@ describe('Test server plugins API validators', function () {
         it('Should fail with an unknown plugin name/plugin version', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const paths = [
+                    '/plugins/' + pluginName + '/0.0.1/auth/fake-auth',
                     '/plugins/' + pluginName + '/0.0.1/static/images/chocobo.png',
                     '/plugins/' + pluginName + '/0.0.1/client-scripts/client/common-client-plugin.js',
                     '/themes/' + themeName + '/0.0.1/static/images/chocobo.png',
@@ -71,6 +72,7 @@ describe('Test server plugins API validators', function () {
         it('Should fail with invalid versions', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const paths = [
+                    '/plugins/' + pluginName + '/0.0.1.1/auth/fake-auth',
                     '/plugins/' + pluginName + '/0.0.1.1/static/images/chocobo.png',
                     '/plugins/' + pluginName + '/0.1/client-scripts/client/common-client-plugin.js',
                     '/themes/' + themeName + '/1/static/images/chocobo.png',
@@ -94,6 +96,12 @@ describe('Test server plugins API validators', function () {
                 for (const p of paths) {
                     yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 400 });
                 }
+            });
+        });
+        it('Should fail with an unknown auth name', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const path = '/plugins/' + pluginName + '/' + npmVersion + '/auth/bad-auth';
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 404 });
             });
         });
         it('Should fail with an unknown static file', function () {
@@ -130,6 +138,8 @@ describe('Test server plugins API validators', function () {
                 for (const p of paths) {
                     yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 200 });
                 }
+                const authPath = '/plugins/' + pluginName + '/' + npmVersion + '/auth/fake-auth';
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: authPath, statusCodeExpected: 302 });
             });
         });
     });
@@ -465,6 +475,7 @@ describe('Test server plugins API validators', function () {
         });
         it('Should succeed with the correct parameters', function () {
             return __awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
                 const it = [
                     { suffix: 'install', status: 200 },
                     { suffix: 'update', status: 200 },

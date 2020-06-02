@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_utils_1 = require("../../../helpers/database-utils");
 const logger_1 = require("../../../helpers/logger");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const actor_1 = require("../../../models/activitypub/actor");
 const video_1 = require("../../../models/video/video");
 const video_comment_1 = require("../../../models/video/video-comment");
@@ -68,7 +68,7 @@ exports.processDeleteActivity = processDeleteActivity;
 function processDeleteVideo(actor, videoToDelete) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Removing remote video "%s".', videoToDelete.uuid);
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             if (videoToDelete.VideoChannel.Account.Actor.id !== actor.id) {
                 throw new Error('Account ' + actor.url + ' does not own video channel ' + videoToDelete.VideoChannel.Actor.url);
             }
@@ -80,7 +80,7 @@ function processDeleteVideo(actor, videoToDelete) {
 function processDeleteVideoPlaylist(actor, playlistToDelete) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Removing remote video playlist "%s".', playlistToDelete.uuid);
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             if (playlistToDelete.OwnerAccount.Actor.id !== actor.id) {
                 throw new Error('Account ' + actor.url + ' does not own video playlist ' + playlistToDelete.url);
             }
@@ -92,7 +92,7 @@ function processDeleteVideoPlaylist(actor, playlistToDelete) {
 function processDeleteAccount(accountToRemove) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Removing remote account "%s".', accountToRemove.Actor.url);
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             yield accountToRemove.destroy({ transaction: t });
         }));
         logger_1.logger.info('Remote account %s removed.', accountToRemove.Actor.url);
@@ -101,7 +101,7 @@ function processDeleteAccount(accountToRemove) {
 function processDeleteVideoChannel(videoChannelToRemove) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Removing remote video channel "%s".', videoChannelToRemove.Actor.url);
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             yield videoChannelToRemove.destroy({ transaction: t });
         }));
         logger_1.logger.info('Remote video channel %s removed.', videoChannelToRemove.Actor.url);
@@ -109,11 +109,11 @@ function processDeleteVideoChannel(videoChannelToRemove) {
 }
 function processDeleteVideoComment(byActor, videoComment, activity) {
     logger_1.logger.debug('Removing remote video comment "%s".', videoComment.url);
-    return initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
         if (byActor.Account.id !== videoComment.Account.id && byActor.Account.id !== videoComment.Video.VideoChannel.accountId) {
             throw new Error(`Account ${byActor.url} does not own video comment ${videoComment.url} or video ${videoComment.Video.url}`);
         }
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             video_comment_2.markCommentAsDeleted(videoComment);
             yield videoComment.save();
         }));

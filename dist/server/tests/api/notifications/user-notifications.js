@@ -23,12 +23,12 @@ const user_subscriptions_1 = require("../../../../shared/extra-utils/users/user-
 const videos_1 = require("../../../../shared/models/videos");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
-const uuidv4 = require("uuid/v4");
+const uuid_1 = require("uuid");
 const blocklist_1 = require("../../../../shared/extra-utils/users/blocklist");
 const expect = chai.expect;
 function uploadVideoByRemoteAccount(servers, additionalParams = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        const name = 'remote video ' + uuidv4();
+        const name = 'remote video ' + uuid_1.v4();
         const data = Object.assign({ name }, additionalParams);
         const res = yield index_1.uploadVideo(servers[1].url, servers[1].accessToken, data);
         yield jobs_1.waitJobs(servers);
@@ -37,7 +37,7 @@ function uploadVideoByRemoteAccount(servers, additionalParams = {}) {
 }
 function uploadVideoByLocalAccount(servers, additionalParams = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        const name = 'local video ' + uuidv4();
+        const name = 'local video ' + uuid_1.v4();
         const data = Object.assign({ name }, additionalParams);
         const res = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, data);
         yield jobs_1.waitJobs(servers);
@@ -47,9 +47,9 @@ function uploadVideoByLocalAccount(servers, additionalParams = {}) {
 describe('Test users notifications', function () {
     let servers = [];
     let userAccessToken;
-    let userNotifications = [];
-    let adminNotifications = [];
-    let adminNotificationsServer2 = [];
+    const userNotifications = [];
+    const adminNotifications = [];
+    const adminNotificationsServer2 = [];
     const emails = [];
     let channelId;
     const allNotificationSettings = {
@@ -154,7 +154,7 @@ describe('Test users notifications', function () {
         it('Should send a new video notification on a scheduled publication', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                let updateAt = new Date(new Date().getTime() + 2000);
+                const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
                     privacy: videos_1.VideoPrivacy.PRIVATE,
                     scheduleUpdate: {
@@ -170,7 +170,7 @@ describe('Test users notifications', function () {
         it('Should send a new video notification on a remote scheduled publication', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(50000);
-                let updateAt = new Date(new Date().getTime() + 2000);
+                const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
                     privacy: videos_1.VideoPrivacy.PRIVATE,
                     scheduleUpdate: {
@@ -187,7 +187,7 @@ describe('Test users notifications', function () {
         it('Should not send a notification before the video is published', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                let updateAt = new Date(new Date().getTime() + 1000000);
+                const updateAt = new Date(new Date().getTime() + 1000000);
                 const data = {
                     privacy: videos_1.VideoPrivacy.PRIVATE,
                     scheduleUpdate: {
@@ -244,7 +244,7 @@ describe('Test users notifications', function () {
         it('Should send a new video notification after a video import', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(100000);
-                const name = 'video import ' + uuidv4();
+                const name = 'video import ' + uuid_1.v4();
                 const attributes = {
                     name,
                     channelId,
@@ -484,7 +484,7 @@ describe('Test users notifications', function () {
         it('Should send a notification to moderators on local video abuse', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
-                const name = 'video for abuse ' + uuidv4();
+                const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
                 const uuid = resVideo.body.video.uuid;
                 yield extra_utils_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, uuid, 'super reason');
@@ -495,7 +495,7 @@ describe('Test users notifications', function () {
         it('Should send a notification to moderators on remote video abuse', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
-                const name = 'video for abuse ' + uuidv4();
+                const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
                 const uuid = resVideo.body.video.uuid;
                 yield jobs_1.waitJobs(servers);
@@ -518,7 +518,7 @@ describe('Test users notifications', function () {
         it('Should send a notification to video owner on blacklist', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
-                const name = 'video for abuse ' + uuidv4();
+                const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
                 const uuid = resVideo.body.video.uuid;
                 yield extra_utils_1.addVideoToBlacklist(servers[0].url, servers[0].accessToken, uuid);
@@ -529,7 +529,7 @@ describe('Test users notifications', function () {
         it('Should send a notification to video owner on unblacklist', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
-                const name = 'video for abuse ' + uuidv4();
+                const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
                 const uuid = resVideo.body.video.uuid;
                 yield extra_utils_1.addVideoToBlacklist(servers[0].url, servers[0].accessToken, uuid);
@@ -589,7 +589,7 @@ describe('Test users notifications', function () {
         it('Should send a notification when an imported video is transcoded', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(50000);
-                const name = 'video import ' + uuidv4();
+                const name = 'video import ' + uuid_1.v4();
                 const attributes = {
                     name,
                     channelId,
@@ -606,7 +606,7 @@ describe('Test users notifications', function () {
         it('Should send a notification when the scheduled update has been proceeded', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(70000);
-                let updateAt = new Date(new Date().getTime() + 2000);
+                const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
                     privacy: videos_1.VideoPrivacy.PRIVATE,
                     scheduleUpdate: {
@@ -622,7 +622,7 @@ describe('Test users notifications', function () {
         it('Should not send a notification before the video is published', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                let updateAt = new Date(new Date().getTime() + 1000000);
+                const updateAt = new Date(new Date().getTime() + 1000000);
                 const data = {
                     privacy: videos_1.VideoPrivacy.PRIVATE,
                     scheduleUpdate: {
@@ -649,7 +649,7 @@ describe('Test users notifications', function () {
         it('Should send a notification when the video import failed', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(70000);
-                const name = 'video import ' + uuidv4();
+                const name = 'video import ' + uuid_1.v4();
                 const attributes = {
                     name,
                     channelId,
@@ -665,7 +665,7 @@ describe('Test users notifications', function () {
         it('Should send a notification when the video import succeeded', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(70000);
-                const name = 'video import ' + uuidv4();
+                const name = 'video import ' + uuid_1.v4();
                 const attributes = {
                     name,
                     channelId,
@@ -706,7 +706,7 @@ describe('Test users notifications', function () {
             followings: {
                 instance: {
                     autoFollowIndex: {
-                        indexUrl: 'http://localhost:42100',
+                        indexUrl: 'http://localhost:42101/api/v1/instances/hosts',
                         enabled: true
                     }
                 }
@@ -777,8 +777,8 @@ describe('Test users notifications', function () {
     });
     describe('New actor follow', function () {
         let baseParams;
-        let myChannelName = 'super channel name';
-        let myUserName = 'super user name';
+        const myChannelName = 'super channel name';
+        const myUserName = 'super user name';
         before(() => __awaiter(this, void 0, void 0, function* () {
             baseParams = {
                 server: servers[0],
@@ -819,22 +819,6 @@ describe('Test users notifications', function () {
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewActorFollow(baseParams, 'channel', 'root', 'super root 2 name', myChannelName, 'presence');
                 yield user_subscriptions_1.removeUserSubscription(servers[1].url, servers[1].accessToken, 'user_1_channel@localhost:' + servers[0].port);
-            });
-        });
-        it('Should notify when a local account is following one of our channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
-                yield user_subscriptions_1.addUserSubscription(servers[0].url, servers[0].accessToken, 'user_1@localhost:' + servers[0].port);
-                yield jobs_1.waitJobs(servers);
-                yield user_notifications_1.checkNewActorFollow(baseParams, 'account', 'root', 'super root name', myUserName, 'presence');
-            });
-        });
-        it('Should notify when a remote account is following one of our channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
-                yield user_subscriptions_1.addUserSubscription(servers[1].url, servers[1].accessToken, 'user_1@localhost:' + servers[0].port);
-                yield jobs_1.waitJobs(servers);
-                yield user_notifications_1.checkNewActorFollow(baseParams, 'account', 'root', 'super root 2 name', myUserName, 'presence');
             });
         });
     });
@@ -883,7 +867,7 @@ describe('Test users notifications', function () {
         it('Should send notification to moderators on new video with auto-blacklist', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                videoName = 'video with auto-blacklist ' + uuidv4();
+                videoName = 'video with auto-blacklist ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: videoName });
                 videoUUID = resVideo.body.video.uuid;
                 yield jobs_1.waitJobs(servers);
@@ -925,8 +909,8 @@ describe('Test users notifications', function () {
         it('Should send unblacklist but not published/subscription notes after unblacklisted if scheduled update pending', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                let updateAt = new Date(new Date().getTime() + 1000000);
-                const name = 'video with auto-blacklist and future schedule ' + uuidv4();
+                const updateAt = new Date(new Date().getTime() + 1000000);
+                const name = 'video with auto-blacklist and future schedule ' + uuid_1.v4();
                 const data = {
                     name,
                     privacy: videos_1.VideoPrivacy.PRIVATE,
@@ -947,8 +931,8 @@ describe('Test users notifications', function () {
         it('Should not send publish/subscription notifications after scheduled update if video still auto-blacklisted', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                let updateAt = new Date(new Date().getTime() + 2000);
-                const name = 'video with schedule done and still auto-blacklisted ' + uuidv4();
+                const updateAt = new Date(new Date().getTime() + 2000);
+                const name = 'video with schedule done and still auto-blacklisted ' + uuid_1.v4();
                 const data = {
                     name,
                     privacy: videos_1.VideoPrivacy.PRIVATE,
@@ -968,7 +952,7 @@ describe('Test users notifications', function () {
         it('Should not send a notification to moderators on new video without auto-blacklist', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
-                const name = 'video without auto-blacklist ' + uuidv4();
+                const name = 'video without auto-blacklist ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name });
                 const uuid = resVideo.body.video.uuid;
                 yield jobs_1.waitJobs(servers);

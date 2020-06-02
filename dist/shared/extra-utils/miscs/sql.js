@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-let sequelizes = {};
+const sequelizes = {};
 function getSequelize(internalServerNumber) {
     if (sequelizes[internalServerNumber])
         return sequelizes[internalServerNumber];
@@ -49,7 +49,8 @@ exports.setPlaylistField = setPlaylistField;
 function countVideoViewsOf(internalServerNumber, uuid) {
     return __awaiter(this, void 0, void 0, function* () {
         const seq = getSequelize(internalServerNumber);
-        const query = `SELECT SUM("videoView"."views") AS "total" FROM "videoView" INNER JOIN "video" ON "video"."id" = "videoView"."videoId" WHERE "video"."uuid" = '${uuid}'`;
+        const query = 'SELECT SUM("videoView"."views") AS "total" FROM "videoView" ' +
+            `INNER JOIN "video" ON "video"."id" = "videoView"."videoId" WHERE "video"."uuid" = '${uuid}'`;
         const options = { type: sequelize_1.QueryTypes.SELECT };
         const [{ total }] = yield seq.query(query, options);
         if (!total)

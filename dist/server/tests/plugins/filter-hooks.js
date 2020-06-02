@@ -9,11 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chai = require("chai");
 require("mocha");
-const servers_1 = require("../../../shared/extra-utils/server/servers");
+const chai = require("chai");
 const extra_utils_1 = require("../../../shared/extra-utils");
+const servers_1 = require("../../../shared/extra-utils/server/servers");
 const video_imports_1 = require("../../../shared/extra-utils/videos/video-imports");
+const videos_1 = require("../../../shared/models/videos");
 const expect = chai.expect;
 describe('Test plugin filter hooks', function () {
     let servers;
@@ -64,6 +65,76 @@ describe('Test plugin filter hooks', function () {
     it('Should run filter:api.video.upload.accept.result', function () {
         return __awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video with bad word' }, 403);
+        });
+    });
+    it('Should run filter:api.video.pre-import-url.accept.result', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseAttributes = {
+                name: 'normal title',
+                privacy: videos_1.VideoPrivacy.PUBLIC,
+                channelId: servers[0].videoChannel.id,
+                targetUrl: video_imports_1.getYoutubeVideoUrl() + 'bad'
+            };
+            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403);
+        });
+    });
+    it('Should run filter:api.video.pre-import-torrent.accept.result', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            const baseAttributes = {
+                name: 'bad torrent',
+                privacy: videos_1.VideoPrivacy.PUBLIC,
+                channelId: servers[0].videoChannel.id,
+                torrentfile: 'video-720p.torrent'
+            };
+            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403);
+        });
+    });
+    it('Should run filter:api.video.post-import-url.accept.result', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(60000);
+            let videoImportId;
+            {
+                const baseAttributes = {
+                    name: 'title with bad word',
+                    privacy: videos_1.VideoPrivacy.PUBLIC,
+                    channelId: servers[0].videoChannel.id,
+                    targetUrl: video_imports_1.getYoutubeVideoUrl()
+                };
+                const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes);
+                videoImportId = res.body.id;
+            }
+            yield extra_utils_1.waitJobs(servers);
+            {
+                const res = yield video_imports_1.getMyVideoImports(servers[0].url, servers[0].accessToken);
+                const videoImports = res.body.data;
+                const videoImport = videoImports.find(i => i.id === videoImportId);
+                expect(videoImport.state.id).to.equal(videos_1.VideoImportState.REJECTED);
+                expect(videoImport.state.label).to.equal('Rejected');
+            }
+        });
+    });
+    it('Should run filter:api.video.post-import-torrent.accept.result', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(60000);
+            let videoImportId;
+            {
+                const baseAttributes = {
+                    name: 'title with bad word',
+                    privacy: videos_1.VideoPrivacy.PUBLIC,
+                    channelId: servers[0].videoChannel.id,
+                    torrentfile: 'video-720p.torrent'
+                };
+                const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes);
+                videoImportId = res.body.id;
+            }
+            yield extra_utils_1.waitJobs(servers);
+            {
+                const res = yield video_imports_1.getMyVideoImports(servers[0].url, servers[0].accessToken);
+                const videoImports = res.body.data;
+                const videoImport = videoImports.find(i => i.id === videoImportId);
+                expect(videoImport.state.id).to.equal(videos_1.VideoImportState.REJECTED);
+                expect(videoImport.state.label).to.equal('Rejected');
+            }
         });
     });
     it('Should run filter:api.video-thread.create.accept.result', function () {

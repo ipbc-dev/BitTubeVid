@@ -104,10 +104,11 @@ function getMyUserVideoQuotaUsed(url, accessToken, specialStatus = 200) {
         .expect('Content-Type', /json/);
 }
 exports.getMyUserVideoQuotaUsed = getMyUserVideoQuotaUsed;
-function getUserInformation(url, accessToken, userId) {
+function getUserInformation(url, accessToken, userId, withStats = false) {
     const path = '/api/v1/users/' + userId;
     return request(url)
         .get(path)
+        .query({ withStats })
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
         .expect(200)
@@ -190,7 +191,7 @@ function updateMyUser(options) {
         path,
         token: options.accessToken,
         fields: toSend,
-        statusCodeExpected: 204
+        statusCodeExpected: options.statusCodeExpected || 204
     });
 }
 exports.updateMyUser = updateMyUser;

@@ -31,7 +31,7 @@ const reqAvatarFile = express_utils_1.createReqFiles(['avatarfile'], constants_1
 const meRouter = express.Router();
 exports.meRouter = meRouter;
 meRouter.get('/me', middlewares_1.authenticate, middlewares_1.asyncMiddleware(getUserInformation));
-meRouter.delete('/me', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.deleteMeValidator), middlewares_1.asyncMiddleware(deleteMe));
+meRouter.delete('/me', middlewares_1.authenticate, validators_1.deleteMeValidator, middlewares_1.asyncMiddleware(deleteMe));
 meRouter.get('/me/video-quota-used', middlewares_1.authenticate, middlewares_1.asyncMiddleware(getUserVideoQuotaUsed));
 meRouter.get('/me/videos/imports', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videoImportsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(getUserVideoImports));
 meRouter.get('/me/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(getUserVideos));

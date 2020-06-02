@@ -37,8 +37,8 @@ function up(utils) {
         {
             const query = 'insert into "videoFile" ' +
                 '(resolution, size, "infoHash", "videoId", "createdAt", "updatedAt", fps, extname, "videoStreamingPlaylistId")' +
-                '(SELECT "videoFile".resolution, "videoFile".size, \'fake\', NULL, "videoFile"."createdAt", "videoFile"."updatedAt", "videoFile"."fps", ' +
-                '"videoFile".extname, "videoStreamingPlaylist".id FROM "videoStreamingPlaylist" ' +
+                '(SELECT "videoFile".resolution, "videoFile".size, \'fake\', NULL, "videoFile"."createdAt", "videoFile"."updatedAt", ' +
+                '"videoFile"."fps", "videoFile".extname, "videoStreamingPlaylist".id FROM "videoStreamingPlaylist" ' +
                 'inner join video ON video.id = "videoStreamingPlaylist"."videoId" inner join "videoFile" ON "videoFile"."videoId" = video.id)';
             yield utils.sequelize.query(query, { transaction: utils.transaction });
         }

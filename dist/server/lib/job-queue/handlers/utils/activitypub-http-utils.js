@@ -10,10 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const activitypub_1 = require("../../../../helpers/activitypub");
-const utils_1 = require("../../../../helpers/utils");
 const actor_1 = require("../../../../models/activitypub/actor");
-const core_utils_1 = require("../../../../helpers/core-utils");
 const constants_1 = require("../../../../initializers/constants");
+const application_1 = require("@server/models/application/application");
+const peertube_crypto_1 = require("@server/helpers/peertube-crypto");
 function computeBody(payload) {
     return __awaiter(this, void 0, void 0, function* () {
         let body = payload.body;
@@ -21,7 +21,7 @@ function computeBody(payload) {
             const actorSignature = yield actor_1.ActorModel.load(payload.signatureActorId);
             if (!actorSignature)
                 throw new Error('Unknown signature actor id.');
-            body = yield activitypub_1.buildSignedActivity(actorSignature, payload.body);
+            body = yield activitypub_1.buildSignedActivity(actorSignature, payload.body, payload.contextType);
         }
         return body;
     });
@@ -36,7 +36,7 @@ function buildSignedRequestOptions(payload) {
                 throw new Error('Unknown signature actor id.');
         }
         else {
-            actor = yield utils_1.getServerActor();
+            actor = yield application_1.getServerActor();
         }
         const keyId = actor.url;
         return {
@@ -51,12 +51,9 @@ function buildSignedRequestOptions(payload) {
 exports.buildSignedRequestOptions = buildSignedRequestOptions;
 function buildGlobalHeaders(body) {
     return {
-        'Digest': buildDigest(body)
+        'Digest': peertube_crypto_1.buildDigest(body),
+        'Content-Type': 'application/activity+json',
+        'Accept': constants_1.ACTIVITY_PUB.ACCEPT_HEADER
     };
 }
 exports.buildGlobalHeaders = buildGlobalHeaders;
-function buildDigest(body) {
-    const rawBody = typeof body === 'string' ? body : JSON.stringify(body);
-    return 'SHA-256=' + core_utils_1.sha256(rawBody, 'base64');
-}
-exports.buildDigest = buildDigest;

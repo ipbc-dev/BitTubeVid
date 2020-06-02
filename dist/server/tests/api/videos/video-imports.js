@@ -15,6 +15,7 @@ const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
+const miscs_1 = require("../../../../shared/extra-utils/miscs/miscs");
 const expect = chai.expect;
 describe('Test video imports', function () {
     let servers = [];
@@ -51,6 +52,8 @@ describe('Test video imports', function () {
             }
             expect(videoTorrent.name).to.contain('你好 世界 720p.mp4');
             expect(videoMagnet.name).to.contain('super peertube2 video');
+            const resCaptions = yield extra_utils_1.listVideoCaptions(url, idHttp);
+            expect(resCaptions.body.total).to.equal(2);
         });
     }
     function checkVideoServer2(url, id) {
@@ -65,6 +68,8 @@ describe('Test video imports', function () {
             expect(video.description).to.equal('my super description');
             expect(video.tags).to.deep.equal(['supertag1', 'supertag2']);
             expect(video.files).to.have.lengthOf(1);
+            const resCaptions = yield extra_utils_1.listVideoCaptions(url, id);
+            expect(resCaptions.body.total).to.equal(2);
         });
     }
     before(function () {
@@ -94,6 +99,45 @@ describe('Test video imports', function () {
                 const attributes = extra_utils_1.immutableAssign(baseAttributes, { targetUrl: video_imports_1.getYoutubeVideoUrl() });
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
                 expect(res.body.video.name).to.equal('small video - youtube');
+                expect(res.body.video.thumbnailPath).to.equal(`/static/thumbnails/${res.body.video.uuid}.jpg`);
+                expect(res.body.video.previewPath).to.equal(`/static/previews/${res.body.video.uuid}.jpg`);
+                yield miscs_1.testImage(servers[0].url, 'video_import_thumbnail', res.body.video.thumbnailPath);
+                yield miscs_1.testImage(servers[0].url, 'video_import_preview', res.body.video.previewPath);
+                const resCaptions = yield extra_utils_1.listVideoCaptions(servers[0].url, res.body.video.id);
+                const videoCaptions = resCaptions.body.data;
+                expect(videoCaptions).to.have.lengthOf(2);
+                const enCaption = videoCaptions.find(caption => caption.language.id === 'en');
+                expect(enCaption).to.exist;
+                expect(enCaption.language.label).to.equal('English');
+                expect(enCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-en.vtt`);
+                yield extra_utils_1.testCaptionFile(servers[0].url, enCaption.captionPath, `WEBVTT
+Kind: captions
+Language: en
+
+00:00:01.600 --> 00:00:04.200
+English (US)
+
+00:00:05.900 --> 00:00:07.999
+This is a subtitle in American English
+
+00:00:10.000 --> 00:00:14.000
+Adding subtitles is very easy to do`);
+                const frCaption = videoCaptions.find(caption => caption.language.id === 'fr');
+                expect(frCaption).to.exist;
+                expect(frCaption.language.label).to.equal('French');
+                expect(frCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-fr.vtt`);
+                yield extra_utils_1.testCaptionFile(servers[0].url, frCaption.captionPath, `WEBVTT
+Kind: captions
+Language: fr
+
+00:00:01.600 --> 00:00:04.200
+Français (FR)
+
+00:00:05.900 --> 00:00:07.999
+C'est un sous-titre français
+
+00:00:10.000 --> 00:00:14.000
+Ajouter un sous-titre est vraiment facile`);
             }
             {
                 const attributes = extra_utils_1.immutableAssign(baseAttributes, {

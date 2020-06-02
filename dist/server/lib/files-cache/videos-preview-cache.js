@@ -13,7 +13,7 @@ const path_1 = require("path");
 const constants_1 = require("../../initializers/constants");
 const video_1 = require("../../models/video/video");
 const abstract_video_static_file_cache_1 = require("./abstract-video-static-file-cache");
-const activitypub_1 = require("../activitypub");
+const requests_1 = require("@server/helpers/requests");
 class VideosPreviewCache extends abstract_video_static_file_cache_1.AbstractVideoStaticFileCache {
     constructor() {
         super();
@@ -38,9 +38,10 @@ class VideosPreviewCache extends abstract_video_static_file_cache_1.AbstractVide
                 return undefined;
             if (video.isOwned())
                 throw new Error('Cannot load remote preview of owned video.');
-            const remoteStaticPath = path_1.join(constants_1.STATIC_PATHS.PREVIEWS, video.getPreview().filename);
-            const destPath = path_1.join(constants_1.FILES_CACHE.PREVIEWS.DIRECTORY, video.getPreview().filename);
-            yield activitypub_1.fetchRemoteVideoStaticFile(video, remoteStaticPath, destPath);
+            const preview = video.getPreview();
+            const destPath = path_1.join(constants_1.FILES_CACHE.PREVIEWS.DIRECTORY, preview.filename);
+            const remoteUrl = preview.getFileUrl(video);
+            yield requests_1.doRequestAndSaveToFile({ uri: remoteUrl }, destPath);
             return { isOwned: false, path: destPath };
         });
     }

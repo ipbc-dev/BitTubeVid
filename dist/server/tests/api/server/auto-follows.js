@@ -57,7 +57,8 @@ function resetFollows(servers) {
             yield index_1.unfollow(servers[0].url, servers[0].accessToken, servers[1]);
             yield index_1.unfollow(servers[1].url, servers[1].accessToken, servers[0]);
         }
-        catch (_a) { }
+        catch (_a) {
+        }
         yield jobs_1.waitJobs(servers);
         yield checkFollow(servers[0], servers[1], false);
         yield checkFollow(servers[1], servers[0], false);
@@ -151,7 +152,7 @@ describe('Test auto follows', function () {
                     followings: {
                         instance: {
                             autoFollowIndex: {
-                                indexUrl: 'http://localhost:42100',
+                                indexUrl: 'http://localhost:42101/api/v1/instances/hosts',
                                 enabled: true
                             }
                         }

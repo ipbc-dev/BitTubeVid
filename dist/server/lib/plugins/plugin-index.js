@@ -30,7 +30,7 @@ function listAvailablePluginsFromIndex(options) {
         try {
             const { body } = yield requests_1.doRequest({ uri, qs, json: true });
             logger_1.logger.debug('Got result from BitTube index.', { body });
-            yield addInstanceInformation(body);
+            addInstanceInformation(body);
             return body;
         }
         catch (err) {
@@ -41,13 +41,11 @@ function listAvailablePluginsFromIndex(options) {
 }
 exports.listAvailablePluginsFromIndex = listAvailablePluginsFromIndex;
 function addInstanceInformation(result) {
-    return __awaiter(this, void 0, void 0, function* () {
-        for (const d of result.data) {
-            d.installed = plugin_manager_1.PluginManager.Instance.isRegistered(d.npmName);
-            d.name = plugin_1.PluginModel.normalizePluginName(d.npmName);
-        }
-        return result;
-    });
+    for (const d of result.data) {
+        d.installed = plugin_manager_1.PluginManager.Instance.isRegistered(d.npmName);
+        d.name = plugin_1.PluginModel.normalizePluginName(d.npmName);
+    }
+    return result;
 }
 function getLatestPluginsVersion(npmNames) {
     return __awaiter(this, void 0, void 0, function* () {

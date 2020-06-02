@@ -13,7 +13,7 @@ exports.isPluginTypeValid = isPluginTypeValid;
 function isPluginNameValid(value) {
     return misc_1.exists(value) &&
         validator_1.default.isLength(value, PLUGINS_CONSTRAINTS_FIELDS.NAME) &&
-        validator_1.default.matches(value, /^[a-z\-]+$/);
+        validator_1.default.matches(value, /^[a-z-0-9]+$/);
 }
 exports.isPluginNameValid = isPluginNameValid;
 function isNpmPluginNameValid(value) {
@@ -126,7 +126,7 @@ function isPackageJSONValid(packageJSON, pluginType) {
 }
 exports.isPackageJSONValid = isPackageJSONValid;
 function isLibraryCodeValid(library) {
-    return typeof library.register === 'function'
-        && typeof library.unregister === 'function';
+    return typeof library.register === 'function' &&
+        typeof library.unregister === 'function';
 }
 exports.isLibraryCodeValid = isLibraryCodeValid;

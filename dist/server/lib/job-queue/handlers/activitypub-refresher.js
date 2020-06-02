@@ -11,9 +11,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../helpers/video");
-const activitypub_1 = require("../../activitypub");
-const actor_1 = require("../../../models/activitypub/actor");
+const actor_1 = require("../../activitypub/actor");
+const videos_1 = require("../../activitypub/videos");
+const actor_2 = require("../../../models/activitypub/actor");
 const video_playlist_1 = require("../../../models/video/video-playlist");
+const playlist_1 = require("@server/lib/activitypub/playlist");
 function refreshAPObject(job) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
@@ -38,16 +40,16 @@ function refreshVideo(videoUrl) {
                 fetchedType: fetchType,
                 syncParam
             };
-            yield activitypub_1.refreshVideoIfNeeded(refreshOptions);
+            yield videos_1.refreshVideoIfNeeded(refreshOptions);
         }
     });
 }
 function refreshActor(actorUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         const fetchType = 'all';
-        const actor = yield actor_1.ActorModel.loadByUrlAndPopulateAccountAndChannel(actorUrl);
+        const actor = yield actor_2.ActorModel.loadByUrlAndPopulateAccountAndChannel(actorUrl);
         if (actor) {
-            yield activitypub_1.refreshActorIfNeeded(actor, fetchType);
+            yield actor_1.refreshActorIfNeeded(actor, fetchType);
         }
     });
 }
@@ -55,7 +57,7 @@ function refreshVideoPlaylist(playlistUrl) {
     return __awaiter(this, void 0, void 0, function* () {
         const playlist = yield video_playlist_1.VideoPlaylistModel.loadByUrlAndPopulateAccount(playlistUrl);
         if (playlist) {
-            yield activitypub_1.refreshVideoPlaylistIfNeeded(playlist);
+            yield playlist_1.refreshVideoPlaylistIfNeeded(playlist);
         }
     });
 }

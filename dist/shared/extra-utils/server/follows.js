@@ -77,7 +77,7 @@ function follow(follower, following, accessToken, expectedStatus = 204) {
         .post(path)
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
-        .send({ 'hosts': followingHosts })
+        .send({ hosts: followingHosts })
         .expect(expectedStatus);
 }
 exports.follow = follow;

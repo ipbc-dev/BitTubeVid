@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Sequelize = require("sequelize");
 const videos_1 = require("../../../shared/models/videos");
-const uuidv4 = require("uuid/v4");
+const uuid_1 = require("uuid");
 const constants_1 = require("../constants");
 function up(utils) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS "videoPlaylistElement"
             const userResult = yield utils.sequelize.query(userQuery, options);
             const usernames = userResult.map(r => r.username);
             for (const username of usernames) {
-                const uuid = uuidv4();
+                const uuid = uuid_1.v4();
                 const baseUrl = constants_1.WEBSERVER.URL + '/video-playlists/' + uuid;
                 const query = `
  INSERT INTO "videoPlaylist" ("url", "uuid", "name", "privacy", "type", "ownerAccountId", "createdAt", "updatedAt")

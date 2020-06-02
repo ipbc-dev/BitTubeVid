@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
@@ -38,24 +29,22 @@ program
     console.log('    $ peertube watch https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10');
     console.log();
 })
-    .action((url, cmd) => {
-    run(url, cmd)
-        .catch(err => {
-        console.error(err);
-        process.exit(-1);
-    });
-})
+    .action((url, cmd) => run(url, cmd))
     .parse(process.argv);
 function run(url, program) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!url) {
-            console.error('<url> positional argument is required.');
-            process.exit(-1);
-        }
-        const cmd = 'node ' + path_1.join(__dirname, 'node_modules', 'webtorrent-hybrid', 'bin', 'cmd.js');
-        const args = ` --${program.gui} ` +
-            url.replace('videos/watch', 'download/torrents') +
-            `-${program.resolution}.torrent`;
+    if (!url) {
+        console.error('<url> positional argument is required.');
+        process.exit(-1);
+    }
+    const cmd = 'node ' + path_1.join(__dirname, 'node_modules', 'webtorrent-hybrid', 'bin', 'cmd.js');
+    const args = ` --${program.gui} ` +
+        url.replace('videos/watch', 'download/torrents') +
+        `-${program.resolution}.torrent`;
+    try {
         child_process_1.execSync(cmd + args);
-    });
+    }
+    catch (err) {
+        console.error('Cannto exec command.', err);
+        process.exit(-1);
+    }
 }

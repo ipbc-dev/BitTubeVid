@@ -20,18 +20,16 @@ const send_announce_1 = require("./send-announce");
 const logger_1 = require("../../../helpers/logger");
 const send_dislike_1 = require("./send-dislike");
 function sendUndoFollow(actorFollow, t) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const me = actorFollow.ActorFollower;
-        const following = actorFollow.ActorFollowing;
-        if (!following.serverId)
-            return;
-        logger_1.logger.info('Creating job to send an unfollow request to %s.', following.url);
-        const followUrl = url_1.getActorFollowActivityPubUrl(me, following);
-        const undoUrl = url_1.getUndoActivityPubUrl(followUrl);
-        const followActivity = send_follow_1.buildFollowActivity(followUrl, me, following);
-        const undoActivity = undoActivityData(undoUrl, me, followActivity);
-        t.afterCommit(() => utils_1.unicastTo(undoActivity, me, following.inboxUrl));
-    });
+    const me = actorFollow.ActorFollower;
+    const following = actorFollow.ActorFollowing;
+    if (!following.serverId)
+        return;
+    logger_1.logger.info('Creating job to send an unfollow request to %s.', following.url);
+    const followUrl = url_1.getActorFollowActivityPubUrl(me, following);
+    const undoUrl = url_1.getUndoActivityPubUrl(followUrl);
+    const followActivity = send_follow_1.buildFollowActivity(followUrl, me, following);
+    const undoActivity = undoActivityData(undoUrl, me, followActivity);
+    t.afterCommit(() => utils_1.unicastTo(undoActivity, me, following.inboxUrl));
 }
 exports.sendUndoFollow = sendUndoFollow;
 function sendUndoAnnounce(byActor, videoShare, video, t) {

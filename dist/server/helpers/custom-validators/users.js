@@ -5,11 +5,18 @@ const shared_1 = require("../../../shared");
 const constants_1 = require("../../initializers/constants");
 const misc_1 = require("./misc");
 const lodash_1 = require("lodash");
+const config_1 = require("../../initializers/config");
 const USERS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.USERS;
 function isUserPasswordValid(value) {
     return validator_1.default.isLength(value, USERS_CONSTRAINTS_FIELDS.PASSWORD);
 }
 exports.isUserPasswordValid = isUserPasswordValid;
+function isUserPasswordValidOrEmpty(value) {
+    if (value === '')
+        return config_1.isEmailEnabled();
+    return isUserPasswordValid(value);
+}
+exports.isUserPasswordValidOrEmpty = isUserPasswordValidOrEmpty;
 function isUserVideoQuotaValid(value) {
     return misc_1.exists(value) && validator_1.default.isInt(value + '', USERS_CONSTRAINTS_FIELDS.VIDEO_QUOTA);
 }
@@ -38,7 +45,7 @@ function isUserEmailVerifiedValid(value) {
 exports.isUserEmailVerifiedValid = isUserEmailVerifiedValid;
 const nsfwPolicies = lodash_1.values(constants_1.NSFW_POLICY_TYPES);
 function isUserNSFWPolicyValid(value) {
-    return misc_1.exists(value) && nsfwPolicies.indexOf(value) !== -1;
+    return misc_1.exists(value) && nsfwPolicies.includes(value);
 }
 exports.isUserNSFWPolicyValid = isUserNSFWPolicyValid;
 function isUserWebTorrentEnabledValid(value) {

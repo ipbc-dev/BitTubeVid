@@ -297,8 +297,9 @@ exports.doVideosInPlaylistExistValidator = doVideosInPlaylistExistValidator;
 function getCommonPlaylistEditAttributes() {
     return [
         express_validator_1.body('thumbnailfile')
-            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'thumbnailfile')).withMessage('This thumbnail file is not supported or too large. Please, make sure it is of the following type: '
-            + constants_1.CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.IMAGE.EXTNAME.join(', ')),
+            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'thumbnailfile'))
+            .withMessage('This thumbnail file is not supported or too large. Please, make sure it is of the following type: ' +
+            constants_1.CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.IMAGE.EXTNAME.join(', ')),
         express_validator_1.body('description')
             .optional()
             .customSanitizer(misc_1.toValueOrNull)

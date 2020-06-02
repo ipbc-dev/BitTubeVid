@@ -200,7 +200,7 @@ describe('Test CLI wrapper', function () {
                 this.timeout(60000);
                 {
                     const env = extra_utils_1.getEnvCli(server);
-                    const params = `list-my-redundancies`;
+                    const params = 'list-my-redundancies';
                     const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} redundancy ${params}`);
                     chai_1.expect(stdout).to.contain('super video');
                     chai_1.expect(stdout).to.contain(`localhost:${server.port}`);
@@ -216,7 +216,7 @@ describe('Test CLI wrapper', function () {
                 yield extra_utils_1.waitJobs(servers);
                 {
                     const env = extra_utils_1.getEnvCli(server);
-                    const params = `list-my-redundancies`;
+                    const params = 'list-my-redundancies';
                     const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} redundancy ${params}`);
                     chai_1.expect(stdout).to.not.contain('super video');
                 }

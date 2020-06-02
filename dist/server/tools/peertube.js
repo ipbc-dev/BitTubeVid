@@ -63,4 +63,5 @@ cli_1.getSettings()
         console.log();
     })
         .parse(process.argv);
-});
+})
+    .catch(err => console.error(err));

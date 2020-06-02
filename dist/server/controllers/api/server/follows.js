@@ -22,6 +22,7 @@ const job_queue_1 = require("../../../lib/job-queue");
 const redundancy_1 = require("../../../lib/redundancy");
 const database_1 = require("../../../initializers/database");
 const follow_1 = require("../../../lib/activitypub/follow");
+const application_1 = require("@server/models/application/application");
 const serverFollowsRouter = express.Router();
 exports.serverFollowsRouter = serverFollowsRouter;
 serverFollowsRouter.get('/following', validators_1.listFollowsValidator, middlewares_1.paginationValidator, validators_1.followingSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listFollowing));
@@ -33,7 +34,7 @@ serverFollowsRouter.post('/followers/:nameWithHost/reject', middlewares_1.authen
 serverFollowsRouter.post('/followers/:nameWithHost/accept', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(acceptFollower));
 function listFollowing(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const resultList = yield actor_follow_1.ActorFollowModel.listFollowingForApi({
             id: serverActor.id,
             start: req.query.start,
@@ -48,7 +49,7 @@ function listFollowing(req, res) {
 }
 function listFollowers(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const resultList = yield actor_follow_1.ActorFollowModel.listFollowersForApi({
             actorId: serverActor.id,
             start: req.query.start,
@@ -64,15 +65,14 @@ function listFollowers(req, res) {
 function followInstance(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const hosts = req.body.hosts;
-        const follower = yield utils_1.getServerActor();
+        const follower = yield application_1.getServerActor();
         for (const host of hosts) {
             const payload = {
                 host,
                 name: constants_1.SERVER_ACTOR_NAME,
                 followerActorId: follower.id
             };
-            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload })
-                .catch(err => logger_1.logger.error('Cannot create follow job for %s.', host, err));
+            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload });
         }
         return res.status(204).end();
     });

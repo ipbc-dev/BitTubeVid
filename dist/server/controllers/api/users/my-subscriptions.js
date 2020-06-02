@@ -19,14 +19,13 @@ const video_1 = require("../../../models/video/video");
 const express_utils_1 = require("../../../helpers/express-utils");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
 const job_queue_1 = require("../../../lib/job-queue");
-const logger_1 = require("../../../helpers/logger");
 const database_1 = require("../../../initializers/database");
 const mySubscriptionsRouter = express.Router();
 exports.mySubscriptionsRouter = mySubscriptionsRouter;
 mySubscriptionsRouter.get('/me/subscriptions/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(getUserSubscriptionVideos));
 mySubscriptionsRouter.get('/me/subscriptions/exist', middlewares_1.authenticate, validators_1.areSubscriptionsExistValidator, middlewares_1.asyncMiddleware(areSubscriptionsExist));
 mySubscriptionsRouter.get('/me/subscriptions', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.userSubscriptionsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(getUserSubscriptions));
-mySubscriptionsRouter.post('/me/subscriptions', middlewares_1.authenticate, middlewares_1.userSubscriptionAddValidator, middlewares_1.asyncMiddleware(addUserSubscription));
+mySubscriptionsRouter.post('/me/subscriptions', middlewares_1.authenticate, middlewares_1.userSubscriptionAddValidator, addUserSubscription);
 mySubscriptionsRouter.get('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, getUserSubscription);
 mySubscriptionsRouter.delete('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, middlewares_1.asyncRetryTransactionMiddleware(deleteUserSubscription));
 function areSubscriptionsExist(req, res) {
@@ -54,18 +53,16 @@ function areSubscriptionsExist(req, res) {
     });
 }
 function addUserSubscription(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const user = res.locals.oauth.token.User;
-        const [name, host] = req.body.uri.split('@');
-        const payload = {
-            name,
-            host,
-            followerActorId: user.Account.Actor.id
-        };
-        job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload })
-            .catch(err => logger_1.logger.error('Cannot create follow job for subscription %s.', req.body.uri, err));
-        return res.status(204).end();
-    });
+    const user = res.locals.oauth.token.User;
+    const [name, host] = req.body.uri.split('@');
+    const payload = {
+        name,
+        host,
+        assertIsChannel: true,
+        followerActorId: user.Account.Actor.id
+    };
+    job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload });
+    return res.status(204).end();
 }
 function getUserSubscription(req, res) {
     const subscription = res.locals.subscription;

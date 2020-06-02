@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../../helpers/utils");
 const video_share_1 = require("../../models/video/video-share");
 const send_1 = require("./send");
 const url_1 = require("./url");
@@ -19,6 +18,7 @@ const actor_1 = require("./actor");
 const logger_1 = require("../../helpers/logger");
 const constants_1 = require("../../initializers/constants");
 const activitypub_1 = require("../../helpers/activitypub");
+const application_1 = require("@server/models/application/application");
 function shareVideoByServerAndChannel(video, t) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!video.hasPrivacyForFederation())
@@ -70,7 +70,7 @@ function addVideoShares(shareUrls, video) {
 exports.addVideoShares = addVideoShares;
 function shareByServer(video, t) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const serverShareUrl = url_1.getVideoAnnounceActivityPubUrl(serverActor, video);
         const [serverShare] = yield video_share_1.VideoShareModel.findOrCreate({
             defaults: {

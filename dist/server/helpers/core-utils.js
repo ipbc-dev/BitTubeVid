@@ -34,7 +34,7 @@ function parseDurationToMs(duration) {
     if (typeof duration === 'number')
         return duration;
     if (typeof duration === 'string') {
-        const split = duration.match(/^([\d\.,]+)\s?(\w+)$/);
+        const split = duration.match(/^([\d.,]+)\s?(\w+)$/);
         if (split.length === 3) {
             const len = parseFloat(split[1]);
             let unit = split[2].replace(/s$/i, '').toLowerCase();
@@ -61,24 +61,24 @@ function parseBytes(value) {
     let match;
     if (value.match(tgm)) {
         match = value.match(tgm);
-        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024
-            + parseInt(match[2], 10) * 1024 * 1024 * 1024
-            + parseInt(match[3], 10) * 1024 * 1024;
+        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024 +
+            parseInt(match[2], 10) * 1024 * 1024 * 1024 +
+            parseInt(match[3], 10) * 1024 * 1024;
     }
     else if (value.match(tg)) {
         match = value.match(tg);
-        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024
-            + parseInt(match[2], 10) * 1024 * 1024 * 1024;
+        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024 +
+            parseInt(match[2], 10) * 1024 * 1024 * 1024;
     }
     else if (value.match(tm)) {
         match = value.match(tm);
-        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024
-            + parseInt(match[2], 10) * 1024 * 1024;
+        return parseInt(match[1], 10) * 1024 * 1024 * 1024 * 1024 +
+            parseInt(match[2], 10) * 1024 * 1024;
     }
     else if (value.match(gm)) {
         match = value.match(gm);
-        return parseInt(match[1], 10) * 1024 * 1024 * 1024
-            + parseInt(match[2], 10) * 1024 * 1024;
+        return parseInt(match[1], 10) * 1024 * 1024 * 1024 +
+            parseInt(match[2], 10) * 1024 * 1024;
     }
     else if (value.match(t)) {
         match = value.match(t);
@@ -152,7 +152,7 @@ function escapeHTML(stringParam) {
         '`': '&#x60;',
         '=': '&#x3D;'
     };
-    return String(stringParam).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
+    return String(stringParam).replace(/[&<>"'`=/]/g, s => entityMap[s]);
 }
 exports.escapeHTML = escapeHTML;
 function pageToStartAndCount(page, itemsPerPage) {
@@ -208,13 +208,6 @@ function promisify1(func) {
     };
 }
 exports.promisify1 = promisify1;
-function promisify1WithVoid(func) {
-    return function promisified(arg) {
-        return new Promise((resolve, reject) => {
-            func.apply(null, [arg, (err) => err ? reject(err) : resolve()]);
-        });
-    };
-}
 function promisify2(func) {
     return function promisified(arg1, arg2) {
         return new Promise((resolve, reject) => {
@@ -223,15 +216,8 @@ function promisify2(func) {
     };
 }
 exports.promisify2 = promisify2;
-function promisify2WithVoid(func) {
-    return function promisified(arg1, arg2) {
-        return new Promise((resolve, reject) => {
-            func.apply(null, [arg1, arg2, (err) => err ? reject(err) : resolve()]);
-        });
-    };
-}
-const pseudoRandomBytesPromise = promisify1(crypto_1.pseudoRandomBytes);
-exports.pseudoRandomBytesPromise = pseudoRandomBytesPromise;
+const randomBytesPromise = promisify1(crypto_1.randomBytes);
+exports.randomBytesPromise = randomBytesPromise;
 const createPrivateKey = promisify1(pem.createPrivateKey);
 exports.createPrivateKey = createPrivateKey;
 const getPublicKey = promisify1(pem.getPublicKey);

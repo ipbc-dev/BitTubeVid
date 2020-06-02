@@ -35,11 +35,8 @@ const config_1 = require("../../../initializers/config");
 const database_1 = require("../../../initializers/database");
 const user_flag_model_1 = require("../../../../shared/models/users/user-flag.model");
 const hooks_1 = require("@server/lib/plugins/hooks");
+const token_1 = require("@server/controllers/api/users/token");
 const auditLogger = audit_logger_1.auditLoggerFactory('users');
-const loginRateLimiter = RateLimit({
-    windowMs: config_1.CONFIG.RATES_LIMIT.LOGIN.WINDOW_MS,
-    max: config_1.CONFIG.RATES_LIMIT.LOGIN.MAX
-});
 const signupRateLimiter = RateLimit({
     windowMs: config_1.CONFIG.RATES_LIMIT.SIGNUP.WINDOW_MS,
     max: config_1.CONFIG.RATES_LIMIT.SIGNUP.MAX,
@@ -51,6 +48,7 @@ const askSendEmailLimiter = new RateLimit({
 });
 const usersRouter = express.Router();
 exports.usersRouter = usersRouter;
+usersRouter.use('/', token_1.tokensRouter);
 usersRouter.use('/', my_notifications_1.myNotificationsRouter);
 usersRouter.use('/', my_subscriptions_1.mySubscriptionsRouter);
 usersRouter.use('/', my_blocklist_1.myBlocklistRouter);
@@ -71,7 +69,6 @@ usersRouter.post('/ask-reset-password', middlewares_1.asyncMiddleware(validators
 usersRouter.post('/:id/reset-password', middlewares_1.asyncMiddleware(validators_1.usersResetPasswordValidator), middlewares_1.asyncMiddleware(resetUserPassword));
 usersRouter.post('/ask-send-verify-email', askSendEmailLimiter, middlewares_1.asyncMiddleware(validators_1.usersAskSendVerifyEmailValidator), middlewares_1.asyncMiddleware(reSendVerifyUserEmail));
 usersRouter.post('/:id/verify-email', middlewares_1.asyncMiddleware(validators_1.usersVerifyEmailValidator), middlewares_1.asyncMiddleware(verifyUserEmail));
-usersRouter.post('/token', loginRateLimiter, middlewares_1.token, tokenSuccess);
 function createUser(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const body = req.body;
@@ -86,9 +83,19 @@ function createUser(req, res) {
             videoQuotaDaily: body.videoQuotaDaily,
             adminFlags: body.adminFlags || user_flag_model_1.UserAdminFlag.NONE
         });
+        const createPassword = userToCreate.password === '';
+        if (createPassword) {
+            userToCreate.password = yield utils_1.generateRandomString(20);
+        }
         const { user, account, videoChannel } = yield user_1.createUserAccountAndChannelAndPlaylist({ userToCreate: userToCreate });
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
         logger_1.logger.info('User %s with its channel and account created.', body.username);
+        if (createPassword) {
+            logger_1.logger.info('Sending to user %s a create password email', body.username);
+            const verificationString = yield redis_1.Redis.Instance.setCreatePasswordVerificationString(user.id);
+            const url = constants_1.WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString;
+            yield emailer_1.Emailer.Instance.addPasswordCreateEmailJob(userToCreate.username, user.email, url);
+        }
         hooks_1.Hooks.runAction('action:api.user.created', { body, user, account, videoChannel });
         return res.json({
             user: {
@@ -233,10 +240,6 @@ function verifyUserEmail(req, res) {
         yield user.save();
         return res.status(204).end();
     });
-}
-function tokenSuccess(req) {
-    const username = req.body.username;
-    hooks_1.Hooks.runAction('action:api.user.oauth2-got-token', { username, ip: req.ip });
 }
 function changeUserBlock(res, user, block, reason) {
     return __awaiter(this, void 0, void 0, function* () {

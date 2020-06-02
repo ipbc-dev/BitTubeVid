@@ -29,6 +29,8 @@ const CONFIG = {
         DB: config.has('redis.db') ? config.get('redis.db') : null
     },
     SMTP: {
+        TRANSPORT: config.has('smtp.transport') ? config.get('smtp.transport') : 'smtp',
+        SENDMAIL: config.has('smtp.sendmail') ? config.get('smtp.sendmail') : null,
         HOSTNAME: config.get('smtp.hostname'),
         PORT: config.get('smtp.port'),
         USERNAME: config.get('smtp.username'),
@@ -109,6 +111,11 @@ const CONFIG = {
         VIDEOS: {
             CHECK_INTERVAL: core_utils_1.parseDurationToMs(config.get('redundancy.videos.check_interval')),
             STRATEGIES: buildVideosRedundancy(config.get('redundancy.videos.strategies'))
+        }
+    },
+    REMOTE_REDUNDANCY: {
+        VIDEOS: {
+            ACCEPT_FROM: config.get('remote_redundancy.videos.accept_from')
         }
     },
     CSP: {
@@ -274,6 +281,10 @@ function registerConfigChangedHandler(fun) {
     configChangedHandlers.push(fun);
 }
 exports.registerConfigChangedHandler = registerConfigChangedHandler;
+function isEmailEnabled() {
+    return !!CONFIG.SMTP.HOSTNAME && !!CONFIG.SMTP.PORT;
+}
+exports.isEmailEnabled = isEmailEnabled;
 function getLocalConfigFilePath() {
     const configSources = config.util.getConfigSources();
     if (configSources.length === 0)
@@ -307,7 +318,7 @@ function reloadConfig() {
     }
     function purge() {
         for (const fileName in require.cache) {
-            if (-1 === fileName.indexOf(directory())) {
+            if (fileName.includes(directory()) === false) {
                 continue;
             }
             delete require.cache[fileName];

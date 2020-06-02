@@ -17,15 +17,13 @@ const oauth_client_1 = require("../models/oauth/oauth-client");
 const url_1 = require("url");
 const config_1 = require("./config");
 const logger_1 = require("../helpers/logger");
-const utils_1 = require("../helpers/utils");
 const misc_1 = require("../helpers/custom-validators/misc");
 const lodash_1 = require("lodash");
-const emailer_1 = require("../lib/emailer");
 const constants_1 = require("./constants");
 function checkActivityPubUrls() {
     return __awaiter(this, void 0, void 0, function* () {
-        const actor = yield utils_1.getServerActor();
-        const parsed = url_1.parse(actor.url);
+        const actor = yield application_1.getServerActor();
+        const parsed = new url_1.URL(actor.url);
         if (constants_1.WEBSERVER.HOST !== parsed.host) {
             const NODE_ENV = config.util.getEnv('NODE_ENV');
             const NODE_CONFIG_DIR = config.util.getEnv('NODE_CONFIG_DIR');
@@ -40,7 +38,7 @@ function checkConfig() {
     if (config.has('services.csp-logger')) {
         logger_1.logger.warn('services.csp-logger configuration has been renamed to csp.report_uri. Please update your configuration file.');
     }
-    if (!emailer_1.Emailer.isEnabled()) {
+    if (!config_1.isEmailEnabled()) {
         if (config_1.CONFIG.SIGNUP.ENABLED && config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION) {
             return 'Emailer is disabled but you require signup email verification.';
         }
@@ -51,7 +49,7 @@ function checkConfig() {
     const defaultNSFWPolicy = config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY;
     {
         const available = ['do_not_list', 'blur', 'display'];
-        if (available.indexOf(defaultNSFWPolicy) === -1) {
+        if (available.includes(defaultNSFWPolicy) === false) {
             return 'NSFW policy setting should be ' + available.join(' or ') + ' instead of ' + defaultNSFWPolicy;
         }
     }
@@ -59,7 +57,7 @@ function checkConfig() {
     if (misc_1.isArray(redundancyVideos)) {
         const available = ['most-views', 'trending', 'recently-added'];
         for (const r of redundancyVideos) {
-            if (available.indexOf(r.strategy) === -1) {
+            if (available.includes(r.strategy) === false) {
                 return 'Videos redundancy should have ' + available.join(' or ') + ' strategy instead of ' + r.strategy;
             }
             if (!core_utils_1.isTestInstance() && r.minLifetime < 1000 * 3600 * 10) {
@@ -77,6 +75,11 @@ function checkConfig() {
     }
     else {
         return 'Videos redundancy should be an array (you must uncomment lines containing - too)';
+    }
+    const acceptFrom = config_1.CONFIG.REMOTE_REDUNDANCY.VIDEOS.ACCEPT_FROM;
+    const acceptFromValues = new Set(['nobody', 'anybody', 'followings']);
+    if (acceptFromValues.has(acceptFrom) === false) {
+        return 'remote_redundancy.videos.accept_from has an incorrect value';
     }
     if (core_utils_1.isProdInstance()) {
         const configStorage = config.get('storage');

@@ -19,16 +19,16 @@ const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const expect = chai.expect;
 describe('Test stats (excluding redundancy)', function () {
     let servers = [];
+    const user = {
+        username: 'user1',
+        password: 'super_password'
+    };
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             yield index_1.setAccessTokensToServers(servers);
             yield extra_utils_1.doubleFollow(servers[0], servers[1]);
-            const user = {
-                username: 'user1',
-                password: 'super_password'
-            };
             yield extra_utils_1.createUser({ url: servers[0].url, accessToken: servers[0].accessToken, username: user.username, password: user.password });
             const resVideo = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { fixture: 'video_short.webm' });
             const videoUUID = resVideo.body.video.uuid;
@@ -81,6 +81,36 @@ describe('Test stats (excluding redundancy)', function () {
             expect(data.totalVideos).to.equal(1);
             expect(data.totalInstanceFollowing).to.equal(1);
             expect(data.totalInstanceFollowers).to.equal(0);
+        });
+    });
+    it('Should have the correct total videos stats after an unfollow', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(15000);
+            yield extra_utils_1.unfollow(servers[2].url, servers[2].accessToken, servers[0]);
+            yield jobs_1.waitJobs(servers);
+            const res = yield stats_1.getStats(servers[2].url);
+            const data = res.body;
+            expect(data.totalVideos).to.equal(0);
+        });
+    });
+    it('Should have the correct active users stats', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            const server = servers[0];
+            {
+                const res = yield stats_1.getStats(server.url);
+                const data = res.body;
+                expect(data.totalDailyActiveUsers).to.equal(1);
+                expect(data.totalWeeklyActiveUsers).to.equal(1);
+                expect(data.totalMonthlyActiveUsers).to.equal(1);
+            }
+            {
+                yield extra_utils_1.userLogin(server, user);
+                const res = yield stats_1.getStats(server.url);
+                const data = res.body;
+                expect(data.totalDailyActiveUsers).to.equal(2);
+                expect(data.totalWeeklyActiveUsers).to.equal(2);
+                expect(data.totalMonthlyActiveUsers).to.equal(2);
+            }
         });
     });
     after(function () {

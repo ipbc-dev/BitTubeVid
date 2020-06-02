@@ -57,33 +57,31 @@ class JobQueue {
         this.initialized = false;
     }
     init() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.initialized === true)
-                return;
-            this.initialized = true;
-            this.jobRedisPrefix = 'bull-' + constants_1.WEBSERVER.HOST;
-            const queueOptions = {
-                prefix: this.jobRedisPrefix,
-                redis: redis_1.Redis.getRedisClientOptions(),
-                settings: {
-                    maxStalledCount: 10
-                }
-            };
-            for (const handlerName of Object.keys(handlers)) {
-                const queue = new Bull(handlerName, queueOptions);
-                const handler = handlers[handlerName];
-                queue.process(constants_1.JOB_CONCURRENCY[handlerName], handler)
-                    .catch(err => logger_1.logger.error('Error in job queue processor %s.', handlerName, { err }));
-                queue.on('failed', (job, err) => {
-                    logger_1.logger.error('Cannot execute job %d in queue %s.', job.id, handlerName, { payload: job.data, err });
-                });
-                queue.on('error', err => {
-                    logger_1.logger.error('Error in job queue %s.', handlerName, { err });
-                });
-                this.queues[handlerName] = queue;
+        if (this.initialized === true)
+            return;
+        this.initialized = true;
+        this.jobRedisPrefix = 'bull-' + constants_1.WEBSERVER.HOST;
+        const queueOptions = {
+            prefix: this.jobRedisPrefix,
+            redis: redis_1.Redis.getRedisClientOptions(),
+            settings: {
+                maxStalledCount: 10
             }
-            this.addRepeatableJobs();
-        });
+        };
+        for (const handlerName of Object.keys(handlers)) {
+            const queue = new Bull(handlerName, queueOptions);
+            const handler = handlers[handlerName];
+            queue.process(constants_1.JOB_CONCURRENCY[handlerName], handler)
+                .catch(err => logger_1.logger.error('Error in job queue processor %s.', handlerName, { err }));
+            queue.on('failed', (job, err) => {
+                logger_1.logger.error('Cannot execute job %d in queue %s.', job.id, handlerName, { payload: job.data, err });
+            });
+            queue.on('error', err => {
+                logger_1.logger.error('Error in job queue %s.', handlerName, { err });
+            });
+            this.queues[handlerName] = queue;
+        }
+        this.addRepeatableJobs();
     }
     terminate() {
         for (const queueName of Object.keys(this.queues)) {
@@ -92,10 +90,14 @@ class JobQueue {
         }
     }
     createJob(obj) {
+        this.createJobWithPromise(obj)
+            .catch(err => logger_1.logger.error('Cannot create job.', { err, obj }));
+    }
+    createJobWithPromise(obj) {
         const queue = this.queues[obj.type];
         if (queue === undefined) {
             logger_1.logger.error('Unknown queue %s: cannot create job.', obj.type);
-            throw Error('Unknown queue, cannot create job');
+            return;
         }
         const jobArgs = {
             backoff: { delay: 60 * 1000, type: 'exponential' },
@@ -115,7 +117,7 @@ class JobQueue {
                     logger_1.logger.error('Unknown queue %s to list jobs.', jobType);
                     continue;
                 }
-                const jobs = yield queue.getJobs(state, 0, start + count, asc);
+                const jobs = yield queue.getJobs([state], 0, start + count, asc);
                 results = results.concat(jobs);
             }
             results.sort((j1, j2) => {
@@ -157,7 +159,7 @@ class JobQueue {
     addRepeatableJobs() {
         this.queues['videos-views'].add({}, {
             repeat: constants_1.REPEAT_JOBS['videos-views']
-        });
+        }).catch(err => logger_1.logger.error('Cannot add repeatable job.', { err }));
     }
     filterJobTypes(jobType) {
         if (!jobType)

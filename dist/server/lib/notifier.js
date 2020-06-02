@@ -19,9 +19,10 @@ const config_1 = require("../initializers/config");
 const videos_1 = require("../../shared/models/videos");
 const account_blocklist_1 = require("../models/account/account-blocklist");
 const server_blocklist_1 = require("@server/models/server/server-blocklist");
-const utils_1 = require("@server/helpers/utils");
+const application_1 = require("@server/models/application/application");
 class Notifier {
-    constructor() { }
+    constructor() {
+    }
     notifyOnNewVideoIfNeeded(video) {
         if (video.privacy !== videos_1.VideoPrivacy.PUBLIC || video.state !== videos_1.VideoState.PUBLISHED || video.isBlacklisted())
             return;
@@ -44,7 +45,9 @@ class Notifier {
         if (video.ScheduleVideoUpdate || (video.waitTranscoding && video.state !== videos_1.VideoState.PUBLISHED))
             return;
         this.notifyOwnedVideoHasBeenPublished(video)
-            .catch(err => logger_1.logger.error('Cannot notify owner that its video %s has been published after removed from auto-blacklist.', video.url, { err }));
+            .catch(err => {
+            logger_1.logger.error('Cannot notify owner that its video %s has been published after removed from auto-blacklist.', video.url, { err });
+        });
     }
     notifyOnNewComment(comment) {
         this.notifyVideoOwnerOfNewComment(comment)
@@ -52,9 +55,9 @@ class Notifier {
         this.notifyOfCommentMention(comment)
             .catch(err => logger_1.logger.error('Cannot notify mentions of comment %s.', comment.url, { err }));
     }
-    notifyOnNewVideoAbuse(videoAbuse) {
-        this.notifyModeratorsOfNewVideoAbuse(videoAbuse)
-            .catch(err => logger_1.logger.error('Cannot notify of new video abuse of video %s.', videoAbuse.Video.url, { err }));
+    notifyOnNewVideoAbuse(parameters) {
+        this.notifyModeratorsOfNewVideoAbuse(parameters)
+            .catch(err => logger_1.logger.error('Cannot notify of new video abuse of video %s.', parameters.videoAbuseInstance.Video.url, { err }));
     }
     notifyOnVideoAutoBlacklist(videoBlacklist) {
         this.notifyModeratorsOfVideoAutoBlacklist(videoBlacklist)
@@ -160,7 +163,7 @@ class Notifier {
             users = users.filter(u => u.Account.id !== comment.accountId);
             if (users.length === 0)
                 return;
-            const serverAccountId = (yield utils_1.getServerActor()).Account.id;
+            const serverAccountId = (yield application_1.getServerActor()).Account.id;
             const sourceAccounts = users.map(u => u.Account.id).concat([serverAccountId]);
             const accountMutedHash = yield account_blocklist_1.AccountBlocklistModel.isAccountMutedByMulti(sourceAccounts, comment.accountId);
             const instanceMutedHash = yield server_blocklist_1.ServerBlocklistModel.isServerMutedByMulti(sourceAccounts, comment.Account.Actor.serverId);
@@ -275,12 +278,12 @@ class Notifier {
             return this.notify({ users: admins, settingGetter, notificationCreator, emailSender });
         });
     }
-    notifyModeratorsOfNewVideoAbuse(videoAbuse) {
+    notifyModeratorsOfNewVideoAbuse(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_VIDEO_ABUSES);
             if (moderators.length === 0)
                 return;
-            logger_1.logger.info('Notifying %s user/moderators of new video abuse %s.', moderators.length, videoAbuse.Video.url);
+            logger_1.logger.info('Notifying %s user/moderators of new video abuse %s.', moderators.length, parameters.videoAbuseInstance.Video.url);
             function settingGetter(user) {
                 return user.NotificationSetting.videoAbuseAsModerator;
             }
@@ -289,14 +292,14 @@ class Notifier {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS,
                         userId: user.id,
-                        videoAbuseId: videoAbuse.id
+                        videoAbuseId: parameters.videoAbuse.id
                     });
-                    notification.VideoAbuse = videoAbuse;
+                    notification.VideoAbuse = parameters.videoAbuseInstance;
                     return notification;
                 });
             }
             function emailSender(emails) {
-                return emailer_1.Emailer.Instance.addVideoAbuseModeratorsNotification(emails, videoAbuse);
+                return emailer_1.Emailer.Instance.addVideoAbuseModeratorsNotification(emails, parameters);
             }
             return this.notify({ users: moderators, settingGetter, notificationCreator, emailSender });
         });
@@ -472,7 +475,7 @@ class Notifier {
                 }
             }
             if (emails.length !== 0) {
-                yield options.emailSender(emails);
+                options.emailSender(emails);
             }
         });
     }
@@ -486,7 +489,7 @@ class Notifier {
     }
     isBlockedByServerOrAccount(user, targetAccount) {
         return __awaiter(this, void 0, void 0, function* () {
-            const serverAccountId = (yield utils_1.getServerActor()).Account.id;
+            const serverAccountId = (yield application_1.getServerActor()).Account.id;
             const sourceAccounts = [serverAccountId, user.Account.id];
             const accountMutedHash = yield account_blocklist_1.AccountBlocklistModel.isAccountMutedByMulti(sourceAccounts, targetAccount.id);
             if (accountMutedHash[serverAccountId] || accountMutedHash[user.Account.id])

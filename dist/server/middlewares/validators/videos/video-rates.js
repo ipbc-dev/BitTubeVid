@@ -31,7 +31,7 @@ const videoUpdateRateValidator = [
     })
 ];
 exports.videoUpdateRateValidator = videoUpdateRateValidator;
-const getAccountVideoRateValidator = function (rateType) {
+const getAccountVideoRateValidatorFactory = function (rateType) {
     return [
         express_validator_1.param('name').custom(accounts_1.isAccountNameValid).withMessage('Should have a valid account name'),
         express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
@@ -50,14 +50,14 @@ const getAccountVideoRateValidator = function (rateType) {
         })
     ];
 };
-exports.getAccountVideoRateValidator = getAccountVideoRateValidator;
+exports.getAccountVideoRateValidatorFactory = getAccountVideoRateValidatorFactory;
 const videoRatingValidator = [
     express_validator_1.query('rating').optional().custom(video_rates_1.isRatingValid).withMessage('Value must be one of "like" or "dislike"'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         logger_1.logger.debug('Checking rating parameter', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
         return next();
-    })
+    }
 ];
 exports.videoRatingValidator = videoRatingValidator;

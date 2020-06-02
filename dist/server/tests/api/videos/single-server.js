@@ -18,6 +18,7 @@ const expect = chai.expect;
 describe('Test a single server', function () {
     let server = null;
     let videoId = -1;
+    let videoId2 = -1;
     let videoUUID = '';
     let videosListBase = null;
     const getCheckAttributes = () => ({
@@ -202,11 +203,10 @@ describe('Test a single server', function () {
     it('Should upload 6 videos', function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(25000);
-            const videos = [
+            const videos = new Set([
                 'video_short.mp4', 'video_short.ogv', 'video_short.webm',
                 'video_short1.webm', 'video_short2.webm', 'video_short3.webm'
-            ];
-            const tasks = [];
+            ]);
             for (const video of videos) {
                 const videoAttributes = {
                     name: video + ' name',
@@ -218,10 +218,8 @@ describe('Test a single server', function () {
                     tags: ['tag1', 'tag2', 'tag3'],
                     fixture: video
                 };
-                const p = extra_utils_1.uploadVideo(server.url, server.accessToken, videoAttributes);
-                tasks.push(p);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, videoAttributes);
             }
-            yield Promise.all(tasks);
         });
     });
     it('Should have the correct durations', function () {
@@ -303,6 +301,7 @@ describe('Test a single server', function () {
             expect(videos[4].name).to.equal('video_short2.webm name');
             expect(videos[5].name).to.equal('video_short1.webm name');
             videoId = videos[3].uuid;
+            videoId2 = videos[5].uuid;
         });
     });
     it('Should list and sort by trending in descending order', function () {
@@ -385,6 +384,38 @@ describe('Test a single server', function () {
             const video = res.body;
             expect(video.likes).to.equal(0);
             expect(video.dislikes).to.equal(1);
+        });
+    });
+    it('Should sort by originallyPublishedAt', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            {
+                {
+                    const now = new Date();
+                    const attributes = { originallyPublishedAt: now.toISOString() };
+                    yield extra_utils_1.updateVideo(server.url, server.accessToken, videoId, attributes);
+                    const res = yield extra_utils_1.getVideosListSort(server.url, '-originallyPublishedAt');
+                    const names = res.body.data.map(v => v.name);
+                    expect(names[0]).to.equal('my super video updated');
+                    expect(names[1]).to.equal('video_short2.webm name');
+                    expect(names[2]).to.equal('video_short1.webm name');
+                    expect(names[3]).to.equal('video_short.webm name');
+                    expect(names[4]).to.equal('video_short.ogv name');
+                    expect(names[5]).to.equal('video_short.mp4 name');
+                }
+                {
+                    const now = new Date();
+                    const attributes = { originallyPublishedAt: now.toISOString() };
+                    yield extra_utils_1.updateVideo(server.url, server.accessToken, videoId2, attributes);
+                    const res = yield extra_utils_1.getVideosListSort(server.url, '-originallyPublishedAt');
+                    const names = res.body.data.map(v => v.name);
+                    expect(names[0]).to.equal('video_short1.webm name');
+                    expect(names[1]).to.equal('my super video updated');
+                    expect(names[2]).to.equal('video_short2.webm name');
+                    expect(names[3]).to.equal('video_short.webm name');
+                    expect(names[4]).to.equal('video_short.ogv name');
+                    expect(names[5]).to.equal('video_short.mp4 name');
+                }
+            }
         });
     });
     after(function () {

@@ -7,8 +7,8 @@ const constants_1 = require("../../initializers/constants");
 const logger_1 = require("../../helpers/logger");
 const express_utils_1 = require("../../helpers/express-utils");
 const updateAvatarValidator = [
-    express_validator_1.body('avatarfile').custom((value, { req }) => users_1.isAvatarFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type : '
-        + constants_1.CONSTRAINTS_FIELDS.ACTORS.AVATAR.EXTNAME.join(', ')),
+    express_validator_1.body('avatarfile').custom((value, { req }) => users_1.isAvatarFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type : ' +
+        constants_1.CONSTRAINTS_FIELDS.ACTORS.AVATAR.EXTNAME.join(', ')),
     (req, res, next) => {
         logger_1.logger.debug('Checking updateAvatarValidator parameters', { files: req.files });
         if (utils_1.areValidationErrors(req, res))

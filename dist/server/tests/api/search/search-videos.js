@@ -63,7 +63,7 @@ describe('Test videos search', function () {
                 startDate = new Date().toISOString();
                 const attributes5 = extra_utils_1.immutableAssign(attributes1, { name: attributes1.name + ' - 5', licence: 2, language: undefined });
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, attributes5);
-                const attributes6 = extra_utils_1.immutableAssign(attributes1, { name: attributes1.name + ' - 6', tags: ['t1', 't2 '] });
+                const attributes6 = extra_utils_1.immutableAssign(attributes1, { name: attributes1.name + ' - 6', tags: ['t1', 't2'] });
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, attributes6);
                 const attributes7 = extra_utils_1.immutableAssign(attributes1, {
                     name: attributes1.name + ' - 7',

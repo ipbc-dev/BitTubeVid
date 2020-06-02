@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const register_ts_paths_1 = require("../server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
-const initializers_1 = require("../server/initializers");
+const database_1 = require("../server/initializers/database");
 const user_1 = require("../server/models/account/user");
 const users_1 = require("../server/helpers/custom-validators/users");
 program
@@ -13,7 +13,7 @@ if (program['user'] === undefined) {
     console.error('All parameters are mandatory.');
     process.exit(-1);
 }
-initializers_1.initDatabaseModels(true)
+database_1.initDatabaseModels(true)
     .then(() => {
     return user_1.UserModel.loadByUsername(program['user']);
 })

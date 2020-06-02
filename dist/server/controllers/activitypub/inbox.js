@@ -15,15 +15,19 @@ inboxRouter.post('/video-channels/:name/inbox', middlewares_1.signatureValidator
 const inboxQueue = async_1.queue((task, cb) => {
     const options = { signatureActor: task.signatureActor, inboxActor: task.inboxActor };
     process_1.processActivities(task.activities, options)
-        .then(() => cb());
+        .then(() => cb())
+        .catch(err => {
+        logger_1.logger.error('Error in process activities.', { err });
+        cb();
+    });
 });
 function inboxController(req, res) {
     const rootActivity = req.body;
-    let activities = [];
-    if (['Collection', 'CollectionPage'].indexOf(rootActivity.type) !== -1) {
+    let activities;
+    if (['Collection', 'CollectionPage'].includes(rootActivity.type)) {
         activities = rootActivity.items;
     }
-    else if (['OrderedCollection', 'OrderedCollectionPage'].indexOf(rootActivity.type) !== -1) {
+    else if (['OrderedCollection', 'OrderedCollectionPage'].includes(rootActivity.type)) {
         activities = rootActivity.orderedItems;
     }
     else {

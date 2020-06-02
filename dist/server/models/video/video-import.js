@@ -33,6 +33,7 @@ let VideoImportModel = VideoImportModel_1 = class VideoImportModel extends seque
             distinct: true,
             include: [
                 {
+                    attributes: ['id'],
                     model: user_1.UserModel.unscoped(),
                     required: true
                 }

@@ -38,7 +38,6 @@ function normalizeComment(comment) {
         else
             comment.url = comment.id;
     }
-    return;
 }
 function isCommentTypeValid(comment) {
     if (comment.type === 'Note')

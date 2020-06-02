@@ -20,7 +20,7 @@ function sendView(byActor, video, t) {
             const url = url_1.getVideoLikeActivityPubUrl(byActor, video);
             return buildViewActivity(url, byActor, video, audience);
         };
-        return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video, transaction: t });
+        return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video, transaction: t, contextType: 'View' });
     });
 }
 exports.sendView = sendView;

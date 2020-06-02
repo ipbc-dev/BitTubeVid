@@ -22,8 +22,8 @@ const constants_1 = require("@server/initializers/constants");
 const parseTorrent = require("parse-torrent");
 const magnetUtil = require("magnet-uri");
 const misc_1 = require("@server/helpers/custom-validators/misc");
-const videos_1 = require("@server/lib/videos");
 const video_paths_1 = require("@server/lib/video-paths");
+const video_1 = require("@server/helpers/video");
 const createTorrentPromise = core_utils_1.promisify2(createTorrent);
 exports.createTorrentPromise = createTorrentPromise;
 function downloadWebTorrentVideo(target, timeout) {
@@ -43,7 +43,7 @@ function downloadWebTorrentVideo(target, timeout) {
                 if (torrent.files.length !== 1) {
                     if (timer)
                         clearTimeout(timer);
-                    for (let file of torrent.files) {
+                    for (const file of torrent.files) {
                         deleteDownloadedFile({ directoryPath, filepath: file.path });
                     }
                     return safeWebtorrentDestroy(webtorrent, torrentId, undefined, target.torrentName)
@@ -54,23 +54,29 @@ function downloadWebTorrentVideo(target, timeout) {
                 writeStream.on('finish', () => {
                     if (timer)
                         clearTimeout(timer);
-                    return safeWebtorrentDestroy(webtorrent, torrentId, { directoryPath, filepath: file.path }, target.torrentName)
-                        .then(() => res(path));
+                    safeWebtorrentDestroy(webtorrent, torrentId, { directoryPath, filepath: file.path }, target.torrentName)
+                        .then(() => res(path))
+                        .catch(err => logger_1.logger.error('Cannot destroy webtorrent.', { err }));
                 });
                 file.createReadStream().pipe(writeStream);
             });
             torrent.on('error', err => rej(err));
-            timer = setTimeout(() => __awaiter(this, void 0, void 0, function* () {
-                return safeWebtorrentDestroy(webtorrent, torrentId, file ? { directoryPath, filepath: file.path } : undefined, target.torrentName)
-                    .then(() => rej(new Error('Webtorrent download timeout.')));
-            }), timeout);
+            timer = setTimeout(() => {
+                const err = new Error('Webtorrent download timeout.');
+                safeWebtorrentDestroy(webtorrent, torrentId, file ? { directoryPath, filepath: file.path } : undefined, target.torrentName)
+                    .then(() => rej(err))
+                    .catch(destroyErr => {
+                    logger_1.logger.error('Cannot destroy webtorrent.', { err: destroyErr });
+                    rej(err);
+                });
+            }, timeout);
         });
     });
 }
 exports.downloadWebTorrentVideo = downloadWebTorrentVideo;
 function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile) {
     return __awaiter(this, void 0, void 0, function* () {
-        const video = videos_1.extractVideo(videoOrPlaylist);
+        const video = video_1.extractVideo(videoOrPlaylist);
         const { baseUrlHttp } = video.getBaseUrls();
         const options = {
             name: `${video.name} ${videoFile.resolution}p${videoFile.extname}`,

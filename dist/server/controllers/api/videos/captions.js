@@ -17,7 +17,7 @@ const constants_1 = require("../../../initializers/constants");
 const utils_1 = require("../../../helpers/utils");
 const video_caption_1 = require("../../../models/video/video-caption");
 const logger_1 = require("../../../helpers/logger");
-const activitypub_1 = require("../../../lib/activitypub");
+const videos_1 = require("../../../lib/activitypub/videos");
 const captions_utils_1 = require("../../../helpers/captions-utils");
 const config_1 = require("../../../initializers/config");
 const database_1 = require("../../../initializers/database");
@@ -46,8 +46,8 @@ function addVideoCaption(req, res) {
         videoCaption.Video = video;
         yield captions_utils_1.moveAndProcessCaptionFile(videoCaptionPhysicalFile, videoCaption);
         yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
-            yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, req.params.captionLanguage, t);
-            yield activitypub_1.federateVideoIfNeeded(video, false, t);
+            yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, req.params.captionLanguage, null, t);
+            yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
         return res.status(204).end();
     });
@@ -58,7 +58,7 @@ function deleteVideoCaption(req, res) {
         const videoCaption = res.locals.videoCaption;
         yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             yield videoCaption.destroy({ transaction: t });
-            yield activitypub_1.federateVideoIfNeeded(video, false, t);
+            yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
         logger_1.logger.info('Video caption %s of video %s deleted.', videoCaption.language, video.uuid);
         return res.type('json').status(204).end();

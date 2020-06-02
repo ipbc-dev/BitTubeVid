@@ -10,39 +10,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
+const video_blacklist_1 = require("@server/lib/video-blacklist");
 const shared_1 = require("../../../../shared");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
+const database_1 = require("../../../initializers/database");
 const middlewares_1 = require("../../../middlewares");
-const video_blacklist_1 = require("../../../models/video/video-blacklist");
-const initializers_1 = require("../../../initializers");
-const notifier_1 = require("../../../lib/notifier");
-const send_1 = require("../../../lib/activitypub/send");
-const activitypub_1 = require("../../../lib/activitypub");
+const video_blacklist_2 = require("../../../models/video/video-blacklist");
 const blacklistRouter = express.Router();
 exports.blacklistRouter = blacklistRouter;
-blacklistRouter.post('/:videoId/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST), middlewares_1.asyncMiddleware(middlewares_1.videosBlacklistAddValidator), middlewares_1.asyncMiddleware(addVideoToBlacklist));
+blacklistRouter.post('/:videoId/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST), middlewares_1.asyncMiddleware(middlewares_1.videosBlacklistAddValidator), middlewares_1.asyncMiddleware(addVideoToBlacklistController));
 blacklistRouter.get('/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST), middlewares_1.paginationValidator, middlewares_1.blacklistSortValidator, middlewares_1.setBlacklistSort, middlewares_1.setDefaultPagination, middlewares_1.videosBlacklistFiltersValidator, middlewares_1.asyncMiddleware(listBlacklist));
 blacklistRouter.put('/:videoId/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST), middlewares_1.asyncMiddleware(middlewares_1.videosBlacklistUpdateValidator), middlewares_1.asyncMiddleware(updateVideoBlacklistController));
 blacklistRouter.delete('/:videoId/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST), middlewares_1.asyncMiddleware(middlewares_1.videosBlacklistRemoveValidator), middlewares_1.asyncMiddleware(removeVideoFromBlacklistController));
-function addVideoToBlacklist(req, res) {
+function addVideoToBlacklistController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
         const body = req.body;
-        const toCreate = {
-            videoId: videoInstance.id,
-            unfederated: body.unfederate === true,
-            reason: body.reason,
-            type: shared_1.VideoBlacklistType.MANUAL
-        };
-        const blacklist = yield video_blacklist_1.VideoBlacklistModel.create(toCreate);
-        blacklist.Video = videoInstance;
-        if (body.unfederate === true) {
-            yield send_1.sendDeleteVideo(videoInstance, undefined);
-        }
-        notifier_1.Notifier.Instance.notifyOnVideoBlacklist(blacklist);
+        yield video_blacklist_1.blacklistVideo(videoInstance, body);
         logger_1.logger.info('Video %s blacklisted.', videoInstance.uuid);
-        return res.type('json').status(204).end();
+        return res.type('json').sendStatus(204);
     });
 }
 function updateVideoBlacklistController(req, res) {
@@ -50,15 +37,21 @@ function updateVideoBlacklistController(req, res) {
         const videoBlacklist = res.locals.videoBlacklist;
         if (req.body.reason !== undefined)
             videoBlacklist.reason = req.body.reason;
-        yield initializers_1.sequelizeTypescript.transaction(t => {
+        yield database_1.sequelizeTypescript.transaction(t => {
             return videoBlacklist.save({ transaction: t });
         });
-        return res.type('json').status(204).end();
+        return res.type('json').sendStatus(204);
     });
 }
 function listBlacklist(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const resultList = yield video_blacklist_1.VideoBlacklistModel.listForApi(req.query.start, req.query.count, req.query.sort, req.query.type);
+        const resultList = yield video_blacklist_2.VideoBlacklistModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            type: req.query.type
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
@@ -66,23 +59,8 @@ function removeVideoFromBlacklistController(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoBlacklist = res.locals.videoBlacklist;
         const video = res.locals.videoAll;
-        const videoBlacklistType = yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
-            const unfederated = videoBlacklist.unfederated;
-            const videoBlacklistType = videoBlacklist.type;
-            yield videoBlacklist.destroy({ transaction: t });
-            video.VideoBlacklist = undefined;
-            if (unfederated === true) {
-                yield activitypub_1.federateVideoIfNeeded(video, true, t);
-            }
-            return videoBlacklistType;
-        }));
-        notifier_1.Notifier.Instance.notifyOnVideoUnblacklist(video);
-        if (videoBlacklistType === shared_1.VideoBlacklistType.AUTO_BEFORE_PUBLISHED) {
-            notifier_1.Notifier.Instance.notifyOnVideoPublishedAfterRemovedFromAutoBlacklist(video);
-            delete video.VideoBlacklist;
-            notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
-        }
+        yield video_blacklist_1.unblacklistVideo(videoBlacklist, video);
         logger_1.logger.info('Video %s removed from blacklist.', video.uuid);
-        return res.type('json').status(204).end();
+        return res.type('json').sendStatus(204);
     });
 }

@@ -163,8 +163,9 @@ function generateHlsPlaylist(video, resolution, copyCodecs, isPortraitMode) {
         const stats = yield fs_extra_1.stat(videoFilePath);
         newVideoFile.size = stats.size;
         newVideoFile.fps = yield ffmpeg_utils_1.getVideoFileFPS(videoFilePath);
+        newVideoFile.metadata = yield ffmpeg_utils_1.getMetadataFromFile(videoFilePath);
         yield webtorrent_1.createTorrentAndSetInfoHash(videoStreamingPlaylist, newVideoFile);
-        yield newVideoFile.save();
+        yield video_file_1.VideoFileModel.customUpsert(newVideoFile, 'streaming-playlist', undefined);
         videoStreamingPlaylist.VideoFiles = yield videoStreamingPlaylist.$get('VideoFiles');
         video.setHLSPlaylist(videoStreamingPlaylist);
         yield hls_1.updateMasterHLSPlaylist(video);
@@ -177,9 +178,11 @@ function onVideoFileTranscoding(video, videoFile, transcodingPath, outputPath) {
     return __awaiter(this, void 0, void 0, function* () {
         const stats = yield fs_extra_1.stat(transcodingPath);
         const fps = yield ffmpeg_utils_1.getVideoFileFPS(transcodingPath);
+        const metadata = yield ffmpeg_utils_1.getMetadataFromFile(transcodingPath);
         yield fs_extra_1.move(transcodingPath, outputPath);
         videoFile.size = stats.size;
         videoFile.fps = fps;
+        videoFile.metadata = metadata;
         yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile);
         const updatedVideoFile = yield videoFile.save();
         if (video.VideoFiles.some(f => f.id === videoFile.id) === false) {

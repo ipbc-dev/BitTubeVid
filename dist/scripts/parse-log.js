@@ -45,7 +45,7 @@ const logger = winston.createLogger({
         new winston.transports.Console({
             level: program['level'] || 'debug',
             stderrLevels: [],
-            format: winston.format.combine(winston.format.splat(), logger_1.labelFormatter, winston.format.colorize(), loggerFormat)
+            format: winston.format.combine(winston.format.splat(), logger_1.labelFormatter(), winston.format.colorize(), loggerFormat)
         })
     ],
     exitOnError: true

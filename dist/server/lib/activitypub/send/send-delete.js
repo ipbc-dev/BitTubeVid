@@ -15,7 +15,7 @@ const url_1 = require("../url");
 const utils_1 = require("./utils");
 const audience_1 = require("../audience");
 const logger_1 = require("../../../helpers/logger");
-const utils_2 = require("../../../helpers/utils");
+const application_1 = require("@server/models/application/application");
 function sendDeleteVideo(video, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to broadcast delete of video %s.', video.url);
@@ -34,7 +34,7 @@ function sendDeleteActor(byActor, t) {
         const url = url_1.getDeleteActivityPubUrl(byActor.url);
         const activity = buildDeleteActivity(url, byActor.url, byActor);
         const actorsInvolved = yield video_share_1.VideoShareModel.loadActorsWhoSharedVideosOf(byActor.id, t);
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         actorsInvolved.push(serverActor);
         actorsInvolved.push(byActor);
         return utils_1.broadcastToFollowers(activity, byActor, actorsInvolved, t);
@@ -70,7 +70,7 @@ function sendDeleteVideoPlaylist(videoPlaylist, t) {
         const byActor = videoPlaylist.OwnerAccount.Actor;
         const url = url_1.getDeleteActivityPubUrl(videoPlaylist.url);
         const activity = buildDeleteActivity(url, videoPlaylist.url, byActor);
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const toFollowersOf = [byActor, serverActor];
         if (videoPlaylist.VideoChannel)
             toFollowersOf.push(videoPlaylist.VideoChannel.Actor);

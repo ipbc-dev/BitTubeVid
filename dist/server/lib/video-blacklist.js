@@ -9,17 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_1 = require("../initializers/config");
+const database_1 = require("@server/initializers/database");
 const models_1 = require("../../shared/models");
-const video_blacklist_1 = require("../models/video/video-blacklist");
-const logger_1 = require("../helpers/logger");
 const user_flag_model_1 = require("../../shared/models/users/user-flag.model");
-const hooks_1 = require("./plugins/hooks");
+const logger_1 = require("../helpers/logger");
+const config_1 = require("../initializers/config");
+const video_blacklist_1 = require("../models/video/video-blacklist");
+const send_1 = require("./activitypub/send");
+const videos_1 = require("./activitypub/videos");
 const notifier_1 = require("./notifier");
+const hooks_1 = require("./plugins/hooks");
 function autoBlacklistVideoIfNeeded(parameters) {
     return __awaiter(this, void 0, void 0, function* () {
         const { video, user, isRemote, isNew, notify = true, transaction } = parameters;
-        const doAutoBlacklist = yield hooks_1.Hooks.wrapPromiseFun(autoBlacklistNeeded, { video, user, isRemote, isNew }, 'filter:video.auto-blacklist.result');
+        const doAutoBlacklist = yield hooks_1.Hooks.wrapFun(autoBlacklistNeeded, { video, user, isRemote, isNew }, 'filter:video.auto-blacklist.result');
         if (!doAutoBlacklist)
             return false;
         const videoBlacklistToCreate = {
@@ -44,17 +47,52 @@ function autoBlacklistVideoIfNeeded(parameters) {
     });
 }
 exports.autoBlacklistVideoIfNeeded = autoBlacklistVideoIfNeeded;
-function autoBlacklistNeeded(parameters) {
+function blacklistVideo(videoInstance, options) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { user, video, isRemote, isNew } = parameters;
-        if (video.VideoBlacklist)
-            return false;
-        if (!config_1.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED || !user)
-            return false;
-        if (isRemote || isNew === false)
-            return false;
-        if (user.hasRight(models_1.UserRight.MANAGE_VIDEO_BLACKLIST) || user.hasAdminFlag(user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST))
-            return false;
-        return true;
+        const blacklist = yield video_blacklist_1.VideoBlacklistModel.create({
+            videoId: videoInstance.id,
+            unfederated: options.unfederate === true,
+            reason: options.reason,
+            type: models_1.VideoBlacklistType.MANUAL
+        });
+        blacklist.Video = videoInstance;
+        if (options.unfederate === true) {
+            yield send_1.sendDeleteVideo(videoInstance, undefined);
+        }
+        notifier_1.Notifier.Instance.notifyOnVideoBlacklist(blacklist);
     });
+}
+exports.blacklistVideo = blacklistVideo;
+function unblacklistVideo(videoBlacklist, video) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const videoBlacklistType = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const unfederated = videoBlacklist.unfederated;
+            const videoBlacklistType = videoBlacklist.type;
+            yield videoBlacklist.destroy({ transaction: t });
+            video.VideoBlacklist = undefined;
+            if (unfederated === true) {
+                yield videos_1.federateVideoIfNeeded(video, true, t);
+            }
+            return videoBlacklistType;
+        }));
+        notifier_1.Notifier.Instance.notifyOnVideoUnblacklist(video);
+        if (videoBlacklistType === models_1.VideoBlacklistType.AUTO_BEFORE_PUBLISHED) {
+            notifier_1.Notifier.Instance.notifyOnVideoPublishedAfterRemovedFromAutoBlacklist(video);
+            delete video.VideoBlacklist;
+            notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
+        }
+    });
+}
+exports.unblacklistVideo = unblacklistVideo;
+function autoBlacklistNeeded(parameters) {
+    const { user, video, isRemote, isNew } = parameters;
+    if (video.VideoBlacklist)
+        return false;
+    if (!config_1.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED || !user)
+        return false;
+    if (isRemote || isNew === false)
+        return false;
+    if (user.hasRight(models_1.UserRight.MANAGE_VIDEO_BLACKLIST) || user.hasAdminFlag(user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST))
+        return false;
+    return true;
 }

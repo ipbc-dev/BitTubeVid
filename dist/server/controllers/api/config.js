@@ -9,31 +9,30 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const hooks_1 = require("@server/lib/plugins/hooks");
 const express = require("express");
-const lodash_1 = require("lodash");
-const shared_1 = require("../../../shared");
-const signup_1 = require("../../helpers/signup");
-const constants_1 = require("../../initializers/constants");
-const middlewares_1 = require("../../middlewares");
-const config_1 = require("../../middlewares/validators/config");
-const client_html_1 = require("../../lib/client-html");
-const audit_logger_1 = require("../../helpers/audit-logger");
 const fs_extra_1 = require("fs-extra");
-const utils_1 = require("../../helpers/utils");
-const emailer_1 = require("../../lib/emailer");
+const lodash_1 = require("lodash");
 const validator_1 = require("validator");
+const shared_1 = require("../../../shared");
+const audit_logger_1 = require("../../helpers/audit-logger");
 const core_utils_1 = require("../../helpers/core-utils");
-const config_2 = require("../../initializers/config");
+const signup_1 = require("../../helpers/signup");
+const utils_1 = require("../../helpers/utils");
+const config_1 = require("../../initializers/config");
+const constants_1 = require("../../initializers/constants");
+const client_html_1 = require("../../lib/client-html");
 const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const theme_utils_1 = require("../../lib/plugins/theme-utils");
-const hooks_1 = require("@server/lib/plugins/hooks");
+const middlewares_1 = require("../../middlewares");
+const config_2 = require("../../middlewares/validators/config");
 const configRouter = express.Router();
 exports.configRouter = configRouter;
 const auditLogger = audit_logger_1.auditLoggerFactory('config');
 configRouter.get('/about', getAbout);
 configRouter.get('/', middlewares_1.asyncMiddleware(getConfig));
-configRouter.get('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), middlewares_1.asyncMiddleware(getCustomConfig));
-configRouter.put('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), middlewares_1.asyncMiddleware(config_1.customConfigUpdateValidator), middlewares_1.asyncMiddleware(updateCustomConfig));
+configRouter.get('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), getCustomConfig);
+configRouter.put('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), config_2.customConfigUpdateValidator, middlewares_1.asyncMiddleware(updateCustomConfig));
 configRouter.delete('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), middlewares_1.asyncMiddleware(deleteCustomConfig));
 let serverCommit;
 function getConfig(req, res) {
@@ -42,64 +41,72 @@ function getConfig(req, res) {
             ip: req.ip
         }, 'filter:api.user.signup.allowed.result');
         const allowedForCurrentIP = signup_1.isSignupAllowedForCurrentIP(req.ip);
-        const defaultTheme = theme_utils_1.getThemeOrDefault(config_2.CONFIG.THEME.DEFAULT, constants_1.DEFAULT_THEME_NAME);
+        const defaultTheme = theme_utils_1.getThemeOrDefault(config_1.CONFIG.THEME.DEFAULT, constants_1.DEFAULT_THEME_NAME);
         if (serverCommit === undefined)
             serverCommit = yield utils_1.getServerCommit();
         const json = {
             instance: {
-                name: config_2.CONFIG.INSTANCE.NAME,
-                shortDescription: config_2.CONFIG.INSTANCE.SHORT_DESCRIPTION,
-                defaultClientRoute: config_2.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
-                isNSFW: config_2.CONFIG.INSTANCE.IS_NSFW,
-                defaultNSFWPolicy: config_2.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
+                name: config_1.CONFIG.INSTANCE.NAME,
+                shortDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
+                defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
+                isNSFW: config_1.CONFIG.INSTANCE.IS_NSFW,
+                defaultNSFWPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
                 customizations: {
-                    javascript: config_2.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT,
-                    css: config_2.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS
+                    javascript: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT,
+                    css: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS
+                }
+            },
+            search: {
+                remoteUri: {
+                    users: config_1.CONFIG.SEARCH.REMOTE_URI.USERS,
+                    anonymous: config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
                 }
             },
             plugin: {
-                registered: getRegisteredPlugins()
+                registered: getRegisteredPlugins(),
+                registeredExternalAuths: getExternalAuthsPlugins(),
+                registeredIdAndPassAuths: getIdAndPassAuthPlugins()
             },
             theme: {
                 registered: getRegisteredThemes(),
                 default: defaultTheme
             },
             email: {
-                enabled: emailer_1.Emailer.isEnabled()
+                enabled: config_1.isEmailEnabled()
             },
             contactForm: {
-                enabled: config_2.CONFIG.CONTACT_FORM.ENABLED
+                enabled: config_1.CONFIG.CONTACT_FORM.ENABLED
             },
             serverVersion: constants_1.PEERTUBE_VERSION,
             serverCommit,
             signup: {
                 allowed,
                 allowedForCurrentIP,
-                requiresEmailVerification: config_2.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION
+                requiresEmailVerification: config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION
             },
             transcoding: {
                 hls: {
-                    enabled: config_2.CONFIG.TRANSCODING.HLS.ENABLED
+                    enabled: config_1.CONFIG.TRANSCODING.HLS.ENABLED
                 },
                 webtorrent: {
-                    enabled: config_2.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
+                    enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
                 },
                 enabledResolutions: getEnabledResolutions()
             },
             import: {
                 videos: {
                     http: {
-                        enabled: config_2.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
+                        enabled: config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
                     },
                     torrent: {
-                        enabled: config_2.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
+                        enabled: config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
                     }
                 }
             },
             autoBlacklist: {
                 videos: {
                     ofUsers: {
-                        enabled: config_2.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
+                        enabled: config_1.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
                     }
                 }
             },
@@ -131,21 +138,21 @@ function getConfig(req, res) {
                 }
             },
             user: {
-                videoQuota: config_2.CONFIG.USER.VIDEO_QUOTA,
-                videoQuotaDaily: config_2.CONFIG.USER.VIDEO_QUOTA_DAILY
+                videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
+                videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY
             },
             trending: {
                 videos: {
-                    intervalDays: config_2.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS
+                    intervalDays: config_1.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS
                 }
             },
             tracker: {
-                enabled: config_2.CONFIG.TRACKER.ENABLED
+                enabled: config_1.CONFIG.TRACKER.ENABLED
             },
             followings: {
                 instance: {
                     autoFollowIndex: {
-                        indexUrl: config_2.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
+                        indexUrl: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
                     }
                 }
             }
@@ -156,34 +163,32 @@ function getConfig(req, res) {
 function getAbout(req, res) {
     const about = {
         instance: {
-            name: config_2.CONFIG.INSTANCE.NAME,
-            shortDescription: config_2.CONFIG.INSTANCE.SHORT_DESCRIPTION,
-            description: config_2.CONFIG.INSTANCE.DESCRIPTION,
-            terms: config_2.CONFIG.INSTANCE.TERMS,
-            codeOfConduct: config_2.CONFIG.INSTANCE.CODE_OF_CONDUCT,
-            hardwareInformation: config_2.CONFIG.INSTANCE.HARDWARE_INFORMATION,
-            creationReason: config_2.CONFIG.INSTANCE.CREATION_REASON,
-            moderationInformation: config_2.CONFIG.INSTANCE.MODERATION_INFORMATION,
-            administrator: config_2.CONFIG.INSTANCE.ADMINISTRATOR,
-            maintenanceLifetime: config_2.CONFIG.INSTANCE.MAINTENANCE_LIFETIME,
-            businessModel: config_2.CONFIG.INSTANCE.BUSINESS_MODEL,
-            languages: config_2.CONFIG.INSTANCE.LANGUAGES,
-            categories: config_2.CONFIG.INSTANCE.CATEGORIES
+            name: config_1.CONFIG.INSTANCE.NAME,
+            shortDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
+            description: config_1.CONFIG.INSTANCE.DESCRIPTION,
+            terms: config_1.CONFIG.INSTANCE.TERMS,
+            codeOfConduct: config_1.CONFIG.INSTANCE.CODE_OF_CONDUCT,
+            hardwareInformation: config_1.CONFIG.INSTANCE.HARDWARE_INFORMATION,
+            creationReason: config_1.CONFIG.INSTANCE.CREATION_REASON,
+            moderationInformation: config_1.CONFIG.INSTANCE.MODERATION_INFORMATION,
+            administrator: config_1.CONFIG.INSTANCE.ADMINISTRATOR,
+            maintenanceLifetime: config_1.CONFIG.INSTANCE.MAINTENANCE_LIFETIME,
+            businessModel: config_1.CONFIG.INSTANCE.BUSINESS_MODEL,
+            languages: config_1.CONFIG.INSTANCE.LANGUAGES,
+            categories: config_1.CONFIG.INSTANCE.CATEGORIES
         }
     };
     return res.json(about).end();
 }
 function getCustomConfig(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const data = customConfig();
-        return res.json(data).end();
-    });
+    const data = customConfig();
+    return res.json(data).end();
 }
 function deleteCustomConfig(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield fs_extra_1.remove(config_2.CONFIG.CUSTOM_FILE);
+        yield fs_extra_1.remove(config_1.CONFIG.CUSTOM_FILE);
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CustomConfigAuditView(customConfig()));
-        config_2.reloadConfig();
+        config_1.reloadConfig();
         client_html_1.ClientHtml.invalidCache();
         const data = customConfig();
         return res.json(data).end();
@@ -193,8 +198,8 @@ function updateCustomConfig(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const oldCustomConfigAuditKeys = new audit_logger_1.CustomConfigAuditView(customConfig());
         const toUpdateJSON = convertCustomConfigBody(req.body);
-        yield fs_extra_1.writeJSON(config_2.CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 });
-        config_2.reloadConfig();
+        yield fs_extra_1.writeJSON(config_1.CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 });
+        config_1.reloadConfig();
         client_html_1.ClientHtml.invalidCache();
         const data = customConfig();
         auditLogger.update(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CustomConfigAuditView(data), oldCustomConfigAuditKeys);
@@ -213,8 +218,8 @@ function getRegisteredThemes() {
 }
 exports.getRegisteredThemes = getRegisteredThemes;
 function getEnabledResolutions() {
-    return Object.keys(config_2.CONFIG.TRANSCODING.RESOLUTIONS)
-        .filter(key => config_2.CONFIG.TRANSCODING.ENABLED && config_2.CONFIG.TRANSCODING.RESOLUTIONS[key] === true)
+    return Object.keys(config_1.CONFIG.TRANSCODING.RESOLUTIONS)
+        .filter(key => config_1.CONFIG.TRANSCODING.ENABLED && config_1.CONFIG.TRANSCODING.RESOLUTIONS[key] === true)
         .map(r => parseInt(r, 10));
 }
 exports.getEnabledResolutions = getEnabledResolutions;
@@ -228,114 +233,144 @@ function getRegisteredPlugins() {
     }));
 }
 exports.getRegisteredPlugins = getRegisteredPlugins;
+function getIdAndPassAuthPlugins() {
+    const result = [];
+    for (const p of plugin_manager_1.PluginManager.Instance.getIdAndPassAuths()) {
+        for (const auth of p.idAndPassAuths) {
+            result.push({
+                npmName: p.npmName,
+                name: p.name,
+                version: p.version,
+                authName: auth.authName,
+                weight: auth.getWeight()
+            });
+        }
+    }
+    return result;
+}
+function getExternalAuthsPlugins() {
+    const result = [];
+    for (const p of plugin_manager_1.PluginManager.Instance.getExternalAuths()) {
+        for (const auth of p.externalAuths) {
+            result.push({
+                npmName: p.npmName,
+                name: p.name,
+                version: p.version,
+                authName: auth.authName,
+                authDisplayName: auth.authDisplayName()
+            });
+        }
+    }
+    return result;
+}
 function customConfig() {
     return {
         instance: {
-            name: config_2.CONFIG.INSTANCE.NAME,
-            shortDescription: config_2.CONFIG.INSTANCE.SHORT_DESCRIPTION,
-            description: config_2.CONFIG.INSTANCE.DESCRIPTION,
-            terms: config_2.CONFIG.INSTANCE.TERMS,
-            codeOfConduct: config_2.CONFIG.INSTANCE.CODE_OF_CONDUCT,
-            creationReason: config_2.CONFIG.INSTANCE.CREATION_REASON,
-            moderationInformation: config_2.CONFIG.INSTANCE.MODERATION_INFORMATION,
-            administrator: config_2.CONFIG.INSTANCE.ADMINISTRATOR,
-            maintenanceLifetime: config_2.CONFIG.INSTANCE.MAINTENANCE_LIFETIME,
-            businessModel: config_2.CONFIG.INSTANCE.BUSINESS_MODEL,
-            hardwareInformation: config_2.CONFIG.INSTANCE.HARDWARE_INFORMATION,
-            languages: config_2.CONFIG.INSTANCE.LANGUAGES,
-            categories: config_2.CONFIG.INSTANCE.CATEGORIES,
-            isNSFW: config_2.CONFIG.INSTANCE.IS_NSFW,
-            defaultClientRoute: config_2.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
-            defaultNSFWPolicy: config_2.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
+            name: config_1.CONFIG.INSTANCE.NAME,
+            shortDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
+            description: config_1.CONFIG.INSTANCE.DESCRIPTION,
+            terms: config_1.CONFIG.INSTANCE.TERMS,
+            codeOfConduct: config_1.CONFIG.INSTANCE.CODE_OF_CONDUCT,
+            creationReason: config_1.CONFIG.INSTANCE.CREATION_REASON,
+            moderationInformation: config_1.CONFIG.INSTANCE.MODERATION_INFORMATION,
+            administrator: config_1.CONFIG.INSTANCE.ADMINISTRATOR,
+            maintenanceLifetime: config_1.CONFIG.INSTANCE.MAINTENANCE_LIFETIME,
+            businessModel: config_1.CONFIG.INSTANCE.BUSINESS_MODEL,
+            hardwareInformation: config_1.CONFIG.INSTANCE.HARDWARE_INFORMATION,
+            languages: config_1.CONFIG.INSTANCE.LANGUAGES,
+            categories: config_1.CONFIG.INSTANCE.CATEGORIES,
+            isNSFW: config_1.CONFIG.INSTANCE.IS_NSFW,
+            defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
+            defaultNSFWPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
             customizations: {
-                css: config_2.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS,
-                javascript: config_2.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT
+                css: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS,
+                javascript: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT
             }
         },
         theme: {
-            default: config_2.CONFIG.THEME.DEFAULT
+            default: config_1.CONFIG.THEME.DEFAULT
         },
         services: {
             twitter: {
-                username: config_2.CONFIG.SERVICES.TWITTER.USERNAME,
-                whitelisted: config_2.CONFIG.SERVICES.TWITTER.WHITELISTED
+                username: config_1.CONFIG.SERVICES.TWITTER.USERNAME,
+                whitelisted: config_1.CONFIG.SERVICES.TWITTER.WHITELISTED
             }
         },
         cache: {
             previews: {
-                size: config_2.CONFIG.CACHE.PREVIEWS.SIZE
+                size: config_1.CONFIG.CACHE.PREVIEWS.SIZE
             },
             captions: {
-                size: config_2.CONFIG.CACHE.VIDEO_CAPTIONS.SIZE
+                size: config_1.CONFIG.CACHE.VIDEO_CAPTIONS.SIZE
             }
         },
         signup: {
-            enabled: config_2.CONFIG.SIGNUP.ENABLED,
-            limit: config_2.CONFIG.SIGNUP.LIMIT,
-            requiresEmailVerification: config_2.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION
+            enabled: config_1.CONFIG.SIGNUP.ENABLED,
+            limit: config_1.CONFIG.SIGNUP.LIMIT,
+            requiresEmailVerification: config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION
         },
         admin: {
-            email: config_2.CONFIG.ADMIN.EMAIL
+            email: config_1.CONFIG.ADMIN.EMAIL
         },
         contactForm: {
-            enabled: config_2.CONFIG.CONTACT_FORM.ENABLED
+            enabled: config_1.CONFIG.CONTACT_FORM.ENABLED
         },
         user: {
-            videoQuota: config_2.CONFIG.USER.VIDEO_QUOTA,
-            videoQuotaDaily: config_2.CONFIG.USER.VIDEO_QUOTA_DAILY
+            videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
+            videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY
         },
         transcoding: {
-            enabled: config_2.CONFIG.TRANSCODING.ENABLED,
-            allowAdditionalExtensions: config_2.CONFIG.TRANSCODING.ALLOW_ADDITIONAL_EXTENSIONS,
-            allowAudioFiles: config_2.CONFIG.TRANSCODING.ALLOW_AUDIO_FILES,
-            threads: config_2.CONFIG.TRANSCODING.THREADS,
+            enabled: config_1.CONFIG.TRANSCODING.ENABLED,
+            allowAdditionalExtensions: config_1.CONFIG.TRANSCODING.ALLOW_ADDITIONAL_EXTENSIONS,
+            allowAudioFiles: config_1.CONFIG.TRANSCODING.ALLOW_AUDIO_FILES,
+            threads: config_1.CONFIG.TRANSCODING.THREADS,
             resolutions: {
-                '0p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['0p'],
-                '240p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['240p'],
-                '360p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['360p'],
-                '480p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['480p'],
-                '720p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['720p'],
-                '1080p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['1080p'],
-                '2160p': config_2.CONFIG.TRANSCODING.RESOLUTIONS['2160p']
+                '0p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['0p'],
+                '240p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['240p'],
+                '360p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['360p'],
+                '480p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['480p'],
+                '720p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['720p'],
+                '1080p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['1080p'],
+                '2160p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['2160p']
             },
             webtorrent: {
-                enabled: config_2.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
+                enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
             },
             hls: {
-                enabled: config_2.CONFIG.TRANSCODING.HLS.ENABLED
+                enabled: config_1.CONFIG.TRANSCODING.HLS.ENABLED
             }
         },
         import: {
             videos: {
                 http: {
-                    enabled: config_2.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
+                    enabled: config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
                 },
                 torrent: {
-                    enabled: config_2.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
+                    enabled: config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
                 }
             }
         },
         autoBlacklist: {
             videos: {
                 ofUsers: {
-                    enabled: config_2.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
+                    enabled: config_1.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
                 }
             }
         },
         followers: {
             instance: {
-                enabled: config_2.CONFIG.FOLLOWERS.INSTANCE.ENABLED,
-                manualApproval: config_2.CONFIG.FOLLOWERS.INSTANCE.MANUAL_APPROVAL
+                enabled: config_1.CONFIG.FOLLOWERS.INSTANCE.ENABLED,
+                manualApproval: config_1.CONFIG.FOLLOWERS.INSTANCE.MANUAL_APPROVAL
             }
         },
         followings: {
             instance: {
                 autoFollowBack: {
-                    enabled: config_2.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_BACK.ENABLED
+                    enabled: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_BACK.ENABLED
                 },
                 autoFollowIndex: {
-                    enabled: config_2.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.ENABLED,
-                    indexUrl: config_2.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
+                    enabled: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.ENABLED,
+                    indexUrl: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
                 }
             }
         }

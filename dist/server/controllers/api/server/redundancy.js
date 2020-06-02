@@ -44,7 +44,7 @@ function addVideoRedundancy(req, res) {
         const payload = {
             videoId: res.locals.onlyVideo.id
         };
-        yield job_queue_1.JobQueue.Instance.createJob({
+        yield job_queue_1.JobQueue.Instance.createJobWithPromise({
             type: 'video-redundancy',
             payload
         });

@@ -32,7 +32,7 @@ function removeVideoFromBlacklist(url, token, videoId, specialStatus = 204) {
 }
 exports.removeVideoFromBlacklist = removeVideoFromBlacklist;
 function getBlacklistedVideosList(parameters) {
-    let { url, token, sort, type, specialStatus = 200 } = parameters;
+    const { url, token, sort, type, specialStatus = 200 } = parameters;
     const path = '/api/v1/videos/blacklist/';
     const query = { sort, type };
     return __1.makeGetRequest({

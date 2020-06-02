@@ -14,10 +14,12 @@ const express_utils_1 = require("../../helpers/express-utils");
 const utils_1 = require("../../helpers/utils");
 const video_1 = require("../../models/video/video");
 const middlewares_1 = require("../../middlewares");
-const activitypub_1 = require("../../lib/activitypub");
+const actor_1 = require("../../lib/activitypub/actor");
 const logger_1 = require("../../helpers/logger");
 const video_channel_1 = require("../../models/video/video-channel");
 const webfinger_1 = require("../../helpers/webfinger");
+const application_1 = require("@server/models/application/application");
+const videos_1 = require("@server/lib/activitypub/videos");
 const searchRouter = express.Router();
 exports.searchRouter = searchRouter;
 searchRouter.get('/videos', middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.videosSearchSortValidator, middlewares_1.setDefaultSearchSort, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.videosSearchValidator, middlewares_1.asyncMiddleware(searchVideos));
@@ -29,7 +31,7 @@ function searchVideoChannels(req, res) {
     const parts = search.split('@');
     if (parts.length === 3 && parts[0].length === 0)
         parts.shift();
-    const isWebfingerSearch = parts.length === 2 && parts.every(p => p && p.indexOf(' ') === -1);
+    const isWebfingerSearch = parts.length === 2 && parts.every(p => p && !p.includes(' '));
     if (isURISearch || isWebfingerSearch)
         return searchVideoChannelURI(search, isWebfingerSearch, res);
     if (query.search.startsWith('@'))
@@ -38,7 +40,7 @@ function searchVideoChannels(req, res) {
 }
 function searchVideoChannelsDB(query, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const options = {
             actorId: serverActor.id,
             search: query.search,
@@ -65,7 +67,7 @@ function searchVideoChannelURI(search, isWebfingerSearch, res) {
         }
         if (express_utils_1.isUserAbleToSearchRemoteURI(res)) {
             try {
-                const actor = yield activitypub_1.getOrCreateActorAndServerAndModel(uri, 'all', true, true);
+                const actor = yield actor_1.getOrCreateActorAndServerAndModel(uri, 'all', true, true);
                 videoChannel = actor.VideoChannel;
             }
             catch (err) {
@@ -114,7 +116,7 @@ function searchVideoURI(url, res) {
                     thumbnail: true,
                     refreshVideo: false
                 };
-                const result = yield activitypub_1.getOrCreateVideoAndAccountAndChannel({ videoObject: url, syncParam });
+                const result = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: url, syncParam });
                 video = result ? result.video : undefined;
             }
             catch (err) {

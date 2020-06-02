@@ -16,7 +16,13 @@ const login_1 = require("../../../../shared/extra-utils/users/login");
 const users_1 = require("../../../../shared/extra-utils/users/users");
 const videos_1 = require("../../../../shared/extra-utils/videos/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const overviews_1 = require("@shared/extra-utils/overviews/overviews");
 const expect = chai.expect;
+function createOverviewRes(res) {
+    const overview = res.body;
+    const videos = overview.categories[0].videos;
+    return { body: { data: videos, total: videos.length } };
+}
 describe('Test video NSFW policy', function () {
     let server;
     let userAccessToken;
@@ -27,20 +33,30 @@ describe('Test video NSFW policy', function () {
             const user = res.body;
             const videoChannelName = user.videoChannels[0].name;
             const accountName = user.account.name + '@' + user.account.host;
+            const hasQuery = Object.keys(query).length !== 0;
+            let promises;
             if (token) {
-                return Promise.all([
+                promises = [
                     extra_utils_1.getVideosListWithToken(server.url, token, query),
                     extra_utils_1.searchVideoWithToken(server.url, 'n', token, query),
                     extra_utils_1.getAccountVideos(server.url, token, accountName, 0, 5, undefined, query),
                     extra_utils_1.getVideoChannelVideos(server.url, token, videoChannelName, 0, 5, undefined, query)
-                ]);
+                ];
+                if (!hasQuery) {
+                    promises.push(overviews_1.getVideosOverviewWithToken(server.url, 1, token).then(res => createOverviewRes(res)));
+                }
+                return Promise.all(promises);
             }
-            return Promise.all([
+            promises = [
                 index_1.getVideosList(server.url),
                 extra_utils_1.searchVideo(server.url, 'n'),
                 extra_utils_1.getAccountVideos(server.url, undefined, accountName, 0, 5),
                 extra_utils_1.getVideoChannelVideos(server.url, undefined, videoChannelName, 0, 5)
-            ]);
+            ];
+            if (!hasQuery) {
+                promises.push(overviews_1.getVideosOverview(server.url, 1).then(res => createOverviewRes(res)));
+            }
+            return Promise.all(promises);
         });
     }
     before(function () {
@@ -49,11 +65,11 @@ describe('Test video NSFW policy', function () {
             server = yield extra_utils_1.flushAndRunServer(1);
             yield index_1.setAccessTokensToServers([server]);
             {
-                const attributes = { name: 'nsfw', nsfw: true };
+                const attributes = { name: 'nsfw', nsfw: true, category: 1 };
                 yield index_1.uploadVideo(server.url, server.accessToken, attributes);
             }
             {
-                const attributes = { name: 'normal', nsfw: false };
+                const attributes = { name: 'normal', nsfw: false, category: 1 };
                 yield index_1.uploadVideo(server.url, server.accessToken, attributes);
             }
             {

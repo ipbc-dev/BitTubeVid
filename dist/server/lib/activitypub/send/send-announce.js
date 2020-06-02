@@ -27,7 +27,7 @@ function sendVideoAnnounce(byActor, videoShare, video, t) {
         const { activity, actorsInvolvedInVideo } = yield buildAnnounceWithVideoAudience(byActor, videoShare, video, t);
         logger_1.logger.info('Creating job to send announce %s.', videoShare.url);
         const followersException = [byActor];
-        return utils_1.broadcastToFollowers(activity, byActor, actorsInvolvedInVideo, t, followersException);
+        return utils_1.broadcastToFollowers(activity, byActor, actorsInvolvedInVideo, t, followersException, 'Announce');
     });
 }
 exports.sendVideoAnnounce = sendVideoAnnounce;

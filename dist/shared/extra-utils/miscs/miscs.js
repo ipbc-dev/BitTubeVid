@@ -83,7 +83,7 @@ function generateHighBitrateVideo() {
         yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
         const exists = yield fs_extra_1.pathExists(tempFixturePath);
         if (!exists) {
-            return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+            return new Promise((res, rej) => {
                 ffmpeg()
                     .outputOptions(['-f rawvideo', '-video_size 1920x1080', '-i /dev/urandom'])
                     .outputOptions(['-ac 2', '-f s16le', '-i /dev/urandom', '-t 10'])
@@ -92,9 +92,30 @@ function generateHighBitrateVideo() {
                     .on('error', rej)
                     .on('end', () => res(tempFixturePath))
                     .run();
-            }));
+            });
         }
         return tempFixturePath;
     });
 }
 exports.generateHighBitrateVideo = generateHighBitrateVideo;
+function generateVideoWithFramerate(fps = 60) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const tempFixturePath = buildAbsoluteFixturePath(`video_${fps}fps.mp4`, true);
+        yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
+        const exists = yield fs_extra_1.pathExists(tempFixturePath);
+        if (!exists) {
+            return new Promise((res, rej) => {
+                ffmpeg()
+                    .outputOptions(['-f rawvideo', '-video_size 1280x720', '-i /dev/urandom'])
+                    .outputOptions(['-ac 2', '-f s16le', '-i /dev/urandom', '-t 10'])
+                    .outputOptions([`-r ${fps}`])
+                    .output(tempFixturePath)
+                    .on('error', rej)
+                    .on('end', () => res(tempFixturePath))
+                    .run();
+            });
+        }
+        return tempFixturePath;
+    });
+}
+exports.generateVideoWithFramerate = generateVideoWithFramerate;

@@ -5,7 +5,7 @@ const path = require("path");
 const winston = require("winston");
 const config_1 = require("../initializers/config");
 const lodash_1 = require("lodash");
-const constants_1 = require("@server/initializers/constants");
+const constants_1 = require("../initializers/constants");
 const label = config_1.CONFIG.WEBSERVER.HOSTNAME + ':' + config_1.CONFIG.WEBSERVER.PORT;
 fs_extra_1.mkdirpSync(config_1.CONFIG.STORAGE.LOG_DIR);
 function getLoggerReplacer() {
@@ -18,7 +18,7 @@ function getLoggerReplacer() {
         }
         if (value instanceof Error) {
             const error = {};
-            Object.getOwnPropertyNames(value).forEach(key => error[key] = value[key]);
+            Object.getOwnPropertyNames(value).forEach(key => { error[key] = value[key]; });
             return error;
         }
         return value;
@@ -42,9 +42,11 @@ const timestampFormatter = winston.format.timestamp({
     format: 'YYYY-MM-DD HH:mm:ss.SSS'
 });
 exports.timestampFormatter = timestampFormatter;
-const labelFormatter = winston.format.label({
-    label
-});
+const labelFormatter = (suffix) => {
+    return winston.format.label({
+        label: suffix ? `${label} ${suffix}` : label
+    });
+};
 exports.labelFormatter = labelFormatter;
 const fileLoggerOptions = {
     filename: path.join(config_1.CONFIG.STORAGE.LOG_DIR, constants_1.LOG_FILENAME),
@@ -55,19 +57,23 @@ if (config_1.CONFIG.LOG.ROTATION.ENABLED) {
     fileLoggerOptions.maxsize = config_1.CONFIG.LOG.ROTATION.MAX_FILE_SIZE;
     fileLoggerOptions.maxFiles = config_1.CONFIG.LOG.ROTATION.MAX_FILES;
 }
-const logger = winston.createLogger({
-    level: config_1.CONFIG.LOG.LEVEL,
-    format: winston.format.combine(labelFormatter, winston.format.splat()),
-    transports: [
-        new winston.transports.File(fileLoggerOptions),
-        new winston.transports.Console({
-            handleExceptions: true,
-            format: winston.format.combine(timestampFormatter, winston.format.colorize(), consoleLoggerFormat)
-        })
-    ],
-    exitOnError: true
-});
+const logger = buildLogger();
 exports.logger = logger;
+function buildLogger(labelSuffix) {
+    return winston.createLogger({
+        level: config_1.CONFIG.LOG.LEVEL,
+        format: winston.format.combine(labelFormatter(labelSuffix), winston.format.splat()),
+        transports: [
+            new winston.transports.File(fileLoggerOptions),
+            new winston.transports.Console({
+                handleExceptions: true,
+                format: winston.format.combine(timestampFormatter, winston.format.colorize(), consoleLoggerFormat)
+            })
+        ],
+        exitOnError: true
+    });
+}
+exports.buildLogger = buildLogger;
 function bunyanLogFactory(level) {
     return function () {
         let meta = null;

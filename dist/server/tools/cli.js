@@ -15,19 +15,19 @@ const miscs_1 = require("../../shared/extra-utils/miscs/miscs");
 const video_channels_1 = require("../../shared/extra-utils/videos/video-channels");
 const videos_1 = require("../../shared/models/videos");
 const winston_1 = require("winston");
-const extra_utils_1 = require("@shared/extra-utils");
+const users_1 = require("@shared/extra-utils/users/users");
 const models_1 = require("@shared/models");
+const login_1 = require("@shared/extra-utils/users/login");
 let configName = 'PeerTube/CLI';
 if (core_utils_1.isTestInstance())
     configName += `-${core_utils_1.getAppNumber()}`;
 const config = require('application-config')(configName);
-exports.config = config;
 const version = require('../../../package.json').version;
 exports.version = version;
 function getAdminTokenOrDie(url, username, password) {
     return __awaiter(this, void 0, void 0, function* () {
-        const accessToken = yield extra_utils_1.getAccessToken(url, username, password);
-        const resMe = yield extra_utils_1.getMyUserInformation(url, accessToken);
+        const accessToken = yield login_1.getAccessToken(url, username, password);
+        const resMe = yield users_1.getMyUserInformation(url, accessToken);
         const me = resMe.body;
         if (me.role !== models_1.UserRole.ADMINISTRATOR) {
             console.error('You must be an administrator.');
@@ -38,16 +38,15 @@ function getAdminTokenOrDie(url, username, password) {
 }
 exports.getAdminTokenOrDie = getAdminTokenOrDie;
 function getSettings() {
-    return new Promise((res, rej) => {
+    return __awaiter(this, void 0, void 0, function* () {
         const defaultSettings = {
             remotes: [],
             default: -1
         };
-        config.read((err, data) => {
-            if (err)
-                return rej(err);
-            return res(Object.keys(data).length === 0 ? defaultSettings : data);
-        });
+        const data = yield config.read();
+        return Object.keys(data).length === 0
+            ? defaultSettings
+            : data;
     });
 }
 exports.getSettings = getSettings;
@@ -63,23 +62,11 @@ function getNetrc() {
 }
 exports.getNetrc = getNetrc;
 function writeSettings(settings) {
-    return new Promise((res, rej) => {
-        config.write(settings, err => {
-            if (err)
-                return rej(err);
-            return res();
-        });
-    });
+    return config.write(settings);
 }
 exports.writeSettings = writeSettings;
 function deleteSettings() {
-    return new Promise((res, rej) => {
-        config.trash((err) => {
-            if (err)
-                return rej(err);
-            return res();
-        });
-    });
+    return config.trash();
 }
 exports.deleteSettings = deleteSettings;
 function getRemoteObjectOrDie(program, settings, netrc) {
@@ -126,9 +113,10 @@ function buildCommonVideoOptions(command) {
         .option('-d, --video-description <description>', 'Video description')
         .option('-P, --privacy <privacy_number>', 'Privacy')
         .option('-C, --channel-name <channel_name>', 'Channel name')
-        .option('-m, --comments-enabled', 'Enable comments')
+        .option('--no-comments-enabled', 'Disable video comments')
         .option('-s, --support <support>', 'Video support text')
-        .option('-w, --wait-transcoding', 'Wait transcoding before publishing the video')
+        .option('--no-wait-transcoding', 'Do not wait transcoding before publishing the video')
+        .option('--no-download-enabled', 'Disable video download')
         .option('-v, --verbose <verbose>', 'Verbosity, from 0/\'error\' to 4/\'debug\'', 'info');
 }
 exports.buildCommonVideoOptions = buildCommonVideoOptions;

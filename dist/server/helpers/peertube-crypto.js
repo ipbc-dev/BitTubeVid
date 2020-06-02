@@ -15,7 +15,6 @@ const custom_jsonld_signature_1 = require("./custom-jsonld-signature");
 const logger_1 = require("./logger");
 const lodash_1 = require("lodash");
 const crypto_1 = require("crypto");
-const activitypub_http_utils_1 = require("../lib/job-queue/handlers/utils/activitypub-http-utils");
 const bcrypt = require("bcrypt");
 const bcryptComparePromise = core_utils_1.promisify2(bcrypt.compare);
 const bcryptGenSaltPromise = core_utils_1.promisify1(bcrypt.genSalt);
@@ -43,7 +42,7 @@ function cryptPassword(password) {
 exports.cryptPassword = cryptPassword;
 function isHTTPSignatureDigestValid(rawBody, req) {
     if (req.headers[constants_1.HTTP_SIGNATURE.HEADER_NAME] && req.headers['digest']) {
-        return activitypub_http_utils_1.buildDigest(rawBody.toString()) === req.headers['digest'];
+        return buildDigest(rawBody.toString()) === req.headers['digest'];
     }
     return true;
 }
@@ -96,6 +95,11 @@ function signJsonLDObject(byActor, data) {
     });
 }
 exports.signJsonLDObject = signJsonLDObject;
+function buildDigest(body) {
+    const rawBody = typeof body === 'string' ? body : JSON.stringify(body);
+    return 'SHA-256=' + core_utils_1.sha256(rawBody, 'base64');
+}
+exports.buildDigest = buildDigest;
 function hash(obj) {
     return custom_jsonld_signature_1.jsonld.promises
         .normalize(obj, {

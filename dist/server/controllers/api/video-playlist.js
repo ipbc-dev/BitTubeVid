@@ -29,6 +29,7 @@ const job_queue_1 = require("../../lib/job-queue");
 const config_1 = require("../../initializers/config");
 const database_1 = require("../../initializers/database");
 const thumbnail_1 = require("../../lib/thumbnail");
+const application_1 = require("@server/models/application/application");
 const reqThumbnailFile = express_utils_1.createReqFiles(['thumbnailfile'], constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT, { thumbnailfile: config_1.CONFIG.STORAGE.TMP_DIR });
 const videoPlaylistRouter = express.Router();
 exports.videoPlaylistRouter = videoPlaylistRouter;
@@ -48,7 +49,7 @@ function listVideoPlaylistPrivacies(req, res) {
 }
 function listVideoPlaylists(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const resultList = yield video_playlist_1.VideoPlaylistModel.listForApi({
             followerActorId: serverActor.id,
             start: req.query.start,
@@ -62,8 +63,7 @@ function listVideoPlaylists(req, res) {
 function getVideoPlaylist(req, res) {
     const videoPlaylist = res.locals.videoPlaylistSummary;
     if (videoPlaylist.isOutdated()) {
-        job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video-playlist', url: videoPlaylist.url } })
-            .catch(err => logger_1.logger.error('Cannot create AP refresher job for playlist %s.', videoPlaylist.url, { err }));
+        job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video-playlist', url: videoPlaylist.url } });
     }
     return res.json(videoPlaylist.toFormattedJSON());
 }
@@ -283,7 +283,7 @@ function getVideoPlaylistVideos(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoPlaylistInstance = res.locals.videoPlaylistSummary;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
-        const server = yield utils_1.getServerActor();
+        const server = yield application_1.getServerActor();
         const resultList = yield video_playlist_element_1.VideoPlaylistElementModel.listForApi({
             start: req.query.start,
             count: req.query.count,
@@ -310,7 +310,12 @@ function regeneratePlaylistThumbnail(videoPlaylist) {
 function generateThumbnailForPlaylist(videoPlaylist, video) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Generating default thumbnail to playlist %s.', videoPlaylist.url);
-        const inputPath = path_1.join(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, video.getMiniature().filename);
+        const videoMiniature = video.getMiniature();
+        if (!videoMiniature) {
+            logger_1.logger.info('Cannot generate thumbnail for playlist %s because video %s does not have any.', videoPlaylist.url, video.url);
+            return;
+        }
+        const inputPath = path_1.join(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, videoMiniature.filename);
         const thumbnailModel = yield thumbnail_1.createPlaylistMiniatureFromExisting(inputPath, videoPlaylist, true, true);
         thumbnailModel.videoPlaylistId = videoPlaylist.id;
         videoPlaylist.Thumbnail = yield thumbnailModel.save();

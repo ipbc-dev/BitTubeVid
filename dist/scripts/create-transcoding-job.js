@@ -13,7 +13,7 @@ const register_ts_paths_1 = require("../server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
 const video_1 = require("../server/models/video/video");
-const initializers_1 = require("../server/initializers");
+const database_1 = require("../server/initializers/database");
 const job_queue_1 = require("../server/lib/job-queue");
 const ffmpeg_utils_1 = require("@server/helpers/ffmpeg-utils");
 program
@@ -37,7 +37,7 @@ run()
 });
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield initializers_1.initDatabaseModels(true);
+        yield database_1.initDatabaseModels(true);
         const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(program['video']);
         if (!video)
             throw new Error('Video not found.');
@@ -74,7 +74,7 @@ function run() {
         }
         yield job_queue_1.JobQueue.Instance.init();
         for (const d of dataInput) {
-            yield job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: d });
+            yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-transcoding', payload: d });
             console.log('Transcoding job for video %s created.', video.uuid);
         }
     });

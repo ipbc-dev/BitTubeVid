@@ -19,20 +19,14 @@ const constants_1 = require("../../initializers/constants");
 const plugin_type_1 = require("../../../shared/models/plugins/plugin.type");
 const yarn_1 = require("./yarn");
 const fs_extra_1 = require("fs-extra");
-const server_hook_model_1 = require("../../../shared/models/plugins/server-hook.model");
 const hooks_1 = require("../../../shared/core-utils/plugins/hooks");
 const client_html_1 = require("../client-html");
+const register_helpers_store_1 = require("./register-helpers-store");
 class PluginManager {
     constructor() {
         this.registeredPlugins = {};
-        this.settings = {};
         this.hooks = {};
         this.translations = {};
-        this.updatedVideoConstants = {
-            language: {},
-            licence: {},
-            category: {}
-        };
     }
     isRegistered(npmName) {
         return !!this.getRegisteredPluginOrTheme(npmName);
@@ -40,14 +34,14 @@ class PluginManager {
     getRegisteredPluginOrTheme(npmName) {
         return this.registeredPlugins[npmName];
     }
-    getRegisteredPlugin(name) {
+    getRegisteredPluginByShortName(name) {
         const npmName = plugin_1.PluginModel.buildNpmName(name, plugin_type_1.PluginType.PLUGIN);
         const registered = this.getRegisteredPluginOrTheme(npmName);
         if (!registered || registered.type !== plugin_type_1.PluginType.PLUGIN)
             return undefined;
         return registered;
     }
-    getRegisteredTheme(name) {
+    getRegisteredThemeByShortName(name) {
         const npmName = plugin_1.PluginModel.buildNpmName(name, plugin_type_1.PluginType.THEME);
         const registered = this.getRegisteredPluginOrTheme(npmName);
         if (!registered || registered.type !== plugin_type_1.PluginType.THEME)
@@ -60,11 +54,87 @@ class PluginManager {
     getRegisteredThemes() {
         return this.getRegisteredPluginsOrThemes(plugin_type_1.PluginType.THEME);
     }
+    getIdAndPassAuths() {
+        return this.getRegisteredPlugins()
+            .map(p => ({
+            npmName: p.npmName,
+            name: p.name,
+            version: p.version,
+            idAndPassAuths: p.registerHelpersStore.getIdAndPassAuths()
+        }))
+            .filter(v => v.idAndPassAuths.length !== 0);
+    }
+    getExternalAuths() {
+        return this.getRegisteredPlugins()
+            .map(p => ({
+            npmName: p.npmName,
+            name: p.name,
+            version: p.version,
+            externalAuths: p.registerHelpersStore.getExternalAuths()
+        }))
+            .filter(v => v.externalAuths.length !== 0);
+    }
     getRegisteredSettings(npmName) {
-        return this.settings[npmName] || [];
+        const result = this.getRegisteredPluginOrTheme(npmName);
+        if (!result || result.type !== plugin_type_1.PluginType.PLUGIN)
+            return [];
+        return result.registerHelpersStore.getSettings();
+    }
+    getRouter(npmName) {
+        const result = this.getRegisteredPluginOrTheme(npmName);
+        if (!result || result.type !== plugin_type_1.PluginType.PLUGIN)
+            return null;
+        return result.registerHelpersStore.getRouter();
     }
     getTranslations(locale) {
         return this.translations[locale] || {};
+    }
+    isTokenValid(token, type) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const auth = this.getAuth(token.User.pluginAuth, token.authName);
+            if (!auth)
+                return true;
+            if (auth.hookTokenValidity) {
+                try {
+                    const { valid } = yield auth.hookTokenValidity({ token, type });
+                    if (valid === false) {
+                        logger_1.logger.info('Rejecting %s token validity from auth %s of plugin %s', type, token.authName, token.User.pluginAuth);
+                    }
+                    return valid;
+                }
+                catch (err) {
+                    logger_1.logger.warn('Cannot run check token validity from auth %s of plugin %s.', token.authName, token.User.pluginAuth, { err });
+                    return true;
+                }
+            }
+            return true;
+        });
+    }
+    onLogout(npmName, authName, user) {
+        const auth = this.getAuth(npmName, authName);
+        if (auth === null || auth === void 0 ? void 0 : auth.onLogout) {
+            logger_1.logger.info('Running onLogout function from auth %s of plugin %s', authName, npmName);
+            try {
+                auth.onLogout(user);
+            }
+            catch (err) {
+                logger_1.logger.warn('Cannot run onLogout function from auth %s of plugin %s.', authName, npmName, { err });
+            }
+        }
+    }
+    onSettingsChanged(name, settings) {
+        const registered = this.getRegisteredPluginByShortName(name);
+        if (!registered) {
+            logger_1.logger.error('Cannot find plugin %s to call on settings changed.', name);
+        }
+        for (const cb of registered.registerHelpersStore.getOnSettingsChangedCallbacks()) {
+            try {
+                cb(settings);
+            }
+            catch (err) {
+                logger_1.logger.error('Cannot run on settings changed callback for %s.', registered.npmName, { err });
+            }
+        }
     }
     runHook(hookName, result, params) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -108,14 +178,14 @@ class PluginManager {
                 throw new Error(`Unknown plugin ${npmName} to unregister`);
             }
             delete this.registeredPlugins[plugin.npmName];
-            delete this.settings[plugin.npmName];
             this.deleteTranslations(plugin.npmName);
             if (plugin.type === plugin_type_1.PluginType.PLUGIN) {
                 yield plugin.unregister();
                 for (const key of Object.keys(this.hooks)) {
                     this.hooks[key] = this.hooks[key].filter(h => h.npmName !== npmName);
                 }
-                this.reinitVideoConstants(plugin.npmName);
+                const store = plugin.registerHelpersStore;
+                store.reinitVideoConstants(plugin.npmName);
                 logger_1.logger.info('Regenerating registered plugin CSS to global file.');
                 yield this.regeneratePluginGlobalCSS();
             }
@@ -198,8 +268,11 @@ class PluginManager {
             const pluginPath = this.getPluginPath(plugin.name, plugin.type);
             this.sanitizeAndCheckPackageJSONOrThrow(packageJSON, plugin.type);
             let library;
+            let registerHelpersStore;
             if (plugin.type === plugin_type_1.PluginType.PLUGIN) {
-                library = yield this.registerPlugin(plugin, pluginPath, packageJSON);
+                const result = yield this.registerPlugin(plugin, pluginPath, packageJSON);
+                library = result.library;
+                registerHelpersStore = result.registerStore;
             }
             const clientScripts = {};
             for (const c of packageJSON.clientScripts) {
@@ -216,6 +289,7 @@ class PluginManager {
                 staticDirs: packageJSON.staticDirs,
                 clientScripts,
                 css: packageJSON.css,
+                registerHelpersStore: registerHelpersStore || undefined,
                 unregister: library ? library.unregister : undefined
             };
             yield this.addTranslations(plugin, npmName, packageJSON.translations);
@@ -230,12 +304,12 @@ class PluginManager {
             if (!plugins_1.isLibraryCodeValid(library)) {
                 throw new Error('Library code is not valid (miss register or unregister function)');
             }
-            const registerHelpers = this.getRegisterHelpers(npmName, plugin);
-            library.register(registerHelpers)
+            const { registerOptions, registerStore } = this.getRegisterHelpers(npmName, plugin);
+            library.register(registerOptions)
                 .catch(err => logger_1.logger.error('Cannot register plugin %s.', npmName, { err }));
             logger_1.logger.info('Add plugin %s CSS to global file.', npmName);
             yield this.addCSSToGlobalFile(pluginPath, packageJSON.css);
-            return library;
+            return { library, registerStore };
         });
     }
     addTranslations(plugin, npmName, translationPaths) {
@@ -300,6 +374,14 @@ class PluginManager {
         const npmName = plugin_1.PluginModel.buildNpmName(pluginName, pluginType);
         return path_1.join(config_1.CONFIG.STORAGE.PLUGINS_DIR, 'node_modules', npmName);
     }
+    getAuth(npmName, authName) {
+        const plugin = this.getRegisteredPluginOrTheme(npmName);
+        if (!plugin || plugin.type !== plugin_type_1.PluginType.PLUGIN)
+            return null;
+        let auths = plugin.registerHelpersStore.getIdAndPassAuths();
+        auths = auths.concat(plugin.registerHelpersStore.getExternalAuths());
+        return auths.find(a => a.authName === authName);
+    }
     getRegisteredPluginsOrThemes(type) {
         const plugins = [];
         for (const npmName of Object.keys(this.registeredPlugins)) {
@@ -311,110 +393,21 @@ class PluginManager {
         return plugins;
     }
     getRegisterHelpers(npmName, plugin) {
-        const registerHook = (options) => {
-            if (server_hook_model_1.serverHookObject[options.target] !== true) {
-                logger_1.logger.warn('Unknown hook %s of plugin %s. Skipping.', options.target, npmName);
-                return;
-            }
+        const onHookAdded = (options) => {
             if (!this.hooks[options.target])
                 this.hooks[options.target] = [];
             this.hooks[options.target].push({
-                npmName,
+                npmName: npmName,
                 pluginName: plugin.name,
                 handler: options.handler,
                 priority: options.priority || 0
             });
         };
-        const registerSetting = (options) => {
-            if (!this.settings[npmName])
-                this.settings[npmName] = [];
-            this.settings[npmName].push(options);
-        };
-        const settingsManager = {
-            getSetting: (name) => plugin_1.PluginModel.getSetting(plugin.name, plugin.type, name),
-            setSetting: (name, value) => plugin_1.PluginModel.setSetting(plugin.name, plugin.type, name, value)
-        };
-        const storageManager = {
-            getData: (key) => plugin_1.PluginModel.getData(plugin.name, plugin.type, key),
-            storeData: (key, data) => plugin_1.PluginModel.storeData(plugin.name, plugin.type, key, data)
-        };
-        const videoLanguageManager = {
-            addLanguage: (key, label) => this.addConstant({ npmName, type: 'language', obj: constants_1.VIDEO_LANGUAGES, key, label }),
-            deleteLanguage: (key) => this.deleteConstant({ npmName, type: 'language', obj: constants_1.VIDEO_LANGUAGES, key })
-        };
-        const videoCategoryManager = {
-            addCategory: (key, label) => this.addConstant({ npmName, type: 'category', obj: constants_1.VIDEO_CATEGORIES, key, label }),
-            deleteCategory: (key) => this.deleteConstant({ npmName, type: 'category', obj: constants_1.VIDEO_CATEGORIES, key })
-        };
-        const videoLicenceManager = {
-            addLicence: (key, label) => this.addConstant({ npmName, type: 'licence', obj: constants_1.VIDEO_LICENCES, key, label }),
-            deleteLicence: (key) => this.deleteConstant({ npmName, type: 'licence', obj: constants_1.VIDEO_LICENCES, key })
-        };
-        const peertubeHelpers = {
-            logger: logger_1.logger
-        };
+        const registerHelpersStore = new register_helpers_store_1.RegisterHelpersStore(npmName, plugin, onHookAdded.bind(this));
         return {
-            registerHook,
-            registerSetting,
-            settingsManager,
-            storageManager,
-            videoLanguageManager,
-            videoCategoryManager,
-            videoLicenceManager,
-            peertubeHelpers
+            registerStore: registerHelpersStore,
+            registerOptions: registerHelpersStore.buildRegisterHelpers()
         };
-    }
-    addConstant(parameters) {
-        const { npmName, type, obj, key, label } = parameters;
-        if (obj[key]) {
-            logger_1.logger.warn('Cannot add %s %s by plugin %s: key already exists.', type, npmName, key);
-            return false;
-        }
-        if (!this.updatedVideoConstants[type][npmName]) {
-            this.updatedVideoConstants[type][npmName] = {
-                added: [],
-                deleted: []
-            };
-        }
-        this.updatedVideoConstants[type][npmName].added.push({ key, label });
-        obj[key] = label;
-        return true;
-    }
-    deleteConstant(parameters) {
-        const { npmName, type, obj, key } = parameters;
-        if (!obj[key]) {
-            logger_1.logger.warn('Cannot delete %s %s by plugin %s: key does not exist.', type, npmName, key);
-            return false;
-        }
-        if (!this.updatedVideoConstants[type][npmName]) {
-            this.updatedVideoConstants[type][npmName] = {
-                added: [],
-                deleted: []
-            };
-        }
-        this.updatedVideoConstants[type][npmName].deleted.push({ key, label: obj[key] });
-        delete obj[key];
-        return true;
-    }
-    reinitVideoConstants(npmName) {
-        const hash = {
-            language: constants_1.VIDEO_LANGUAGES,
-            licence: constants_1.VIDEO_LICENCES,
-            category: constants_1.VIDEO_CATEGORIES
-        };
-        const types = ['language', 'licence', 'category'];
-        for (const type of types) {
-            const updatedConstants = this.updatedVideoConstants[type][npmName];
-            if (!updatedConstants)
-                continue;
-            for (const added of updatedConstants.added) {
-                delete hash[type][added.key];
-            }
-            for (const deleted of updatedConstants.deleted) {
-                hash[type][deleted.key] = deleted.label;
-            }
-            delete this.updatedVideoConstants[type][npmName];
-        }
     }
     sanitizeAndCheckPackageJSONOrThrow(packageJSON, pluginType) {
         if (!packageJSON.staticDirs)

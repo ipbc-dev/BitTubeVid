@@ -40,7 +40,7 @@ describe('Test video captions API validator', function () {
     describe('When adding video caption', function () {
         const fields = {};
         const attaches = {
-            'captionfile': path_1.join(__dirname, '..', '..', 'fixtures', 'subtitle-good1.vtt')
+            captionfile: path_1.join(__dirname, '..', '..', 'fixtures', 'subtitle-good1.vtt')
         };
         it('Should fail without a valid uuid', function () {
             return __awaiter(this, void 0, void 0, function* () {

@@ -31,8 +31,10 @@ function isVideoImportStateValid(value) {
     return misc_1.exists(value) && constants_1.VIDEO_IMPORT_STATES[value] !== undefined;
 }
 exports.isVideoImportStateValid = isVideoImportStateValid;
-const videoTorrentImportTypes = Object.keys(constants_1.MIMETYPES.TORRENT.MIMETYPE_EXT).map(m => `(${m})`);
-const videoTorrentImportRegex = videoTorrentImportTypes.join('|');
+const videoTorrentImportRegex = Object.keys(constants_1.MIMETYPES.TORRENT.MIMETYPE_EXT)
+    .concat(['application/octet-stream'])
+    .map(m => `(${m})`)
+    .join('|');
 function isVideoImportTorrentFile(files) {
     return misc_1.isFileValid(files, videoTorrentImportRegex, 'torrentfile', constants_1.CONSTRAINTS_FIELDS.VIDEO_IMPORTS.TORRENT_FILE.FILE_SIZE.max, true);
 }

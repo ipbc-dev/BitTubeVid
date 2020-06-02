@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const logger_1 = require("../../../helpers/logger");
 const constants_1 = require("../../../initializers/constants");
-const activitypub_1 = require("../../../lib/activitypub");
+const video_rates_1 = require("../../../lib/activitypub/video-rates");
 const middlewares_1 = require("../../../middlewares");
 const account_1 = require("../../../models/account/account");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
@@ -46,7 +46,7 @@ function rateVideo(req, res) {
                 }
                 else {
                     previousRate.type = rateType;
-                    previousRate.url = activitypub_1.getRateUrl(rateType, userAccount.Actor, videoInstance);
+                    previousRate.url = video_rates_1.getRateUrl(rateType, userAccount.Actor, videoInstance);
                     yield previousRate.save(sequelizeOptions);
                 }
             }
@@ -55,7 +55,7 @@ function rateVideo(req, res) {
                     accountId: accountInstance.id,
                     videoId: videoInstance.id,
                     type: rateType,
-                    url: activitypub_1.getRateUrl(rateType, userAccount.Actor, videoInstance)
+                    url: video_rates_1.getRateUrl(rateType, userAccount.Actor, videoInstance)
                 };
                 yield account_video_rate_1.AccountVideoRateModel.create(query, sequelizeOptions);
             }
@@ -64,7 +64,7 @@ function rateVideo(req, res) {
                 dislikes: dislikesToIncrement
             };
             yield videoInstance.increment(incrementQuery, sequelizeOptions);
-            yield activitypub_1.sendVideoRateChange(accountInstance, videoInstance, likesToIncrement, dislikesToIncrement, t);
+            yield video_rates_1.sendVideoRateChange(accountInstance, videoInstance, likesToIncrement, dislikesToIncrement, t);
             logger_1.logger.info('Account video rate for video %s of account %s updated.', videoInstance.name, accountInstance.name);
         }));
         return res.type('json').status(204).end();

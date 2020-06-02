@@ -5,4 +5,5 @@ var VideoImportState;
     VideoImportState[VideoImportState["PENDING"] = 1] = "PENDING";
     VideoImportState[VideoImportState["SUCCESS"] = 2] = "SUCCESS";
     VideoImportState[VideoImportState["FAILED"] = 3] = "FAILED";
+    VideoImportState[VideoImportState["REJECTED"] = 4] = "REJECTED";
 })(VideoImportState = exports.VideoImportState || (exports.VideoImportState = {}));

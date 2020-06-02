@@ -121,6 +121,15 @@ const localVideoChannelValidator = [
     })
 ];
 exports.localVideoChannelValidator = localVideoChannelValidator;
+const videoChannelStatsValidator = [
+    express_validator_1.query('withStats').optional().isBoolean().withMessage('Should have a valid stats flag'),
+    (req, res, next) => {
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.videoChannelStatsValidator = videoChannelStatsValidator;
 function checkUserCanDeleteVideoChannel(user, videoChannel, res) {
     if (videoChannel.Actor.isOwned() === false) {
         res.status(403)

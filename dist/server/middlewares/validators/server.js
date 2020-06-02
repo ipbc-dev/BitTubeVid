@@ -15,7 +15,6 @@ const servers_1 = require("../../helpers/custom-validators/servers");
 const server_1 = require("../../models/server/server");
 const express_validator_1 = require("express-validator");
 const users_1 = require("../../helpers/custom-validators/users");
-const emailer_1 = require("../../lib/emailer");
 const redis_1 = require("../../lib/redis");
 const config_1 = require("../../initializers/config");
 const serverGetValidator = [
@@ -52,7 +51,7 @@ const contactAdministratorValidator = [
                 .send({ error: 'Contact form is not enabled on this instance.' })
                 .end();
         }
-        if (emailer_1.Emailer.isEnabled() === false) {
+        if (config_1.isEmailEnabled() === false) {
             return res
                 .status(409)
                 .send({ error: 'Emailer is not enabled on this instance.' })

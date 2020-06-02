@@ -1,16 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const requests_1 = require("../requests/requests");
-function getVideosOverview(url, useCache = false) {
+function getVideosOverview(url, page, statusCodeExpected = 200) {
     const path = '/api/v1/overviews/videos';
-    const query = {
-        t: useCache ? undefined : new Date().getTime()
-    };
+    const query = { page };
     return requests_1.makeGetRequest({
         url,
         path,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected
     });
 }
 exports.getVideosOverview = getVideosOverview;
+function getVideosOverviewWithToken(url, page, token, statusCodeExpected = 200) {
+    const path = '/api/v1/overviews/videos';
+    const query = { page };
+    return requests_1.makeGetRequest({
+        url,
+        path,
+        query,
+        token,
+        statusCodeExpected
+    });
+}
+exports.getVideosOverviewWithToken = getVideosOverviewWithToken;

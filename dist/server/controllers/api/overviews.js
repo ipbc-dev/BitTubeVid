@@ -15,11 +15,11 @@ const video_1 = require("../../models/video/video");
 const middlewares_1 = require("../../middlewares");
 const tag_1 = require("../../models/video/tag");
 const constants_1 = require("../../initializers/constants");
-const cache_1 = require("../../middlewares/cache");
 const memoizee = require("memoizee");
+const logger_1 = require("@server/helpers/logger");
 const overviewsRouter = express.Router();
 exports.overviewsRouter = overviewsRouter;
-overviewsRouter.get('/videos', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.OVERVIEWS.VIDEOS)), middlewares_1.asyncMiddleware(getVideosOverview));
+overviewsRouter.get('/videos', middlewares_1.videosOverviewValidator, middlewares_1.optionalAuthenticate, middlewares_1.asyncMiddleware(getVideosOverview));
 const buildSamples = memoizee(function () {
     return __awaiter(this, void 0, void 0, function* () {
         const [categories, channels, tags] = yield Promise.all([
@@ -27,59 +27,72 @@ const buildSamples = memoizee(function () {
             video_1.VideoModel.getRandomFieldSamples('channelId', constants_1.OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD, constants_1.OVERVIEWS.VIDEOS.SAMPLES_COUNT),
             tag_1.TagModel.getRandomSamples(constants_1.OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD, constants_1.OVERVIEWS.VIDEOS.SAMPLES_COUNT)
         ]);
-        return { categories, channels, tags };
+        const result = { categories, channels, tags };
+        logger_1.logger.debug('Building samples for overview endpoint.', { result });
+        return result;
     });
 }, { maxAge: constants_1.MEMOIZE_TTL.OVERVIEWS_SAMPLE });
 function getVideosOverview(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const attributes = yield buildSamples();
-        const [categories, channels, tags] = yield Promise.all([
-            Promise.all(attributes.categories.map(c => getVideosByCategory(c, res))),
-            Promise.all(attributes.channels.map(c => getVideosByChannel(c, res))),
-            Promise.all(attributes.tags.map(t => getVideosByTag(t, res)))
+        const page = req.query.page || 1;
+        const index = page - 1;
+        const categories = [];
+        const channels = [];
+        const tags = [];
+        yield Promise.all([
+            getVideosByCategory(attributes.categories, index, res, categories),
+            getVideosByChannel(attributes.channels, index, res, channels),
+            getVideosByTag(attributes.tags, index, res, tags)
         ]);
         const result = {
             categories,
             channels,
             tags
         };
-        for (const key of Object.keys(result)) {
-            result[key] = result[key].filter(v => v !== undefined);
-        }
         return res.json(result);
     });
 }
-function getVideosByTag(tag, res) {
+function getVideosByTag(tagsSample, index, res, acc) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (tagsSample.length <= index)
+            return;
+        const tag = tagsSample[index];
         const videos = yield getVideos(res, { tagsOneOf: [tag] });
         if (videos.length === 0)
-            return undefined;
-        return {
+            return;
+        acc.push({
             tag,
             videos
-        };
+        });
     });
 }
-function getVideosByCategory(category, res) {
+function getVideosByCategory(categoriesSample, index, res, acc) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (categoriesSample.length <= index)
+            return;
+        const category = categoriesSample[index];
         const videos = yield getVideos(res, { categoryOneOf: [category] });
         if (videos.length === 0)
-            return undefined;
-        return {
+            return;
+        acc.push({
             category: videos[0].category,
             videos
-        };
+        });
     });
 }
-function getVideosByChannel(channelId, res) {
+function getVideosByChannel(channelsSample, index, res, acc) {
     return __awaiter(this, void 0, void 0, function* () {
+        if (channelsSample.length <= index)
+            return;
+        const channelId = channelsSample[index];
         const videos = yield getVideos(res, { videoChannelId: channelId });
         if (videos.length === 0)
-            return undefined;
-        return {
+            return;
+        acc.push({
             channel: videos[0].channel,
             videos
-        };
+        });
     });
 }
 function getVideos(res, where) {

@@ -132,8 +132,11 @@ function parseAggregateResult(result) {
 }
 exports.parseAggregateResult = parseAggregateResult;
 const createSafeIn = (model, stringArr) => {
-    return stringArr.map(t => model.sequelize.escape('' + t))
-        .join(', ');
+    return stringArr.map(t => {
+        return t === null
+            ? null
+            : model.sequelize.escape('' + t);
+    }).join(', ');
 };
 exports.createSafeIn = createSafeIn;
 function buildLocalAccountIdsIn() {
@@ -144,12 +147,6 @@ function buildLocalActorIdsIn() {
     return sequelize_1.literal('(SELECT "actor"."id" FROM "actor" WHERE "actor"."serverId" IS NULL)');
 }
 exports.buildLocalActorIdsIn = buildLocalActorIdsIn;
-function searchTrigramNormalizeValue(value) {
-    return sequelize_typescript_1.Sequelize.fn('lower', sequelize_typescript_1.Sequelize.fn('immutable_unaccent', value));
-}
-function searchTrigramNormalizeCol(col) {
-    return sequelize_typescript_1.Sequelize.fn('lower', sequelize_typescript_1.Sequelize.fn('immutable_unaccent', sequelize_typescript_1.Sequelize.col(col)));
-}
 function buildDirectionAndField(value) {
     let field;
     let direction;
@@ -162,4 +159,21 @@ function buildDirectionAndField(value) {
         field = value;
     }
     return { direction, field };
+}
+exports.buildDirectionAndField = buildDirectionAndField;
+function searchAttribute(sourceField, targetField) {
+    if (!sourceField)
+        return {};
+    return {
+        [targetField]: {
+            [sequelize_1.Op.iLike]: `%${sourceField}%`
+        }
+    };
+}
+exports.searchAttribute = searchAttribute;
+function searchTrigramNormalizeValue(value) {
+    return sequelize_typescript_1.Sequelize.fn('lower', sequelize_typescript_1.Sequelize.fn('immutable_unaccent', value));
+}
+function searchTrigramNormalizeCol(col) {
+    return sequelize_typescript_1.Sequelize.fn('lower', sequelize_typescript_1.Sequelize.fn('immutable_unaccent', sequelize_typescript_1.Sequelize.col(col)));
 }

@@ -106,7 +106,7 @@ describe('Test plugins', function () {
     it('Should have the correct global css', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPluginsCSS(server.url);
-            expect(res.text).to.contain('--mainBackgroundColor');
+            expect(res.text).to.contain('background-color: red');
         });
     });
     it('Should have the plugin loaded in the configuration', function () {
@@ -211,6 +211,12 @@ describe('Test plugins', function () {
                 npmName: 'peertube-plugin-hello-world',
                 settings
             });
+        });
+    });
+    it('Should have watched settings changes', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
+            yield extra_utils_1.waitUntilLog(server, 'Settings changed!');
         });
     });
     it('Should get a plugin and a theme', function () {

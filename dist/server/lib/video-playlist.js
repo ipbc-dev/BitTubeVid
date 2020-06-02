@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const video_playlist_1 = require("../models/video/video-playlist");
 const video_playlist_privacy_model_1 = require("../../shared/models/videos/playlist/video-playlist-privacy.model");
-const activitypub_1 = require("./activitypub");
+const url_1 = require("./activitypub/url");
 const video_playlist_type_model_1 = require("../../shared/models/videos/playlist/video-playlist-type.model");
 function createWatchLaterPlaylist(account, t) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -21,7 +21,7 @@ function createWatchLaterPlaylist(account, t) {
             type: video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER,
             ownerAccountId: account.id
         });
-        videoPlaylist.url = activitypub_1.getVideoPlaylistActivityPubUrl(videoPlaylist);
+        videoPlaylist.url = url_1.getVideoPlaylistActivityPubUrl(videoPlaylist);
         yield videoPlaylist.save({ transaction: t });
         videoPlaylist.OwnerAccount = account;
         return videoPlaylist;

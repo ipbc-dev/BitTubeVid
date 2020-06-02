@@ -73,15 +73,21 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
             return { total: count, data: rows };
         });
     }
-    static listPublicUrlsOfForAP(accountId, start, count) {
+    static listPublicUrlsOfForAP(options, start, count) {
+        const where = {
+            privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
+        };
+        if (options.account) {
+            Object.assign(where, { ownerAccountId: options.account.id });
+        }
+        if (options.channel) {
+            Object.assign(where, { videoChannelId: options.channel.id });
+        }
         const query = {
             attributes: ['url'],
             offset: start,
             limit: count,
-            where: {
-                ownerAccountId: accountId,
-                privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
-            }
+            where
         };
         return VideoPlaylistModel_1.findAndCountAll(query)
             .then(({ rows, count }) => {
@@ -221,7 +227,9 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
             ownerAccount: this.OwnerAccount.toFormattedSummaryJSON(),
-            videoChannel: this.VideoChannel ? this.VideoChannel.toFormattedSummaryJSON() : null
+            videoChannel: this.VideoChannel
+                ? this.VideoChannel.toFormattedSummaryJSON()
+                : null
         };
     }
     toActivityPubObject(page, t) {
@@ -270,7 +278,7 @@ __decorate([
 __decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Is('VideoPlaylistDescription', value => utils_1.throwIfNotValid(value, video_playlists_1.isVideoPlaylistDescriptionValid, 'description', true)),
-    sequelize_typescript_1.Column,
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.DESCRIPTION.max)),
     __metadata("design:type", String)
 ], VideoPlaylistModel.prototype, "description", void 0);
 __decorate([

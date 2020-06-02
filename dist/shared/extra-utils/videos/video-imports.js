@@ -13,7 +13,7 @@ function getBadVideoUrl() {
     return 'https://download.cpy.re/peertube/bad_video.mp4';
 }
 exports.getBadVideoUrl = getBadVideoUrl;
-function importVideo(url, token, attributes) {
+function importVideo(url, token, attributes, statusCodeExpected = 200) {
     const path = '/api/v1/videos/imports';
     let attaches = {};
     if (attributes.torrentfile)
@@ -24,7 +24,7 @@ function importVideo(url, token, attributes) {
         token,
         attaches,
         fields: attributes,
-        statusCodeExpected: 200
+        statusCodeExpected
     });
 }
 exports.importVideo = importVideo;

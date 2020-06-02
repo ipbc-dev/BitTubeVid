@@ -28,7 +28,7 @@ function isSignupAllowed() {
 exports.isSignupAllowed = isSignupAllowed;
 function isSignupAllowedForCurrentIP(ip) {
     const addr = ipaddr.parse(ip);
-    let excludeList = ['blacklist'];
+    const excludeList = ['blacklist'];
     let matched = '';
     if (config_1.CONFIG.SIGNUP.FILTERS.CIDR.WHITELIST.filter(cidr => isCidr(cidr)).length > 0) {
         excludeList.push('unknown');

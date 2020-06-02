@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const video_1 = require("../video");
 const users_1 = require("../../../shared/models/users");
 const video_channel_1 = require("../../models/video/video-channel");
+const video_file_1 = require("@server/models/video/video-file");
 function doesVideoExist(id, res, fetchType = 'all') {
     return __awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : undefined;
@@ -25,6 +26,9 @@ function doesVideoExist(id, res, fetchType = 'all') {
         switch (fetchType) {
             case 'all':
                 res.locals.videoAll = video;
+                break;
+            case 'only-immutable-attributes':
+                res.locals.onlyImmutableVideo = video;
                 break;
             case 'id':
                 res.locals.videoId = video;
@@ -40,6 +44,18 @@ function doesVideoExist(id, res, fetchType = 'all') {
     });
 }
 exports.doesVideoExist = doesVideoExist;
+function doesVideoFileOfVideoExist(id, videoIdOrUUID, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!(yield video_file_1.VideoFileModel.doesVideoExistForVideoFile(id, videoIdOrUUID))) {
+            res.status(404)
+                .json({ error: 'VideoFile matching Video not found' })
+                .end();
+            return false;
+        }
+        return true;
+    });
+}
+exports.doesVideoFileOfVideoExist = doesVideoFileOfVideoExist;
 function doesVideoChannelOfAccountExist(channelId, user, res) {
     return __awaiter(this, void 0, void 0, function* () {
         if (user.hasRight(users_1.UserRight.UPDATE_ANY_VIDEO) === true) {

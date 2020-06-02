@@ -14,7 +14,7 @@ const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
 const video_views_1 = require("../../../models/video/video-views");
 const core_utils_1 = require("../../../helpers/core-utils");
-const activitypub_1 = require("../../activitypub");
+const videos_1 = require("../../activitypub/videos");
 function processVideosViews() {
     return __awaiter(this, void 0, void 0, function* () {
         const lastHour = new Date();
@@ -30,6 +30,7 @@ function processVideosViews() {
         for (const videoId of videoIds) {
             try {
                 const views = yield redis_1.Redis.Instance.getVideoViews(videoId, hour);
+                yield redis_1.Redis.Instance.deleteVideoViews(videoId, hour);
                 if (views) {
                     logger_1.logger.debug('Adding %d views to video %d in hour %d.', views, videoId, hour);
                     try {
@@ -47,14 +48,13 @@ function processVideosViews() {
                         if (video.isOwned()) {
                             yield video_1.VideoModel.incrementViews(videoId, views);
                             video.views += views;
-                            yield activitypub_1.federateVideoIfNeeded(video, false);
+                            yield videos_1.federateVideoIfNeeded(video, false);
                         }
                     }
                     catch (err) {
                         logger_1.logger.error('Cannot create video views for video %d in hour %d.', videoId, hour, { err });
                     }
                 }
-                yield redis_1.Redis.Instance.deleteVideoViews(videoId, hour);
             }
             catch (err) {
                 logger_1.logger.error('Cannot update video views of video %d in hour %d.', videoId, hour, { err });

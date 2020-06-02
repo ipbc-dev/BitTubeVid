@@ -12,9 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
 const job_queue_1 = require("../job-queue");
-const activitypub_1 = require("../../activitypub");
+const videos_1 = require("../../activitypub/videos");
 const database_utils_1 = require("../../../helpers/database-utils");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
 const video_transcoding_1 = require("../../video-transcoding");
 const notifier_1 = require("../../notifier");
@@ -74,8 +74,8 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
         if (videoArg === undefined)
             return undefined;
         const { videoFileResolution } = yield videoArg.getMaxQualityResolution();
-        const { videoDatabase, videoPublished } = yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
-            let videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
+        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
             if (!videoDatabase)
                 return undefined;
             const resolutionsEnabled = ffmpeg_utils_1.computeResolutionsToTranscode(videoFileResolution);
@@ -84,7 +84,6 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
             const hlsPayload = Object.assign({}, payload, { resolution: videoDatabase.getMaxQualityFile().resolution });
             yield createHlsJobIfEnabled(hlsPayload);
             if (resolutionsEnabled.length !== 0) {
-                const tasks = [];
                 for (const resolution of resolutionsEnabled) {
                     let dataInput;
                     if (config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED) {
@@ -103,17 +102,15 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
                             copyCodecs: false
                         };
                     }
-                    const p = job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput });
-                    tasks.push(p);
+                    job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput });
                 }
-                yield Promise.all(tasks);
                 logger_1.logger.info('Transcoding jobs created for uuid %s.', videoDatabase.uuid, { resolutionsEnabled });
             }
             else {
                 videoPublished = yield videoDatabase.publishIfNeededAndSave(t);
                 logger_1.logger.info('No transcoding jobs created for video %s (no resolutions).', videoDatabase.uuid, { privacy: videoDatabase.privacy });
             }
-            yield activitypub_1.federateVideoIfNeeded(videoDatabase, payload.isNewVideo, t);
+            yield videos_1.federateVideoIfNeeded(videoDatabase, payload.isNewVideo, t);
             return { videoDatabase, videoPublished };
         }));
         if (payload.isNewVideo)
@@ -136,12 +133,12 @@ function createHlsJobIfEnabled(payload) {
 }
 function publishAndFederateIfNeeded(video) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { videoDatabase, videoPublished } = yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
             if (!videoDatabase)
                 return undefined;
             const videoPublished = yield videoDatabase.publishIfNeededAndSave(t);
-            yield activitypub_1.federateVideoIfNeeded(videoDatabase, videoPublished, t);
+            yield videos_1.federateVideoIfNeeded(videoDatabase, videoPublished, t);
             return { videoDatabase, videoPublished };
         }));
         if (videoPublished) {

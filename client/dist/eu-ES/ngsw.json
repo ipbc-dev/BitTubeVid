@@ -1,14 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1591086440191,
-  "index": "/index.html",
+  "timestamp": 1591116318614,
+  "index": "/client/eu-ES/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "urls": [
-        "/index.html"
+        "/client/eu-ES/index.html",
+        "/client/eu-ES/manifest.webmanifest"
       ],
       "patterns": []
     },
@@ -22,7 +23,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/index.html": "81943b9fdb7347cc375ee821794dcb4b4f43c12b"
+    "/client/eu-ES/index.html": "5be3e726561fac18dc0f55efcf19adc11a8ad73a",
+    "/client/eu-ES/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
     {

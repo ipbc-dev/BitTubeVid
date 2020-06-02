@@ -183,7 +183,7 @@ describe('Test video imports API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -192,7 +192,7 @@ describe('Test video imports API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -201,7 +201,7 @@ describe('Test video imports API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -210,7 +210,7 @@ describe('Test video imports API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -219,7 +219,7 @@ describe('Test video imports API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
                 const attaches = {
-                    'torrentfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    torrentfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -287,7 +287,7 @@ describe('Test video imports API validator', function () {
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
                 fields = lodash_1.omit(fields, 'magnetUri');
                 const attaches = {
-                    'torrentfile': path_1.join(__dirname, '..', '..', 'fixtures', 'video-720p.torrent')
+                    torrentfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video-720p.torrent')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches, statusCodeExpected: 409 });
             });

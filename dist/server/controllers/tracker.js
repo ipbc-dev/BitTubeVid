@@ -17,7 +17,6 @@ const proxyAddr = require("proxy-addr");
 const ws_1 = require("ws");
 const constants_1 = require("../initializers/constants");
 const video_file_1 = require("../models/video/video-file");
-const url_1 = require("url");
 const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
 const config_1 = require("../initializers/config");
 const TrackerServer = bitTorrentTracker.Server;
@@ -86,8 +85,7 @@ function createWebsocketTrackerServer(app) {
         trackerServer.onWebSocketConnection(ws);
     });
     server.on('upgrade', (request, socket, head) => {
-        const pathname = url_1.parse(request.url).pathname;
-        if (pathname === '/tracker/socket') {
+        if (request.url === '/tracker/socket') {
             wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
         }
     });

@@ -17,24 +17,57 @@ const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const plugin_1 = require("../../models/server/plugin");
 const config_1 = require("../../initializers/config");
-const servePluginStaticDirectoryValidator = (pluginType) => [
-    express_validator_1.param('pluginName').custom(plugins_1.isPluginNameValid).withMessage('Should have a valid plugin name'),
-    express_validator_1.param('pluginVersion').custom(plugins_1.isPluginVersionValid).withMessage('Should have a valid plugin version'),
-    express_validator_1.param('staticEndpoint').custom(misc_1.isSafePath).withMessage('Should have a valid static endpoint'),
+const getPluginValidator = (pluginType, withVersion = true) => {
+    const validators = [
+        express_validator_1.param('pluginName').custom(plugins_1.isPluginNameValid).withMessage('Should have a valid plugin name')
+    ];
+    if (withVersion) {
+        validators.push(express_validator_1.param('pluginVersion').custom(plugins_1.isPluginVersionValid).withMessage('Should have a valid plugin version'));
+    }
+    return validators.concat([
+        (req, res, next) => {
+            logger_1.logger.debug('Checking getPluginValidator parameters', { parameters: req.params });
+            if (utils_1.areValidationErrors(req, res))
+                return;
+            const npmName = plugin_1.PluginModel.buildNpmName(req.params.pluginName, pluginType);
+            const plugin = plugin_manager_1.PluginManager.Instance.getRegisteredPluginOrTheme(npmName);
+            if (!plugin)
+                return res.sendStatus(404);
+            if (withVersion && plugin.version !== req.params.pluginVersion)
+                return res.sendStatus(404);
+            res.locals.registeredPlugin = plugin;
+            return next();
+        }
+    ]);
+};
+exports.getPluginValidator = getPluginValidator;
+const getExternalAuthValidator = [
+    express_validator_1.param('authName').custom(misc_1.exists).withMessage('Should have a valid auth name'),
     (req, res, next) => {
-        logger_1.logger.debug('Checking servePluginStaticDirectory parameters', { parameters: req.params });
+        logger_1.logger.debug('Checking getExternalAuthValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
-        const npmName = plugin_1.PluginModel.buildNpmName(req.params.pluginName, pluginType);
-        const plugin = plugin_manager_1.PluginManager.Instance.getRegisteredPluginOrTheme(npmName);
-        if (!plugin || plugin.version !== req.params.pluginVersion) {
+        const plugin = res.locals.registeredPlugin;
+        if (!plugin.registerHelpersStore)
             return res.sendStatus(404);
-        }
-        res.locals.registeredPlugin = plugin;
+        const externalAuth = plugin.registerHelpersStore.getExternalAuths().find(a => a.authName === req.params.authName);
+        if (!externalAuth)
+            return res.sendStatus(404);
+        res.locals.externalAuth = externalAuth;
         return next();
     }
 ];
-exports.servePluginStaticDirectoryValidator = servePluginStaticDirectoryValidator;
+exports.getExternalAuthValidator = getExternalAuthValidator;
+const pluginStaticDirectoryValidator = [
+    express_validator_1.param('staticEndpoint').custom(misc_1.isSafePath).withMessage('Should have a valid static endpoint'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking pluginStaticDirectoryValidator parameters', { parameters: req.params });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.pluginStaticDirectoryValidator = pluginStaticDirectoryValidator;
 const listPluginsValidator = [
     express_validator_1.query('pluginType')
         .optional()

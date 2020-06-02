@@ -13,14 +13,14 @@ const express_validator_1 = require("express-validator");
 const core_utils_1 = require("../../helpers/core-utils");
 const servers_1 = require("../../helpers/custom-validators/servers");
 const logger_1 = require("../../helpers/logger");
-const utils_1 = require("../../helpers/utils");
 const constants_1 = require("../../initializers/constants");
 const actor_follow_1 = require("../../models/activitypub/actor-follow");
-const utils_2 = require("./utils");
+const utils_1 = require("./utils");
 const actor_1 = require("../../models/activitypub/actor");
 const webfinger_1 = require("../../helpers/webfinger");
 const actor_2 = require("../../helpers/custom-validators/activitypub/actor");
 const follows_1 = require("@server/helpers/custom-validators/follows");
+const application_1 = require("@server/models/application/application");
 const listFollowsValidator = [
     express_validator_1.query('state')
         .optional()
@@ -29,7 +29,7 @@ const listFollowsValidator = [
         .optional()
         .custom(actor_2.isActorTypeValid).withMessage('Should have a valid actor type'),
     (req, res, next) => {
-        if (utils_2.areValidationErrors(req, res))
+        if (utils_1.areValidationErrors(req, res))
             return;
         return next();
     }
@@ -46,7 +46,7 @@ const followValidator = [
                 .end();
         }
         logger_1.logger.debug('Checking follow parameters', { parameters: req.body });
-        if (utils_2.areValidationErrors(req, res))
+        if (utils_1.areValidationErrors(req, res))
             return;
         return next();
     }
@@ -56,9 +56,9 @@ const removeFollowingValidator = [
     express_validator_1.param('host').custom(servers_1.isHostValid).withMessage('Should have a valid host'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking unfollowing parameters', { parameters: req.params });
-        if (utils_2.areValidationErrors(req, res))
+        if (utils_1.areValidationErrors(req, res))
             return;
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const follow = yield actor_follow_1.ActorFollowModel.loadByActorAndTargetNameAndHostForAPI(serverActor.id, constants_1.SERVER_ACTOR_NAME, req.params.host);
         if (!follow) {
             return res
@@ -77,13 +77,13 @@ const getFollowerValidator = [
     express_validator_1.param('nameWithHost').custom(actor_2.isValidActorHandle).withMessage('Should have a valid nameWithHost'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking get follower parameters', { parameters: req.params });
-        if (utils_2.areValidationErrors(req, res))
+        if (utils_1.areValidationErrors(req, res))
             return;
         let follow;
         try {
             const actorUrl = yield webfinger_1.loadActorUrlOrGetFromWebfinger(req.params.nameWithHost);
             const actor = yield actor_1.ActorModel.loadByUrl(actorUrl);
-            const serverActor = yield utils_1.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             follow = yield actor_follow_1.ActorFollowModel.loadByActorAndTarget(actor.id, serverActor.id);
         }
         catch (err) {

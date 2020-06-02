@@ -1,19 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const OAuthServer = require("express-oauth-server");
-const constants_1 = require("../initializers/constants");
 const logger_1 = require("../helpers/logger");
 const oauth_model_1 = require("../lib/oauth-model");
-const oAuthServer = new OAuthServer({
-    useErrorHandler: true,
-    accessTokenLifetime: constants_1.OAUTH_LIFETIME.ACCESS_TOKEN,
-    refreshTokenLifetime: constants_1.OAUTH_LIFETIME.REFRESH_TOKEN,
-    continueMiddleware: true,
-    model: require('../lib/oauth-model')
-});
+const auth_1 = require("@server/lib/auth");
 function authenticate(req, res, next, authenticateInQuery = false) {
     const options = authenticateInQuery ? { allowBearerTokensInQueryString: true } : {};
-    oAuthServer.authenticate(options)(req, res, err => {
+    auth_1.oAuthServer.authenticate(options)(req, res, err => {
         if (err) {
             logger_1.logger.warn('Cannot authenticate.', { err });
             return res.status(err.status)
@@ -40,7 +32,8 @@ function authenticateSocket(socket, next) {
         }
         socket.handshake.query.user = tokenDB.User;
         return next();
-    });
+    })
+        .catch(err => logger_1.logger.error('Cannot get access token.', { err }));
 }
 exports.authenticateSocket = authenticateSocket;
 function authenticatePromiseIfNeeded(req, res, authenticateInQuery = false) {
@@ -60,17 +53,3 @@ function optionalAuthenticate(req, res, next) {
     return next();
 }
 exports.optionalAuthenticate = optionalAuthenticate;
-function token(req, res, next) {
-    return oAuthServer.token()(req, res, err => {
-        if (err) {
-            return res.status(err.status)
-                .json({
-                error: err.message,
-                code: err.name
-            })
-                .end();
-        }
-        return next();
-    });
-}
-exports.token = token;

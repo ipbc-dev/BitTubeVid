@@ -14,7 +14,7 @@ const serveThemeCSSValidator = [
         logger_1.logger.debug('Checking serveThemeCSS parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
-        const theme = plugin_manager_1.PluginManager.Instance.getRegisteredTheme(req.params.themeName);
+        const theme = plugin_manager_1.PluginManager.Instance.getRegisteredThemeByShortName(req.params.themeName);
         if (!theme || theme.version !== req.params.themeVersion) {
             return res.sendStatus(404);
         }

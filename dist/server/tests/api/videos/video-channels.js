@@ -311,6 +311,37 @@ describe('Test video channels', function () {
             }
         });
     });
+    it('Should report correct channel statistics', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            {
+                const res = yield index_1.getAccountVideoChannelsList({
+                    url: servers[0].url,
+                    accountName: userInfo.account.name + '@' + userInfo.account.host,
+                    withStats: true
+                });
+                res.body.data.forEach((channel) => {
+                    expect(channel).to.haveOwnProperty('viewsPerDay');
+                    expect(channel.viewsPerDay).to.have.length(30 + 1);
+                    channel.viewsPerDay.forEach((v) => {
+                        expect(v.date).to.be.an('string');
+                        expect(v.views).to.equal(0);
+                    });
+                });
+            }
+            {
+                yield index_1.viewVideo(servers[0].url, videoUUID, 204, '0.0.0.1,127.0.0.1');
+                yield index_1.viewVideo(servers[0].url, videoUUID, 204, '0.0.0.2,127.0.0.1');
+                yield extra_utils_1.wait(8000);
+                const res = yield index_1.getAccountVideoChannelsList({
+                    url: servers[0].url,
+                    accountName: userInfo.account.name + '@' + userInfo.account.host,
+                    withStats: true
+                });
+                const channelWithView = res.body.data.find((channel) => channel.id === firstVideoChannelId);
+                expect(channelWithView.viewsPerDay.slice(-1)[0].views).to.equal(2);
+            }
+        });
+    });
     after(function () {
         return __awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);

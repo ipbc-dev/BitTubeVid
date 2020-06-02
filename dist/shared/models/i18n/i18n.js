@@ -3,44 +3,52 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LOCALE_FILES = ['player', 'server'];
 exports.I18N_LOCALES = {
     'en-US': 'English',
-    'fr-FR': 'Français',
-    'ja-JP': '日本語',
-    'eu-ES': 'Euskara',
     'ca-ES': 'Català',
     'cs-CZ': 'Čeština',
-    'eo': 'Esperanto',
-    'el-GR': 'ελληνικά',
     'de-DE': 'Deutsch',
-    'it-IT': 'Italiano',
-    'nl-NL': 'Nederlands',
+    'el-GR': 'ελληνικά',
+    'eo': 'Esperanto',
     'es-ES': 'Español',
-    'oc': 'Occitan',
+    'eu-ES': 'Euskara',
+    'fi-FI': 'suomi',
+    'fr-FR': 'Français',
     'gd': 'Gàidhlig',
-    'zh-Hant-TW': '繁體中文（台灣）',
+    'hu-HU': 'magyar',
+    'it-IT': 'Italiano',
+    'ja-JP': '日本語',
+    'nl-NL': 'Nederlands',
+    'pl-PL': 'Polski',
     'pt-BR': 'Português (Brasil)',
     'pt-PT': 'Português (Portugal)',
-    'sv-SE': 'svenska',
-    'pl-PL': 'Polski',
-    'fi-FI': 'suomi',
     'ru-RU': 'русский',
-    'zh-Hans-CN': '简体中文（中国）'
+    'sv-SE': 'svenska',
+    'th-TH': 'ไทย',
+    'zh-Hans-CN': '简体中文（中国）',
+    'zh-Hant-TW': '繁體中文（台灣）'
 };
 const I18N_LOCALE_ALIAS = {
-    'en': 'en-US',
-    'fr': 'fr-FR',
-    'eu': 'eu-ES',
     'ca': 'ca-ES',
     'cs': 'cs-CZ',
     'de': 'de-DE',
+    'el': 'el-GR',
+    'en': 'en-US',
     'es': 'es-ES',
-    'pt': 'pt-PT',
+    'eu': 'eu-ES',
     'fi': 'fi-FI',
-    'sv': 'sv-SE',
-    'pl': 'pl-PL',
-    'ru': 'ru-RU',
+    'fr': 'fr-FR',
+    'ja': 'ja-JP',
+    'it': 'it-IT',
+    'hu': 'hu-HU',
     'nl': 'nl-NL',
+    'pl': 'pl-PL',
+    'pt': 'pt-BR',
+    'ru': 'ru-RU',
+    'sv': 'sv-SE',
+    'th': 'th-TH',
     'zh': 'zh-Hans-CN',
+    'zh-Hans': 'zh-Hans-CN',
     'zh-CN': 'zh-Hans-CN',
+    'zh-Hant': 'zh-Hant-TW',
     'zh-TW': 'zh-Hant-TW'
 };
 exports.POSSIBLE_LOCALES = Object.keys(exports.I18N_LOCALES)
@@ -59,11 +67,11 @@ function peertubeTranslate(str, translations) {
 exports.peertubeTranslate = peertubeTranslate;
 const possiblePaths = exports.POSSIBLE_LOCALES.map(l => '/' + l);
 function is18nPath(path) {
-    return possiblePaths.indexOf(path) !== -1;
+    return possiblePaths.includes(path);
 }
 exports.is18nPath = is18nPath;
 function is18nLocale(locale) {
-    return exports.POSSIBLE_LOCALES.indexOf(locale) !== -1;
+    return exports.POSSIBLE_LOCALES.includes(locale);
 }
 exports.is18nLocale = is18nLocale;
 function getCompleteLocale(locale) {
@@ -75,7 +83,7 @@ function getCompleteLocale(locale) {
 }
 exports.getCompleteLocale = getCompleteLocale;
 function getShortLocale(locale) {
-    if (locale.indexOf('-') === -1)
+    if (locale.includes('-') === false)
         return locale;
     return locale.split('-')[0];
 }

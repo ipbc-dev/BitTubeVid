@@ -26,7 +26,7 @@ describe('Test handle downs', function () {
     let missedVideo1;
     let missedVideo2;
     let unlistedVideo;
-    let videoIdsServer1 = [];
+    const videoIdsServer1 = [];
     const videoAttributes = {
         name: 'my super name for server 1',
         category: 5,
@@ -109,7 +109,7 @@ describe('Test handle downs', function () {
             missedVideo1 = resLastVideo1.body.video;
             const resLastVideo2 = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes);
             missedVideo2 = resLastVideo2.body.video;
-            let resVideo = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, unlistedVideoAttributes);
+            const resVideo = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, unlistedVideoAttributes);
             unlistedVideo = resVideo.body.video;
             {
                 const text = 'thread 1';

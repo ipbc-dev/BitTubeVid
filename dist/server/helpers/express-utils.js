@@ -23,7 +23,7 @@ function buildNSFWFilter(res, paramNSFW) {
         return false;
     if (paramNSFW === 'both')
         return undefined;
-    if (res && res.locals.oauth) {
+    if (res === null || res === void 0 ? void 0 : res.locals.oauth) {
         const user = res.locals.oauth.token.User;
         if (user.nsfwPolicy === 'do_not_list')
             return false;
@@ -91,7 +91,7 @@ function createReqFiles(fieldNames, mimeTypes, destinations) {
             cb(null, randomString + extension);
         })
     });
-    let fields = [];
+    const fields = [];
     for (const fieldName of fieldNames) {
         fields.push({
             name: fieldName,

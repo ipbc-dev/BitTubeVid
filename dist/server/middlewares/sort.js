@@ -7,7 +7,7 @@ exports.setDefaultVideoRedundanciesSort = setDefaultVideoRedundanciesSort;
 const setDefaultSearchSort = setDefaultSortFactory('-match');
 exports.setDefaultSearchSort = setDefaultSearchSort;
 function setBlacklistSort(req, res, next) {
-    let newSort = { sortModel: undefined, sortValue: '' };
+    const newSort = { sortModel: undefined, sortValue: '' };
     if (!req.query.sort)
         req.query.sort = '-createdAt';
     if (req.query.sort === '-createdAt' || req.query.sort === 'createdAt' ||

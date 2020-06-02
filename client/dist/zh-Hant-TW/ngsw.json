@@ -1,14 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1591086270852,
-  "index": "/index.html",
+  "timestamp": 1591117174048,
+  "index": "/client/zh-Hant-TW/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "urls": [
-        "/index.html"
+        "/client/zh-Hant-TW/index.html",
+        "/client/zh-Hant-TW/manifest.webmanifest"
       ],
       "patterns": []
     },
@@ -22,7 +23,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/index.html": "7516d2c19caa63c5856bb9019bdd740a53d994d5"
+    "/client/zh-Hant-TW/index.html": "72c26b1f296c9258eadd7d12b7452c9363dcfaf2",
+    "/client/zh-Hant-TW/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
     {

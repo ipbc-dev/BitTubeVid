@@ -25,7 +25,9 @@ const video_playlist_privacy_model_1 = require("../../../shared/models/videos/pl
 const database_1 = require("../../initializers/database");
 const thumbnail_1 = require("../thumbnail");
 function playlistObjectToDBAttributes(playlistObject, byAccount, to) {
-    const privacy = to.indexOf(constants_1.ACTIVITY_PUB.PUBLIC) !== -1 ? video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC : video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED;
+    const privacy = to.includes(constants_1.ACTIVITY_PUB.PUBLIC)
+        ? video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
+        : video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED;
     return {
         name: playlistObject.name,
         description: playlistObject.content,

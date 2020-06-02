@@ -13,7 +13,7 @@ const logger_1 = require("../../helpers/logger");
 const abstract_scheduler_1 = require("./abstract-scheduler");
 const schedule_video_update_1 = require("../../models/video/schedule-video-update");
 const database_utils_1 = require("../../helpers/database-utils");
-const activitypub_1 = require("../activitypub");
+const videos_1 = require("../activitypub/videos");
 const constants_1 = require("../../initializers/constants");
 const notifier_1 = require("../notifier");
 const database_1 = require("../../initializers/database");
@@ -42,7 +42,7 @@ class UpdateVideosScheduler extends abstract_scheduler_1.AbstractScheduler {
                         const isNewVideo = video.isNewVideo(schedule.privacy);
                         video.setPrivacy(schedule.privacy);
                         yield video.save({ transaction: t });
-                        yield activitypub_1.federateVideoIfNeeded(video, isNewVideo, t);
+                        yield videos_1.federateVideoIfNeeded(video, isNewVideo, t);
                         if (wasConfidentialVideo) {
                             const videoToPublish = Object.assign(video, { ScheduleVideoUpdate: schedule, UserVideoHistories: [] });
                             publishedVideos.push(videoToPublish);

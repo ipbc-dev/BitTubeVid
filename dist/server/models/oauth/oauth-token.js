@@ -25,14 +25,21 @@ let OAuthTokenModel = OAuthTokenModel_1 = class OAuthTokenModel extends sequeliz
     static removeTokenCache(token) {
         return oauth_model_1.clearCacheByToken(token.accessToken);
     }
+    static loadByRefreshToken(refreshToken) {
+        const query = {
+            where: { refreshToken }
+        };
+        return OAuthTokenModel_1.findOne(query);
+    }
     static getByRefreshTokenAndPopulateClient(refreshToken) {
         const query = {
             where: {
-                refreshToken: refreshToken
+                refreshToken
             },
             include: [oauth_client_1.OAuthClientModel]
         };
-        return OAuthTokenModel_1.findOne(query)
+        return OAuthTokenModel_1.scope(ScopeNames.WITH_USER)
+            .findOne(query)
             .then(token => {
             if (!token)
                 return null;
@@ -42,9 +49,8 @@ let OAuthTokenModel = OAuthTokenModel_1 = class OAuthTokenModel extends sequeliz
                 client: {
                     id: token.oAuthClientId
                 },
-                user: {
-                    id: token.userId
-                }
+                user: token.User,
+                token
             };
         })
             .catch(err => {
@@ -69,14 +75,14 @@ let OAuthTokenModel = OAuthTokenModel_1 = class OAuthTokenModel extends sequeliz
     static getByRefreshTokenAndPopulateUser(refreshToken) {
         const query = {
             where: {
-                refreshToken: refreshToken
+                refreshToken
             }
         };
         return OAuthTokenModel_1.scope(ScopeNames.WITH_USER)
             .findOne(query)
             .then(token => {
             if (!token)
-                return new OAuthTokenModel_1();
+                return undefined;
             return Object.assign(token, { user: token.User });
         });
     }
@@ -110,6 +116,10 @@ __decorate([
     sequelize_typescript_1.Column,
     __metadata("design:type", Date)
 ], OAuthTokenModel.prototype, "refreshTokenExpiresAt", void 0);
+__decorate([
+    sequelize_typescript_1.Column,
+    __metadata("design:type", String)
+], OAuthTokenModel.prototype, "authName", void 0);
 __decorate([
     sequelize_typescript_1.CreatedAt,
     __metadata("design:type", Date)

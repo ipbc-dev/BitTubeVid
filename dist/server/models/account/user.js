@@ -43,10 +43,12 @@ const theme_utils_1 = require("../../lib/plugins/theme-utils");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FOR_ME_API"] = "FOR_ME_API";
+    ScopeNames["WITH_VIDEOCHANNELS"] = "WITH_VIDEOCHANNELS";
+    ScopeNames["WITH_STATS"] = "WITH_STATS";
 })(ScopeNames || (ScopeNames = {}));
 let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Model {
     static cryptPasswordIfNeeded(instance) {
-        if (instance.changed('password')) {
+        if (instance.changed('password') && instance.password) {
             return peertube_crypto_1.cryptPassword(instance.password)
                 .then(hash => {
                 instance.password = hash;
@@ -61,7 +63,7 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         return this.count();
     }
     static listForApi(start, count, sort, search) {
-        let where = undefined;
+        let where;
         if (search) {
             where = {
                 [sequelize_1.Op.or]: [
@@ -83,14 +85,10 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
                 include: [
                     [
                         sequelize_1.literal('(' +
-                            'SELECT COALESCE(SUM("size"), 0) ' +
-                            'FROM (' +
-                            'SELECT MAX("videoFile"."size") AS "size" FROM "videoFile" ' +
-                            'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
-                            'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-                            'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
-                            'WHERE "account"."userId" = "UserModel"."id" GROUP BY "video"."id"' +
-                            ') t' +
+                            UserModel_1.generateUserQuotaBaseSQL({
+                                withSelect: false,
+                                whereUserId: '"UserModel"."id"'
+                            }) +
                             ')'),
                         'videoQuotaUsed'
                     ]
@@ -167,8 +165,13 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         };
         return UserModel_1.findAll(query);
     }
-    static loadById(id) {
-        return UserModel_1.findByPk(id);
+    static loadById(id, withStats = false) {
+        const scopes = [
+            ScopeNames.WITH_VIDEOCHANNELS
+        ];
+        if (withStats)
+            scopes.push(ScopeNames.WITH_STATS);
+        return UserModel_1.scope(scopes).findByPk(id);
     }
     static loadByUsername(username) {
         const query = {
@@ -289,18 +292,41 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         return UserModel_1.findOne(query);
     }
     static getOriginalVideoFileTotalFromUser(user) {
-        const query = UserModel_1.generateUserQuotaBaseSQL();
+        const query = UserModel_1.generateUserQuotaBaseSQL({
+            withSelect: true,
+            whereUserId: '$userId'
+        });
         return UserModel_1.getTotalRawQuery(query, user.id);
     }
     static getOriginalVideoFileTotalDailyFromUser(user) {
-        const query = UserModel_1.generateUserQuotaBaseSQL('"video"."createdAt" > now() - interval \'24 hours\'');
+        const query = UserModel_1.generateUserQuotaBaseSQL({
+            withSelect: true,
+            whereUserId: '$userId',
+            where: '"video"."createdAt" > now() - interval \'24 hours\''
+        });
         return UserModel_1.getTotalRawQuery(query, user.id);
     }
     static getStats() {
         return __awaiter(this, void 0, void 0, function* () {
+            function getActiveUsers(days) {
+                const query = {
+                    where: {
+                        [sequelize_1.Op.and]: [
+                            sequelize_1.literal(`"lastLoginDate" > NOW() - INTERVAL '${days}d'`)
+                        ]
+                    }
+                };
+                return UserModel_1.count(query);
+            }
             const totalUsers = yield UserModel_1.count();
+            const totalDailyActiveUsers = yield getActiveUsers(1);
+            const totalWeeklyActiveUsers = yield getActiveUsers(7);
+            const totalMonthlyActiveUsers = yield getActiveUsers(30);
             return {
-                totalUsers
+                totalUsers,
+                totalDailyActiveUsers,
+                totalWeeklyActiveUsers,
+                totalMonthlyActiveUsers
             };
         });
     }
@@ -340,6 +366,10 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
     toFormattedJSON(parameters = {}) {
         const videoQuotaUsed = this.get('videoQuotaUsed');
         const videoQuotaUsedDaily = this.get('videoQuotaUsedDaily');
+        const videosCount = this.get('videosCount');
+        const [videoAbusesCount, videoAbusesAcceptedCount] = (this.get('videoAbusesCount') || ':').split(':');
+        const videoAbusesCreatedCount = this.get('videoAbusesCreatedCount');
+        const videoCommentsCount = this.get('videoCommentsCount');
         const json = {
             id: this.id,
             username: this.username,
@@ -364,6 +394,21 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             videoQuotaUsedDaily: videoQuotaUsedDaily !== undefined
                 ? parseInt(videoQuotaUsedDaily + '', 10)
                 : undefined,
+            videosCount: videosCount !== undefined
+                ? parseInt(videosCount + '', 10)
+                : undefined,
+            videoAbusesCount: videoAbusesCount
+                ? parseInt(videoAbusesCount, 10)
+                : undefined,
+            videoAbusesAcceptedCount: videoAbusesAcceptedCount
+                ? parseInt(videoAbusesAcceptedCount, 10)
+                : undefined,
+            videoAbusesCreatedCount: videoAbusesCreatedCount !== undefined
+                ? parseInt(videoAbusesCreatedCount + '', 10)
+                : undefined,
+            videoCommentsCount: videoCommentsCount !== undefined
+                ? parseInt(videoCommentsCount + '', 10)
+                : undefined,
             noInstanceConfigWarningModal: this.noInstanceConfigWarningModal,
             noWelcomeModal: this.noWelcomeModal,
             blocked: this.blocked,
@@ -373,7 +418,9 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
                 ? this.NotificationSetting.toFormattedJSON()
                 : undefined,
             videoChannels: [],
-            createdAt: this.createdAt
+            createdAt: this.createdAt,
+            pluginAuth: this.pluginAuth,
+            lastLoginDate: this.lastLoginDate
         };
         if (parameters.withAdminFlags) {
             Object.assign(json, { adminFlags: this.adminFlags });
@@ -414,17 +461,25 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             return uploadedTotal < this.videoQuota && uploadedDaily < this.videoQuotaDaily;
         });
     }
-    static generateUserQuotaBaseSQL(where) {
-        const andWhere = where ? 'AND ' + where : '';
-        return 'SELECT SUM("size") AS "total" ' +
-            'FROM (' +
-            'SELECT MAX("videoFile"."size") AS "size" FROM "videoFile" ' +
-            'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
-            'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
+    static generateUserQuotaBaseSQL(options) {
+        const andWhere = options.where
+            ? 'AND ' + options.where
+            : '';
+        const videoChannelJoin = 'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
             'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
-            'WHERE "account"."userId" = $userId ' + andWhere +
-            'GROUP BY "video"."id"' +
-            ') t';
+            `WHERE "account"."userId" = ${options.whereUserId} ${andWhere}`;
+        const webtorrentFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+            'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
+            videoChannelJoin;
+        const hlsFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+            'INNER JOIN "videoStreamingPlaylist" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist".id ' +
+            'INNER JOIN "video" ON "videoStreamingPlaylist"."videoId" = "video"."id" ' +
+            videoChannelJoin;
+        return 'SELECT COALESCE(SUM("size"), 0) AS "total" ' +
+            'FROM (' +
+            `SELECT MAX("t1"."size") AS "size" FROM (${webtorrentFiles} UNION ${hlsFiles}) t1 ` +
+            'GROUP BY "t1"."videoId"' +
+            ') t2';
     }
     static getTotalRawQuery(query, userId) {
         const options = {
@@ -440,14 +495,14 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
     }
 };
 __decorate([
-    sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserPassword', value => utils_1.throwIfNotValid(value, users_1.isUserPasswordValid, 'user password')),
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Is('UserPassword', value => utils_1.throwIfNotValid(value, users_1.isUserPasswordValid, 'user password', true)),
     sequelize_typescript_1.Column,
     __metadata("design:type", String)
 ], UserModel.prototype, "password", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserPassword', value => utils_1.throwIfNotValid(value, users_1.isUserUsernameValid, 'user name')),
+    sequelize_typescript_1.Is('UserUsername', value => utils_1.throwIfNotValid(value, users_1.isUserUsernameValid, 'user name')),
     sequelize_typescript_1.Column,
     __metadata("design:type", String)
 ], UserModel.prototype, "username", void 0);
@@ -579,6 +634,18 @@ __decorate([
     __metadata("design:type", Boolean)
 ], UserModel.prototype, "noWelcomeModal", void 0);
 __decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Column,
+    __metadata("design:type", String)
+], UserModel.prototype, "pluginAuth", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Column,
+    __metadata("design:type", Date)
+], UserModel.prototype, "lastLoginDate", void 0);
+__decorate([
     sequelize_typescript_1.CreatedAt,
     __metadata("design:type", Date)
 ], UserModel.prototype, "createdAt", void 0);
@@ -669,6 +736,86 @@ UserModel = UserModel_1 = __decorate([
                     required: true
                 }
             ]
+        },
+        [ScopeNames.WITH_VIDEOCHANNELS]: {
+            include: [
+                {
+                    model: account_1.AccountModel,
+                    include: [
+                        {
+                            model: video_channel_1.VideoChannelModel
+                        },
+                        {
+                            attributes: ['id', 'name', 'type'],
+                            model: video_playlist_1.VideoPlaylistModel.unscoped(),
+                            required: true,
+                            where: {
+                                type: {
+                                    [sequelize_1.Op.ne]: shared_1.VideoPlaylistType.REGULAR
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        [ScopeNames.WITH_STATS]: {
+            attributes: {
+                include: [
+                    [
+                        sequelize_1.literal('(' +
+                            UserModel_1.generateUserQuotaBaseSQL({
+                                withSelect: false,
+                                whereUserId: '"UserModel"."id"'
+                            }) +
+                            ')'),
+                        'videoQuotaUsed'
+                    ],
+                    [
+                        sequelize_1.literal('(' +
+                            'SELECT COUNT("video"."id") ' +
+                            'FROM "video" ' +
+                            'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
+                            'INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ' +
+                            'WHERE "account"."userId" = "UserModel"."id"' +
+                            ')'),
+                        'videosCount'
+                    ],
+                    [
+                        sequelize_1.literal('(' +
+                            `SELECT concat_ws(':', "abuses", "acceptedAbuses") ` +
+                            'FROM (' +
+                            'SELECT COUNT("videoAbuse"."id") AS "abuses", ' +
+                            `COUNT("videoAbuse"."id") FILTER (WHERE "videoAbuse"."state" = ${shared_1.VideoAbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
+                            'FROM "videoAbuse" ' +
+                            'INNER JOIN "video" ON "videoAbuse"."videoId" = "video"."id" ' +
+                            'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
+                            'INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ' +
+                            'WHERE "account"."userId" = "UserModel"."id"' +
+                            ') t' +
+                            ')'),
+                        'videoAbusesCount'
+                    ],
+                    [
+                        sequelize_1.literal('(' +
+                            'SELECT COUNT("videoAbuse"."id") ' +
+                            'FROM "videoAbuse" ' +
+                            'INNER JOIN "account" ON "account"."id" = "videoAbuse"."reporterAccountId" ' +
+                            'WHERE "account"."userId" = "UserModel"."id"' +
+                            ')'),
+                        'videoAbusesCreatedCount'
+                    ],
+                    [
+                        sequelize_1.literal('(' +
+                            'SELECT COUNT("videoComment"."id") ' +
+                            'FROM "videoComment" ' +
+                            'INNER JOIN "account" ON "account"."id" = "videoComment"."accountId" ' +
+                            'WHERE "account"."userId" = "UserModel"."id"' +
+                            ')'),
+                        'videoCommentsCount'
+                    ]
+                ]
+            }
         }
     })),
     sequelize_typescript_1.Table({

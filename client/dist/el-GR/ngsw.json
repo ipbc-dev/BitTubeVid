@@ -1,14 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1591085756161,
-  "index": "/index.html",
+  "timestamp": 1591116517312,
+  "index": "/client/el-GR/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "urls": [
-        "/index.html"
+        "/client/el-GR/index.html",
+        "/client/el-GR/manifest.webmanifest"
       ],
       "patterns": []
     },
@@ -22,7 +23,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/index.html": "dad8426a53fba554d7066df0f338c12e2aab4a27"
+    "/client/el-GR/index.html": "8deadb649915e27309370a87b5c6e73aed8c8250",
+    "/client/el-GR/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
     {

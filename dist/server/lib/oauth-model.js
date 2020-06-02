@@ -9,19 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const Bluebird = require("bluebird");
 const node_fetch_1 = require("node-fetch");
 const oauth2_server_1 = require("oauth2-server");
-const user_1 = require("../lib/user");
 const logger_1 = require("../helpers/logger");
-const actor_1 = require("../models/activitypub/actor");
-const user_2 = require("../models/account/user");
+const user_1 = require("../models/account/user");
 const oauth_client_1 = require("../models/oauth/oauth-client");
 const oauth_token_1 = require("../models/oauth/oauth-token");
 const constants_1 = require("../initializers/constants");
 const config_1 = require("../initializers/config");
 const LRUCache = require("lru-cache");
-const shared_1 = require("../../shared");
+const user_flag_model_1 = require("@shared/models/users/user-flag.model");
+const user_2 = require("./user");
+const user_role_1 = require("@shared/models/users/user-role");
+const plugin_manager_1 = require("@server/lib/plugins/plugin-manager");
+const actor_1 = require("@server/models/activitypub/actor");
 const accessTokenCache = new LRUCache({ max: constants_1.LRU_CACHE.USER_TOKENS.MAX_SIZE });
 const userHavingToken = new LRUCache({ max: constants_1.LRU_CACHE.USER_TOKENS.MAX_SIZE });
 function deleteUserToken(userId, t) {
@@ -46,16 +47,27 @@ function clearCacheByToken(token) {
 }
 exports.clearCacheByToken = clearCacheByToken;
 function getAccessToken(bearerToken) {
-    logger_1.logger.debug('Getting access token (bearerToken: ' + bearerToken + ').');
-    if (!bearerToken)
-        return Bluebird.resolve(undefined);
-    if (accessTokenCache.has(bearerToken))
-        return Bluebird.resolve(accessTokenCache.get(bearerToken));
-    return oauth_token_1.OAuthTokenModel.getByTokenAndPopulateUser(bearerToken)
-        .then(tokenModel => {
-        if (tokenModel) {
-            accessTokenCache.set(bearerToken, tokenModel);
-            userHavingToken.set(tokenModel.userId, tokenModel.accessToken);
+    return __awaiter(this, void 0, void 0, function* () {
+        logger_1.logger.debug('Getting access token (bearerToken: ' + bearerToken + ').');
+        if (!bearerToken)
+            return undefined;
+        let tokenModel;
+        if (accessTokenCache.has(bearerToken)) {
+            tokenModel = accessTokenCache.get(bearerToken);
+        }
+        else {
+            tokenModel = yield oauth_token_1.OAuthTokenModel.getByTokenAndPopulateUser(bearerToken);
+            if (tokenModel) {
+                accessTokenCache.set(bearerToken, tokenModel);
+                userHavingToken.set(tokenModel.userId, tokenModel.accessToken);
+            }
+        }
+        if (!tokenModel)
+            return undefined;
+        if (tokenModel.User.pluginAuth) {
+            const valid = yield plugin_manager_1.PluginManager.Instance.isTokenValid(tokenModel, 'access');
+            if (valid !== true)
+                return undefined;
         }
         return tokenModel;
     });
@@ -67,8 +79,19 @@ function getClient(clientId, clientSecret) {
 }
 exports.getClient = getClient;
 function getRefreshToken(refreshToken) {
-    logger_1.logger.debug('Getting RefreshToken (refreshToken: ' + refreshToken + ').');
-    return oauth_token_1.OAuthTokenModel.getByRefreshTokenAndPopulateClient(refreshToken);
+    return __awaiter(this, void 0, void 0, function* () {
+        logger_1.logger.debug('Getting RefreshToken (refreshToken: ' + refreshToken + ').');
+        const tokenInfo = yield oauth_token_1.OAuthTokenModel.getByRefreshTokenAndPopulateClient(refreshToken);
+        if (!tokenInfo)
+            return undefined;
+        const tokenModel = tokenInfo.token;
+        if (tokenModel.User.pluginAuth) {
+            const valid = yield plugin_manager_1.PluginManager.Instance.isTokenValid(tokenModel, 'refresh');
+            if (valid !== true)
+                return undefined;
+        }
+        return tokenInfo;
+    });
 }
 exports.getRefreshToken = getRefreshToken;
 const USERS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.USERS;
@@ -80,7 +103,7 @@ function generateUntakenUsername(username, email) {
         let testUser = {};
         do {
             if (newUsernameFromName.length >= USERS_CONSTRAINTS_FIELDS.USERNAME.min) {
-                testUser = yield user_2.UserModel.loadByUsername(newUsernameFromName);
+                testUser = yield user_1.UserModel.loadByUsername(newUsernameFromName);
                 if (!testUser) {
                     testUser = yield actor_1.ActorModel.loadLocalByName(newUsernameFromName);
                 }
@@ -124,14 +147,14 @@ function getUserFirebase(usernameOrEmail, password, user) {
                     username: yield generateUntakenUsername(userDisplayName, email),
                     email,
                     password,
-                    role: shared_1.UserRole.USER,
+                    role: user_role_1.UserRole.USER,
                     emailVerified: config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION ? emailVerified : null,
                     nsfwPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
                     videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
                     videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY
                 };
-                const userToCreate = new user_2.UserModel(userData);
-                const userCreationResult = yield user_1.createUserAccountAndChannelAndPlaylist({
+                const userToCreate = new user_1.UserModel(userData);
+                const userCreationResult = yield user_2.createUserAccountAndChannelAndPlaylist({
                     userToCreate,
                     userDisplayName
                 });
@@ -149,12 +172,29 @@ function getUserFirebase(usernameOrEmail, password, user) {
 }
 function getUser(usernameOrEmail, password) {
     return __awaiter(this, void 0, void 0, function* () {
+        const res = this.request.res;
+        if (res.locals.bypassLogin && res.locals.bypassLogin.bypass === true) {
+            const obj = res.locals.bypassLogin;
+            logger_1.logger.info('Bypassing oauth login by plugin %s.', obj.pluginName);
+            let user = yield user_1.UserModel.loadByEmail(obj.user.email);
+            if (!user)
+                user = yield createUserFromExternal(obj.pluginName, obj.user);
+            if (!user)
+                throw new oauth2_server_1.AccessDeniedError('Cannot create such user: an actor with that name already exists.');
+            if (user.pluginAuth !== null) {
+                if (user.pluginAuth !== obj.pluginName)
+                    return null;
+                return user;
+            }
+        }
         logger_1.logger.debug('Getting User (username/email: ' + usernameOrEmail + ', password: ******).');
-        const user = yield user_2.UserModel.loadByUsernameOrEmail(usernameOrEmail);
+        const user = yield user_1.UserModel.loadByUsernameOrEmail(usernameOrEmail);
         if (!user)
             return getUserFirebase(usernameOrEmail, password, null);
+        if (!user || user.pluginAuth !== null || !password)
+            return null;
         const passwordMatch = yield user.isPasswordMatch(password);
-        if (passwordMatch === false)
+        if (passwordMatch !== true)
             return getUserFirebase(usernameOrEmail, password, user);
         if (user.blocked)
             throw new oauth2_server_1.AccessDeniedError('User is blocked.');
@@ -167,31 +207,70 @@ function getUser(usernameOrEmail, password) {
 exports.getUser = getUser;
 function revokeToken(tokenInfo) {
     return __awaiter(this, void 0, void 0, function* () {
+        const res = this.request.res;
         const token = yield oauth_token_1.OAuthTokenModel.getByRefreshTokenAndPopulateUser(tokenInfo.refreshToken);
         if (token) {
+            if (res.locals.explicitLogout === true && token.User.pluginAuth && token.authName) {
+                plugin_manager_1.PluginManager.Instance.onLogout(token.User.pluginAuth, token.authName, token.User);
+            }
             clearCacheByToken(token.accessToken);
             token.destroy()
                 .catch(err => logger_1.logger.error('Cannot destroy token when revoking token.', { err }));
+            return true;
         }
-        const expiredToken = token;
-        expiredToken.refreshTokenExpiresAt = new Date('2015-05-28T06:59:53.000Z');
-        return expiredToken;
+        return false;
     });
 }
 exports.revokeToken = revokeToken;
 function saveToken(token, client, user) {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        const res = this.request.res;
+        let authName = null;
+        if (((_a = res.locals.bypassLogin) === null || _a === void 0 ? void 0 : _a.bypass) === true) {
+            authName = res.locals.bypassLogin.authName;
+        }
+        else if (res.locals.refreshTokenAuthName) {
+            authName = res.locals.refreshTokenAuthName;
+        }
         logger_1.logger.debug('Saving token ' + token.accessToken + ' for client ' + client.id + ' and user ' + user.id + '.');
         const tokenToCreate = {
             accessToken: token.accessToken,
             accessTokenExpiresAt: token.accessTokenExpiresAt,
             refreshToken: token.refreshToken,
             refreshTokenExpiresAt: token.refreshTokenExpiresAt,
+            authName,
             oAuthClientId: client.id,
             userId: user.id
         };
         const tokenCreated = yield oauth_token_1.OAuthTokenModel.create(tokenToCreate);
+        user.lastLoginDate = new Date();
+        yield user.save();
         return Object.assign(tokenCreated, { client, user });
     });
 }
 exports.saveToken = saveToken;
+function createUserFromExternal(pluginAuth, options) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const actor = yield actor_1.ActorModel.loadLocalByName(options.username);
+        if (actor)
+            return null;
+        const userToCreate = new user_1.UserModel({
+            username: options.username,
+            password: null,
+            email: options.email,
+            nsfwPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
+            autoPlayVideo: true,
+            role: options.role,
+            videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
+            videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY,
+            adminFlags: user_flag_model_1.UserAdminFlag.NONE,
+            pluginAuth
+        });
+        const { user } = yield user_2.createUserAccountAndChannelAndPlaylist({
+            userToCreate,
+            userDisplayName: options.displayName
+        });
+        return user;
+    });
+}

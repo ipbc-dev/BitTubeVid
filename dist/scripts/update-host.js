@@ -15,15 +15,15 @@ const constants_1 = require("../server/initializers/constants");
 const actor_follow_1 = require("../server/models/activitypub/actor-follow");
 const video_1 = require("../server/models/video/video");
 const actor_1 = require("../server/models/activitypub/actor");
-const activitypub_1 = require("../server/lib/activitypub");
+const url_1 = require("../server/lib/activitypub/url");
 const video_share_1 = require("../server/models/video/video-share");
 const video_comment_1 = require("../server/models/video/video-comment");
-const utils_1 = require("../server/helpers/utils");
 const account_1 = require("../server/models/account/account");
 const video_channel_1 = require("../server/models/video/video-channel");
 const video_streaming_playlist_1 = require("../server/models/video/video-streaming-playlist");
-const initializers_1 = require("../server/initializers");
+const database_1 = require("../server/initializers/database");
 const webtorrent_1 = require("@server/helpers/webtorrent");
+const application_1 = require("@server/models/application/application");
 run()
     .then(() => process.exit(0))
     .catch(err => {
@@ -32,8 +32,8 @@ run()
 });
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield initializers_1.initDatabaseModels(true);
-        const serverAccount = yield utils_1.getServerActor();
+        yield database_1.initDatabaseModels(true);
+        const serverAccount = yield application_1.getServerActor();
         {
             const res = yield actor_follow_1.ActorFollowModel.listAcceptedFollowingUrlsForApi([serverAccount.id], undefined);
             const hasFollowing = res.total > 0;
@@ -59,8 +59,8 @@ function run() {
                 continue;
             console.log('Updating actor ' + actor.url);
             const newUrl = actor.Account
-                ? activitypub_1.getAccountActivityPubUrl(actor.preferredUsername)
-                : activitypub_1.getVideoChannelActivityPubUrl(actor.preferredUsername);
+                ? url_1.getAccountActivityPubUrl(actor.preferredUsername)
+                : url_1.getVideoChannelActivityPubUrl(actor.preferredUsername);
             actor.url = newUrl;
             actor.inboxUrl = newUrl + '/inbox';
             actor.outboxUrl = newUrl + '/outbox';
@@ -77,7 +77,7 @@ function run() {
             if (videoShare.Video.isOwned() === false)
                 continue;
             console.log('Updating video share ' + videoShare.url);
-            videoShare.url = activitypub_1.getVideoAnnounceActivityPubUrl(videoShare.Actor, videoShare.Video);
+            videoShare.url = url_1.getVideoAnnounceActivityPubUrl(videoShare.Actor, videoShare.Video);
             yield videoShare.save();
         }
         console.log('Updating video comments.');
@@ -100,14 +100,14 @@ function run() {
             if (comment.isOwned() === false)
                 continue;
             console.log('Updating comment ' + comment.url);
-            comment.url = activitypub_1.getVideoCommentActivityPubUrl(comment.Video, comment);
+            comment.url = url_1.getVideoCommentActivityPubUrl(comment.Video, comment);
             yield comment.save();
         }
         console.log('Updating video and torrent files.');
         const videos = yield video_1.VideoModel.listLocal();
         for (const video of videos) {
             console.log('Updating video ' + video.uuid);
-            video.url = activitypub_1.getVideoActivityPubUrl(video);
+            video.url = url_1.getVideoActivityPubUrl(video);
             yield video.save();
             for (const file of video.VideoFiles) {
                 console.log('Updating torrent file %s of video %s.', file.resolution, video.uuid);

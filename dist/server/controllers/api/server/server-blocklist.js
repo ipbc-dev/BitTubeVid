@@ -18,6 +18,7 @@ const account_blocklist_1 = require("../../../models/account/account-blocklist")
 const blocklist_1 = require("../../../lib/blocklist");
 const server_blocklist_1 = require("../../../models/server/server-blocklist");
 const users_1 = require("../../../../shared/models/users");
+const application_1 = require("@server/models/application/application");
 const serverBlocklistRouter = express.Router();
 exports.serverBlocklistRouter = serverBlocklistRouter;
 serverBlocklistRouter.get('/blocklist/accounts', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_ACCOUNTS_BLOCKLIST), middlewares_1.paginationValidator, validators_1.accountsBlocklistSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listBlockedAccounts));
@@ -28,14 +29,20 @@ serverBlocklistRouter.post('/blocklist/servers', middlewares_1.authenticate, mid
 serverBlocklistRouter.delete('/blocklist/servers/:host', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVERS_BLOCKLIST), middlewares_1.asyncMiddleware(validators_1.unblockServerByServerValidator), middlewares_1.asyncRetryTransactionMiddleware(unblockServer));
 function listBlockedAccounts(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
-        const resultList = yield account_blocklist_1.AccountBlocklistModel.listForApi(serverActor.Account.id, req.query.start, req.query.count, req.query.sort);
+        const serverActor = yield application_1.getServerActor();
+        const resultList = yield account_blocklist_1.AccountBlocklistModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            accountId: serverActor.Account.id
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
 function blockAccount(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const accountToBlock = res.locals.account;
         yield blocklist_1.addAccountInBlocklist(serverActor.Account.id, accountToBlock.id);
         return res.status(204).end();
@@ -50,14 +57,20 @@ function unblockAccount(req, res) {
 }
 function listBlockedServers(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
-        const resultList = yield server_blocklist_1.ServerBlocklistModel.listForApi(serverActor.Account.id, req.query.start, req.query.count, req.query.sort);
+        const serverActor = yield application_1.getServerActor();
+        const resultList = yield server_blocklist_1.ServerBlocklistModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            accountId: serverActor.Account.id
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
 function blockServer(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const serverToBlock = res.locals.server;
         yield blocklist_1.addServerInBlocklist(serverActor.Account.id, serverToBlock.id);
         return res.status(204).end();

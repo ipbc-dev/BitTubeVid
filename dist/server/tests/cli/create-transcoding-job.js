@@ -16,7 +16,7 @@ const jobs_1 = require("../../../shared/extra-utils/server/jobs");
 const expect = chai.expect;
 describe('Test create transcoding jobs', function () {
     let servers = [];
-    let videosUUID = [];
+    const videosUUID = [];
     const config = {
         transcoding: {
             enabled: false,

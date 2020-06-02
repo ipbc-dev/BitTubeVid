@@ -15,7 +15,7 @@ const prompt = require("prompt");
 const path_1 = require("path");
 const config_1 = require("../server/initializers/config");
 const video_1 = require("../server/models/video/video");
-const initializers_1 = require("../server/initializers");
+const database_1 = require("../server/initializers/database");
 const fs_extra_1 = require("fs-extra");
 const video_redundancy_1 = require("../server/models/redundancy/video-redundancy");
 const Bluebird = require("bluebird");
@@ -36,7 +36,7 @@ function run() {
             console.error('Cannot prune storage because you put multiple storage keys in the same directory.');
             process.exit(0);
         }
-        yield initializers_1.initDatabaseModels(true);
+        yield database_1.initDatabaseModels(true);
         let toDelete = [];
         toDelete = toDelete.concat(yield pruneDirectory(config_1.CONFIG.STORAGE.VIDEOS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.TORRENTS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, doesRedundancyExist), yield pruneDirectory(config_1.CONFIG.STORAGE.PREVIEWS_DIR, doesThumbnailExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, doesThumbnailExist(false)), yield pruneDirectory(config_1.CONFIG.STORAGE.AVATARS_DIR, doesAvatarExist));
         const tmpFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.TMP_DIR);

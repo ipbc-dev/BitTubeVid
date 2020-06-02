@@ -1,14 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1591086043248,
-  "index": "/index.html",
+  "timestamp": 1591117555530,
+  "index": "/client/sv-SE/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "urls": [
-        "/index.html"
+        "/client/sv-SE/index.html",
+        "/client/sv-SE/manifest.webmanifest"
       ],
       "patterns": []
     },
@@ -22,7 +23,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/index.html": "9653deefb109d38db5a30bfca057a1644ea94687"
+    "/client/sv-SE/index.html": "d7abbcff4993d0a54360198e13d4b8e7b6d39725",
+    "/client/sv-SE/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
     {

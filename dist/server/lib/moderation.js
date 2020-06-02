@@ -20,3 +20,11 @@ function isRemoteVideoCommentAccepted(_object) {
     return { accepted: true };
 }
 exports.isRemoteVideoCommentAccepted = isRemoteVideoCommentAccepted;
+function isPreImportVideoAccepted(object) {
+    return { accepted: true };
+}
+exports.isPreImportVideoAccepted = isPreImportVideoAccepted;
+function isPostImportVideoAccepted(object) {
+    return { accepted: true };
+}
+exports.isPostImportVideoAccepted = isPostImportVideoAccepted;

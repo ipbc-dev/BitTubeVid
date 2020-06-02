@@ -55,7 +55,7 @@ function generateVideoMiniature(video, videoFile, type) {
 exports.generateVideoMiniature = generateVideoMiniature;
 function createPlaceholderThumbnail(fileUrl, video, type, size) {
     const { filename, height, width, existingThumbnail } = buildMetadataFromVideo(video, type, size);
-    const thumbnail = existingThumbnail ? existingThumbnail : new thumbnail_1.ThumbnailModel();
+    const thumbnail = existingThumbnail || new thumbnail_1.ThumbnailModel();
     thumbnail.filename = filename;
     thumbnail.height = height;
     thumbnail.width = width;
@@ -109,7 +109,7 @@ function buildMetadataFromVideo(video, type, size) {
 function createThumbnailFromFunction(parameters) {
     return __awaiter(this, void 0, void 0, function* () {
         const { thumbnailCreator, filename, width, height, type, existingThumbnail, automaticallyGenerated = null, fileUrl = null } = parameters;
-        const thumbnail = existingThumbnail ? existingThumbnail : new thumbnail_1.ThumbnailModel();
+        const thumbnail = existingThumbnail || new thumbnail_1.ThumbnailModel();
         thumbnail.filename = filename;
         thumbnail.height = height;
         thumbnail.width = width;
