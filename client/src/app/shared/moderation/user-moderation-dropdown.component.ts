@@ -14,14 +14,15 @@ import { ServerConfig } from '@shared/models'
   templateUrl: './user-moderation-dropdown.component.html'
 })
 export class UserModerationDropdownComponent implements OnInit, OnChanges {
-  @ViewChild('userBanModal', { static: false }) userBanModal: UserBanModalComponent
+  @ViewChild('userBanModal') userBanModal: UserBanModalComponent
 
   @Input() user: User
   @Input() account: Account
 
   @Input() buttonSize: 'normal' | 'small' = 'normal'
-  @Input() placement = 'left'
+  @Input() placement = 'left-top left-bottom auto'
   @Input() label: string
+  @Input() container: 'body' | undefined = undefined
 
   @Output() userChanged = new EventEmitter()
   @Output() userDeleted = new EventEmitter()

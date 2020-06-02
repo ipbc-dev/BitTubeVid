@@ -24,7 +24,7 @@ const videoUpdateRateValidator = [
   }
 ]
 
-const getAccountVideoRateValidator = function (rateType: VideoRateType) {
+const getAccountVideoRateValidatorFactory = function (rateType: VideoRateType) {
   return [
     param('name').custom(isAccountNameValid).withMessage('Should have a valid account name'),
     param('videoId').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
@@ -51,7 +51,7 @@ const getAccountVideoRateValidator = function (rateType: VideoRateType) {
 const videoRatingValidator = [
   query('rating').optional().custom(isRatingValid).withMessage('Value must be one of "like" or "dislike"'),
 
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking rating parameter', { parameters: req.params })
 
     if (areValidationErrors(req, res)) return
@@ -64,6 +64,6 @@ const videoRatingValidator = [
 
 export {
   videoUpdateRateValidator,
-  getAccountVideoRateValidator,
+  getAccountVideoRateValidatorFactory,
   videoRatingValidator
 }

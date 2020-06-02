@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/no-floating-promises */
 
 import { expect } from 'chai'
 import { pathExists, readdir, readFile } from 'fs-extra'
@@ -93,6 +93,14 @@ function getVideo (url: string, id: number | string, expectedStatus = 200) {
           .get(path)
           .set('Accept', 'application/json')
           .expect(expectedStatus)
+}
+
+function getVideoFileMetadataUrl (url: string) {
+  return request(url)
+    .get('/')
+    .set('Accept', 'application/json')
+    .expect(200)
+    .expect('Content-Type', /json/)
 }
 
 function viewVideo (url: string, id: number | string, expectedStatus = 204, xForwardedFor?: string) {
@@ -488,7 +496,7 @@ async function completeVideoCheck (
     description: string
     publishedAt?: string
     support: string
-    originallyPublishedAt?: string,
+    originallyPublishedAt?: string
     account: {
       name: string
       host: string
@@ -509,7 +517,7 @@ async function completeVideoCheck (
     files: {
       resolution: number
       size: number
-    }[],
+    }[]
     thumbnailfile?: string
     previewfile?: string
   }
@@ -583,9 +591,10 @@ async function completeVideoCheck (
 
     const minSize = attributeFile.size - ((10 * attributeFile.size) / 100)
     const maxSize = attributeFile.size + ((10 * attributeFile.size) / 100)
-    expect(file.size,
-           'File size for resolution ' + file.resolution.label + ' outside confidence interval (' + minSize + '> size <' + maxSize + ')')
-      .to.be.above(minSize).and.below(maxSize)
+    expect(
+      file.size,
+      'File size for resolution ' + file.resolution.label + ' outside confidence interval (' + minSize + '> size <' + maxSize + ')'
+    ).to.be.above(minSize).and.below(maxSize)
 
     const torrent = await webtorrentAdd(file.magnetUri, true)
     expect(torrent.files).to.be.an('array')
@@ -608,10 +617,10 @@ async function videoUUIDToId (url: string, id: number | string) {
 }
 
 async function uploadVideoAndGetId (options: {
-  server: ServerInfo,
-  videoName: string,
-  nsfw?: boolean,
-  privacy?: VideoPrivacy,
+  server: ServerInfo
+  videoName: string
+  nsfw?: boolean
+  privacy?: VideoPrivacy
   token?: string
 }) {
   const videoAttrs: any = { name: options.videoName }
@@ -642,6 +651,7 @@ export {
   getAccountVideos,
   getVideoChannelVideos,
   getVideo,
+  getVideoFileMetadataUrl,
   getVideoWithToken,
   getVideosList,
   getVideosListPagination,

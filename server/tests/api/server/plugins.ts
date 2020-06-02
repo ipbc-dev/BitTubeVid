@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import 'mocha'
 import * as chai from 'chai'
@@ -6,19 +6,29 @@ import {
   cleanupTests,
   closeAllSequelize,
   flushAndRunServer,
-  getConfig, getMyUserInformation, getPluginPackageJSON,
+  getConfig,
+  getMyUserInformation,
   getPlugin,
+  getPluginPackageJSON,
   getPluginRegisteredSettings,
   getPluginsCSS,
-  installPlugin, killallServers,
+  getPublicSettings,
+  installPlugin,
+  killallServers,
   listAvailablePlugins,
-  listPlugins, reRunServer,
+  listPlugins,
+  reRunServer,
   ServerInfo,
   setAccessTokensToServers,
-  setPluginVersion, uninstallPlugin,
-  updateCustomSubConfig, updateMyUser, updatePluginPackageJSON, updatePlugin,
+  setPluginVersion,
+  uninstallPlugin,
+  updateCustomSubConfig,
+  updateMyUser,
+  updatePlugin,
+  updatePluginPackageJSON,
   updatePluginSettings,
-  wait, getPublicSettings
+  wait,
+  waitUntilLog
 } from '../../../../shared/extra-utils'
 import { PluginType } from '../../../../shared/models/plugins/plugin.type'
 import { PeerTubePluginIndex } from '../../../../shared/models/plugins/peertube-plugin-index.model'
@@ -88,7 +98,7 @@ describe('Test plugins', function () {
       expect(res2.body.total).to.be.at.least(2)
       expect(data2).to.have.lengthOf(2)
 
-      expect(data1[0].npmName).to.not.equal(data2[ 0 ].npmName)
+      expect(data1[0].npmName).to.not.equal(data2[0].npmName)
     }
 
     {
@@ -133,7 +143,7 @@ describe('Test plugins', function () {
   it('Should have the correct global css', async function () {
     const res = await getPluginsCSS(server.url)
 
-    expect(res.text).to.contain('--mainBackgroundColor')
+    expect(res.text).to.contain('background-color: red')
   })
 
   it('Should have the plugin loaded in the configuration', async function () {
@@ -247,6 +257,12 @@ describe('Test plugins', function () {
       npmName: 'peertube-plugin-hello-world',
       settings
     })
+  })
+
+  it('Should have watched settings changes', async function () {
+    this.timeout(10000)
+
+    await waitUntilLog(server, 'Settings changed!')
   })
 
   it('Should get a plugin and a theme', async function () {

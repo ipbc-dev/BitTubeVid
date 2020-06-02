@@ -3,7 +3,7 @@
 </div>
 
 <p-table
-  [value]="blockedAccounts" [lazy]="true" [paginator]="true" [totalRecords]="totalRecords" [rows]="rowsPerPage"
+  [value]="blockedAccounts" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage"
   [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)"
 >
 
@@ -11,6 +11,7 @@
     <tr>
       <th i18n>Account</th>
       <th i18n pSortableColumn="createdAt">Muted at <p-sortIcon field="createdAt"></p-sortIcon></th>
+      <th></th> <!-- column for action buttons -->
     </tr>
   </ng-template>
 

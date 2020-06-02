@@ -1,3 +1,5 @@
+@import '_bootstrap-variables';
+
 $small-view: 800px;
 $mobile-view: 500px;
 
@@ -10,11 +12,15 @@ $grey-background-color: #E5E5E5;
 $grey-background-hover-color: #EFEFEF;
 $grey-foreground-color: #585858;
 $grey-foreground-hover-color: #303030;
+$grey-button-outline-color: scale-color($grey-foreground-color, $alpha: -95%);
 
-$orange-color: #F1680D;
-$orange-hover-color: #F97D46;
-
-$cyan-color: hsl(187, 77%, 34%);
+// Palette
+$main-color: hsl(24, 90%, 50%);
+$main-hover-color: lighten($main-color, 5%);
+$main-color-lighter: lighten($main-color, 10%);
+$main-color-lightest: lighten($main-color, 40%);
+$secondary-color: hsl(187, 77, 34);
+//
 
 $support-button: inherit;
 $support-button-heart: #e83e8c;
@@ -47,8 +53,6 @@ $sub-menu-color: #F7F7F7;
 $footer-height: 30px;
 $footer-margin: 30px;
 
-$footer-border-color: $header-border-color;
-
 $separator-border-color: rgba(0, 0, 0, 0.10);
 
 $video-miniature-width: 238px;
@@ -59,12 +63,20 @@ $video-thumbnail-ratio: $video-thumbnail-width / $video-thumbnail-height;
 
 $theater-bottom-space: 115px;
 
+$input-foreground-color: $fg-color;
 $input-background-color: $bg-color;
 $input-placeholder-color: #898989;
 
+$textarea-foreground-color: $fg-color;
+$textarea-background-color: $bg-color;
+$markdown-textarea-background-color: $grey-background-hover-color;
+
 $sub-menu-margin-bottom: 30px;
+$sub-menu-margin-bottom-small-view: 10px;
 
 $activated-action-button-color: black;
+
+$focus-box-shadow-form: 0 0 0 .2rem;
 
 /*** map theme ***/
 
@@ -72,19 +84,30 @@ $activated-action-button-color: black;
 // to be warned of non-existing variables
 $variables: (
   --mainColor: var(--mainColor),
+  --mainColorLighter: var(--mainColorLighter),
+  --mainColorLightest: var(--mainColorLightest),
   --mainHoverColor: var(--mainHoverColor),
   --mainBackgroundColor: var(--mainBackgroundColor),
   --mainForegroundColor: var(--mainForegroundColor),
   --secondaryColor: var(--secondaryColor),
 
+  --greyForegroundColor: var(--greyForegroundColor),
+
   --menuBackgroundColor: var(--menuBackgroundColor),
   --menuForegroundColor: var(--menuForegroundColor),
   --submenuColor: var(--submenuColor),
 
-  --inputColor: var(--inputColor),
+  --inputForegroundColor: var(--inputForegroundColor),
+  --inputBackgroundColor: var(--inputBackgroundColor),
   --inputPlaceholderColor: var(--inputPlaceholderColor),
 
+  --textareaForegroundColor: var(--textareaForegroundColor),
+  --textareaBackgroundColor: var(--textareaBackgroundColor),
+  --markdownTextareaBackgroundColor: var(--markdownTextareaBackgroundColor),
+
   --actionButtonColor: var(--actionButtonColor),
+  --activatedActionButtonColor: var(--activatedActionButtonColor),
+
   --supportButtonColor: var(--supportButtonColor),
   --supportButtonBackgroundColor: var(--supportButtonBackgroundColor),
   --supportButtonHeartColor: var(--supportButtonHeartColor),
@@ -93,8 +116,28 @@ $variables: (
   --embedBigPlayBackgroundColor: var(--embedBigPlayBackgroundColor)
 );
 
-/*** theme helper ***/
-
 @function var($variable) {
   @return map-get($variables, $variable);
+}
+
+/*** z-index groups ***/
+
+$zindex: (
+  miniature    :    10,
+  privacymsg   :    20,
+  typeahead    :    30,
+  header       :  1000,
+  menu         : 11000,
+  dropdown     : 12000,
+  popover      : 13000,
+  tooltip      : 14000,
+  loadbar      : 15000,
+  modal        : 16000,
+  help-popover : 17000,
+  notification : 18000,
+  hotkeys      : 19000
+);
+
+@function z($label) {
+  @return map-get($zindex, $label);
 }

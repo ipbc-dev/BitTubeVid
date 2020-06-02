@@ -1,5 +1,10 @@
+import * as Bluebird from 'bluebird'
+import { FindAndCountOptions, json, QueryTypes } from 'sequelize'
 import { AllowNull, Column, CreatedAt, DataType, DefaultScope, Is, Model, Table, UpdatedAt } from 'sequelize-typescript'
-import { getSort, throwIfNotValid } from '../utils'
+import { MPlugin, MPluginFormattable } from '@server/typings/models'
+import { PeerTubePlugin } from '../../../shared/models/plugins/peertube-plugin.model'
+import { PluginType } from '../../../shared/models/plugins/plugin.type'
+import { RegisterServerSettingOptions } from '../../../shared/models/plugins/register-server-setting.model'
 import {
   isPluginDescriptionValid,
   isPluginHomepage,
@@ -7,12 +12,7 @@ import {
   isPluginTypeValid,
   isPluginVersionValid
 } from '../../helpers/custom-validators/plugins'
-import { PluginType } from '../../../shared/models/plugins/plugin.type'
-import { PeerTubePlugin } from '../../../shared/models/plugins/peertube-plugin.model'
-import { FindAndCountOptions, json } from 'sequelize'
-import { RegisterServerSettingOptions } from '../../../shared/models/plugins/register-server-setting.model'
-import * as Bluebird from 'bluebird'
-import { MPlugin, MPluginFormattable } from '@server/typings/models'
+import { getSort, throwIfNotValid } from '../utils'
 
 @DefaultScope(() => ({
   attributes: {
@@ -112,7 +112,7 @@ export class PluginModel extends Model<PluginModel> {
     return PluginModel.findOne(query)
   }
 
-  static getSetting (pluginName: string, pluginType: PluginType, settingName: string) {
+  static getSetting (pluginName: string, pluginType: PluginType, settingName: string, registeredSettings: RegisterServerSettingOptions[]) {
     const query = {
       attributes: [ 'settings' ],
       where: {
@@ -123,9 +123,48 @@ export class PluginModel extends Model<PluginModel> {
 
     return PluginModel.findOne(query)
       .then(p => {
-        if (!p || !p.settings) return undefined
+        if (!p || !p.settings || p.settings === undefined) {
+          const registered = registeredSettings.find(s => s.name === settingName)
+          if (!registered || registered.default === undefined) return undefined
+
+          return registered.default
+        }
 
         return p.settings[settingName]
+      })
+  }
+
+  static getSettings (
+    pluginName: string,
+    pluginType: PluginType,
+    settingNames: string[],
+    registeredSettings: RegisterServerSettingOptions[]
+  ) {
+    const query = {
+      attributes: [ 'settings' ],
+      where: {
+        name: pluginName,
+        type: pluginType
+      }
+    }
+
+    return PluginModel.findOne(query)
+      .then(p => {
+        const result: { [settingName: string ]: string | boolean } = {}
+
+        for (const name of settingNames) {
+          if (!p || !p.settings || p.settings[name] === undefined) {
+            const registered = registeredSettings.find(s => s.name === name)
+
+            if (registered?.default !== undefined) {
+              result[name] = registered.default
+            }
+          } else {
+            result[name] = p.settings[name]
+          }
+        }
+
+        return result
       })
   }
 
@@ -173,26 +212,25 @@ export class PluginModel extends Model<PluginModel> {
   }
 
   static storeData (pluginName: string, pluginType: PluginType, key: string, data: any) {
-    const query = {
-      where: {
-        name: pluginName,
-        type: pluginType
-      }
+    const query = 'UPDATE "plugin" SET "storage" = jsonb_set(coalesce("storage", \'{}\'), :key, :data::jsonb) ' +
+    'WHERE "name" = :pluginName AND "type" = :pluginType'
+
+    const jsonPath = '{' + key + '}'
+
+    const options = {
+      replacements: { pluginName, pluginType, key: jsonPath, data: JSON.stringify(data) },
+      type: QueryTypes.UPDATE
     }
 
-    const toSave = {
-      [`storage.${key}`]: data
-    }
-
-    return PluginModel.update(toSave, query)
+    return PluginModel.sequelize.query(query, options)
                       .then(() => undefined)
   }
 
   static listForApi (options: {
-    pluginType?: PluginType,
-    uninstalled?: boolean,
-    start: number,
-    count: number,
+    pluginType?: PluginType
+    uninstalled?: boolean
+    start: number
+    count: number
     sort: string
   }) {
     const { uninstalled = false } = options

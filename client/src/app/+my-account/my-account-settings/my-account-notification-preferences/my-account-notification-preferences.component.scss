@@ -8,14 +8,15 @@
 
   &:first-child {
     font-size: 16px;
-
-    & > div {
-      font-weight: $font-semibold;
-    }
   }
 
   & > div {
+    padding: 10px;
     width: 350px;
+
+    &:nth-child(2) {
+      max-width: 60px !important;
+    }
 
     @media screen and (max-width: $small-view) {
       width: auto;
@@ -25,9 +26,4 @@
       }
     }
   }
-
-  & > div {
-    padding: 10px
-  }
 }
-

@@ -1,6 +1,5 @@
 $dropdown-link-active-bg: inherit;
 
-$zindex-modal: 10005;
 $modal-footer-border-width: 0;
 $modal-md: 600px;
 
@@ -13,9 +12,14 @@ $grid-breakpoints: (
   md: 768px,
   // Large screen / desktop
   lg: 900px,
-  // Extra large screen / wide desktop
-  xl: 1200px
+  // Extra large screens / wide desktops
+  xl: 1200px,
+  xxl: 1600px
 );
+
+@function breakpoint($label) {
+  @return map-get($grid-breakpoints, $label);
+}
 
 $container-max-widths: (
   sm: 420px,
@@ -30,6 +34,3 @@ $input-focus-border-color: #ced4da;
 
 $nav-pills-link-active-bg: #F0F0F0;
 $nav-pills-link-active-color: #000;
-
-$zindex-dropdown: 10000;
-$zindex-popover: 10000;

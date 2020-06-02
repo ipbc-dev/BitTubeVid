@@ -11,7 +11,8 @@ import { VideoEdit } from '@app/shared/video/video-edit.model'
 import { FormValidatorService } from '@app/shared'
 import { VideoCaptionService } from '@app/shared/video-caption'
 import { VideoImportService } from '@app/shared/video-import'
-import { scrollToTop } from '@app/shared/misc/utils'
+import { scrollToTop, getAbsoluteAPIUrl } from '@app/shared/misc/utils'
+import { switchMap, map } from 'rxjs/operators'
 
 @Component({
   selector: 'my-video-import-url',
@@ -76,31 +77,54 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
 
     this.loadingBar.start()
 
-    this.videoImportService.importVideoUrl(this.targetUrl, videoUpdate).subscribe(
-      res => {
-        this.loadingBar.complete()
-        this.firstStepDone.emit(res.video.name)
-        this.isImportingVideo = false
-        this.hasImportedVideo = true
+    this.videoImportService
+        .importVideoUrl(this.targetUrl, videoUpdate)
+        .pipe(
+          switchMap(res => {
+            return this.videoCaptionService
+                .listCaptions(res.video.id)
+                .pipe(
+                  map(result => ({ video: res.video, videoCaptions: result.data }))
+                )
+          })
+        )
+        .subscribe(
+          ({ video, videoCaptions }) => {
+            this.loadingBar.complete()
+            this.firstStepDone.emit(video.name)
+            this.isImportingVideo = false
+            this.hasImportedVideo = true
 
-        this.video = new VideoEdit(Object.assign(res.video, {
-          commentsEnabled: videoUpdate.commentsEnabled,
-          downloadEnabled: videoUpdate.downloadEnabled,
-          support: null,
-          thumbnailUrl: null,
-          previewUrl: null
-        }))
+            const absoluteAPIUrl = getAbsoluteAPIUrl()
 
-        this.hydrateFormFromVideo()
-      },
+            const thumbnailUrl = video.thumbnailPath
+              ? absoluteAPIUrl + video.thumbnailPath
+              : null
 
-      err => {
-        this.loadingBar.complete()
-        this.isImportingVideo = false
-        this.firstStepError.emit()
-        this.notifier.error(err.message)
-      }
-    )
+            const previewUrl = video.previewPath
+              ? absoluteAPIUrl + video.previewPath
+              : null
+
+            this.video = new VideoEdit(Object.assign(video, {
+              commentsEnabled: videoUpdate.commentsEnabled,
+              downloadEnabled: videoUpdate.downloadEnabled,
+              support: null,
+              thumbnailUrl,
+              previewUrl
+            }))
+
+            this.videoCaptions = videoCaptions
+
+            this.hydrateFormFromVideo()
+          },
+
+          err => {
+            this.loadingBar.complete()
+            this.isImportingVideo = false
+            this.firstStepError.emit()
+            this.notifier.error(err.message)
+          }
+        )
   }
 
   updateSecondStep () {
@@ -133,5 +157,26 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
 
   private hydrateFormFromVideo () {
     this.form.patchValue(this.video.toFormPatch())
+
+    const objects = [
+      {
+        url: 'thumbnailUrl',
+        name: 'thumbnailfile'
+      },
+      {
+        url: 'previewUrl',
+        name: 'previewfile'
+      }
+    ]
+
+    for (const obj of objects) {
+      fetch(this.video[obj.url])
+        .then(response => response.blob())
+        .then(data => {
+          this.form.patchValue({
+            [ obj.name ]: data
+          })
+        })
+    }
   }
 }

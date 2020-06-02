@@ -46,15 +46,19 @@ const inboxQueue = queue<QueueParam, Error>((task, cb) => {
 
   processActivities(task.activities, options)
     .then(() => cb())
+    .catch(err => {
+      logger.error('Error in process activities.', { err })
+      cb()
+    })
 })
 
 function inboxController (req: express.Request, res: express.Response) {
   const rootActivity: RootActivity = req.body
-  let activities: Activity[] = []
+  let activities: Activity[]
 
-  if ([ 'Collection', 'CollectionPage' ].indexOf(rootActivity.type) !== -1) {
+  if ([ 'Collection', 'CollectionPage' ].includes(rootActivity.type)) {
     activities = (rootActivity as ActivityPubCollection).items
-  } else if ([ 'OrderedCollection', 'OrderedCollectionPage' ].indexOf(rootActivity.type) !== -1) {
+  } else if ([ 'OrderedCollection', 'OrderedCollectionPage' ].includes(rootActivity.type)) {
     activities = (rootActivity as ActivityPubOrderedCollection<Activity>).orderedItems
   } else {
     activities = [ rootActivity as Activity ]

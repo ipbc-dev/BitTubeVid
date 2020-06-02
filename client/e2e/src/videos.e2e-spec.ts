@@ -1,10 +1,11 @@
-import { VideoWatchPage } from './po/video-watch.po'
-import { VideoUploadPage } from './po/video-upload.po'
-import { LoginPage } from './po/login.po'
 import { browser } from 'protractor'
-import { VideoUpdatePage } from './po/video-update.po'
-import { MyAccountPage } from './po/my-account'
 import { AppPage } from './po/app.po'
+import { LoginPage } from './po/login.po'
+import { MyAccountPage } from './po/my-account'
+import { VideoUpdatePage } from './po/video-update.po'
+import { VideoUploadPage } from './po/video-upload.po'
+import { VideoWatchPage } from './po/video-watch.po'
+import { isIOS, isMobileDevice, isSafari } from './utils'
 
 async function skipIfUploadNotSupported () {
   if (await isMobileDevice() || await isSafari()) {
@@ -13,16 +14,6 @@ async function skipIfUploadNotSupported () {
   }
 
   return false
-}
-
-async function isMobileDevice () {
-  const caps = await browser.getCapabilities()
-  return caps.get('realMobile') === 'true' || caps.get('realMobile') === true
-}
-
-async function isSafari () {
-  const caps = await browser.getCapabilities()
-  return caps.get('browserName') && caps.get('browserName').toLowerCase() === 'safari'
 }
 
 describe('Videos workflow', () => {
@@ -46,12 +37,20 @@ describe('Videos workflow', () => {
     loginPage = new LoginPage()
     appPage = new AppPage()
 
-    if (await isMobileDevice()) {
-      console.log('Mobile device detected.')
+    if (await isIOS()) {
+      // iOS does not seem to work with protractor
+      // https://github.com/angular/protractor/issues/2840
+      browser.ignoreSynchronization = true
+
+      console.log('iOS detected')
+    } else if (await isMobileDevice()) {
+      console.log('Android detected.')
+    } else if (await isSafari()) {
+      console.log('Safari detected.')
     }
 
-    if (await isSafari()) {
-      console.log('Safari detected.')
+    if (!await isMobileDevice()) {
+      await browser.driver.manage().window().maximize()
     }
   })
 
@@ -100,7 +99,7 @@ describe('Videos workflow', () => {
   it('Should play the video', async () => {
     videoWatchUrl = await browser.getCurrentUrl()
 
-    await videoWatchPage.playAndPauseVideo(true, await isMobileDevice())
+    await videoWatchPage.playAndPauseVideo(true)
     expect(videoWatchPage.getWatchVideoPlayerCurrentTime()).toBeGreaterThanOrEqual(2)
   })
 
@@ -109,7 +108,7 @@ describe('Videos workflow', () => {
 
     await videoWatchPage.goOnAssociatedEmbed()
 
-    await videoWatchPage.playAndPauseVideo(false, await isMobileDevice())
+    await videoWatchPage.playAndPauseVideo(false)
     expect(videoWatchPage.getWatchVideoPlayerCurrentTime()).toBeGreaterThanOrEqual(2)
 
     await browser.waitForAngularEnabled(true)
@@ -120,7 +119,7 @@ describe('Videos workflow', () => {
 
     await videoWatchPage.goOnP2PMediaLoaderEmbed()
 
-    await videoWatchPage.playAndPauseVideo(false, await isMobileDevice())
+    await videoWatchPage.playAndPauseVideo(false)
     expect(videoWatchPage.getWatchVideoPlayerCurrentTime()).toBeGreaterThanOrEqual(2)
 
     await browser.waitForAngularEnabled(true)

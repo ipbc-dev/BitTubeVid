@@ -27,7 +27,7 @@ import { scrollToTop } from '@app/shared/misc/utils'
 export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy, CanComponentDeactivate {
   @Output() firstStepDone = new EventEmitter<string>()
   @Output() firstStepError = new EventEmitter<void>()
-  @ViewChild('videofileInput', { static: false }) videofileInput: ElementRef<HTMLInputElement>
+  @ViewChild('videofileInput') videofileInput: ElementRef<HTMLInputElement>
 
   // So that it can be accessed in the template
   readonly SPECIAL_SCHEDULED_PRIVACY = VideoEdit.SPECIAL_SCHEDULED_PRIVACY
@@ -70,7 +70,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
   }
 
   get videoExtensions () {
-    return this.serverConfig.video.file.extensions.join(',')
+    return this.serverConfig.video.file.extensions.join(', ')
   }
 
   ngOnInit () {
@@ -108,6 +108,11 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
     return this.videofileInput.nativeElement.files[0]
   }
 
+  setVideoFile (files: FileList) {
+    this.videofileInput.nativeElement.files = files
+    this.fileChange()
+  }
+
   getAudioUploadLabel () {
     const videofile = this.getVideoFile()
     if (!videofile) return this.i18n('Upload')
@@ -122,9 +127,13 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
   cancelUpload () {
     if (this.videoUploadObservable !== null) {
       this.videoUploadObservable.unsubscribe()
+
       this.isUploadingVideo = false
       this.videoUploadPercents = 0
       this.videoUploadObservable = null
+
+      this.firstStepError.emit()
+
       this.notifier.info(this.i18n('Upload cancelled'))
     }
   }

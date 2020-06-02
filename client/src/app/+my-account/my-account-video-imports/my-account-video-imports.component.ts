@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { RestPagination, RestTable } from '@app/shared'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { Notifier } from '@app/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoImport, VideoImportState } from '../../../../../shared/models/videos'
 import { VideoImportService } from '@app/shared/video-import'
 
@@ -14,20 +13,22 @@ import { VideoImportService } from '@app/shared/video-import'
 export class MyAccountVideoImportsComponent extends RestTable implements OnInit {
   videoImports: VideoImport[] = []
   totalRecords = 0
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: 1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
   constructor (
     private notifier: Notifier,
-    private videoImportService: VideoImportService,
-    private i18n: I18n
+    private videoImportService: VideoImportService
   ) {
     super()
   }
 
   ngOnInit () {
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'MyAccountVideoImportsComponent'
   }
 
   isVideoImportSuccess (videoImport: VideoImport) {

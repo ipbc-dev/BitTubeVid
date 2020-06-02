@@ -1,20 +1,14 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import 'mocha'
 
-import {
-  cleanupTests,
-  closeAllSequelize,
-  flushAndRunMultipleServers,
-  killallServers,
-  ServerInfo,
-  setActorField
-} from '../../../../shared/extra-utils'
+import { cleanupTests, closeAllSequelize, flushAndRunMultipleServers, ServerInfo, setActorField } from '../../../../shared/extra-utils'
 import { HTTP_SIGNATURE } from '../../../initializers/constants'
-import { buildDigest, buildGlobalHeaders } from '../../../lib/job-queue/handlers/utils/activitypub-http-utils'
+import { buildGlobalHeaders } from '../../../lib/job-queue/handlers/utils/activitypub-http-utils'
 import * as chai from 'chai'
 import { activityPubContextify, buildSignedActivity } from '../../../helpers/activitypub'
 import { makeFollowRequest, makePOSTAPRequest } from '../../../../shared/extra-utils/requests/activitypub'
+import { buildDigest } from '@server/helpers/peertube-crypto'
 
 const expect = chai.expect
 
@@ -33,7 +27,7 @@ function getAnnounceWithoutContext (server2: ServerInfo) {
     if (Array.isArray(json[key])) {
       result[key] = json[key].map(v => v.replace(':9002', `:${server2.port}`))
     } else {
-      result[ key ] = json[ key ].replace(':9002', `:${server2.port}`)
+      result[key] = json[key].replace(':9002', `:${server2.port}`)
     }
   }
 

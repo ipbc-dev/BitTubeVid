@@ -1,10 +1,10 @@
 import * as express from 'express'
 import { extname } from 'path'
 import { VideoCreate, VideoPrivacy, VideoState, VideoUpdate } from '../../../../shared'
-import { getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffmpeg-utils'
+import { getMetadataFromFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffmpeg-utils'
 import { logger } from '../../../helpers/logger'
 import { auditLoggerFactory, getAuditIdFromRes, VideoAuditView } from '../../../helpers/audit-logger'
-import { getFormattedObjects, getServerActor } from '../../../helpers/utils'
+import { getFormattedObjects } from '../../../helpers/utils'
 import { autoBlacklistVideoIfNeeded } from '../../../lib/video-blacklist'
 import {
   DEFAULT_AUDIO_RESOLUTION,
@@ -14,12 +14,7 @@ import {
   VIDEO_LICENCES,
   VIDEO_PRIVACIES
 } from '../../../initializers/constants'
-import {
-  changeVideoChannelShare,
-  federateVideoIfNeeded,
-  fetchRemoteVideoDescription,
-  getVideoActivityPubUrl
-} from '../../../lib/activitypub'
+import { federateVideoIfNeeded, fetchRemoteVideoDescription } from '../../../lib/activitypub/videos'
 import { JobQueue } from '../../../lib/job-queue'
 import { Redis } from '../../../lib/redis'
 import {
@@ -32,6 +27,7 @@ import {
   paginationValidator,
   setDefaultPagination,
   setDefaultSort,
+  videoFileMetadataGetValidator,
   videosAddValidator,
   videosCustomGetValidator,
   videosGetValidator,
@@ -61,11 +57,15 @@ import { CONFIG } from '../../../initializers/config'
 import { sequelizeTypescript } from '../../../initializers/database'
 import { createVideoMiniatureFromExisting, generateVideoMiniature } from '../../../lib/thumbnail'
 import { ThumbnailType } from '../../../../shared/models/videos/thumbnail.type'
-import { VideoTranscodingPayload } from '../../../lib/job-queue/handlers/video-transcoding'
 import { Hooks } from '../../../lib/plugins/hooks'
 import { MVideoDetails, MVideoFullLight } from '@server/typings/models'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
 import { getVideoFilePath } from '@server/lib/video-paths'
+import toInt from 'validator/lib/toInt'
+import { addOptimizeOrMergeAudioJob } from '@server/helpers/video'
+import { getServerActor } from '@server/models/application/application'
+import { changeVideoChannelShare } from '@server/lib/activitypub/share'
+import { getVideoActivityPubUrl } from '@server/lib/activitypub/url'
 
 const auditLogger = auditLoggerFactory('videos')
 const videosRouter = express.Router()
@@ -128,6 +128,10 @@ videosRouter.get('/:id/description',
   asyncMiddleware(videosGetValidator),
   asyncMiddleware(getVideoDescription)
 )
+videosRouter.get('/:id/metadata/:videoFileId',
+  asyncMiddleware(videoFileMetadataGetValidator),
+  asyncMiddleware(getVideoFileMetadata)
+)
 videosRouter.get('/:id',
   optionalAuthenticate,
   asyncMiddleware(videosCustomGetValidator('only-video-with-rights')),
@@ -135,7 +139,7 @@ videosRouter.get('/:id',
   asyncMiddleware(getVideo)
 )
 videosRouter.post('/:id/views',
-  asyncMiddleware(videosGetValidator),
+  asyncMiddleware(videosCustomGetValidator('only-immutable-attributes')),
   asyncMiddleware(viewVideo)
 )
 
@@ -207,7 +211,8 @@ async function addVideo (req: express.Request, res: express.Response) {
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
-    videoStreamingPlaylistId: null
+    videoStreamingPlaylistId: null,
+    metadata: await getMetadataFromFile<any>(videoPhysicalFile.path)
   })
 
   if (videoFile.isAudio()) {
@@ -292,25 +297,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated)
 
   if (video.state === VideoState.TO_TRANSCODE) {
-    // Put uuid because we don't have id auto incremented for now
-    let dataInput: VideoTranscodingPayload
-
-    if (videoFile.isAudio()) {
-      dataInput = {
-        type: 'merge-audio' as 'merge-audio',
-        resolution: DEFAULT_AUDIO_RESOLUTION,
-        videoUUID: videoCreated.uuid,
-        isNewVideo: true
-      }
-    } else {
-      dataInput = {
-        type: 'optimize' as 'optimize',
-        videoUUID: videoCreated.uuid,
-        isNewVideo: true
-      }
-    }
-    logger.info('Sending job to transcoder (optimize) with payload: ', dataInput)
-    await JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput })
+    await addOptimizeOrMergeAudioJob(videoCreated, videoFile)
   }
   logger.info('action:api.video.uploaded ', videoCreated)
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
@@ -455,14 +442,13 @@ async function getVideo (req: express.Request, res: express.Response) {
 
   if (video.isOutdated()) {
     JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: video.url } })
-      .catch(err => logger.error('Cannot create AP refresher job for video %s.', video.url, { err }))
   }
 
   return res.json(video.toFormattedDetailsJSON())
 }
 
 async function viewVideo (req: express.Request, res: express.Response) {
-  const videoInstance = res.locals.videoAll
+  const videoInstance = res.locals.onlyImmutableVideo
 
   const ip = req.ip
   const exists = await Redis.Instance.doesVideoIPViewExist(ip, videoInstance.uuid)
@@ -495,6 +481,11 @@ async function getVideoDescription (req: express.Request, res: express.Response)
   }
 
   return res.json({ description })
+}
+
+async function getVideoFileMetadata (req: express.Request, res: express.Response) {
+  const videoFile = await VideoFileModel.loadWithMetadata(toInt(req.params.videoFileId))
+  return res.json(videoFile.metadata)
 }
 
 async function listVideos (req: express.Request, res: express.Response) {

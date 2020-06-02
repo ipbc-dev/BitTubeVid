@@ -8,7 +8,7 @@ import {
   getVideoDislikesActivityPubUrl,
   getVideoLikesActivityPubUrl,
   getVideoSharesActivityPubUrl
-} from '../../lib/activitypub'
+} from '../../lib/activitypub/url'
 import { isArray } from '../../helpers/custom-validators/misc'
 import { VideoStreamingPlaylist } from '../../../shared/models/videos/video-streaming-playlist.model'
 import {
@@ -23,16 +23,18 @@ import {
 import { MVideoFileRedundanciesOpt } from '../../typings/models/video/video-file'
 import { VideoFile } from '@shared/models/videos/video-file.model'
 import { generateMagnetUri } from '@server/helpers/webtorrent'
+import { extractVideo } from '@server/helpers/video'
 
 export type VideoFormattingJSONOptions = {
   completeDescription?: boolean
   additionalAttributes: {
-    state?: boolean,
-    waitTranscoding?: boolean,
-    scheduledUpdate?: boolean,
+    state?: boolean
+    waitTranscoding?: boolean
+    scheduledUpdate?: boolean
     blacklistInfo?: boolean
   }
 }
+
 function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFormattingJSONOptions): Video {
   const userHistory = isArray(video.UserVideoHistories) ? video.UserVideoHistories[0] : undefined
 
@@ -179,14 +181,14 @@ function videoFilesModelToFormattedJSON (
   baseUrlWs: string,
   videoFiles: MVideoFileRedundanciesOpt[]
 ): VideoFile[] {
+  const video = extractVideo(model)
+
   return videoFiles
     .map(videoFile => {
-      let resolutionLabel = videoFile.resolution + 'p'
-
       return {
         resolution: {
           id: videoFile.resolution,
-          label: resolutionLabel
+          label: videoFile.resolution + 'p'
         },
         magnetUri: generateMagnetUri(model, videoFile, baseUrlHttp, baseUrlWs),
         size: videoFile.size,
@@ -194,7 +196,8 @@ function videoFilesModelToFormattedJSON (
         torrentUrl: model.getTorrentUrl(videoFile, baseUrlHttp),
         torrentDownloadUrl: model.getTorrentDownloadUrl(videoFile, baseUrlHttp),
         fileUrl: model.getVideoFileUrl(videoFile, baseUrlHttp),
-        fileDownloadUrl: model.getVideoFileDownloadUrl(videoFile, baseUrlHttp)
+        fileDownloadUrl: model.getVideoFileDownloadUrl(videoFile, baseUrlHttp),
+        metadataUrl: video.getVideoFileMetadataUrl(videoFile, baseUrlHttp)
       } as VideoFile
     })
     .sort((a, b) => {
@@ -214,10 +217,19 @@ function addVideoFilesInAPAcc (
   for (const file of files) {
     acc.push({
       type: 'Link',
-      mediaType: MIMETYPES.VIDEO.EXT_MIMETYPE[ file.extname ] as any,
+      mediaType: MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname] as any,
       href: model.getVideoFileUrl(file, baseUrlHttp),
       height: file.resolution,
       size: file.size,
+      fps: file.fps
+    })
+
+    acc.push({
+      type: 'Link',
+      rel: [ 'metadata', MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname] ],
+      mediaType: 'application/json' as 'application/json',
+      href: extractVideo(model).getVideoFileMetadataUrl(file, baseUrlHttp),
+      height: file.resolution,
       fps: file.fps
     })
 
@@ -282,10 +294,8 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
   addVideoFilesInAPAcc(url, video, baseUrlHttp, baseUrlWs, video.VideoFiles || [])
 
   for (const playlist of (video.VideoStreamingPlaylists || [])) {
-    let tag: ActivityTagObject[]
-
-    tag = playlist.p2pMediaLoaderInfohashes
-                  .map(i => ({ type: 'Infohash' as 'Infohash', name: i }))
+    const tag = playlist.p2pMediaLoaderInfohashes
+                  .map(i => ({ type: 'Infohash' as 'Infohash', name: i })) as ActivityTagObject[]
     tag.push({
       type: 'Link',
       name: 'sha256',
@@ -308,10 +318,14 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
   for (const caption of video.VideoCaptions) {
     subtitleLanguage.push({
       identifier: caption.language,
-      name: VideoCaptionModel.getLanguageLabel(caption.language)
+      name: VideoCaptionModel.getLanguageLabel(caption.language),
+      url: caption.getFileUrl(video)
     })
   }
 
+  // FIXME: remove and uncomment in PT 2.3
+  // Breaks compatibility with PT <= 2.1
+  // const icons = [ video.getMiniature(), video.getPreview() ]
   const miniature = video.getMiniature()
 
   return {
@@ -339,11 +353,18 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
     subtitleLanguage,
     icon: {
       type: 'Image',
-      url: miniature.getFileUrl(video.isOwned()),
+      url: miniature.getFileUrl(video),
       mediaType: 'image/jpeg',
       width: miniature.width,
       height: miniature.height
-    },
+    } as any,
+    // icon: icons.map(i => ({
+    //   type: 'Image',
+    //   url: i.getFileUrl(video),
+    //   mediaType: 'image/jpeg',
+    //   width: i.width,
+    //   height: i.height
+    // })),
     url,
     likes: getVideoLikesActivityPubUrl(video),
     dislikes: getVideoDislikesActivityPubUrl(video),

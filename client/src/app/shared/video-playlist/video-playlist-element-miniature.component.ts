@@ -18,7 +18,7 @@ import { VideoPlaylistElement } from '@app/shared/video-playlist/video-playlist-
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class VideoPlaylistElementMiniatureComponent implements OnInit {
-  @ViewChild('moreDropdown', { static: false }) moreDropdown: NgbDropdown
+  @ViewChild('moreDropdown') moreDropdown: NgbDropdown
 
   @Input() playlist: VideoPlaylist
   @Input() playlistElement: VideoPlaylistElement
@@ -27,6 +27,7 @@ export class VideoPlaylistElementMiniatureComponent implements OnInit {
   @Input() rowLink = false
   @Input() accountLink = true
   @Input() position: number // Keep this property because we're in the OnPush change detection strategy
+  @Input() touchScreenEditButton = false
 
   @Output() elementRemoved = new EventEmitter<VideoPlaylistElement>()
 

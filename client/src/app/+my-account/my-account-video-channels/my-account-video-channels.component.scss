@@ -6,13 +6,14 @@
 }
 
 ::ng-deep .action-button {
-  &.action-button-delete {
+  &.action-button-edit {
     margin-right: 10px;
   }
 }
 
 .video-channel {
   @include row-blocks;
+  padding-bottom: 0;
 
   img {
     @include avatar(80px);
@@ -49,6 +50,7 @@
   }
 
   .video-channel-buttons {
+    margin-top: 10px;
     min-width: 190px;
   }
 }
@@ -58,15 +60,32 @@
   margin: 20px 0 50px;
 }
 
-@media screen and (max-width: 800px) {
+::ng-deep .chartjs-render-monitor {
+  position: relative;
+  top: 1px;
+}
+
+@media screen and (max-width: $small-view) {
   .video-channels-header {
     text-align: center;
   }
 
   .video-channel {
-    .video-channel-names {
-      flex-direction: column;
-      align-items: center !important;
+    padding-bottom: 10px;
+
+    .video-channel-info {
+      padding-bottom: 10px;
+      text-align: center;
+
+      .video-channel-names {
+        flex-direction: column;
+        align-items: center !important;
+        margin: auto;
+
+        .video-channel-name {
+          margin-left: 0px !important;
+        }
+      }
     }
 
     img {
@@ -74,7 +93,23 @@
     }
 
     .video-channel-buttons {
-      margin-top: 10px;
+      align-self: center;
+    }
+  }
+}
+
+@media screen and (min-width: breakpoint(lg)) {
+  :host-context(.main-col:not(.expanded)) {
+    .video-channel-buttons {
+      float: right;
+    }
+  }
+}
+
+@media screen and (min-width: $small-view) {
+  :host-context(.expanded) {
+    .video-channel-buttons {
+      float: right;
     }
   }
 }

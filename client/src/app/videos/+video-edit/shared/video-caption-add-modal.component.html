@@ -9,7 +9,7 @@
     <div class="modal-body">
       <label i18n for="language">Language</label>
       <div class="peertube-select-container">
-        <select id="language" formControlName="language">
+        <select id="language" formControlName="language" class="form-control">
           <option></option>
           <option *ngFor="let language of videoCaptionLanguages" [value]="language.id">{{ language.label }}</option>
         </select>
@@ -23,6 +23,7 @@
         <my-reactive-file
           formControlName="captionfile" inputName="captionfile" i18n-inputLabel inputLabel="Select the caption file"
           [extensions]="videoCaptionExtensions" [maxFileSize]="videoCaptionMaxSize" [displayFilename]="true"
+          i18n-ngbTooltip [ngbTooltip]="'(extensions: ' + videoCaptionExtensions.join(', ') + ')'"
         ></my-reactive-file>
       </div>
 
@@ -32,9 +33,10 @@
     </div>
 
     <div class="modal-footer inputs">
-      <span i18n class="action-button action-button-cancel" (click)="hide()">
-        Cancel
-      </span>
+      <input
+        type="button" role="button" i18n-value value="Cancel" class="action-button action-button-cancel"
+        (click)="hide()" (key.enter)="hide()"
+      >
 
       <input
         type="submit" i18n-value value="Add this caption" class="action-button-submit"

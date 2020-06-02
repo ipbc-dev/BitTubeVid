@@ -3,11 +3,19 @@ import { UserRole } from '../../../shared'
 import { CONSTRAINTS_FIELDS, NSFW_POLICY_TYPES } from '../../initializers/constants'
 import { exists, isArray, isBooleanValid, isFileValid } from './misc'
 import { values } from 'lodash'
+import { isEmailEnabled } from '../../initializers/config'
 
 const USERS_CONSTRAINTS_FIELDS = CONSTRAINTS_FIELDS.USERS
 
 function isUserPasswordValid (value: string) {
   return validator.isLength(value, USERS_CONSTRAINTS_FIELDS.PASSWORD)
+}
+
+function isUserPasswordValidOrEmpty (value: string) {
+  // Empty password is only possible if emailing is enabled.
+  if (value === '') return isEmailEnabled()
+
+  return isUserPasswordValid(value)
 }
 
 function isUserVideoQuotaValid (value: string) {
@@ -38,7 +46,7 @@ function isUserEmailVerifiedValid (value: any) {
 
 const nsfwPolicies = values(NSFW_POLICY_TYPES)
 function isUserNSFWPolicyValid (value: any) {
-  return exists(value) && nsfwPolicies.indexOf(value) !== -1
+  return exists(value) && nsfwPolicies.includes(value)
 }
 
 function isUserWebTorrentEnabledValid (value: any) {
@@ -103,6 +111,7 @@ export {
   isUserVideosHistoryEnabledValid,
   isUserBlockedValid,
   isUserPasswordValid,
+  isUserPasswordValidOrEmpty,
   isUserVideoLanguages,
   isUserBlockedReasonValid,
   isUserRoleValid,

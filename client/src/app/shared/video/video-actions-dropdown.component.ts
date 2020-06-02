@@ -1,8 +1,7 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core'
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { DropdownAction, DropdownButtonSize, DropdownDirection } from '@app/shared/buttons/action-dropdown.component'
-import { AuthService, ConfirmService, Notifier, ServerService } from '@app/core'
-import { BlocklistService } from '@app/shared/blocklist'
+import { AuthService, ConfirmService, Notifier } from '@app/core'
 import { Video } from '@app/shared/video/video.model'
 import { VideoService } from '@app/shared/video/video.service'
 import { VideoDetails } from '@app/shared/video/video-details.model'
@@ -32,12 +31,12 @@ export type VideoActionsDisplayType = {
   styleUrls: [ './video-actions-dropdown.component.scss' ]
 })
 export class VideoActionsDropdownComponent implements OnChanges {
-  @ViewChild('playlistDropdown', { static: false }) playlistDropdown: NgbDropdown
-  @ViewChild('playlistAdd', { static: false }) playlistAdd: VideoAddToPlaylistComponent
+  @ViewChild('playlistDropdown') playlistDropdown: NgbDropdown
+  @ViewChild('playlistAdd') playlistAdd: VideoAddToPlaylistComponent
 
-  @ViewChild('videoDownloadModal', { static: false }) videoDownloadModal: VideoDownloadComponent
-  @ViewChild('videoReportModal', { static: false }) videoReportModal: VideoReportComponent
-  @ViewChild('videoBlacklistModal', { static: false }) videoBlacklistModal: VideoBlacklistComponent
+  @ViewChild('videoDownloadModal') videoDownloadModal: VideoDownloadComponent
+  @ViewChild('videoReportModal') videoReportModal: VideoReportComponent
+  @ViewChild('videoBlacklistModal') videoBlacklistModal: VideoBlacklistComponent
 
   @Input() video: Video | VideoDetails
   @Input() videoCaptions: VideoCaption[] = []
@@ -73,10 +72,8 @@ export class VideoActionsDropdownComponent implements OnChanges {
     private notifier: Notifier,
     private confirmService: ConfirmService,
     private videoBlacklistService: VideoBlacklistService,
-    private serverService: ServerService,
     private screenService: ScreenService,
     private videoService: VideoService,
-    private blocklistService: BlocklistService,
     private redundancyService: RedundancyService,
     private i18n: I18n
   ) { }
@@ -254,7 +251,7 @@ export class VideoActionsDropdownComponent implements OnChanges {
           isDisplayed: () => this.authService.isLoggedIn() && this.displayOptions.blacklist && this.isVideoUnblacklistable()
         },
         {
-          label: this.i18n('Duplicate (redundancy)'),
+          label: this.i18n('Mirror'),
           handler: () => this.duplicateVideo(),
           isDisplayed: () => this.authService.isLoggedIn() && this.displayOptions.duplicate && this.canVideoBeDuplicated(),
           iconName: 'cloud-download'

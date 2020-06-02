@@ -47,8 +47,16 @@ export class ServerService {
         css: ''
       }
     },
+    search: {
+      remoteUri: {
+        users: true,
+        anonymous: false
+      }
+    },
     plugin: {
-      registered: []
+      registered: [],
+      registeredExternalAuths: [],
+      registeredIdAndPassAuths: []
     },
     theme: {
       registered: [],
@@ -257,17 +265,19 @@ export class ServerService {
                               .pipe(map(data => ({ data, translations })))
                  }),
                  map(({ data, translations }) => {
-                   const hashToPopulate: VideoConstant<T>[] = []
+                   const hashToPopulate: VideoConstant<T>[] = Object.keys(data)
+                                                                    .map(dataKey => {
+                                                                      const label = data[ dataKey ]
 
-                   Object.keys(data)
-                         .forEach(dataKey => {
-                           const label = data[ dataKey ]
+                                                                      const id = attributeName === 'languages'
+                                                                        ? dataKey as T
+                                                                        : parseInt(dataKey, 10) as T
 
-                           hashToPopulate.push({
-                             id: (attributeName === 'languages' ? dataKey : parseInt(dataKey, 10)) as T,
-                             label: peertubeTranslate(label, translations)
-                           })
-                         })
+                                                                      return {
+                                                                        id,
+                                                                        label: peertubeTranslate(label, translations)
+                                                                      }
+                                                                    })
 
                    if (sort === true) sortBy(hashToPopulate, 'label')
 

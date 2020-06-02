@@ -80,7 +80,8 @@ $play-overlay-width: 18px;
   }
 
   &.focus-visible {
-    box-shadow: 0 0 0 2px var(--mainColor);
+    box-shadow: #{$focus-box-shadow-form} var(--mainColorLightest);
+    outline: none;
   }
 
   img {
@@ -126,9 +127,9 @@ $play-overlay-width: 18px;
     }
 
     .video-thumbnail {
-      margin: 0 -15px 10px -15px;
-      width: 100vw;
-      height: calc(100vw / #{$video-thumbnail-ratio});
+      margin-bottom: 10px;
+      width: 100%;
+      height: calc(100% / #{$video-thumbnail-ratio});
       border-radius: 0;
 
       img {
@@ -186,7 +187,7 @@ $play-overlay-width: 18px;
       }
 
       .followers {
-        color: $grey-foreground-color;
+        color: var(--greyForegroundColor);
         font-weight: normal;
         font-size: 14px;
         margin-left: 10px;
@@ -202,7 +203,7 @@ $play-overlay-width: 18px;
     display: inline-block;
     font-size: 16px;
     text-transform: uppercase;
-    color: $grey-foreground-color;
+    color: var(--greyForegroundColor);
     margin-bottom: 10px;
     font-weight: $font-semibold;
     text-decoration: none;
@@ -240,7 +241,7 @@ $play-overlay-width: 18px;
     width: $video-miniature-width * 2;
   }
 
-  @media screen and (max-width: 500px) {
+  @media screen and (max-width: $mobile-view) {
     width: auto;
     margin: 0 !important;
 

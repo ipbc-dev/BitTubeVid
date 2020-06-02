@@ -16,7 +16,7 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { ActivityPubActorType } from '../../../shared/models/activitypub'
+import { ActivityIconObject, ActivityPubActorType } from '../../../shared/models/activitypub'
 import { Avatar } from '../../../shared/models/avatars/avatar.model'
 import { activityPubContextify } from '../../helpers/activitypub'
 import {
@@ -43,11 +43,12 @@ import {
   MActorFull,
   MActorHost,
   MActorServer,
-  MActorSummaryFormattable,
+  MActorSummaryFormattable, MActorUrl,
   MActorWithInboxes
 } from '../../typings/models'
 import * as Bluebird from 'bluebird'
 import { Op, Transaction, literal } from 'sequelize'
+import { ModelCache } from '@server/models/model-cache'
 
 enum ScopeNames {
   FULL = 'FULL'
@@ -122,13 +123,13 @@ export const unusedActorAttributesForAPI = [
         }
       }
     },
-    // {
-    //   fields: [ 'preferredUsername' ],
-    //   unique: true,
-    //   where: {
-    //     serverId: null
-    //   }
-    // },
+    {
+      fields: [ 'preferredUsername' ],
+      unique: true,
+      where: {
+        serverId: null
+      }
+    },
     {
       fields: [ 'inboxUrl', 'sharedInboxUrl' ]
     },
@@ -276,8 +277,6 @@ export class ActorModel extends Model<ActorModel> {
   })
   VideoChannel: VideoChannelModel
 
-  private static cache: { [ id: string ]: any } = {}
-
   static load (id: number): Bluebird<MActor> {
     return ActorModel.unscoped().findByPk(id)
   }
@@ -334,7 +333,7 @@ export class ActorModel extends Model<ActorModel> {
     const query = {
       where: {
         followersUrl: {
-          [ Op.in ]: followersUrls
+          [Op.in]: followersUrls
         }
       },
       transaction
@@ -344,28 +343,50 @@ export class ActorModel extends Model<ActorModel> {
   }
 
   static loadLocalByName (preferredUsername: string, transaction?: Transaction): Bluebird<MActorFull> {
-    // The server actor never change, so we can easily cache it
-    if (preferredUsername === SERVER_ACTOR_NAME && ActorModel.cache[preferredUsername]) {
-      return Bluebird.resolve(ActorModel.cache[preferredUsername])
+    const fun = () => {
+      const query = {
+        where: {
+          preferredUsername,
+          serverId: null
+        },
+        transaction
+      }
+
+      return ActorModel.scope(ScopeNames.FULL)
+                       .findOne(query)
     }
 
-    const query = {
-      where: {
-        preferredUsername,
-        serverId: null
-      },
-      transaction
+    return ModelCache.Instance.doCache({
+      cacheType: 'local-actor-name',
+      key: preferredUsername,
+      // The server actor never change, so we can easily cache it
+      whitelist: () => preferredUsername === SERVER_ACTOR_NAME,
+      fun
+    })
+  }
+
+  static loadLocalUrlByName (preferredUsername: string, transaction?: Transaction): Bluebird<MActorUrl> {
+    const fun = () => {
+      const query = {
+        attributes: [ 'url' ],
+        where: {
+          preferredUsername,
+          serverId: null
+        },
+        transaction
+      }
+
+      return ActorModel.unscoped()
+                       .findOne(query)
     }
 
-    return ActorModel.scope(ScopeNames.FULL)
-                     .findOne(query)
-                     .then(actor => {
-                       if (preferredUsername === SERVER_ACTOR_NAME) {
-                         ActorModel.cache[ preferredUsername ] = actor
-                       }
-
-                       return actor
-                     })
+    return ModelCache.Instance.doCache({
+      cacheType: 'local-actor-name',
+      key: preferredUsername,
+      // The server actor never change, so we can easily cache it
+      whitelist: () => preferredUsername === SERVER_ACTOR_NAME,
+      fun
+    })
   }
 
   static loadByNameAndHost (preferredUsername: string, host: string): Bluebird<MActorFull> {
@@ -441,6 +462,36 @@ export class ActorModel extends Model<ActorModel> {
     }, { where, transaction })
   }
 
+  static loadAccountActorByVideoId (videoId: number): Bluebird<MActor> {
+    const query = {
+      include: [
+        {
+          attributes: [ 'id' ],
+          model: AccountModel.unscoped(),
+          required: true,
+          include: [
+            {
+              attributes: [ 'id', 'accountId' ],
+              model: VideoChannelModel.unscoped(),
+              required: true,
+              include: [
+                {
+                  attributes: [ 'id', 'channelId' ],
+                  model: VideoModel.unscoped(),
+                  where: {
+                    id: videoId
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    return ActorModel.unscoped().findOne(query)
+  }
+
   getSharedInbox (this: MActorWithInboxes) {
     return this.sharedInboxUrl || this.inboxUrl
   }
@@ -473,9 +524,11 @@ export class ActorModel extends Model<ActorModel> {
   }
 
   toActivityPubObject (this: MActorAP, name: string) {
-    let icon = undefined
+    let icon: ActivityIconObject
+
     if (this.avatarId) {
       const extension = extname(this.Avatar.filename)
+
       icon = {
         type: 'Image',
         mediaType: extension === '.png' ? 'image/png' : 'image/jpeg',

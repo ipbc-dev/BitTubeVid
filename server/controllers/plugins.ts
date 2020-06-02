@@ -2,11 +2,12 @@ import * as express from 'express'
 import { PLUGIN_GLOBAL_CSS_PATH } from '../initializers/constants'
 import { join } from 'path'
 import { PluginManager, RegisteredPlugin } from '../lib/plugins/plugin-manager'
-import { servePluginStaticDirectoryValidator } from '../middlewares/validators/plugins'
+import { getPluginValidator, pluginStaticDirectoryValidator, getExternalAuthValidator } from '../middlewares/validators/plugins'
 import { serveThemeCSSValidator } from '../middlewares/validators/themes'
 import { PluginType } from '../../shared/models/plugins/plugin.type'
 import { isTestInstance } from '../helpers/core-utils'
 import { getCompleteLocale, is18nLocale } from '../../shared/models/i18n'
+import { logger } from '@server/helpers/logger'
 
 const sendFileOptions = {
   maxAge: '30 days',
@@ -23,23 +24,43 @@ pluginsRouter.get('/plugins/translations/:locale.json',
   getPluginTranslations
 )
 
+pluginsRouter.get('/plugins/:pluginName/:pluginVersion/auth/:authName',
+  getPluginValidator(PluginType.PLUGIN),
+  getExternalAuthValidator,
+  handleAuthInPlugin
+)
+
 pluginsRouter.get('/plugins/:pluginName/:pluginVersion/static/:staticEndpoint(*)',
-  servePluginStaticDirectoryValidator(PluginType.PLUGIN),
+  getPluginValidator(PluginType.PLUGIN),
+  pluginStaticDirectoryValidator,
   servePluginStaticDirectory
 )
 
 pluginsRouter.get('/plugins/:pluginName/:pluginVersion/client-scripts/:staticEndpoint(*)',
-  servePluginStaticDirectoryValidator(PluginType.PLUGIN),
+  getPluginValidator(PluginType.PLUGIN),
+  pluginStaticDirectoryValidator,
   servePluginClientScripts
 )
 
+pluginsRouter.use('/plugins/:pluginName/router',
+  getPluginValidator(PluginType.PLUGIN, false),
+  servePluginCustomRoutes
+)
+
+pluginsRouter.use('/plugins/:pluginName/:pluginVersion/router',
+  getPluginValidator(PluginType.PLUGIN),
+  servePluginCustomRoutes
+)
+
 pluginsRouter.get('/themes/:pluginName/:pluginVersion/static/:staticEndpoint(*)',
-  servePluginStaticDirectoryValidator(PluginType.THEME),
+  getPluginValidator(PluginType.THEME),
+  pluginStaticDirectoryValidator,
   servePluginStaticDirectory
 )
 
 pluginsRouter.get('/themes/:pluginName/:pluginVersion/client-scripts/:staticEndpoint(*)',
-  servePluginStaticDirectoryValidator(PluginType.THEME),
+  getPluginValidator(PluginType.THEME),
+  pluginStaticDirectoryValidator,
   servePluginClientScripts
 )
 
@@ -85,12 +106,19 @@ function servePluginStaticDirectory (req: express.Request, res: express.Response
   const [ directory, ...file ] = staticEndpoint.split('/')
 
   const staticPath = plugin.staticDirs[directory]
-  if (!staticPath) {
-    return res.sendStatus(404)
-  }
+  if (!staticPath) return res.sendStatus(404)
 
   const filepath = file.join('/')
   return res.sendFile(join(plugin.path, staticPath, filepath), sendFileOptions)
+}
+
+function servePluginCustomRoutes (req: express.Request, res: express.Response, next: express.NextFunction) {
+  const plugin: RegisteredPlugin = res.locals.registeredPlugin
+  const router = PluginManager.Instance.getRouter(plugin.npmName)
+
+  if (!router) return res.sendStatus(404)
+
+  return router(req, res, next)
 }
 
 function servePluginClientScripts (req: express.Request, res: express.Response) {
@@ -98,9 +126,7 @@ function servePluginClientScripts (req: express.Request, res: express.Response) 
   const staticEndpoint = req.params.staticEndpoint
 
   const file = plugin.clientScripts[staticEndpoint]
-  if (!file) {
-    return res.sendStatus(404)
-  }
+  if (!file) return res.sendStatus(404)
 
   return res.sendFile(join(plugin.path, staticEndpoint), sendFileOptions)
 }
@@ -114,4 +140,15 @@ function serveThemeCSSDirectory (req: express.Request, res: express.Response) {
   }
 
   return res.sendFile(join(plugin.path, staticEndpoint), sendFileOptions)
+}
+
+function handleAuthInPlugin (req: express.Request, res: express.Response) {
+  const authOptions = res.locals.externalAuth
+
+  try {
+    logger.debug('Forwarding auth plugin request in %s of plugin %s.', authOptions.authName, res.locals.registeredPlugin.npmName)
+    authOptions.onAuthRequest(req, res)
+  } catch (err) {
+    logger.error('Forward request error in auth %s of plugin %s.', authOptions.authName, res.locals.registeredPlugin.npmName, { err })
+  }
 }

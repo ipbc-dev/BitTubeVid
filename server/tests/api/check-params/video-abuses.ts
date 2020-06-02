@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import 'mocha'
 
@@ -76,6 +76,22 @@ describe('Test video abuses API validators', function () {
         statusCodeExpected: 403
       })
     })
+
+    it('Should fail with a bad id filter', async function () {
+      await makeGetRequest({ url: server.url, path, token: server.accessToken, query: { id: 'toto' } })
+    })
+
+    it('Should fail with a bad state filter', async function () {
+      await makeGetRequest({ url: server.url, path, token: server.accessToken, query: { state: 'toto' } })
+    })
+
+    it('Should fail with a bad videoIs filter', async function () {
+      await makeGetRequest({ url: server.url, path, token: server.accessToken, query: { videoIs: 'toto' } })
+    })
+
+    it('Should succeed with the correct params', async function () {
+      await makeGetRequest({ url: server.url, path, token: server.accessToken, query: { id: 13 }, statusCodeExpected: 200 })
+    })
   })
 
   describe('When reporting a video abuse', function () {
@@ -126,6 +142,7 @@ describe('Test video abuses API validators', function () {
 
   describe('When updating a video abuse', function () {
     const basePath = '/api/v1/videos/'
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let path: string
 
     before(() => {
@@ -163,6 +180,7 @@ describe('Test video abuses API validators', function () {
 
   describe('When deleting a video abuse', function () {
     const basePath = '/api/v1/videos/'
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let path: string
 
     before(() => {

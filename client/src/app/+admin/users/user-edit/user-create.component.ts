@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { Router } from '@angular/router'
+import { Router, ActivatedRoute } from '@angular/router'
 import { AuthService, Notifier, ServerService } from '@app/core'
 import { UserCreate, UserRole } from '../../../../../../shared'
 import { UserEdit } from './user-edit'
@@ -8,6 +8,7 @@ import { FormValidatorService } from '@app/shared/forms/form-validators/form-val
 import { UserValidatorsService } from '@app/shared/forms/form-validators/user-validators.service'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { UserService } from '@app/shared'
+import { ScreenService } from '@app/shared/misc/screen.service'
 
 @Component({
   selector: 'my-user-create',
@@ -21,8 +22,10 @@ export class UserCreateComponent extends UserEdit implements OnInit {
     protected serverService: ServerService,
     protected formValidatorService: FormValidatorService,
     protected configService: ConfigService,
+    protected screenService: ScreenService,
     protected auth: AuthService,
     private userValidatorsService: UserValidatorsService,
+    private route: ActivatedRoute,
     private router: Router,
     private notifier: Notifier,
     private userService: UserService,
@@ -45,7 +48,7 @@ export class UserCreateComponent extends UserEdit implements OnInit {
     this.buildForm({
       username: this.userValidatorsService.USER_USERNAME,
       email: this.userValidatorsService.USER_EMAIL,
-      password: this.userValidatorsService.USER_PASSWORD,
+      password: this.isPasswordOptional() ? this.userValidatorsService.USER_PASSWORD_OPTIONAL : this.userValidatorsService.USER_PASSWORD,
       role: this.userValidatorsService.USER_ROLE,
       videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
       videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY,
@@ -76,6 +79,11 @@ export class UserCreateComponent extends UserEdit implements OnInit {
 
   isCreation () {
     return true
+  }
+
+  isPasswordOptional () {
+    const serverConfig = this.route.snapshot.data.serverConfig
+    return serverConfig.email.enabled
   }
 
   getFormButtonTitle () {

@@ -1,11 +1,12 @@
 import { buildSignedActivity } from '../../../../helpers/activitypub'
-import { getServerActor } from '../../../../helpers/utils'
 import { ActorModel } from '../../../../models/activitypub/actor'
-import { sha256 } from '../../../../helpers/core-utils'
-import { HTTP_SIGNATURE } from '../../../../initializers/constants'
+import { ACTIVITY_PUB, HTTP_SIGNATURE } from '../../../../initializers/constants'
 import { MActor } from '../../../../typings/models'
+import { getServerActor } from '@server/models/application/application'
+import { buildDigest } from '@server/helpers/peertube-crypto'
+import { ContextType } from '@shared/models/activitypub/context'
 
-type Payload = { body: any, signatureActorId?: number }
+type Payload = { body: any, contextType?: ContextType, signatureActorId?: number }
 
 async function computeBody (payload: Payload) {
   let body = payload.body
@@ -13,7 +14,7 @@ async function computeBody (payload: Payload) {
   if (payload.signatureActorId) {
     const actorSignature = await ActorModel.load(payload.signatureActorId)
     if (!actorSignature) throw new Error('Unknown signature actor id.')
-    body = await buildSignedActivity(actorSignature, payload.body)
+    body = await buildSignedActivity(actorSignature, payload.body, payload.contextType)
   }
 
   return body
@@ -42,18 +43,13 @@ async function buildSignedRequestOptions (payload: Payload) {
 
 function buildGlobalHeaders (body: any) {
   return {
-    'Digest': buildDigest(body)
+    'Digest': buildDigest(body),
+    'Content-Type': 'application/activity+json',
+    'Accept': ACTIVITY_PUB.ACCEPT_HEADER
   }
 }
 
-function buildDigest (body: any) {
-  const rawBody = typeof body === 'string' ? body : JSON.stringify(body)
-
-  return 'SHA-256=' + sha256(rawBody, 'base64')
-}
-
 export {
-  buildDigest,
   buildGlobalHeaders,
   computeBody,
   buildSignedRequestOptions

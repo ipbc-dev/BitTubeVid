@@ -1,17 +1,16 @@
-<div *ngIf="!isUploadingVideo" class="upload-video-container">
+<div *ngIf="!isUploadingVideo" class="upload-video-container" dragDrop (fileDropped)="setVideoFile($event)">
   <div class="first-step-block">
     <my-global-icon class="upload-icon" iconName="upload"></my-global-icon>
 
-    <div class="button-file">
+    <div class="button-file form-control" [ngbTooltip]="'(extensions: ' + videoExtensions + ')'">
       <span i18n>Select the file to upload</span>
-      <input #videofileInput type="file" name="videofile" id="videofile" [accept]="videoExtensions" (change)="fileChange()" />
+      <input #videofileInput type="file" name="videofile" id="videofile" [accept]="videoExtensions" (change)="fileChange()" autofocus />
     </div>
-    <span class="button-file-extension">({{ videoExtensions }})</span>
 
     <div class="form-group form-group-channel">
       <label i18n for="first-step-channel">Channel</label>
       <div class="peertube-select-container">
-        <select id="first-step-channel" [(ngModel)]="firstStepChannelId">
+        <select id="first-step-channel" [(ngModel)]="firstStepChannelId" class="form-control">
           <option *ngFor="let channel of userVideoChannels" [value]="channel.id">{{ channel.label }}</option>
         </select>
       </div>
@@ -20,7 +19,7 @@
     <div class="form-group">
       <label i18n for="first-step-privacy">Privacy</label>
       <div class="peertube-select-container">
-        <select id="first-step-privacy" [(ngModel)]="firstStepPrivacyId">
+        <select id="first-step-privacy" [(ngModel)]="firstStepPrivacyId" class="form-control">
           <option *ngFor="let privacy of videoPrivacies" [value]="privacy.id">{{ privacy.label }}</option>
           <option i18n [value]="SPECIAL_SCHEDULED_PRIVACY">Scheduled</option>
         </select>
@@ -51,10 +50,12 @@
 </div>
 
 <div *ngIf="isUploadingVideo && !error" class="upload-progress-cancel">
-  <p-progressBar
-    [value]="videoUploadPercents"
-    [ngClass]="{ processing: videoUploadPercents === 100 && videoUploaded === false }"
-  ></p-progressBar>
+  <div class="progress" i18n-title title="Total video quota">
+    <div class="progress-bar" role="progressbar" [style]="{ width: videoUploadPercents + '%' }" [attr.aria-valuenow]="videoUploadPercents" aria-valuemin="0" [attr.aria-valuemax]="100">
+      <span *ngIf="videoUploadPercents === 100 && videoUploaded === false" i18n>Processing…</span>
+      <span *ngIf="videoUploadPercents !== 100 || videoUploaded">{{ videoUploadPercents }}%</span>
+    </div>
+  </div>
   <input *ngIf="videoUploaded === false" type="button" value="Cancel" (click)="cancelUpload()" />
 </div>
 
@@ -68,7 +69,7 @@
 </div>
 
 <!-- Hidden because we want to load the component -->
-<form [hidden]="!isUploadingVideo" novalidate [formGroup]="form">
+<form [hidden]="!isUploadingVideo" novalidate [formGroup]="form" class="mb-3">
   <my-video-edit
     [form]="form" [formErrors]="formErrors" [videoCaptions]="videoCaptions"
     [validationMessages]="validationMessages" [userVideoChannels]="userVideoChannels"

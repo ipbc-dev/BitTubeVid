@@ -2,6 +2,27 @@
 
 const valuesMap = new Map()
 
+function proxify (instance: MemoryStorage) {
+  return new Proxy(instance, {
+    set: function (obj, prop: string | number, value) {
+      if (MemoryStorage.prototype.hasOwnProperty(prop)) {
+        instance[prop] = value
+      } else {
+        instance.setItem(prop, value)
+      }
+      return true
+    },
+    get: function (target, name: string | number) {
+      if (MemoryStorage.prototype.hasOwnProperty(name)) {
+        return instance[name]
+      }
+      if (valuesMap.has(name)) {
+        return instance.getItem(name)
+      }
+    }
+  })
+}
+
 class MemoryStorage {
   [key: string]: any
   [index: number]: string
@@ -47,26 +68,11 @@ try {
   peertubeLocalStorage = localStorage
   peertubeSessionStorage = sessionStorage
 } catch (err) {
-  const instance = new MemoryStorage()
+  const instanceLocalStorage = new MemoryStorage()
+  const instanceSessionStorage = new MemoryStorage()
 
-  peertubeLocalStorage = sessionStorage = new Proxy(instance, {
-    set: function (obj, prop: string | number, value) {
-      if (MemoryStorage.prototype.hasOwnProperty(prop)) {
-        instance[prop] = value
-      } else {
-        instance.setItem(prop, value)
-      }
-      return true
-    },
-    get: function (target, name: string | number) {
-      if (MemoryStorage.prototype.hasOwnProperty(name)) {
-        return instance[name]
-      }
-      if (valuesMap.has(name)) {
-        return instance.getItem(name)
-      }
-    }
-  })
+  peertubeLocalStorage = proxify(instanceLocalStorage)
+  peertubeSessionStorage = proxify(instanceSessionStorage)
 }
 
 export {

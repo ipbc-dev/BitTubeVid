@@ -29,16 +29,10 @@ program
     console.log('    $ peertube watch https://peertube.cpy.re/videos/watch/e8a1af4e-414a-4d58-bfe6-2146eed06d10')
     console.log()
   })
-  .action((url, cmd) => {
-    run(url, cmd)
-      .catch(err => {
-        console.error(err)
-        process.exit(-1)
-      })
-  })
+  .action((url, cmd) => run(url, cmd))
   .parse(process.argv)
 
-async function run (url: string, program: any) {
+function run (url: string, program: any) {
   if (!url) {
     console.error('<url> positional argument is required.')
     process.exit(-1)
@@ -49,5 +43,10 @@ async function run (url: string, program: any) {
     url.replace('videos/watch', 'download/torrents') +
     `-${program.resolution}.torrent`
 
-  execSync(cmd + args)
+  try {
+    execSync(cmd + args)
+  } catch (err) {
+    console.error('Cannto exec command.', err)
+    process.exit(-1)
+  }
 }
