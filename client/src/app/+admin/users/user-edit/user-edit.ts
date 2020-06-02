@@ -4,17 +4,22 @@ import { ServerConfig, USER_ROLE_LABELS, UserRole, VideoResolution } from '../..
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { UserAdminFlag } from '@shared/models/users/user-flag.model'
 import { OnInit } from '@angular/core'
+import { User } from '@app/shared/users/user.model'
+import { ScreenService } from '@app/shared/misc/screen.service'
 
 export abstract class UserEdit extends FormReactive implements OnInit {
-  videoQuotaOptions: { value: string, label: string }[] = []
-  videoQuotaDailyOptions: { value: string, label: string }[] = []
+  videoQuotaOptions: { value: string, label: string, disabled?: boolean }[] = []
+  videoQuotaDailyOptions: { value: string, label: string, disabled?: boolean }[] = []
   username: string
-  userId: number
+  user: User
+
+  roles: { value: string, label: string }[] = []
 
   protected serverConfig: ServerConfig
 
   protected abstract serverService: ServerService
   protected abstract configService: ConfigService
+  protected abstract screenService: ScreenService
   protected abstract auth: AuthService
   abstract isCreation (): boolean
   abstract getFormButtonTitle (): string
@@ -23,17 +28,34 @@ export abstract class UserEdit extends FormReactive implements OnInit {
     this.serverConfig = this.serverService.getTmpConfig()
     this.serverService.getConfig()
         .subscribe(config => this.serverConfig = config)
+
+    this.buildRoles()
   }
 
-  getRoles () {
+  get subscribersCount () {
+    const forAccount = this.user
+      ? this.user.account.followersCount
+      : 0
+    const forChannels = this.user
+      ? this.user.videoChannels.map(c => c.followersCount).reduce((a, b) => a + b, 0)
+      : 0
+    return forAccount + forChannels
+  }
+
+  isInBigView () {
+    return this.screenService.getWindowInnerWidth() > 1600
+  }
+
+  buildRoles () {
     const authUser = this.auth.getUser()
 
     if (authUser.role === UserRole.ADMINISTRATOR) {
-      return Object.keys(USER_ROLE_LABELS)
+      this.roles = Object.keys(USER_ROLE_LABELS)
             .map(key => ({ value: key.toString(), label: USER_ROLE_LABELS[key] }))
+      return
     }
 
-    return [
+    this.roles = [
       { value: UserRole.USER.toString(), label: USER_ROLE_LABELS[UserRole.USER] }
     ]
   }
@@ -72,9 +94,22 @@ export abstract class UserEdit extends FormReactive implements OnInit {
   protected buildQuotaOptions () {
     // These are used by a HTML select, so convert key into strings
     this.videoQuotaOptions = this.configService
-                                 .videoQuotaOptions.map(q => ({ value: q.value.toString(), label: q.label }))
+                                 .videoQuotaOptions.map(q => ({
+                                   value: q.value?.toString(),
+                                   label: q.label,
+                                   disabled: q.disabled
+                                 }))
 
     this.videoQuotaDailyOptions = this.configService
-                                      .videoQuotaDailyOptions.map(q => ({ value: q.value.toString(), label: q.label }))
+                                      .videoQuotaDailyOptions.map(q => ({
+                                        value: q.value?.toString(),
+                                        label: q.label,
+                                        disabled: q.disabled
+                                      }))
+
+    console.log(
+      this.videoQuotaOptions,
+      this.videoQuotaDailyOptions
+    )
   }
 }

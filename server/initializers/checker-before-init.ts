@@ -22,6 +22,8 @@ function checkMissedConfig () {
     'signup.filters.cidr.whitelist', 'signup.filters.cidr.blacklist',
     'redundancy.videos.strategies', 'redundancy.videos.check_interval',
     'transcoding.enabled', 'transcoding.threads', 'transcoding.allow_additional_extensions', 'transcoding.hls.enabled',
+    'transcoding.resolutions.0p', 'transcoding.resolutions.240p', 'transcoding.resolutions.360p', 'transcoding.resolutions.480p',
+    'transcoding.resolutions.720p', 'transcoding.resolutions.1080p', 'transcoding.resolutions.2160p',
     'import.videos.http.enabled', 'import.videos.torrent.enabled', 'auto_blacklist.videos.of_users.enabled',
     'trending.videos.interval_days',
     'instance.name', 'instance.short_description', 'instance.description', 'instance.terms', 'instance.default_client_route',
@@ -31,12 +33,13 @@ function checkMissedConfig () {
     'tracker.enabled', 'tracker.private', 'tracker.reject_too_many_announces',
     'history.videos.max_age', 'views.videos.remote.max_age',
     'rates_limit.login.window', 'rates_limit.login.max', 'rates_limit.ask_send_email.window', 'rates_limit.ask_send_email.max',
-    'theme.default'
+    'theme.default',
+    'remote_redundancy.videos.accept_from'
   ]
   const requiredAlternatives = [
     [ // set
-      ['redis.hostname', 'redis.port'], // alternative
-      ['redis.socket']
+      [ 'redis.hostname', 'redis.port' ], // alternative
+      [ 'redis.socket' ]
     ]
   ]
   const miss: string[] = []

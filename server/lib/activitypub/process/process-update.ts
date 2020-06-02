@@ -2,7 +2,7 @@ import { ActivityUpdate, CacheFileObject, VideoTorrentObject } from '../../../..
 import { ActivityPubActor } from '../../../../shared/models/activitypub/activitypub-actor'
 import { resetSequelizeInstance, retryTransactionWrapper } from '../../../helpers/database-utils'
 import { logger } from '../../../helpers/logger'
-import { sequelizeTypescript } from '../../../initializers'
+import { sequelizeTypescript } from '../../../initializers/database'
 import { AccountModel } from '../../../models/account/account'
 import { ActorModel } from '../../../models/activitypub/actor'
 import { VideoChannelModel } from '../../../models/video/video-channel'
@@ -16,6 +16,7 @@ import { PlaylistObject } from '../../../../shared/models/activitypub/objects/pl
 import { createOrUpdateVideoPlaylist } from '../playlist'
 import { APProcessorOptions } from '../../../typings/activitypub-processor.model'
 import { MActorSignature, MAccountIdActor } from '../../../typings/models'
+import { isRedundancyAccepted } from '@server/lib/redundancy'
 
 async function processUpdateActivity (options: APProcessorOptions<ActivityUpdate>) {
   const { activity, byActor } = options
@@ -78,6 +79,8 @@ async function processUpdateVideo (actor: MActorSignature, activity: ActivityUpd
 }
 
 async function processUpdateCacheFile (byActor: MActorSignature, activity: ActivityUpdate) {
+  if (await isRedundancyAccepted(activity, byActor) !== true) return
+
   const cacheFileObject = activity.object as CacheFileObject
 
   if (!isCacheFileObjectValid(cacheFileObject)) {

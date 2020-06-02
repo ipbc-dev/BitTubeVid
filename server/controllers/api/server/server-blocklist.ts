@@ -1,6 +1,6 @@
 import * as express from 'express'
 import 'multer'
-import { getFormattedObjects, getServerActor } from '../../../helpers/utils'
+import { getFormattedObjects } from '../../../helpers/utils'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -22,6 +22,7 @@ import { AccountBlocklistModel } from '../../../models/account/account-blocklist
 import { addAccountInBlocklist, addServerInBlocklist, removeAccountFromBlocklist, removeServerFromBlocklist } from '../../../lib/blocklist'
 import { ServerBlocklistModel } from '../../../models/server/server-blocklist'
 import { UserRight } from '../../../../shared/models/users'
+import { getServerActor } from '@server/models/application/application'
 
 const serverBlocklistRouter = express.Router()
 
@@ -82,7 +83,13 @@ export {
 async function listBlockedAccounts (req: express.Request, res: express.Response) {
   const serverActor = await getServerActor()
 
-  const resultList = await AccountBlocklistModel.listForApi(serverActor.Account.id, req.query.start, req.query.count, req.query.sort)
+  const resultList = await AccountBlocklistModel.listForApi({
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort,
+    search: req.query.search,
+    accountId: serverActor.Account.id
+  })
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }
@@ -107,7 +114,13 @@ async function unblockAccount (req: express.Request, res: express.Response) {
 async function listBlockedServers (req: express.Request, res: express.Response) {
   const serverActor = await getServerActor()
 
-  const resultList = await ServerBlocklistModel.listForApi(serverActor.Account.id, req.query.start, req.query.count, req.query.sort)
+  const resultList = await ServerBlocklistModel.listForApi({
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort,
+    search: req.query.search,
+    accountId: serverActor.Account.id
+  })
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }

@@ -5,7 +5,7 @@ import * as winston from 'winston'
 import { FileTransportOptions } from 'winston/lib/winston/transports'
 import { CONFIG } from '../initializers/config'
 import { omit } from 'lodash'
-import { LOG_FILENAME } from '@server/initializers/constants'
+import { LOG_FILENAME } from '../initializers/constants'
 
 const label = CONFIG.WEBSERVER.HOSTNAME + ':' + CONFIG.WEBSERVER.PORT
 
@@ -27,7 +27,7 @@ function getLoggerReplacer () {
     if (value instanceof Error) {
       const error = {}
 
-      Object.getOwnPropertyNames(value).forEach(key => error[ key ] = value[ key ])
+      Object.getOwnPropertyNames(value).forEach(key => { error[key] = value[key] })
 
       return error
     }
@@ -54,9 +54,11 @@ const jsonLoggerFormat = winston.format.printf(info => {
 const timestampFormatter = winston.format.timestamp({
   format: 'YYYY-MM-DD HH:mm:ss.SSS'
 })
-const labelFormatter = winston.format.label({
-  label
-})
+const labelFormatter = (suffix?: string) => {
+  return winston.format.label({
+    label: suffix ? `${label} ${suffix}` : label
+  })
+}
 
 const fileLoggerOptions: FileTransportOptions = {
   filename: path.join(CONFIG.STORAGE.LOG_DIR, LOG_FILENAME),
@@ -72,25 +74,29 @@ if (CONFIG.LOG.ROTATION.ENABLED) {
   fileLoggerOptions.maxFiles = CONFIG.LOG.ROTATION.MAX_FILES
 }
 
-const logger = winston.createLogger({
-  level: CONFIG.LOG.LEVEL,
-  format: winston.format.combine(
-    labelFormatter,
-    winston.format.splat()
-  ),
-  transports: [
-    new winston.transports.File(fileLoggerOptions),
-    new winston.transports.Console({
-      handleExceptions: true,
-      format: winston.format.combine(
-        timestampFormatter,
-        winston.format.colorize(),
-        consoleLoggerFormat
-      )
-    })
-  ],
-  exitOnError: true
-})
+const logger = buildLogger()
+
+function buildLogger (labelSuffix?: string) {
+  return winston.createLogger({
+    level: CONFIG.LOG.LEVEL,
+    format: winston.format.combine(
+      labelFormatter(labelSuffix),
+      winston.format.splat()
+    ),
+    transports: [
+      new winston.transports.File(fileLoggerOptions),
+      new winston.transports.Console({
+        handleExceptions: true,
+        format: winston.format.combine(
+          timestampFormatter,
+          winston.format.colorize(),
+          consoleLoggerFormat
+        )
+      })
+    ],
+    exitOnError: true
+  })
+}
 
 function bunyanLogFactory (level: string) {
   return function () {
@@ -98,19 +104,20 @@ function bunyanLogFactory (level: string) {
     let args: any[] = []
     args.concat(arguments)
 
-    if (arguments[ 0 ] instanceof Error) {
-      meta = arguments[ 0 ].toString()
+    if (arguments[0] instanceof Error) {
+      meta = arguments[0].toString()
       args = Array.prototype.slice.call(arguments, 1)
       args.push(meta)
-    } else if (typeof (args[ 0 ]) !== 'string') {
-      meta = arguments[ 0 ]
+    } else if (typeof (args[0]) !== 'string') {
+      meta = arguments[0]
       args = Array.prototype.slice.call(arguments, 1)
       args.push(meta)
     }
 
-    logger[ level ].apply(logger, args)
+    logger[level].apply(logger, args)
   }
 }
+
 const bunyanLogger = {
   trace: bunyanLogFactory('debug'),
   debug: bunyanLogFactory('debug'),
@@ -122,6 +129,7 @@ const bunyanLogger = {
 // ---------------------------------------------------------------------------
 
 export {
+  buildLogger,
   timestampFormatter,
   labelFormatter,
   consoleLoggerFormat,

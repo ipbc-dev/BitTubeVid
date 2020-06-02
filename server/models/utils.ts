@@ -1,7 +1,24 @@
 import { Model, Sequelize } from 'sequelize-typescript'
 import validator from 'validator'
 import { Col } from 'sequelize/types/lib/utils'
-import { literal, OrderItem } from 'sequelize'
+import { literal, OrderItem, Op } from 'sequelize'
+
+type Primitive = string | Function | number | boolean | Symbol | undefined | null
+type DeepOmitHelper<T, K extends keyof T> = {
+  [P in K]: // extra level of indirection needed to trigger homomorhic behavior
+  T[P] extends infer TP // distribute over unions
+    ? TP extends Primitive
+      ? TP // leave primitives and functions alone
+      : TP extends any[]
+        ? DeepOmitArray<TP, K> // Array special handling
+        : DeepOmit<TP, K>
+    : never
+}
+type DeepOmit<T, K> = T extends Primitive ? T : DeepOmitHelper<T, Exclude<keyof T, K>>
+
+type DeepOmitArray<T extends any[], K> = {
+  [P in keyof T]: DeepOmit<T[P], K>
+}
 
 type SortType = { sortModel: string, sortValue: string }
 
@@ -67,7 +84,7 @@ function getVideoSort (value: string, lastSort: OrderItem = [ 'id', 'ASC' ]): Or
 function getBlacklistSort (model: any, value: string, lastSort: OrderItem = [ 'id', 'ASC' ]): OrderItem[] {
   const [ firstSort ] = getSort(value)
 
-  if (model) return [ [ literal(`"${model}.${firstSort[ 0 ]}" ${firstSort[ 1 ]}`) ], lastSort ] as any[] // FIXME: typings
+  if (model) return [ [ literal(`"${model}.${firstSort[0]}" ${firstSort[1]}`) ], lastSort ] as any[] // FIXME: typings
   return [ firstSort, lastSort ]
 }
 
@@ -139,7 +156,7 @@ function buildServerIdsFollowedBy (actorId: any) {
     'SELECT "actor"."serverId" FROM "actorFollow" ' +
     'INNER JOIN "actor" ON actor.id = "actorFollow"."targetActorId" ' +
     'WHERE "actorFollow"."actorId" = ' + actorIdNumber +
-  ')'
+    ')'
 }
 
 function buildWhereIdOrUUID (id: number | string) {
@@ -156,8 +173,11 @@ function parseAggregateResult (result: any) {
 }
 
 const createSafeIn = (model: typeof Model, stringArr: (string | number)[]) => {
-  return stringArr.map(t => model.sequelize.escape('' + t))
-                  .join(', ')
+  return stringArr.map(t => {
+    return t === null
+      ? null
+      : model.sequelize.escape('' + t)
+  }).join(', ')
 }
 
 function buildLocalAccountIdsIn () {
@@ -172,9 +192,35 @@ function buildLocalActorIdsIn () {
   )
 }
 
+function buildDirectionAndField (value: string) {
+  let field: string
+  let direction: 'ASC' | 'DESC'
+
+  if (value.substring(0, 1) === '-') {
+    direction = 'DESC'
+    field = value.substring(1)
+  } else {
+    direction = 'ASC'
+    field = value
+  }
+
+  return { direction, field }
+}
+
+function searchAttribute (sourceField?: string, targetField?: string) {
+  if (!sourceField) return {}
+
+  return {
+    [targetField]: {
+      [Op.iLike]: `%${sourceField}%`
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 export {
+  DeepOmit,
   buildBlockedAccountSQL,
   buildLocalActorIdsIn,
   SortType,
@@ -191,7 +237,9 @@ export {
   isOutdated,
   parseAggregateResult,
   getFollowsSort,
-  createSafeIn
+  buildDirectionAndField,
+  createSafeIn,
+  searchAttribute
 }
 
 // ---------------------------------------------------------------------------
@@ -202,19 +250,4 @@ function searchTrigramNormalizeValue (value: string) {
 
 function searchTrigramNormalizeCol (col: string) {
   return Sequelize.fn('lower', Sequelize.fn('immutable_unaccent', Sequelize.col(col)))
-}
-
-function buildDirectionAndField (value: string) {
-  let field: string
-  let direction: 'ASC' | 'DESC'
-
-  if (value.substring(0, 1) === '-') {
-    direction = 'DESC'
-    field = value.substring(1)
-  } else {
-    direction = 'ASC'
-    field = value
-  }
-
-  return { direction, field }
 }

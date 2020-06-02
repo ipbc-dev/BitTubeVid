@@ -8,7 +8,9 @@
   <div class="modal-body">
     <form novalidate [formGroup]="form" (ngSubmit)="banUser()">
       <div class="form-group">
-        <textarea formControlName="moderationComment" [ngClass]="{ 'input-error': formErrors['moderationComment'] }">
+        <textarea
+          formControlName="moderationComment" ngbAutofocus i18-placeholder placeholder="Comment this report…"
+          [ngClass]="{ 'input-error': formErrors['moderationComment'] }" class="form-control">
         </textarea>
         <div *ngIf="formErrors.moderationComment" class="form-error">
           {{ formErrors.moderationComment }}
@@ -20,7 +22,10 @@
       </div>
 
       <div class="form-group inputs">
-        <span i18n class="action-button action-button-cancel" (click)="hide()">Cancel</span>
+        <input
+          type="button" role="button" i18n-value value="Cancel" class="action-button action-button-cancel"
+          (click)="hide()" (key.enter)="hide()"
+        >
 
         <input
           type="submit" i18n-value value="Update this comment" class="action-button-submit"

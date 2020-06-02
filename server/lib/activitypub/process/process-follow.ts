@@ -1,17 +1,17 @@
 import { ActivityFollow } from '../../../../shared/models/activitypub'
 import { retryTransactionWrapper } from '../../../helpers/database-utils'
 import { logger } from '../../../helpers/logger'
-import { sequelizeTypescript } from '../../../initializers'
+import { sequelizeTypescript } from '../../../initializers/database'
 import { ActorModel } from '../../../models/activitypub/actor'
 import { ActorFollowModel } from '../../../models/activitypub/actor-follow'
 import { sendAccept, sendReject } from '../send'
 import { Notifier } from '../../notifier'
 import { getAPId } from '../../../helpers/activitypub'
-import { getServerActor } from '../../../helpers/utils'
 import { CONFIG } from '../../../initializers/config'
 import { APProcessorOptions } from '../../../typings/activitypub-processor.model'
 import { MActorFollowActors, MActorSignature } from '../../../typings/models'
 import { autoFollowBackIfNeeded } from '../follow'
+import { getServerActor } from '@server/models/application/application'
 
 async function processFollowActivity (options: APProcessorOptions<ActivityFollow>) {
   const { activity, byActor } = options

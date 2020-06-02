@@ -1,8 +1,8 @@
-import { Response } from 'express'
 import validator from 'validator'
+
 import { CONSTRAINTS_FIELDS, VIDEO_ABUSE_STATES } from '../../initializers/constants'
 import { exists } from './misc'
-import { VideoAbuseModel } from '../../models/video/video-abuse'
+import { VideoAbuseVideoIs } from '@shared/models/videos/abuse/video-abuse-video-is.type'
 
 const VIDEO_ABUSES_CONSTRAINTS_FIELDS = CONSTRAINTS_FIELDS.VIDEO_ABUSES
 
@@ -15,7 +15,14 @@ function isVideoAbuseModerationCommentValid (value: string) {
 }
 
 function isVideoAbuseStateValid (value: string) {
-  return exists(value) && VIDEO_ABUSE_STATES[ value ] !== undefined
+  return exists(value) && VIDEO_ABUSE_STATES[value] !== undefined
+}
+
+function isAbuseVideoIsValid (value: VideoAbuseVideoIs) {
+  return exists(value) && (
+    value === 'deleted' ||
+    value === 'blacklisted'
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -23,5 +30,6 @@ function isVideoAbuseStateValid (value: string) {
 export {
   isVideoAbuseStateValid,
   isVideoAbuseReasonValid,
+  isAbuseVideoIsValid,
   isVideoAbuseModerationCommentValid
 }

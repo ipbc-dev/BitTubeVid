@@ -1,6 +1,16 @@
 <ng-container *ngIf="actor">
   <div class="actor">
-    <img [src]="actor.avatarUrl" alt="Avatar" />
+    <div class="d-flex">
+      <img [src]="actor.avatarUrl" alt="Avatar" />
+
+      <div class="actor-img-edit-container">
+        <div class="actor-img-edit-button" [ngbTooltip]="'(extensions: '+ avatarExtensions +', '+ maxSizeText +': '+ maxAvatarSizeInBytes +')'" placement="right" container="body">
+          <my-global-icon iconName="edit"></my-global-icon>
+          <input #avatarfileInput type="file" title=" " name="avatarfile" id="avatarfile" [accept]="avatarExtensions" (change)="onAvatarChange()"/>
+        </div>
+      </div>
+    </div>
+
 
     <div class="actor-info">
       <div class="actor-info-names">
@@ -10,10 +20,4 @@
       <div i18n class="actor-info-followers">{{ actor.followersCount }} subscribers</div>
     </div>
   </div>
-
-  <div class="button-file">
-    <span i18n>Change the avatar</span>
-    <input #avatarfileInput type="file" name="avatarfile" id="avatarfile" [accept]="avatarExtensions" (change)="onAvatarChange()" />
-  </div>
-  <div i18n class="file-max-size">(extensions: {{ avatarExtensions }}, max size: {{ maxAvatarSize | bytes }})</div>
 </ng-container>

@@ -1,47 +1,21 @@
 import * as Bull from 'bull'
-import { VideoResolution } from '../../../../shared'
+import {
+  MergeAudioTranscodingPayload,
+  NewResolutionTranscodingPayload,
+  OptimizeTranscodingPayload,
+  VideoTranscodingPayload
+} from '../../../../shared'
 import { logger } from '../../../helpers/logger'
 import { VideoModel } from '../../../models/video/video'
 import { JobQueue } from '../job-queue'
-import { federateVideoIfNeeded } from '../../activitypub'
+import { federateVideoIfNeeded } from '../../activitypub/videos'
 import { retryTransactionWrapper } from '../../../helpers/database-utils'
-import { sequelizeTypescript } from '../../../initializers'
-import * as Bluebird from 'bluebird'
+import { sequelizeTypescript } from '../../../initializers/database'
 import { computeResolutionsToTranscode } from '../../../helpers/ffmpeg-utils'
 import { generateHlsPlaylist, mergeAudioVideofile, optimizeOriginalVideofile, transcodeNewResolution } from '../../video-transcoding'
 import { Notifier } from '../../notifier'
 import { CONFIG } from '../../../initializers/config'
 import { MVideoFullLight, MVideoUUID, MVideoWithFile } from '@server/typings/models'
-
-interface BaseTranscodingPayload {
-  videoUUID: string
-  isNewVideo?: boolean
-}
-
-interface HLSTranscodingPayload extends BaseTranscodingPayload {
-  type: 'hls'
-  isPortraitMode?: boolean
-  resolution: VideoResolution
-  copyCodecs: boolean
-}
-
-interface NewResolutionTranscodingPayload extends BaseTranscodingPayload {
-  type: 'new-resolution'
-  isPortraitMode?: boolean
-  resolution: VideoResolution
-}
-
-interface MergeAudioTranscodingPayload extends BaseTranscodingPayload {
-  type: 'merge-audio'
-  resolution: VideoResolution
-}
-
-interface OptimizeTranscodingPayload extends BaseTranscodingPayload {
-  type: 'optimize'
-}
-
-export type VideoTranscodingPayload = HLSTranscodingPayload | NewResolutionTranscodingPayload
-  | OptimizeTranscodingPayload | MergeAudioTranscodingPayload
 
 async function processVideoTranscoding (job: Bull.Job) {
   const payload = job.data as VideoTranscodingPayload
@@ -105,7 +79,7 @@ async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: O
 
   const { videoDatabase, videoPublished } = await sequelizeTypescript.transaction(async t => {
     // Maybe the video changed in database, refresh it
-    let videoDatabase = await VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t)
+    const videoDatabase = await VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t)
     // Video does not exist anymore
     if (!videoDatabase) return undefined
 
@@ -118,12 +92,11 @@ async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: O
 
     let videoPublished = false
 
+    // Generate HLS version of the max quality file
     const hlsPayload = Object.assign({}, payload, { resolution: videoDatabase.getMaxQualityFile().resolution })
     await createHlsJobIfEnabled(hlsPayload)
 
     if (resolutionsEnabled.length !== 0) {
-      const tasks: (Bluebird<Bull.Job<any>> | Promise<Bull.Job<any>>)[] = []
-
       for (const resolution of resolutionsEnabled) {
         let dataInput: VideoTranscodingPayload
 
@@ -143,11 +116,8 @@ async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: O
           }
         }
 
-        const p = JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput })
-        tasks.push(p)
+        JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput })
       }
-
-      await Promise.all(tasks)
 
       logger.info('Transcoding jobs created for uuid %s.', videoDatabase.uuid, { resolutionsEnabled })
     } else {

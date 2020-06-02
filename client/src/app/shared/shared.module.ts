@@ -5,9 +5,10 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { RouterModule } from '@angular/router'
 import { MarkdownTextareaComponent } from '@app/shared/forms/markdown-textarea.component'
 import { HelpComponent } from '@app/shared/misc/help.component'
+import { ListOverflowComponent } from '@app/shared/misc/list-overflow.component'
 import { InfiniteScrollerDirective } from '@app/shared/video/infinite-scroller.directive'
 import { BytesPipe, KeysPipe, NgPipesModule } from 'ngx-pipes'
-import { SharedModule as PrimeSharedModule } from 'primeng/components/common/shared'
+import { SharedModule as PrimeSharedModule } from 'primeng/api'
 import { AUTH_INTERCEPTOR_PROVIDER } from './auth'
 import { ButtonComponent } from './buttons/button.component'
 import { DeleteButtonComponent } from './buttons/delete-button.component'
@@ -46,6 +47,7 @@ import {
 import { I18nPrimengCalendarService } from '@app/shared/i18n/i18n-primeng-calendar'
 import { InputMaskModule } from 'primeng/inputmask'
 import { ScreenService } from '@app/shared/misc/screen.service'
+import { LocalStorageService, SessionStorageService } from '@app/shared/misc/storage.service'
 import { VideoCaptionsValidatorsService } from '@app/shared/forms/form-validators/video-captions-validators.service'
 import { VideoCaptionService } from '@app/shared/video-caption'
 import { PeertubeCheckboxComponent } from '@app/shared/forms/peertube-checkbox.component'
@@ -56,7 +58,7 @@ import {
   NgbDropdownModule,
   NgbModalModule,
   NgbPopoverModule,
-  NgbTabsetModule,
+  NgbNavModule,
   NgbTooltipModule
 } from '@ng-bootstrap/ng-bootstrap'
 import { RemoteSubscribeComponent, SubscribeButtonComponent, UserSubscriptionService } from '@app/shared/user-subscription'
@@ -88,17 +90,24 @@ import { NumberFormatterPipe } from '@app/shared/angular/number-formatter.pipe'
 import { VideoDurationPipe } from '@app/shared/angular/video-duration-formatter.pipe'
 import { ObjectLengthPipe } from '@app/shared/angular/object-length.pipe'
 import { FromNowPipe } from '@app/shared/angular/from-now.pipe'
+import { HighlightPipe } from '@app/shared/angular/highlight.pipe'
 import { PeerTubeTemplateDirective } from '@app/shared/angular/peertube-template.directive'
 import { VideoActionsDropdownComponent } from '@app/shared/video/video-actions-dropdown.component'
 import { VideoBlacklistComponent } from '@app/shared/video/modals/video-blacklist.component'
 import { VideoDownloadComponent } from '@app/shared/video/modals/video-download.component'
 import { VideoReportComponent } from '@app/shared/video/modals/video-report.component'
-import { ClipboardModule } from 'ngx-clipboard'
 import { FollowService } from '@app/shared/instance/follow.service'
 import { MultiSelectModule } from 'primeng/multiselect'
 import { FeatureBooleanComponent } from '@app/shared/instance/feature-boolean.component'
 import { InputReadonlyCopyComponent } from '@app/shared/forms/input-readonly-copy.component'
 import { RedundancyService } from '@app/shared/video/redundancy.service'
+import { ClipboardModule } from '@angular/cdk/clipboard'
+import { InputSwitchModule } from 'primeng/inputswitch'
+
+import { MyAccountVideoSettingsComponent } from '@app/+my-account/my-account-settings/my-account-video-settings'
+import { MyAccountInterfaceSettingsComponent } from '@app/+my-account/my-account-settings/my-account-interface'
+import { ActorAvatarInfoComponent } from '@app/+my-account/shared/actor-avatar-info.component'
+import { BatchDomainsValidatorsService } from '@app/+admin/config/shared/batch-domains-validators.service'
 
 @NgModule({
   imports: [
@@ -111,7 +120,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     NgbDropdownModule,
     NgbModalModule,
     NgbPopoverModule,
-    NgbTabsetModule,
+    NgbNavModule,
     NgbTooltipModule,
     NgbCollapseModule,
 
@@ -120,7 +129,8 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     PrimeSharedModule,
     InputMaskModule,
     NgPipesModule,
-    MultiSelectModule
+    MultiSelectModule,
+    InputSwitchModule
   ],
 
   declarations: [
@@ -148,6 +158,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     NumberFormatterPipe,
     ObjectLengthPipe,
     FromNowPipe,
+    HighlightPipe,
     PeerTubeTemplateDirective,
     VideoDurationPipe,
 
@@ -156,6 +167,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     InfiniteScrollerDirective,
     TextareaAutoResizeDirective,
     HelpComponent,
+    ListOverflowComponent,
 
     ReactiveFileComponent,
     PeertubeCheckboxComponent,
@@ -176,7 +188,11 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     DateToggleComponent,
 
     GlobalIconComponent,
-    PreviewUploadComponent
+    PreviewUploadComponent,
+
+    MyAccountVideoSettingsComponent,
+    MyAccountInterfaceSettingsComponent,
+    ActorAvatarInfoComponent
   ],
 
   exports: [
@@ -189,7 +205,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     NgbDropdownModule,
     NgbModalModule,
     NgbPopoverModule,
-    NgbTabsetModule,
+    NgbNavModule,
     NgbTooltipModule,
     NgbCollapseModule,
 
@@ -227,6 +243,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     InfiniteScrollerDirective,
     TextareaAutoResizeDirective,
     HelpComponent,
+    ListOverflowComponent,
     InputReadonlyCopyComponent,
 
     ReactiveFileComponent,
@@ -251,8 +268,13 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     NumberFormatterPipe,
     ObjectLengthPipe,
     FromNowPipe,
+    HighlightPipe,
     PeerTubeTemplateDirective,
-    VideoDurationPipe
+    VideoDurationPipe,
+
+    MyAccountVideoSettingsComponent,
+    MyAccountInterfaceSettingsComponent,
+    ActorAvatarInfoComponent
   ],
 
   providers: [
@@ -276,6 +298,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
     LoginValidatorsService,
     ResetPasswordValidatorsService,
     UserValidatorsService,
+    BatchDomainsValidatorsService,
     VideoPlaylistValidatorsService,
     VideoAbuseValidatorsService,
     VideoChannelValidatorsService,
@@ -297,6 +320,7 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
 
     I18nPrimengCalendarService,
     ScreenService,
+    LocalStorageService, SessionStorageService,
 
     UserNotificationService,
 

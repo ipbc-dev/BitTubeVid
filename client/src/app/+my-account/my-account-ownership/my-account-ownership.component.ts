@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { Notifier } from '@app/core'
 import { RestPagination, RestTable } from '@app/shared'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { VideoChangeOwnership } from '../../../../../shared'
 import { VideoOwnershipService } from '@app/shared/video-ownership'
 import { Account } from '@app/shared/account/account.model'
@@ -14,7 +14,6 @@ import { MyAccountAcceptOwnershipComponent } from './my-account-accept-ownership
 export class MyAccountOwnershipComponent extends RestTable implements OnInit {
   videoChangeOwnerships: VideoChangeOwnership[] = []
   totalRecords = 0
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
@@ -29,6 +28,10 @@ export class MyAccountOwnershipComponent extends RestTable implements OnInit {
 
   ngOnInit () {
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'MyAccountOwnershipComponent'
   }
 
   createByString (account: Account) {

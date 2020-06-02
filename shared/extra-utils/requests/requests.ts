@@ -1,26 +1,30 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/no-floating-promises */
+
 import * as request from 'supertest'
 import { buildAbsoluteFixturePath, root } from '../miscs/miscs'
 import { isAbsolute, join } from 'path'
-import { parse } from 'url'
+import { URL } from 'url'
+import { decode } from 'querystring'
 
 function get4KFileUrl () {
   return 'https://download.cpy.re/peertube/4k_file.txt'
 }
 
 function makeRawRequest (url: string, statusCodeExpected?: number, range?: string) {
-  const { host, protocol, pathname } = parse(url)
+  const { host, protocol, pathname } = new URL(url)
 
   return makeGetRequest({ url: `${protocol}//${host}`, path: pathname, statusCodeExpected, range })
 }
 
 function makeGetRequest (options: {
-  url: string,
-  path?: string,
-  query?: any,
-  token?: string,
-  statusCodeExpected?: number,
-  contentType?: string,
+  url: string
+  path?: string
+  query?: any
+  token?: string
+  statusCodeExpected?: number
+  contentType?: string
   range?: string
+  redirects?: number
 }) {
   if (!options.statusCodeExpected) options.statusCodeExpected = 400
   if (options.contentType === undefined) options.contentType = 'application/json'
@@ -31,14 +35,15 @@ function makeGetRequest (options: {
   if (options.token) req.set('Authorization', 'Bearer ' + options.token)
   if (options.query) req.query(options.query)
   if (options.range) req.set('Range', options.range)
+  if (options.redirects) req.redirects(options.redirects)
 
   return req.expect(options.statusCodeExpected)
 }
 
 function makeDeleteRequest (options: {
-  url: string,
-  path: string,
-  token?: string,
+  url: string
+  path: string
+  token?: string
   statusCodeExpected?: number
 }) {
   if (!options.statusCodeExpected) options.statusCodeExpected = 400
@@ -53,12 +58,12 @@ function makeDeleteRequest (options: {
 }
 
 function makeUploadRequest (options: {
-  url: string,
-  method?: 'POST' | 'PUT',
-  path: string,
-  token?: string,
-  fields: { [ fieldName: string ]: any },
-  attaches: { [ attachName: string ]: any | any[] },
+  url: string
+  method?: 'POST' | 'PUT'
+  path: string
+  token?: string
+  fields: { [ fieldName: string ]: any }
+  attaches: { [ attachName: string ]: any | any[] }
   statusCodeExpected?: number
 }) {
   if (!options.statusCodeExpected) options.statusCodeExpected = 400
@@ -101,10 +106,10 @@ function makeUploadRequest (options: {
 }
 
 function makePostBodyRequest (options: {
-  url: string,
-  path: string,
-  token?: string,
-  fields?: { [ fieldName: string ]: any },
+  url: string
+  path: string
+  token?: string
+  fields?: { [ fieldName: string ]: any }
   statusCodeExpected?: number
 }) {
   if (!options.fields) options.fields = {}
@@ -121,10 +126,10 @@ function makePostBodyRequest (options: {
 }
 
 function makePutBodyRequest (options: {
-  url: string,
-  path: string,
-  token?: string,
-  fields: { [ fieldName: string ]: any },
+  url: string
+  path: string
+  token?: string
+  fields: { [ fieldName: string ]: any }
   statusCodeExpected?: number
 }) {
   if (!options.statusCodeExpected) options.statusCodeExpected = 400
@@ -147,9 +152,9 @@ function makeHTMLRequest (url: string, path: string) {
 }
 
 function updateAvatarRequest (options: {
-  url: string,
-  path: string,
-  accessToken: string,
+  url: string
+  path: string
+  accessToken: string
   fixture: string
 }) {
   let filePath = ''
@@ -169,12 +174,17 @@ function updateAvatarRequest (options: {
   })
 }
 
+function decodeQueryString (path: string) {
+  return decode(path.split('?')[1])
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   get4KFileUrl,
   makeHTMLRequest,
   makeGetRequest,
+  decodeQueryString,
   makeUploadRequest,
   makePostBodyRequest,
   makePutBodyRequest,

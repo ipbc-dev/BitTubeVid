@@ -1,9 +1,9 @@
 import { catchError, map } from 'rxjs/operators'
 import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { Observable } from 'rxjs'
-import { ResultList, VideoAbuse, VideoAbuseUpdate } from '../../../../../shared'
+import { ResultList, VideoAbuse, VideoAbuseUpdate, VideoAbuseState } from '../../../../../shared'
 import { environment } from '../../../environments/environment'
 import { RestExtractor, RestPagination, RestService } from '../rest'
 
@@ -17,15 +17,48 @@ export class VideoAbuseService {
     private restExtractor: RestExtractor
   ) {}
 
-  getVideoAbuses (pagination: RestPagination, sort: SortMeta): Observable<ResultList<VideoAbuse>> {
+  getVideoAbuses (options: {
+    pagination: RestPagination,
+    sort: SortMeta,
+    search?: string
+  }): Observable<ResultList<VideoAbuse>> {
+    const { pagination, sort, search } = options
     const url = VideoAbuseService.BASE_VIDEO_ABUSE_URL + 'abuse'
 
     let params = new HttpParams()
     params = this.restService.addRestGetParams(params, pagination, sort)
 
+    if (search) {
+      const filters = this.restService.parseQueryStringFilter(search, {
+        id: { prefix: '#' },
+        state: {
+          prefix: 'state:',
+          handler: v => {
+            if (v === 'accepted') return VideoAbuseState.ACCEPTED
+            if (v === 'pending') return VideoAbuseState.PENDING
+            if (v === 'rejected') return VideoAbuseState.REJECTED
+
+            return undefined
+          }
+        },
+        videoIs: {
+          prefix: 'videoIs:',
+          handler: v => {
+            if (v === 'deleted') return v
+            if (v === 'blacklisted') return v
+
+            return undefined
+          }
+        },
+        searchReporter: { prefix: 'reporter:' },
+        searchReportee: { prefix: 'reportee:' }
+      })
+
+      params = this.restService.addObjectParams(params, filters)
+    }
+
     return this.authHttp.get<ResultList<VideoAbuse>>(url, { params })
                .pipe(
-                 map(res => this.restExtractor.convertResultListDateToHuman(res)),
                  catchError(res => this.restExtractor.handleError(res))
                )
   }

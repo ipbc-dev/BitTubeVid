@@ -2,13 +2,13 @@ import { CONSTRAINTS_FIELDS, MIMETYPES, VIDEO_LANGUAGES } from '../../initialize
 import { exists, isFileValid } from './misc'
 
 function isVideoCaptionLanguageValid (value: any) {
-  return exists(value) && VIDEO_LANGUAGES[ value ] !== undefined
+  return exists(value) && VIDEO_LANGUAGES[value] !== undefined
 }
 
-const videoCaptionTypes = Object.keys(MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT)
-                                .concat([ 'application/octet-stream' ]) // MacOS sends application/octet-stream ><
+const videoCaptionTypesRegex = Object.keys(MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT)
+                                .concat([ 'application/octet-stream' ]) // MacOS sends application/octet-stream
                                 .map(m => `(${m})`)
-const videoCaptionTypesRegex = videoCaptionTypes.join('|')
+                                .join('|')
 function isVideoCaptionFile (files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[], field: string) {
   return isFileValid(files, videoCaptionTypesRegex, field, CONSTRAINTS_FIELDS.VIDEO_CAPTIONS.CAPTION_FILE.FILE_SIZE.max)
 }

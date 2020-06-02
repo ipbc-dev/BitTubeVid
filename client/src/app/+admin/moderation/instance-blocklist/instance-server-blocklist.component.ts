@@ -1,20 +1,22 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { Notifier } from '@app/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { RestPagination, RestTable } from '@app/shared'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { BlocklistService } from '@app/shared/blocklist'
 import { ServerBlock } from '../../../../../../shared'
+import { BatchDomainsModalComponent } from '@app/+admin/config/shared/batch-domains-modal.component'
 
 @Component({
   selector: 'my-instance-server-blocklist',
-  styleUrls: [ './instance-server-blocklist.component.scss' ],
+  styleUrls: [ '../moderation.component.scss', './instance-server-blocklist.component.scss' ],
   templateUrl: './instance-server-blocklist.component.html'
 })
 export class InstanceServerBlocklistComponent extends RestTable implements OnInit {
+  @ViewChild('batchDomainsModal') batchDomainsModal: BatchDomainsModalComponent
+
   blockedServers: ServerBlock[] = []
   totalRecords = 0
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
@@ -30,6 +32,10 @@ export class InstanceServerBlocklistComponent extends RestTable implements OnIni
     this.initialize()
   }
 
+  getIdentifier () {
+    return 'InstanceServerBlocklistComponent'
+  }
+
   unblockServer (serverBlock: ServerBlock) {
     const host = serverBlock.blockedServer.host
 
@@ -43,8 +49,29 @@ export class InstanceServerBlocklistComponent extends RestTable implements OnIni
       )
   }
 
+  addServersToBlock () {
+    this.batchDomainsModal.openModal()
+  }
+
+  onDomainsToBlock (domains: string[]) {
+    domains.forEach(domain => {
+      this.blocklistService.blockServerByInstance(domain)
+        .subscribe(
+          () => {
+            this.notifier.success(this.i18n('Instance {{domain}} muted by your instance.', { domain }))
+
+            this.loadData()
+          }
+        )
+    })
+  }
+
   protected loadData () {
-    return this.blocklistService.getInstanceServerBlocklist(this.pagination, this.sort)
+    return this.blocklistService.getInstanceServerBlocklist({
+      pagination: this.pagination,
+      sort: this.sort,
+      search: this.search
+    })
       .subscribe(
         resultList => {
           this.blockedServers = resultList.data

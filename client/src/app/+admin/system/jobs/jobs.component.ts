@@ -40,7 +40,6 @@ export class JobsComponent extends RestTable implements OnInit {
 
   jobs: Job[] = []
   totalRecords: number
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
@@ -55,6 +54,10 @@ export class JobsComponent extends RestTable implements OnInit {
   ngOnInit () {
     this.loadJobStateAndType()
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'JobsComponent'
   }
 
   onJobStateOrTypeChanged () {

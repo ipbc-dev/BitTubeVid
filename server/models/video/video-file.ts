@@ -10,7 +10,9 @@ import {
   Is,
   Model,
   Table,
-  UpdatedAt
+  UpdatedAt,
+  Scopes,
+  DefaultScope
 } from 'sequelize-typescript'
 import {
   isVideoFileExtnameValid,
@@ -28,7 +30,33 @@ import { MIMETYPES, MEMOIZE_LENGTH, MEMOIZE_TTL } from '../../initializers/const
 import { MVideoFile, MVideoFileStreamingPlaylistVideo, MVideoFileVideo } from '../../typings/models/video/video-file'
 import { MStreamingPlaylistVideo, MVideo } from '@server/typings/models'
 import * as memoizee from 'memoizee'
+import validator from 'validator'
 
+export enum ScopeNames {
+  WITH_VIDEO = 'WITH_VIDEO',
+  WITH_METADATA = 'WITH_METADATA'
+}
+
+@DefaultScope(() => ({
+  attributes: {
+    exclude: [ 'metadata' ]
+  }
+}))
+@Scopes(() => ({
+  [ScopeNames.WITH_VIDEO]: {
+    include: [
+      {
+        model: VideoModel.unscoped(),
+        required: true
+      }
+    ]
+  },
+  [ScopeNames.WITH_METADATA]: {
+    attributes: {
+      include: [ 'metadata' ]
+    }
+  }
+}))
 @Table({
   tableName: 'videoFile',
   indexes: [
@@ -106,6 +134,14 @@ export class VideoFileModel extends Model<VideoFileModel> {
   @Column
   fps: number
 
+  @AllowNull(true)
+  @Column(DataType.JSONB)
+  metadata: any
+
+  @AllowNull(true)
+  @Column
+  metadataUrl: string
+
   @ForeignKey(() => VideoModel)
   @Column
   videoId: number
@@ -157,17 +193,56 @@ export class VideoFileModel extends Model<VideoFileModel> {
               .then(results => results.length === 1)
   }
 
+  static async doesVideoExistForVideoFile (id: number, videoIdOrUUID: number | string) {
+    const videoFile = await VideoFileModel.loadWithVideoOrPlaylist(id, videoIdOrUUID)
+
+    return !!videoFile
+  }
+
+  static loadWithMetadata (id: number) {
+    return VideoFileModel.scope(ScopeNames.WITH_METADATA).findByPk(id)
+  }
+
   static loadWithVideo (id: number) {
+    return VideoFileModel.scope(ScopeNames.WITH_VIDEO).findByPk(id)
+  }
+
+  static loadWithVideoOrPlaylist (id: number, videoIdOrUUID: number | string) {
+    const whereVideo = validator.isUUID(videoIdOrUUID + '')
+      ? { uuid: videoIdOrUUID }
+      : { id: videoIdOrUUID }
+
     const options = {
+      where: {
+        id
+      },
       include: [
         {
           model: VideoModel.unscoped(),
-          required: true
+          required: false,
+          where: whereVideo
+        },
+        {
+          model: VideoStreamingPlaylistModel.unscoped(),
+          required: false,
+          include: [
+            {
+              model: VideoModel.unscoped(),
+              required: true,
+              where: whereVideo
+            }
+          ]
         }
       ]
     }
 
-    return VideoFileModel.findByPk(id, options)
+    return VideoFileModel.findOne(options)
+      .then(file => {
+        // We used `required: false` so check we have at least a video or a streaming playlist
+        if (!file.Video && !file.VideoStreamingPlaylist) return null
+
+        return file
+      })
   }
 
   static listByStreamingPlaylist (streamingPlaylistId: number, transaction: Transaction) {

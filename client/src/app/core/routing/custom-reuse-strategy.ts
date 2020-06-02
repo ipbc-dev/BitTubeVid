@@ -1,5 +1,7 @@
 import { ActivatedRouteSnapshot, DetachedRouteHandle, RouteReuseStrategy } from '@angular/router'
+import { Injectable } from '@angular/core'
 
+@Injectable()
 export class CustomReuseStrategy implements RouteReuseStrategy {
   storedRouteHandles = new Map<string, DetachedRouteHandle>()
   recentlyUsed: string
@@ -76,6 +78,6 @@ export class CustomReuseStrategy implements RouteReuseStrategy {
   }
 
   private isReuseEnabled (route: ActivatedRouteSnapshot) {
-    return route.data.reuse && route.data.reuse.enabled && route.queryParams['a-state']
+    return route.data.reuse && route.data.reuse.enabled && route.queryParams[ 'a-state' ]
   }
 }

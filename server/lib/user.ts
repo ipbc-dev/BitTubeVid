@@ -1,8 +1,8 @@
-import * as uuidv4 from 'uuid/v4'
+import { v4 as uuidv4 } from 'uuid'
 import { ActivityPubActorType } from '../../shared/models/activitypub'
 import { SERVER_ACTOR_NAME, WEBSERVER } from '../initializers/constants'
 import { AccountModel } from '../models/account/account'
-import { buildActorInstance, getAccountActivityPubUrl, setAsyncActorKeys } from './activitypub'
+import { buildActorInstance, setAsyncActorKeys } from './activitypub/actor'
 import { createLocalVideoChannel } from './video-channel'
 import { ActorModel } from '../models/activitypub/actor'
 import { UserNotificationSettingModel } from '../models/account/user-notification-setting'
@@ -14,13 +14,14 @@ import { Redis } from './redis'
 import { Emailer } from './emailer'
 import { MAccountDefault, MActorDefault, MChannelActor } from '../typings/models'
 import { MUser, MUserDefault, MUserId } from '../typings/models/user'
+import { getAccountActivityPubUrl } from './activitypub/url'
 
 type ChannelNames = { name: string, displayName: string }
 
 async function createUserAccountAndChannelAndPlaylist (parameters: {
-  userToCreate: MUser,
-  userDisplayName?: string,
-  channelNames?: ChannelNames,
+  userToCreate: MUser
+  userDisplayName?: string
+  channelNames?: ChannelNames
   validateUser?: boolean
 }): Promise<{ user: MUserDefault, account: MAccountDefault, videoChannel: MChannelActor }> {
   const { userToCreate, userDisplayName, channelNames, validateUser = true } = parameters
@@ -63,11 +64,11 @@ async function createUserAccountAndChannelAndPlaylist (parameters: {
 }
 
 async function createLocalAccountWithoutKeys (parameters: {
-  name: string,
-  displayName?: string,
-  userId: number | null,
-  applicationId: number | null,
-  t: Transaction | undefined,
+  name: string
+  displayName?: string
+  userId: number | null
+  applicationId: number | null
+  t: Transaction | undefined
   type?: ActivityPubActorType
 }) {
   const { name, displayName, userId, applicationId, t, type = 'Person' } = parameters

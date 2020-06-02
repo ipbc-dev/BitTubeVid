@@ -1,46 +1,56 @@
 export const LOCALE_FILES = [ 'player', 'server' ]
 
 export const I18N_LOCALES = {
+  // Always first to avoid issues when using express acceptLanguages function when no accept language header is set
   'en-US': 'English',
-  'fr-FR': 'Français',
-  'ja-JP': '日本語',
-  'eu-ES': 'Euskara',
+
   'ca-ES': 'Català',
   'cs-CZ': 'Čeština',
-  'eo': 'Esperanto',
-  'el-GR': 'ελληνικά',
   'de-DE': 'Deutsch',
-  'it-IT': 'Italiano',
-  'nl-NL': 'Nederlands',
+  'el-GR': 'ελληνικά',
+  'eo': 'Esperanto',
   'es-ES': 'Español',
-  'oc': 'Occitan',
+  'eu-ES': 'Euskara',
+  'fi-FI': 'suomi',
+  'fr-FR': 'Français',
   'gd': 'Gàidhlig',
-  'zh-Hant-TW': '繁體中文（台灣）',
+  'hu-HU': 'magyar',
+  'it-IT': 'Italiano',
+  'ja-JP': '日本語',
+  'nl-NL': 'Nederlands',
+  'pl-PL': 'Polski',
   'pt-BR': 'Português (Brasil)',
   'pt-PT': 'Português (Portugal)',
-  'sv-SE': 'svenska',
-  'pl-PL': 'Polski',
-  'fi-FI': 'suomi',
   'ru-RU': 'русский',
-  'zh-Hans-CN': '简体中文（中国）'
+  'sv-SE': 'svenska',
+  'th-TH': 'ไทย',
+  'zh-Hans-CN': '简体中文（中国）',
+  'zh-Hant-TW': '繁體中文（台灣）'
 }
 
 const I18N_LOCALE_ALIAS = {
-  'en': 'en-US',
-  'fr': 'fr-FR',
-  'eu': 'eu-ES',
   'ca': 'ca-ES',
   'cs': 'cs-CZ',
   'de': 'de-DE',
+  'el': 'el-GR',
+  'en': 'en-US',
   'es': 'es-ES',
-  'pt': 'pt-PT',
+  'eu': 'eu-ES',
   'fi': 'fi-FI',
-  'sv': 'sv-SE',
-  'pl': 'pl-PL',
-  'ru': 'ru-RU',
+  'fr': 'fr-FR',
+  'ja': 'ja-JP',
+  'it': 'it-IT',
+  'hu': 'hu-HU',
   'nl': 'nl-NL',
+  'pl': 'pl-PL',
+  'pt': 'pt-BR',
+  'ru': 'ru-RU',
+  'sv': 'sv-SE',
+  'th': 'th-TH',
   'zh': 'zh-Hans-CN',
+  'zh-Hans': 'zh-Hans-CN',
   'zh-CN': 'zh-Hans-CN',
+  'zh-Hant': 'zh-Hant-TW',
   'zh-TW': 'zh-Hant-TW'
 }
 
@@ -56,16 +66,18 @@ export function isDefaultLocale (locale: string) {
 }
 
 export function peertubeTranslate (str: string, translations?: { [ id: string ]: string }) {
+  // FIXME: remove disable rule when the client is upgraded to typescript 3.7
+  // eslint-disable-next-line
   return translations && translations[str] ? translations[str] : str
 }
 
 const possiblePaths = POSSIBLE_LOCALES.map(l => '/' + l)
 export function is18nPath (path: string) {
-  return possiblePaths.indexOf(path) !== -1
+  return possiblePaths.includes(path)
 }
 
 export function is18nLocale (locale: string) {
-  return POSSIBLE_LOCALES.indexOf(locale) !== -1
+  return POSSIBLE_LOCALES.includes(locale)
 }
 
 export function getCompleteLocale (locale: string) {
@@ -77,7 +89,7 @@ export function getCompleteLocale (locale: string) {
 }
 
 export function getShortLocale (locale: string) {
-  if (locale.indexOf('-') === -1) return locale
+  if (locale.includes('-') === false) return locale
 
   return locale.split('-')[0]
 }

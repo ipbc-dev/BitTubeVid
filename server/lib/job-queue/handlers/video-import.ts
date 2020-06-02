@@ -1,43 +1,36 @@
 import * as Bull from 'bull'
-import { logger } from '../../../helpers/logger'
-import { downloadYoutubeDLVideo } from '../../../helpers/youtube-dl'
-import { VideoImportModel } from '../../../models/video/video-import'
-import { VideoImportState } from '../../../../shared/models/videos'
-import { getDurationFromVideoFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffmpeg-utils'
-import { extname } from 'path'
-import { VideoFileModel } from '../../../models/video/video-file'
-import { VIDEO_IMPORT_TIMEOUT } from '../../../initializers/constants'
-import { VideoState } from '../../../../shared'
-import { JobQueue } from '../index'
-import { federateVideoIfNeeded } from '../../activitypub'
-import { VideoModel } from '../../../models/video/video'
-import { createTorrentAndSetInfoHash, downloadWebTorrentVideo } from '../../../helpers/webtorrent'
-import { getSecureTorrentName } from '../../../helpers/utils'
 import { move, remove, stat } from 'fs-extra'
-import { Notifier } from '../../notifier'
-import { CONFIG } from '../../../initializers/config'
-import { sequelizeTypescript } from '../../../initializers/database'
-import { createVideoMiniatureFromUrl, generateVideoMiniature } from '../../thumbnail'
-import { ThumbnailType } from '../../../../shared/models/videos/thumbnail.type'
-import { MThumbnail } from '../../../typings/models/video/thumbnail'
-import { MVideoImportDefault, MVideoImportDefaultFiles, MVideoImportVideo } from '@server/typings/models/video/video-import'
+import { extname } from 'path'
+import { addOptimizeOrMergeAudioJob } from '@server/helpers/video'
+import { isPostImportVideoAccepted } from '@server/lib/moderation'
+import { Hooks } from '@server/lib/plugins/hooks'
 import { getVideoFilePath } from '@server/lib/video-paths'
-
-type VideoImportYoutubeDLPayload = {
-  type: 'youtube-dl'
-  videoImportId: number
-
-  thumbnailUrl: string
-  downloadThumbnail: boolean
-  downloadPreview: boolean
-}
-
-type VideoImportTorrentPayload = {
-  type: 'magnet-uri' | 'torrent-file'
-  videoImportId: number
-}
-
-export type VideoImportPayload = VideoImportYoutubeDLPayload | VideoImportTorrentPayload
+import { MVideoImportDefault, MVideoImportDefaultFiles, MVideoImportVideo } from '@server/typings/models/video/video-import'
+import {
+  VideoImportPayload,
+  VideoImportTorrentPayload,
+  VideoImportTorrentPayloadType,
+  VideoImportYoutubeDLPayload,
+  VideoImportYoutubeDLPayloadType,
+  VideoState
+} from '../../../../shared'
+import { VideoImportState } from '../../../../shared/models/videos'
+import { ThumbnailType } from '../../../../shared/models/videos/thumbnail.type'
+import { getDurationFromVideoFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffmpeg-utils'
+import { logger } from '../../../helpers/logger'
+import { getSecureTorrentName } from '../../../helpers/utils'
+import { createTorrentAndSetInfoHash, downloadWebTorrentVideo } from '../../../helpers/webtorrent'
+import { downloadYoutubeDLVideo } from '../../../helpers/youtube-dl'
+import { CONFIG } from '../../../initializers/config'
+import { VIDEO_IMPORT_TIMEOUT } from '../../../initializers/constants'
+import { sequelizeTypescript } from '../../../initializers/database'
+import { VideoModel } from '../../../models/video/video'
+import { VideoFileModel } from '../../../models/video/video-file'
+import { VideoImportModel } from '../../../models/video/video-import'
+import { MThumbnail } from '../../../typings/models/video/thumbnail'
+import { federateVideoIfNeeded } from '../../activitypub/videos'
+import { Notifier } from '../../notifier'
+import { generateVideoMiniature } from '../../thumbnail'
 
 async function processVideoImport (job: Bull.Job) {
   const payload = job.data as VideoImportPayload
@@ -60,10 +53,8 @@ async function processTorrentImport (job: Bull.Job, payload: VideoImportTorrentP
   const videoImport = await getVideoImportOrDie(payload.videoImportId)
 
   const options = {
+    type: payload.type,
     videoImportId: payload.videoImportId,
-
-    downloadThumbnail: false,
-    downloadPreview: false,
 
     generateThumbnail: true,
     generatePreview: true
@@ -80,17 +71,14 @@ async function processYoutubeDLImport (job: Bull.Job, payload: VideoImportYoutub
 
   const videoImport = await getVideoImportOrDie(payload.videoImportId)
   const options = {
+    type: payload.type,
     videoImportId: videoImport.id,
 
-    downloadThumbnail: payload.downloadThumbnail,
-    downloadPreview: payload.downloadPreview,
-    thumbnailUrl: payload.thumbnailUrl,
-
-    generateThumbnail: false,
-    generatePreview: false
+    generateThumbnail: payload.generateThumbnail,
+    generatePreview: payload.generatePreview
   }
 
-  return processFile(() => downloadYoutubeDLVideo(videoImport.targetUrl, VIDEO_IMPORT_TIMEOUT), videoImport, options)
+  return processFile(() => downloadYoutubeDLVideo(videoImport.targetUrl, payload.fileExt, VIDEO_IMPORT_TIMEOUT), videoImport, options)
 }
 
 async function getVideoImportOrDie (videoImportId: number) {
@@ -103,11 +91,8 @@ async function getVideoImportOrDie (videoImportId: number) {
 }
 
 type ProcessFileOptions = {
+  type: VideoImportYoutubeDLPayloadType | VideoImportTorrentPayloadType
   videoImportId: number
-
-  downloadThumbnail: boolean
-  downloadPreview: boolean
-  thumbnailUrl?: string
 
   generateThumbnail: boolean
   generatePreview: boolean
@@ -132,7 +117,7 @@ async function processFile (downloader: () => Promise<string>, videoImport: MVid
     const fps = await getVideoFileFPS(tempVideoPath)
     const duration = await getDurationFromVideoFile(tempVideoPath)
 
-    // Create video file object in database
+    // Prepare video file object for creation in database
     const videoFileData = {
       extname: extname(tempVideoPath),
       resolution: videoFileResolution,
@@ -142,6 +127,30 @@ async function processFile (downloader: () => Promise<string>, videoImport: MVid
     }
     videoFile = new VideoFileModel(videoFileData)
 
+    const hookName = options.type === 'youtube-dl'
+      ? 'filter:api.video.post-import-url.accept.result'
+      : 'filter:api.video.post-import-torrent.accept.result'
+
+    // Check we accept this video
+    const acceptParameters = {
+      videoImport,
+      video: videoImport.Video,
+      videoFilePath: tempVideoPath,
+      videoFile,
+      user: videoImport.User
+    }
+    const acceptedResult = await Hooks.wrapFun(isPostImportVideoAccepted, acceptParameters, hookName)
+
+    if (acceptedResult.accepted !== true) {
+      logger.info('Refused imported video.', { acceptedResult, acceptParameters })
+
+      videoImport.state = VideoImportState.REJECTED
+      await videoImport.save()
+
+      throw new Error(acceptedResult.errorMessage)
+    }
+
+    // Video is accepted, resuming preparation
     const videoWithFiles = Object.assign(videoImport.Video, { VideoFiles: [ videoFile ], VideoStreamingPlaylists: [] })
     // To clean files if the import fails
     const videoImportWithFiles: MVideoImportDefaultFiles = Object.assign(videoImport, { Video: videoWithFiles })
@@ -153,17 +162,13 @@ async function processFile (downloader: () => Promise<string>, videoImport: MVid
 
     // Process thumbnail
     let thumbnailModel: MThumbnail
-    if (options.downloadThumbnail && options.thumbnailUrl) {
-      thumbnailModel = await createVideoMiniatureFromUrl(options.thumbnailUrl, videoImportWithFiles.Video, ThumbnailType.MINIATURE)
-    } else if (options.generateThumbnail || options.downloadThumbnail) {
+    if (options.generateThumbnail) {
       thumbnailModel = await generateVideoMiniature(videoImportWithFiles.Video, videoFile, ThumbnailType.MINIATURE)
     }
 
     // Process preview
     let previewModel: MThumbnail
-    if (options.downloadPreview && options.thumbnailUrl) {
-      previewModel = await createVideoMiniatureFromUrl(options.thumbnailUrl, videoImportWithFiles.Video, ThumbnailType.PREVIEW)
-    } else if (options.generatePreview || options.downloadPreview) {
+    if (options.generatePreview) {
       previewModel = await generateVideoMiniature(videoImportWithFiles.Video, videoFile, ThumbnailType.PREVIEW)
     }
 
@@ -214,14 +219,7 @@ async function processFile (downloader: () => Promise<string>, videoImport: MVid
 
     // Create transcoding jobs?
     if (video.state === VideoState.TO_TRANSCODE) {
-      // Put uuid because we don't have id auto incremented for now
-      const dataInput = {
-        type: 'optimize' as 'optimize',
-        videoUUID: videoImportUpdated.Video.uuid,
-        isNewVideo: true
-      }
-
-      await JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput })
+      await addOptimizeOrMergeAudioJob(videoImportUpdated.Video, videoFile)
     }
 
   } catch (err) {
@@ -232,7 +230,9 @@ async function processFile (downloader: () => Promise<string>, videoImport: MVid
     }
 
     videoImport.error = err.message
-    videoImport.state = VideoImportState.FAILED
+    if (videoImport.state !== VideoImportState.REJECTED) {
+      videoImport.state = VideoImportState.FAILED
+    }
     await videoImport.save()
 
     Notifier.Instance.notifyOnFinishedVideoImport(videoImport, false)

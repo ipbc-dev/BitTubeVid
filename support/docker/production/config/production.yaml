@@ -45,6 +45,7 @@ storage:
   tmp: '../data/tmp/'
   avatars: '../data/avatars/'
   videos: '../data/videos/'
+  streaming_playlists: '../data/streaming-playlists'
   redundancy: '../data/redundancy/'
   logs: '../data/logs/'
   previews: '../data/previews/'
