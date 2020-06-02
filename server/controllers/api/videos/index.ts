@@ -170,6 +170,7 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
 }
 
 async function addVideo (req: express.Request, res: express.Response) {
+  logger.info('Inside addVideo function')
   // Processing the video could be long
   // Set timeout to 10 minutes
   req.setTimeout(1000 * 60 * 10, () => {
@@ -199,10 +200,10 @@ async function addVideo (req: express.Request, res: express.Response) {
     channelId: res.locals.videoChannel.id,
     originallyPublishedAt: videoInfo.originallyPublishedAt
   }
-
+  logger.info('Received video data is: ', videoData)
   const video = new VideoModel(videoData) as MVideoDetails
   video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
-
+  logger.info('VideoUrl is: ', video.url)
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
@@ -218,10 +219,12 @@ async function addVideo (req: express.Request, res: express.Response) {
 
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
+  logger.info('Moving the file to destination: ', destination)
   await move(videoPhysicalFile.path, destination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
+  logger.info('videoPhysicalFile is: ', videoPhysicalFile)
 
   // Process thumbnail or create it from the video
   const thumbnailField = req.files['thumbnailfile']
@@ -270,7 +273,7 @@ async function addVideo (req: express.Request, res: express.Response) {
         privacy: videoInfo.scheduleUpdate.privacy || null
       }, { transaction: t })
     }
-
+    logger.info('videoInfo is: ', videoInfo)
     await autoBlacklistVideoIfNeeded({
       video,
       user: res.locals.oauth.token.User,
@@ -306,12 +309,12 @@ async function addVideo (req: express.Request, res: express.Response) {
         isNewVideo: true
       }
     }
-
+    logger.info('Sending job to transcoder (optimize) with payload: ', dataInput)
     await JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput })
   }
-
+  logger.info('action:api.video.uploaded ', videoCreated)
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
-
+  logger.info('Going to return videoCreated is: ', videoCreated)
   return res.json({
     video: {
       id: videoCreated.id,
