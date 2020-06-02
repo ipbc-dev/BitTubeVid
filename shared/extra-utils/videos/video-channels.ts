@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+
 import * as request from 'supertest'
 import { VideoChannelUpdate } from '../../models/videos/channel/video-channel-update.model'
 import { VideoChannelCreate } from '../../models/videos/channel/video-channel-create.model'
@@ -6,7 +8,7 @@ import { ServerInfo } from '../server/servers'
 import { User } from '../../models/users/user.model'
 import { getMyUserInformation } from '../users/users'
 
-function getVideoChannelsList (url: string, start: number, count: number, sort?: string) {
+function getVideoChannelsList (url: string, start: number, count: number, sort?: string, withStats?: boolean) {
   const path = '/api/v1/video-channels'
 
   const req = request(url)
@@ -15,6 +17,7 @@ function getVideoChannelsList (url: string, start: number, count: number, sort?:
     .query({ count: count })
 
   if (sort) req.query({ sort })
+  if (withStats) req.query({ withStats })
 
   return req.set('Accept', 'application/json')
             .expect(200)
@@ -22,14 +25,15 @@ function getVideoChannelsList (url: string, start: number, count: number, sort?:
 }
 
 function getAccountVideoChannelsList (parameters: {
-  url: string,
-  accountName: string,
-  start?: number,
-  count?: number,
-  sort?: string,
+  url: string
+  accountName: string
+  start?: number
+  count?: number
+  sort?: string
   specialStatus?: number
+  withStats?: boolean
 }) {
-  const { url, accountName, start, count, sort = 'createdAt', specialStatus = 200 } = parameters
+  const { url, accountName, start, count, sort = 'createdAt', specialStatus = 200, withStats = false } = parameters
 
   const path = '/api/v1/accounts/' + accountName + '/video-channels'
 
@@ -39,7 +43,8 @@ function getAccountVideoChannelsList (parameters: {
     query: {
       start,
       count,
-      sort
+      sort,
+      withStats
     },
     statusCodeExpected: specialStatus
   })
@@ -113,9 +118,9 @@ function getVideoChannel (url: string, channelName: string) {
 }
 
 function updateVideoChannelAvatar (options: {
-  url: string,
-  accessToken: string,
-  fixture: string,
+  url: string
+  accessToken: string
+  fixture: string
   videoChannelName: string | number
 }) {
 
@@ -129,7 +134,7 @@ function setDefaultVideoChannel (servers: ServerInfo[]) {
 
   for (const server of servers) {
     const p = getMyUserInformation(server.url, server.accessToken)
-      .then(res => server.videoChannel = (res.body as User).videoChannels[0])
+      .then(res => { server.videoChannel = (res.body as User).videoChannels[0] })
 
     tasks.push(p)
   }

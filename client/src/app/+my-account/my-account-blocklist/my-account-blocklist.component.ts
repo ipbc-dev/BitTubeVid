@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core'
 import { Notifier } from '@app/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { RestPagination, RestTable } from '@app/shared'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { AccountBlock, BlocklistService } from '@app/shared/blocklist'
 
 @Component({
@@ -13,7 +13,6 @@ import { AccountBlock, BlocklistService } from '@app/shared/blocklist'
 export class MyAccountBlocklistComponent extends RestTable implements OnInit {
   blockedAccounts: AccountBlock[] = []
   totalRecords = 0
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
@@ -27,6 +26,10 @@ export class MyAccountBlocklistComponent extends RestTable implements OnInit {
 
   ngOnInit () {
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'MyAccountBlocklistComponent'
   }
 
   unblockAccount (accountBlock: AccountBlock) {

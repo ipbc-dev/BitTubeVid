@@ -1,11 +1,11 @@
 import * as Sequelize from 'sequelize'
 import { VideoPlaylistPrivacy, VideoPlaylistType } from '../../../shared/models/videos'
-import * as uuidv4 from 'uuid/v4'
+import { v4 as uuidv4 } from 'uuid'
 import { WEBSERVER } from '../constants'
 
 async function up (utils: {
-  transaction: Sequelize.Transaction,
-  queryInterface: Sequelize.QueryInterface,
+  transaction: Sequelize.Transaction
+  queryInterface: Sequelize.QueryInterface
   sequelize: Sequelize.Sequelize
 }): Promise<void> {
   const transaction = utils.transaction

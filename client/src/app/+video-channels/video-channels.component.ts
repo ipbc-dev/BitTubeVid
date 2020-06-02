@@ -9,16 +9,19 @@ import { AuthService, Notifier } from '@app/core'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
 import { SubscribeButtonComponent } from '@app/shared/user-subscription/subscribe-button.component'
 import { I18n } from '@ngx-translate/i18n-polyfill'
+import { ListOverflowItem } from '@app/shared/misc/list-overflow.component'
+import { ScreenService } from '@app/shared/misc/screen.service'
 
 @Component({
   templateUrl: './video-channels.component.html',
   styleUrls: [ './video-channels.component.scss' ]
 })
 export class VideoChannelsComponent implements OnInit, OnDestroy {
-  @ViewChild('subscribeButton', { static: false }) subscribeButton: SubscribeButtonComponent
+  @ViewChild('subscribeButton') subscribeButton: SubscribeButtonComponent
 
   videoChannel: VideoChannel
   hotkeys: Hotkey[]
+  links: ListOverflowItem[] = []
   isChannelManageable = false
 
   private routeSub: Subscription
@@ -30,7 +33,8 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private videoChannelService: VideoChannelService,
     private restExtractor: RestExtractor,
-    private hotkeysService: HotkeysService
+    private hotkeysService: HotkeysService,
+    private screenService: ScreenService
   ) { }
 
   ngOnInit () {
@@ -62,6 +66,12 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
       }, undefined, this.i18n('Subscribe to the account'))
     ]
     if (this.isUserLoggedIn()) this.hotkeysService.add(this.hotkeys)
+
+    this.links = [
+      { label: this.i18n('VIDEOS'), routerLink: 'videos' },
+      { label: this.i18n('VIDEO PLAYLISTS'), routerLink: 'video-playlists' },
+      { label: this.i18n('ABOUT'), routerLink: 'about' }
+    ]
   }
 
   ngOnDestroy () {
@@ -69,6 +79,10 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
 
     // Unbind hotkeys
     if (this.isUserLoggedIn()) this.hotkeysService.remove(this.hotkeys)
+  }
+
+  get isInSmallView () {
+    return this.screenService.isInSmallView()
   }
 
   isUserLoggedIn () {

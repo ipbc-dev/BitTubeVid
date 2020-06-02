@@ -1,8 +1,8 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import * as chai from 'chai'
 import 'mocha'
-import { VideoDetails, VideoImport, VideoPrivacy } from '../../../../shared/models/videos'
+import { VideoDetails, VideoImport, VideoPrivacy, VideoCaption } from '../../../../shared/models/videos'
 import {
   cleanupTests,
   doubleFollow,
@@ -11,13 +11,15 @@ import {
   getMyVideos,
   getVideo,
   getVideosList,
+  listVideoCaptions,
+  testCaptionFile,
   immutableAssign,
-  killallServers,
   ServerInfo,
   setAccessTokensToServers
 } from '../../../../shared/extra-utils'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
-import { getMagnetURI, getYoutubeVideoUrl, importVideo, getMyVideoImports } from '../../../../shared/extra-utils/videos/video-imports'
+import { getMagnetURI, getMyVideoImports, getYoutubeVideoUrl, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
+import { testImage } from '../../../../shared/extra-utils/miscs/miscs'
 
 const expect = chai.expect
 
@@ -61,11 +63,14 @@ describe('Test video imports', function () {
 
     expect(videoTorrent.name).to.contain('你好 世界 720p.mp4')
     expect(videoMagnet.name).to.contain('super peertube2 video')
+
+    const resCaptions = await listVideoCaptions(url, idHttp)
+    expect(resCaptions.body.total).to.equal(2)
   }
 
   async function checkVideoServer2 (url: string, id: number | string) {
     const res = await getVideo(url, id)
-    const video = res.body
+    const video: VideoDetails = res.body
 
     expect(video.name).to.equal('my super name')
     expect(video.category.label).to.equal('Entertainment')
@@ -76,6 +81,9 @@ describe('Test video imports', function () {
     expect(video.tags).to.deep.equal([ 'supertag1', 'supertag2' ])
 
     expect(video.files).to.have.lengthOf(1)
+
+    const resCaptions = await listVideoCaptions(url, id)
+    expect(resCaptions.body.total).to.equal(2)
   }
 
   before(async function () {
@@ -88,12 +96,12 @@ describe('Test video imports', function () {
 
     {
       const res = await getMyUserInformation(servers[0].url, servers[0].accessToken)
-      channelIdServer1 = res.body.videoChannels[ 0 ].id
+      channelIdServer1 = res.body.videoChannels[0].id
     }
 
     {
       const res = await getMyUserInformation(servers[1].url, servers[1].accessToken)
-      channelIdServer2 = res.body.videoChannels[ 0 ].id
+      channelIdServer2 = res.body.videoChannels[0].id
     }
 
     await doubleFollow(servers[0], servers[1])
@@ -111,6 +119,48 @@ describe('Test video imports', function () {
       const attributes = immutableAssign(baseAttributes, { targetUrl: getYoutubeVideoUrl() })
       const res = await importVideo(servers[0].url, servers[0].accessToken, attributes)
       expect(res.body.video.name).to.equal('small video - youtube')
+      expect(res.body.video.thumbnailPath).to.equal(`/static/thumbnails/${res.body.video.uuid}.jpg`)
+      expect(res.body.video.previewPath).to.equal(`/static/previews/${res.body.video.uuid}.jpg`)
+      await testImage(servers[0].url, 'video_import_thumbnail', res.body.video.thumbnailPath)
+      await testImage(servers[0].url, 'video_import_preview', res.body.video.previewPath)
+
+      const resCaptions = await listVideoCaptions(servers[0].url, res.body.video.id)
+      const videoCaptions: VideoCaption[] = resCaptions.body.data
+      expect(videoCaptions).to.have.lengthOf(2)
+
+      const enCaption = videoCaptions.find(caption => caption.language.id === 'en')
+      expect(enCaption).to.exist
+      expect(enCaption.language.label).to.equal('English')
+      expect(enCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-en.vtt`)
+      await testCaptionFile(servers[0].url, enCaption.captionPath, `WEBVTT
+Kind: captions
+Language: en
+
+00:00:01.600 --> 00:00:04.200
+English (US)
+
+00:00:05.900 --> 00:00:07.999
+This is a subtitle in American English
+
+00:00:10.000 --> 00:00:14.000
+Adding subtitles is very easy to do`)
+
+      const frCaption = videoCaptions.find(caption => caption.language.id === 'fr')
+      expect(frCaption).to.exist
+      expect(frCaption.language.label).to.equal('French')
+      expect(frCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-fr.vtt`)
+      await testCaptionFile(servers[0].url, frCaption.captionPath, `WEBVTT
+Kind: captions
+Language: fr
+
+00:00:01.600 --> 00:00:04.200
+Français (FR)
+
+00:00:05.900 --> 00:00:07.999
+C'est un sous-titre français
+
+00:00:10.000 --> 00:00:14.000
+Ajouter un sous-titre est vraiment facile`)
     }
 
     {
@@ -125,7 +175,7 @@ describe('Test video imports', function () {
 
     {
       const attributes = immutableAssign(baseAttributes, {
-        torrentfile: 'video-720p.torrent',
+        torrentfile: 'video-720p.torrent' as any,
         description: 'this is a super torrent description',
         tags: [ 'tag_torrent1', 'tag_torrent2' ]
       })
@@ -214,7 +264,7 @@ describe('Test video imports', function () {
 
       await checkVideoServer2(server.url, res.body.data[0].uuid)
 
-      const [ ,videoHttp, videoMagnet, videoTorrent ] = res.body.data
+      const [ , videoHttp, videoMagnet, videoTorrent ] = res.body.data
       await checkVideosServer1(server.url, videoHttp.uuid, videoMagnet.uuid, videoTorrent.uuid)
     }
   })

@@ -1,8 +1,8 @@
 import * as Bluebird from 'bluebird'
 import { Transaction } from 'sequelize'
-import * as url from 'url'
-import * as uuidv4 from 'uuid/v4'
-import { ActivityPubActor, ActivityPubActorType } from '../../../shared/models/activitypub'
+import { URL } from 'url'
+import { v4 as uuidv4 } from 'uuid'
+import { ActivityPubActor, ActivityPubActorType, ActivityPubOrderedCollection } from '../../../shared/models/activitypub'
 import { ActivityPubAttributedTo } from '../../../shared/models/activitypub/objects'
 import { checkUrlsSameHost, getAPId } from '../../helpers/activitypub'
 import { sanitizeAndCheckActorObject } from '../../helpers/custom-validators/activitypub/actor'
@@ -19,7 +19,6 @@ import { AvatarModel } from '../../models/avatar/avatar'
 import { ServerModel } from '../../models/server/server'
 import { VideoChannelModel } from '../../models/video/video-channel'
 import { JobQueue } from '../job-queue'
-import { getServerActor } from '../../helpers/utils'
 import { ActorFetchByUrlType, fetchActorByUrl } from '../../helpers/actor'
 import { sequelizeTypescript } from '../../initializers/database'
 import {
@@ -33,9 +32,10 @@ import {
   MActorFull,
   MActorFullActor,
   MActorId,
-  MChannel,
-  MChannelAccountDefault
+  MChannel
 } from '../../typings/models'
+import { extname } from 'path'
+import { getServerActor } from '@server/models/application/application'
 
 // Set account keys, this could be long so process after the account creation and do not block the client
 function setAsyncActorKeys <T extends MActor> (actor: T) {
@@ -117,17 +117,17 @@ async function getOrCreateActorAndServerAndModel (
   if (actor.VideoChannel) (actor as MActorAccountChannelIdActor).VideoChannel.Actor = actor
 
   const { actor: actorRefreshed, refreshed } = await retryTransactionWrapper(refreshActorIfNeeded, actor, fetchType)
-  if (!actorRefreshed) throw new Error('Actor ' + actorRefreshed.url + ' does not exist anymore.')
+  if (!actorRefreshed) throw new Error('Actor ' + actor.url + ' does not exist anymore.')
 
   if ((created === true || refreshed === true) && updateCollections === true) {
     const payload = { uri: actor.outboxUrl, type: 'activity' as 'activity' }
-    await JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload })
+    await JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload })
   }
 
   // We created a new account: fetch the playlists
   if (created === true && actor.Account && accountPlaylistsUrl) {
     const payload = { uri: accountPlaylistsUrl, accountId: actor.Account.id, type: 'account-playlists' as 'account-playlists' }
-    await JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload })
+    await JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload })
   }
 
   return actorRefreshed
@@ -207,7 +207,7 @@ async function fetchActorTotalItems (url: string) {
   }
 
   try {
-    const { body } = await doRequest(options)
+    const { body } = await doRequest<ActivityPubOrderedCollection<unknown>>(options)
     return body.totalItems ? body.totalItems : 0
   } catch (err) {
     logger.warn('Cannot fetch remote actor count %s.', url, { err })
@@ -215,20 +215,28 @@ async function fetchActorTotalItems (url: string) {
   }
 }
 
-async function getAvatarInfoIfExists (actorJSON: ActivityPubActor) {
-  if (
-    actorJSON.icon && actorJSON.icon.type === 'Image' && MIMETYPES.IMAGE.MIMETYPE_EXT[actorJSON.icon.mediaType] !== undefined &&
-    isActivityPubUrlValid(actorJSON.icon.url)
-  ) {
-    const extension = MIMETYPES.IMAGE.MIMETYPE_EXT[actorJSON.icon.mediaType]
+function getAvatarInfoIfExists (actorJSON: ActivityPubActor) {
+  const mimetypes = MIMETYPES.IMAGE
+  const icon = actorJSON.icon
 
-    return {
-      name: uuidv4() + extension,
-      fileUrl: actorJSON.icon.url
-    }
+  if (!icon || icon.type !== 'Image' || !isActivityPubUrlValid(icon.url)) return undefined
+
+  let extension: string
+
+  if (icon.mediaType) {
+    extension = mimetypes.MIMETYPE_EXT[icon.mediaType]
+  } else {
+    const tmp = extname(icon.url)
+
+    if (mimetypes.EXT_MIMETYPE[tmp] !== undefined) extension = tmp
   }
 
-  return undefined
+  if (!extension) return undefined
+
+  return {
+    name: uuidv4() + extension,
+    fileUrl: icon.url
+  }
 }
 
 async function addFetchOutboxJob (actor: Pick<ActorModel, 'id' | 'outboxUrl'>) {
@@ -271,7 +279,10 @@ async function refreshActorIfNeeded <T extends MActorFull | MActorAccountChannel
 
     if (statusCode === 404) {
       logger.info('Deleting actor %s because there is a 404 in refresh actor.', actor.url)
-      actor.Account ? actor.Account.destroy() : actor.VideoChannel.destroy()
+      actor.Account
+        ? await actor.Account.destroy()
+        : await actor.VideoChannel.destroy()
+
       return { actor: undefined, refreshed: false }
     }
 
@@ -337,14 +348,14 @@ function saveActorAndServerAndModelIfNotExist (
   ownerActor?: MActorFullActor,
   t?: Transaction
 ): Bluebird<MActorFullActor> | Promise<MActorFullActor> {
-  let actor = result.actor
+  const actor = result.actor
 
   if (t !== undefined) return save(t)
 
   return sequelizeTypescript.transaction(t => save(t))
 
   async function save (t: Transaction) {
-    const actorHost = url.parse(actor.url).host
+    const actorHost = new URL(actor.url).host
 
     const serverOptions = {
       where: {
@@ -402,7 +413,7 @@ type FetchRemoteActorResult = {
   support?: string
   playlists?: string
   avatar?: {
-    name: string,
+    name: string
     fileUrl: string
   }
   attributedTo: ActivityPubAttributedTo[]

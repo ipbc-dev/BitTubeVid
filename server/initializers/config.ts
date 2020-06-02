@@ -5,6 +5,7 @@ import { VideosRedundancyStrategy } from '../../shared/models'
 import { buildPath, parseBytes, parseDurationToMs, root } from '../helpers/core-utils'
 import { NSFWPolicyType } from '../../shared/models/videos/nsfw-policy.type'
 import * as bytes from 'bytes'
+import { VideoRedundancyConfigFilter } from '@shared/models/redundancy/video-redundancy-config-filter.type'
 
 // Use a variable to reload the configuration if we need
 let config: IConfig = require('config')
@@ -35,6 +36,8 @@ const CONFIG = {
     DB: config.has('redis.db') ? config.get<number>('redis.db') : null
   },
   SMTP: {
+    TRANSPORT: config.has('smtp.transport') ? config.get<string>('smtp.transport') : 'smtp',
+    SENDMAIL: config.has('smtp.sendmail') ? config.get<string>('smtp.sendmail') : null,
     HOSTNAME: config.get<string>('smtp.hostname'),
     PORT: config.get<number>('smtp.port'),
     USERNAME: config.get<string>('smtp.username'),
@@ -115,6 +118,11 @@ const CONFIG = {
     VIDEOS: {
       CHECK_INTERVAL: parseDurationToMs(config.get<string>('redundancy.videos.check_interval')),
       STRATEGIES: buildVideosRedundancy(config.get<any[]>('redundancy.videos.strategies'))
+    }
+  },
+  REMOTE_REDUNDANCY: {
+    VIDEOS: {
+      ACCEPT_FROM: config.get<VideoRedundancyConfigFilter>('remote_redundancy.videos.accept_from')
     }
   },
   CSP: {
@@ -284,11 +292,16 @@ function registerConfigChangedHandler (fun: Function) {
   configChangedHandlers.push(fun)
 }
 
+function isEmailEnabled () {
+  return !!CONFIG.SMTP.HOSTNAME && !!CONFIG.SMTP.PORT
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   CONFIG,
-  registerConfigChangedHandler
+  registerConfigChangedHandler,
+  isEmailEnabled
 }
 
 // ---------------------------------------------------------------------------
@@ -301,7 +314,7 @@ function getLocalConfigFilePath () {
   if (process.env.NODE_ENV) filename += `-${process.env.NODE_ENV}`
   if (process.env.NODE_APP_INSTANCE) filename += `-${process.env.NODE_APP_INSTANCE}`
 
-  return join(dirname(configSources[ 0 ].name), filename + '.json')
+  return join(dirname(configSources[0].name), filename + '.json')
 }
 
 function buildVideosRedundancy (objs: any[]): VideosRedundancyStrategy[] {
@@ -330,7 +343,7 @@ export function reloadConfig () {
 
   function purge () {
     for (const fileName in require.cache) {
-      if (-1 === fileName.indexOf(directory())) {
+      if (fileName.includes(directory()) === false) {
         continue
       }
 

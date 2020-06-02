@@ -1,16 +1,8 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import * as chai from 'chai'
 import 'mocha'
-import {
-  flushTests,
-  killallServers,
-  flushAndRunServer,
-  ServerInfo,
-  setAccessTokensToServers,
-  wait,
-  cleanupTests
-} from '../../../../shared/extra-utils'
+import { cleanupTests, flushAndRunServer, ServerInfo, setAccessTokensToServers, wait } from '../../../../shared/extra-utils'
 import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
 import { sendContactForm } from '../../../../shared/extra-utils/server/contact-form'
@@ -54,7 +46,7 @@ describe('Test contact form', function () {
     const email = emails[0]
 
     expect(email['from'][0]['address']).equal('test-admin@localhost')
-    expect(email['from'][0]['name']).equal('toto@example.com')
+    expect(email['replyTo'][0]['address']).equal('toto@example.com')
     expect(email['to'][0]['address']).equal('admin' + server.internalServerNumber + '@example.com')
     expect(email['subject']).contains('my subject')
     expect(email['text']).contains('my super message')

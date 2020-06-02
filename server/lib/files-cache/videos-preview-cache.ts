@@ -1,9 +1,8 @@
 import { join } from 'path'
-import { FILES_CACHE, STATIC_PATHS } from '../../initializers/constants'
+import { FILES_CACHE } from '../../initializers/constants'
 import { VideoModel } from '../../models/video/video'
 import { AbstractVideoStaticFileCache } from './abstract-video-static-file-cache'
-import { CONFIG } from '../../initializers/config'
-import { fetchRemoteVideoStaticFile } from '../activitypub'
+import { doRequestAndSaveToFile } from '@server/helpers/requests'
 
 class VideosPreviewCache extends AbstractVideoStaticFileCache <string> {
 
@@ -32,11 +31,11 @@ class VideosPreviewCache extends AbstractVideoStaticFileCache <string> {
 
     if (video.isOwned()) throw new Error('Cannot load remote preview of owned video.')
 
-    // FIXME: use URL
-    const remoteStaticPath = join(STATIC_PATHS.PREVIEWS, video.getPreview().filename)
-    const destPath = join(FILES_CACHE.PREVIEWS.DIRECTORY, video.getPreview().filename)
+    const preview = video.getPreview()
+    const destPath = join(FILES_CACHE.PREVIEWS.DIRECTORY, preview.filename)
 
-    await fetchRemoteVideoStaticFile(video, remoteStaticPath, destPath)
+    const remoteUrl = preview.getFileUrl(video)
+    await doRequestAndSaveToFile({ uri: remoteUrl }, destPath)
 
     return { isOwned: false, path: destPath }
   }

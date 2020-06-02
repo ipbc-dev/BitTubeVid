@@ -1,10 +1,8 @@
 <div class="admin-sub-header">
-  <div i18n class="form-sub-title">Jobs list</div>
-
   <div class="select-filter-block">
     <label for="jobType" i18n>Job type</label>
     <div class="peertube-select-container">
-      <select id="jobType" name="jobType" [(ngModel)]="jobType" (ngModelChange)="onJobStateOrTypeChanged()">
+      <select id="jobType" name="jobType" [(ngModel)]="jobType" (ngModelChange)="onJobStateOrTypeChanged()" class="form-control">
         <option *ngFor="let jobType of jobTypes" [value]="jobType">{{ jobType }}</option>
       </select>
     </div>
@@ -13,7 +11,7 @@
   <div class="select-filter-block">
     <label for="jobState" i18n>Job state</label>
     <div class="peertube-select-container">
-      <select id="jobState" name="jobState" [(ngModel)]="jobState" (ngModelChange)="onJobStateOrTypeChanged()">
+      <select id="jobState" name="jobState" [(ngModel)]="jobState" (ngModelChange)="onJobStateOrTypeChanged()" class="form-control">
         <option *ngFor="let state of jobStates" [value]="state">{{ state }}</option>
       </select>
     </div>
@@ -21,12 +19,13 @@
 </div>
 
 <p-table
-  [value]="jobs" [lazy]="true" [paginator]="true" [totalRecords]="totalRecords" [rows]="rowsPerPage" dataKey="uniqId"
+  [value]="jobs" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage" dataKey="uniqId"
   [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)" [first]="pagination.start"
-  [tableStyle]="{'table-layout':'auto'}"
+  [tableStyle]="{'table-layout':'auto'}" (onPage)="onPage($event)" [expandedRowKeys]="expandedRows"
 >
   <ng-template pTemplate="header">
     <tr>
+      <th style="width: 40px"></th>
       <th class="job-id" i18n>ID</th>
       <th class="job-type" i18n>Type</th>
       <th class="job-date" i18n pSortableColumn="createdAt">Created <p-sortIcon field="createdAt"></p-sortIcon></th>
@@ -35,7 +34,13 @@
   </ng-template>
 
   <ng-template pTemplate="body" let-expanded="expanded" let-job>
-    <tr class="expander" [pRowToggler]="job">
+    <tr>
+      <td class="expand-cell">
+        <span class="expander" [pRowToggler]="job" i18n-ngbTooltip ngbTooltip="More information">
+          <i [ngClass]="expanded ? 'glyphicon glyphicon-menu-down' : 'glyphicon glyphicon-menu-right'"></i>
+        </span>
+      </td>
+
       <td class="job-id" [title]="job.id">{{ job.id }}</td>
       <td class="job-type">{{ job.type }}</td>
       <td class="job-date">{{ job.createdAt }}</td>

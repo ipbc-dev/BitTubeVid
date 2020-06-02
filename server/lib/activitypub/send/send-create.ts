@@ -6,7 +6,6 @@ import { broadcastToActors, broadcastToFollowers, sendVideoRelatedActivity, unic
 import { audiencify, getActorsInvolvedInVideo, getAudience, getAudienceFromFollowersOf, getVideoCommentAudience } from '../audience'
 import { logger } from '../../../helpers/logger'
 import { VideoPlaylistPrivacy } from '../../../../shared/models/videos/playlist/video-playlist-privacy.model'
-import { getServerActor } from '../../../helpers/utils'
 import {
   MActorLight,
   MCommentOwnerVideo,
@@ -16,6 +15,8 @@ import {
   MVideoRedundancyFileVideo,
   MVideoRedundancyStreamingPlaylistVideo
 } from '../../../typings/models'
+import { getServerActor } from '@server/models/application/application'
+import { ContextType } from '@shared/models/activitypub/context'
 
 async function sendCreateVideo (video: MVideoAP, t: Transaction) {
   if (!video.hasPrivacyForFederation()) return undefined
@@ -42,7 +43,8 @@ async function sendCreateCacheFile (
     byActor,
     video,
     url: fileRedundancy.url,
-    object: fileRedundancy.toActivityPubObject()
+    object: fileRedundancy.toActivityPubObject(),
+    contextType: 'CacheFile'
   })
 }
 
@@ -78,7 +80,8 @@ async function sendCreateVideoComment (comment: MCommentOwnerVideo, t: Transacti
   // Add the actor that commented too
   actorsInvolvedInComment.push(byActor)
 
-  const parentsCommentActors = threadParentComments.map(c => c.Account.Actor)
+  const parentsCommentActors = threadParentComments.filter(c => !c.isDeleted())
+                                                   .map(c => c.Account.Actor)
 
   let audience: ActivityAudience
   if (isOrigin) {
@@ -130,11 +133,12 @@ export {
 // ---------------------------------------------------------------------------
 
 async function sendVideoRelatedCreateActivity (options: {
-  byActor: MActorLight,
-  video: MVideoAccountLight,
-  url: string,
-  object: any,
+  byActor: MActorLight
+  video: MVideoAccountLight
+  url: string
+  object: any
   transaction?: Transaction
+  contextType?: ContextType
 }) {
   const activityBuilder = (audience: ActivityAudience) => {
     return buildCreateActivity(options.url, options.byActor, options.object, audience)

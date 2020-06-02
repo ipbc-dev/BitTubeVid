@@ -2,6 +2,8 @@
 
 set -eu
 
+declare -A languages
+
 pre_build_hook () {
   mkdir "./src/pending_locale" > /dev/null || true
   mv ./src/locale/angular.*.xlf "./src/pending_locale"
@@ -37,24 +39,94 @@ post_build_hook
 
 # Don't build other languages if --light arg is provided
 if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
-    if [ ! -z ${1+x} ] && [ "$1" == "--light-fr" ]; then
-        languages=("fr-FR")
+    if [ ! -z ${1+x} ] && [ "$1" == "--light-hu" ]; then
+        languages=(["hu"]="hu-HU")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-th" ]; then
+        languages=(["th"]="th-TH")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-fi" ]; then
+        languages=(["fi"]="fi-FI")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-nl" ]; then
+        languages=(["nl"]="nl-NL")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-gd" ]; then
+        languages=(["gd"]="gd")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-el" ]; then
+        languages=(["el"]="el-GR")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-es" ]; then
-        languages=("es-ES")
+        languages=(["es"]="es-ES")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-pt" ]; then
+        languages=(["pt"]="pt-BR")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-pt-PT" ]; then
+        languages=(["pt-PT"]="pt-PT")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-sv" ]; then
+        languages=(["sv"]="sv-SE")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-pl" ]; then
+        languages=(["pl"]="pl-PL")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-ru" ]; then
+        languages=(["ru"]="ru-RU")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-zh-Hans" ]; then
+        languages=(["zh-Hans"]="zh-Hans-CN")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-zh-Hant" ]; then
+        languages=(["zh-Hant"]="zh-Hant-TW")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-fr" ]; then
+        languages=(["fr"]="fr-FR")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-ja" ]; then
+        languages=(["ja"]="ja-JP")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-eu" ]; then
+        languages=(["eu"]="eu-ES")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-ca" ]; then
+        languages=(["ca"]="ca-ES")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-cs" ]; then
+        languages=(["cs"]="cs-CZ")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-eo" ]; then
+        languages=(["eo"]="eo")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-de" ]; then
+        languages=(["de"]="de-DE")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-it" ]; then
+        languages=(["it"]="it-IT")
     else
         # Supported languages
         languages=(
-            "fi-FI" "nl-NL" "gd" "el-GR" "es-ES" "oc" "pt-BR" "pt-PT" "sv-SE" "pl-PL" "ru-RU" "zh-Hans-CN" "zh-Hant-TW"
-            "fr-FR" "ja-JP" "eu-ES" "ca-ES" "cs-CZ" "eo" "de-DE" "it-IT"
+            ["hu"]="hu-HU"
+            ["th"]="th-TH"
+            ["fi"]="fi-FI"
+            ["nl"]="nl-NL"
+            ["gd"]="gd"
+            ["el"]="el-GR"
+            ["es"]="es-ES"
+            ["pt"]="pt-BR"
+            ["pt-PT"]="pt-PT"
+            ["sv"]="sv-SE"
+            ["pl"]="pl-PL"
+            ["ru"]="ru-RU"
+            ["zh-Hans"]="zh-Hans-CN"
+            ["zh-Hant"]="zh-Hant-TW"
+            ["fr"]="fr-FR"
+            ["ja"]="ja-JP"
+            ["eu"]="eu-ES"
+            ["ca"]="ca-ES"
+            ["cs"]="cs-CZ"
+            ["eo"]="eo"
+            ["de"]="de-DE"
+            ["it"]="it-IT"
         )
     fi
 
-    for lang in "${languages[@]}"; do
+    for key in "${!languages[@]}"; do
+        lang=${languages[$key]}
+
         # TODO: remove when the project will use runtime translations
         pre_build_hook "$lang"
 
-        npm run ng build -- --prod --i18n-file "./src/locale/angular.$lang.xlf" --i18n-format xlf --i18n-locale "$lang" \
-            --output-path "dist/$lang/" --deploy-url "/client/$lang/"
+        npm run ng build -- --prod --configuration="$lang" --output-path "dist/build"
+
+        # If --localize is not used
+        mv "dist/build/$key" "dist/$lang"
+        rmdir "dist/build"
+
+        # If --localize is used
+        # if [ ! "$lang" = "$key" ]; then
+        #   mv "dist/$key" "dist/$lang"
+        # fi
 
         # Do not duplicate assets
         rm -r "./dist/$lang/assets"

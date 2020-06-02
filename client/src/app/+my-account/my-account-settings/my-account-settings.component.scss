@@ -5,15 +5,23 @@
   font-size: 15px;
   margin-top: 20px;
 
-  .user-quota-label {
+  label {
     margin-right: 5px;
-    font-weight: $font-semibold;
   }
 }
 
 .account-title {
-  @include in-content-small-title;
+  @include settings-big-title;
+}
 
-  margin-top: 55px;
-  margin-bottom: 30px;
+.progress {
+  @include progressbar;
+  width: 500px;
+  max-width: 100%;
+}
+
+@media screen and (max-width: $small-view) {
+  .progress {
+    width: 100%;
+  }
 }

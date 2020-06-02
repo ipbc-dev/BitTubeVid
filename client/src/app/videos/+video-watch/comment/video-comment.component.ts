@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core'
 import { User, UserRight } from '../../../../../../shared/models/users'
-import { VideoCommentThreadTree } from '../../../../../../shared/models/videos/video-comment.model'
 import { AuthService } from '@app/core/auth'
 import { AccountService } from '@app/shared/account/account.service'
 import { Video } from '@app/shared/video/video.model'
@@ -10,6 +9,7 @@ import { Account } from '@app/shared/account/account.model'
 import { Notifier } from '@app/core'
 import { UserService } from '@app/shared'
 import { Actor } from '@app/shared/actor/actor.model'
+import { VideoCommentThreadTree } from '@app/videos/+video-watch/comment/video-comment-thread-tree.model'
 
 @Component({
   selector: 'my-video-comment',
@@ -98,6 +98,7 @@ export class VideoCommentComponent implements OnInit, OnChanges {
     return this.comment.account && this.isUserLoggedIn() &&
       (
         this.user.account.id === this.comment.account.id ||
+        this.user.account.id === this.video.account.id ||
         this.user.hasRight(UserRight.REMOVE_ANY_VIDEO_COMMENT)
       )
   }
@@ -125,7 +126,12 @@ export class VideoCommentComponent implements OnInit, OnChanges {
     const html = await this.markdownService.textMarkdownToHTML(this.comment.text, true)
     this.sanitizedCommentHTML = await this.markdownService.processVideoTimestamps(html)
     this.newParentComments = this.parentComments.concat([ this.comment ])
-    this.commentAccount = new Account(this.comment.account)
-    this.getUserIfNeeded(this.commentAccount)
+
+    if (this.comment.account) {
+      this.commentAccount = new Account(this.comment.account)
+      this.getUserIfNeeded(this.commentAccount)
+    } else {
+      this.comment.account = null
+    }
   }
 }

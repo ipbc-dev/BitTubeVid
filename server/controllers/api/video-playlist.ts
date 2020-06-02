@@ -1,5 +1,5 @@
 import * as express from 'express'
-import { getFormattedObjects, getServerActor } from '../../helpers/utils'
+import { getFormattedObjects } from '../../helpers/utils'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -41,6 +41,7 @@ import { CONFIG } from '../../initializers/config'
 import { sequelizeTypescript } from '../../initializers/database'
 import { createPlaylistMiniatureFromExisting } from '../../lib/thumbnail'
 import { MVideoPlaylistFull, MVideoPlaylistThumbnail, MVideoThumbnail } from '@server/typings/models'
+import { getServerActor } from '@server/models/application/application'
 
 const reqThumbnailFile = createReqFiles([ 'thumbnailfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { thumbnailfile: CONFIG.STORAGE.TMP_DIR })
 
@@ -144,7 +145,6 @@ function getVideoPlaylist (req: express.Request, res: express.Response) {
 
   if (videoPlaylist.isOutdated()) {
     JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video-playlist', url: videoPlaylist.url } })
-            .catch(err => logger.error('Cannot create AP refresher job for playlist %s.', videoPlaylist.url, { err }))
   }
 
   return res.json(videoPlaylist.toFormattedJSON())
@@ -464,7 +464,13 @@ async function regeneratePlaylistThumbnail (videoPlaylist: MVideoPlaylistThumbna
 async function generateThumbnailForPlaylist (videoPlaylist: MVideoPlaylistThumbnail, video: MVideoThumbnail) {
   logger.info('Generating default thumbnail to playlist %s.', videoPlaylist.url)
 
-  const inputPath = join(CONFIG.STORAGE.THUMBNAILS_DIR, video.getMiniature().filename)
+  const videoMiniature = video.getMiniature()
+  if (!videoMiniature) {
+    logger.info('Cannot generate thumbnail for playlist %s because video %s does not have any.', videoPlaylist.url, video.url)
+    return
+  }
+
+  const inputPath = join(CONFIG.STORAGE.THUMBNAILS_DIR, videoMiniature.filename)
   const thumbnailModel = await createPlaylistMiniatureFromExisting(inputPath, videoPlaylist, true, true)
 
   thumbnailModel.videoPlaylistId = videoPlaylist.id

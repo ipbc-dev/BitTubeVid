@@ -6,9 +6,9 @@ import { AccountBlocklistModel } from '../../models/account/account-blocklist'
 import { isHostValid } from '../../helpers/custom-validators/servers'
 import { ServerBlocklistModel } from '../../models/server/server-blocklist'
 import { ServerModel } from '../../models/server/server'
-import { getServerActor } from '../../helpers/utils'
 import { WEBSERVER } from '../../initializers/constants'
 import { doesAccountNameWithHostExist } from '../../helpers/middlewares'
+import { getServerActor } from '@server/models/application/application'
 
 const blockAccountValidator = [
   body('accountName').exists().withMessage('Should have an account name with host'),
@@ -84,12 +84,7 @@ const blockServerValidator = [
         .end()
     }
 
-    const server = await ServerModel.loadByHost(host)
-    if (!server) {
-      return res.status(404)
-                .send({ error: 'Server host not found.' })
-                .end()
-    }
+    const server = await ServerModel.loadOrCreateByHost(host)
 
     res.locals.server = server
 

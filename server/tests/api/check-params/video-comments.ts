@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import * as chai from 'chai'
 import 'mocha'
@@ -29,6 +29,7 @@ describe('Test video comments API validator', function () {
   let server: ServerInfo
   let videoUUID: string
   let userAccessToken: string
+  let userAccessToken2: string
   let commentId: number
 
   // ---------------------------------------------------------------
@@ -53,12 +54,15 @@ describe('Test video comments API validator', function () {
     }
 
     {
-      const user = {
-        username: 'user1',
-        password: 'my super password'
-      }
+      const user = { username: 'user1', password: 'my super password' }
       await createUser({ url: server.url, accessToken: server.accessToken, username: user.username, password: user.password })
       userAccessToken = await userLogin(server, user)
+    }
+
+    {
+      const user = { username: 'user2', password: 'my super password' }
+      await createUser({ url: server.url, accessToken: server.accessToken, username: user.username, password: user.password })
+      userAccessToken2 = await userLogin(server, user)
     }
   })
 
@@ -133,7 +137,7 @@ describe('Test video comments API validator', function () {
 
     it('Should fail with a long comment', async function () {
       const fields = {
-        text: 'h'.repeat(3001)
+        text: 'h'.repeat(10001)
       }
       await makePostBodyRequest({ url: server.url, path: pathThread, token: server.accessToken, fields })
     })
@@ -176,7 +180,7 @@ describe('Test video comments API validator', function () {
 
     it('Should fail with a long comment', async function () {
       const fields = {
-        text: 'h'.repeat(3001)
+        text: 'h'.repeat(10001)
       }
       await makePostBodyRequest({ url: server.url, path: pathComment, token: server.accessToken, fields })
     })
@@ -222,6 +226,40 @@ describe('Test video comments API validator', function () {
     it('Should fail with an incorrect comment', async function () {
       const path = '/api/v1/videos/' + videoUUID + '/comments/124'
       await makeDeleteRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: 404 })
+    })
+
+    it('Should succeed with the same user', async function () {
+      let commentToDelete: number
+
+      {
+        const res = await addVideoCommentThread(server.url, userAccessToken, videoUUID, 'hello')
+        commentToDelete = res.body.comment.id
+      }
+
+      const path = '/api/v1/videos/' + videoUUID + '/comments/' + commentToDelete
+
+      await makeDeleteRequest({ url: server.url, path, token: userAccessToken2, statusCodeExpected: 403 })
+      await makeDeleteRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 204 })
+    })
+
+    it('Should succeed with the owner of the video', async function () {
+      let commentToDelete: number
+      let anotherVideoUUID: string
+
+      {
+        const res = await uploadVideo(server.url, userAccessToken, { name: 'video' })
+        anotherVideoUUID = res.body.video.uuid
+      }
+
+      {
+        const res = await addVideoCommentThread(server.url, server.accessToken, anotherVideoUUID, 'hello')
+        commentToDelete = res.body.comment.id
+      }
+
+      const path = '/api/v1/videos/' + anotherVideoUUID + '/comments/' + commentToDelete
+
+      await makeDeleteRequest({ url: server.url, path, token: userAccessToken2, statusCodeExpected: 403 })
+      await makeDeleteRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 204 })
     })
 
     it('Should succeed with the correct parameters', async function () {

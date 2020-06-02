@@ -5,7 +5,7 @@ import { TableModule } from 'primeng/table'
 import { SharedModule } from '../shared'
 import { AdminRoutingModule } from './admin-routing.module'
 import { AdminComponent } from './admin.component'
-import { FollowersListComponent, FollowingAddComponent, FollowsComponent, VideoRedundanciesListComponent } from './follows'
+import { FollowersListComponent, FollowsComponent, VideoRedundanciesListComponent } from './follows'
 import { FollowingListComponent } from './follows/following-list/following-list.component'
 import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersComponent, UserUpdateComponent } from './users'
 import {
@@ -28,6 +28,8 @@ import { SelectButtonModule } from 'primeng/selectbutton'
 import { PluginApiService } from '@app/+admin/plugins/shared/plugin-api.service'
 import { VideoRedundancyInformationComponent } from '@app/+admin/follows/video-redundancies-list/video-redundancy-information.component'
 import { ChartModule } from 'primeng/chart'
+import { BatchDomainsModalComponent } from './config/shared/batch-domains-modal.component'
+import { VideoAbuseDetailsComponent } from './moderation/video-abuse-list/video-abuse-details.component'
 
 @NgModule({
   imports: [
@@ -44,7 +46,6 @@ import { ChartModule } from 'primeng/chart'
     AdminComponent,
 
     FollowsComponent,
-    FollowingAddComponent,
     FollowersListComponent,
     FollowingListComponent,
     RedundancyCheckboxComponent,
@@ -60,6 +61,7 @@ import { ChartModule } from 'primeng/chart'
     ModerationComponent,
     VideoBlacklistListComponent,
     VideoAbuseListComponent,
+    VideoAbuseDetailsComponent,
     VideoAutoBlacklistListComponent,
     ModerationCommentModalComponent,
     InstanceServerBlocklistComponent,
@@ -76,7 +78,9 @@ import { ChartModule } from 'primeng/chart'
     DebugComponent,
 
     ConfigComponent,
-    EditCustomConfigComponent
+    EditCustomConfigComponent,
+
+    BatchDomainsModalComponent
   ],
 
   exports: [

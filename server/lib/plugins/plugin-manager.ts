@@ -9,23 +9,20 @@ import {
   PluginTranslationPaths as PackagePluginTranslations
 } from '../../../shared/models/plugins/plugin-package-json.model'
 import { createReadStream, createWriteStream } from 'fs'
-import { PLUGIN_GLOBAL_CSS_PATH, VIDEO_CATEGORIES, VIDEO_LANGUAGES, VIDEO_LICENCES } from '../../initializers/constants'
+import { PLUGIN_GLOBAL_CSS_PATH } from '../../initializers/constants'
 import { PluginType } from '../../../shared/models/plugins/plugin.type'
 import { installNpmPlugin, installNpmPluginFromDisk, removeNpmPlugin } from './yarn'
 import { outputFile, readJSON } from 'fs-extra'
-import { PluginSettingsManager } from '../../../shared/models/plugins/plugin-settings-manager.model'
-import { PluginStorageManager } from '../../../shared/models/plugins/plugin-storage-manager.model'
-import { ServerHook, ServerHookName, serverHookObject } from '../../../shared/models/plugins/server-hook.model'
+import { ServerHook, ServerHookName } from '../../../shared/models/plugins/server-hook.model'
 import { getHookType, internalRunHook } from '../../../shared/core-utils/plugins/hooks'
 import { RegisterServerOptions } from '../../typings/plugins/register-server-option.model'
 import { PluginLibrary } from '../../typings/plugins'
 import { ClientHtml } from '../client-html'
-import { RegisterServerHookOptions } from '../../../shared/models/plugins/register-server-hook.model'
-import { RegisterServerSettingOptions } from '../../../shared/models/plugins/register-server-setting.model'
-import { PluginVideoLanguageManager } from '../../../shared/models/plugins/plugin-video-language-manager.model'
-import { PluginVideoCategoryManager } from '../../../shared/models/plugins/plugin-video-category-manager.model'
-import { PluginVideoLicenceManager } from '../../../shared/models/plugins/plugin-video-licence-manager.model'
 import { PluginTranslation } from '../../../shared/models/plugins/plugin-translation.model'
+import { RegisterHelpersStore } from './register-helpers-store'
+import { RegisterServerHookOptions } from '@shared/models/plugins/register-server-hook.model'
+import { MOAuthTokenUser, MUser } from '@server/typings/models'
+import { RegisterServerAuthPassOptions, RegisterServerAuthExternalOptions } from '@shared/models/plugins/register-server-auth.model'
 
 export interface RegisteredPlugin {
   npmName: string
@@ -44,6 +41,7 @@ export interface RegisteredPlugin {
   css: string[]
 
   // Only if this is a plugin
+  registerHelpersStore?: RegisterHelpersStore
   unregister?: Function
 }
 
@@ -54,35 +52,18 @@ export interface HookInformationValue {
   priority: number
 }
 
-type AlterableVideoConstant = 'language' | 'licence' | 'category'
-type VideoConstant = { [ key in number | string ]: string }
-type UpdatedVideoConstant = {
-  [ name in AlterableVideoConstant ]: {
-    [ npmName: string ]: {
-      added: { key: number | string, label: string }[],
-      deleted: { key: number | string, label: string }[]
-    }
-  }
-}
-
 type PluginLocalesTranslations = {
-  [ locale: string ]: PluginTranslation
+  [locale: string]: PluginTranslation
 }
 
 export class PluginManager implements ServerHook {
 
   private static instance: PluginManager
 
-  private registeredPlugins: { [ name: string ]: RegisteredPlugin } = {}
-  private settings: { [ name: string ]: RegisterServerSettingOptions[] } = {}
-  private hooks: { [ name: string ]: HookInformationValue[] } = {}
-  private translations: PluginLocalesTranslations = {}
+  private registeredPlugins: { [name: string]: RegisteredPlugin } = {}
 
-  private updatedVideoConstants: UpdatedVideoConstant = {
-    language: {},
-    licence: {},
-    category: {}
-  }
+  private hooks: { [name: string]: HookInformationValue[] } = {}
+  private translations: PluginLocalesTranslations = {}
 
   private constructor () {
   }
@@ -97,7 +78,7 @@ export class PluginManager implements ServerHook {
     return this.registeredPlugins[npmName]
   }
 
-  getRegisteredPlugin (name: string) {
+  getRegisteredPluginByShortName (name: string) {
     const npmName = PluginModel.buildNpmName(name, PluginType.PLUGIN)
     const registered = this.getRegisteredPluginOrTheme(npmName)
 
@@ -106,7 +87,7 @@ export class PluginManager implements ServerHook {
     return registered
   }
 
-  getRegisteredTheme (name: string) {
+  getRegisteredThemeByShortName (name: string) {
     const npmName = PluginModel.buildNpmName(name, PluginType.THEME)
     const registered = this.getRegisteredPluginOrTheme(npmName)
 
@@ -123,17 +104,102 @@ export class PluginManager implements ServerHook {
     return this.getRegisteredPluginsOrThemes(PluginType.THEME)
   }
 
+  getIdAndPassAuths () {
+    return this.getRegisteredPlugins()
+      .map(p => ({
+        npmName: p.npmName,
+        name: p.name,
+        version: p.version,
+        idAndPassAuths: p.registerHelpersStore.getIdAndPassAuths()
+      }))
+      .filter(v => v.idAndPassAuths.length !== 0)
+  }
+
+  getExternalAuths () {
+    return this.getRegisteredPlugins()
+      .map(p => ({
+        npmName: p.npmName,
+        name: p.name,
+        version: p.version,
+        externalAuths: p.registerHelpersStore.getExternalAuths()
+      }))
+      .filter(v => v.externalAuths.length !== 0)
+  }
+
   getRegisteredSettings (npmName: string) {
-    return this.settings[npmName] || []
+    const result = this.getRegisteredPluginOrTheme(npmName)
+    if (!result || result.type !== PluginType.PLUGIN) return []
+
+    return result.registerHelpersStore.getSettings()
+  }
+
+  getRouter (npmName: string) {
+    const result = this.getRegisteredPluginOrTheme(npmName)
+    if (!result || result.type !== PluginType.PLUGIN) return null
+
+    return result.registerHelpersStore.getRouter()
   }
 
   getTranslations (locale: string) {
     return this.translations[locale] || {}
   }
 
+  async isTokenValid (token: MOAuthTokenUser, type: 'access' | 'refresh') {
+    const auth = this.getAuth(token.User.pluginAuth, token.authName)
+    if (!auth) return true
+
+    if (auth.hookTokenValidity) {
+      try {
+        const { valid } = await auth.hookTokenValidity({ token, type })
+
+        if (valid === false) {
+          logger.info('Rejecting %s token validity from auth %s of plugin %s', type, token.authName, token.User.pluginAuth)
+        }
+
+        return valid
+      } catch (err) {
+        logger.warn('Cannot run check token validity from auth %s of plugin %s.', token.authName, token.User.pluginAuth, { err })
+        return true
+      }
+    }
+
+    return true
+  }
+
+  // ###################### External events ######################
+
+  onLogout (npmName: string, authName: string, user: MUser) {
+    const auth = this.getAuth(npmName, authName)
+
+    if (auth?.onLogout) {
+      logger.info('Running onLogout function from auth %s of plugin %s', authName, npmName)
+
+      try {
+        auth.onLogout(user)
+      } catch (err) {
+        logger.warn('Cannot run onLogout function from auth %s of plugin %s.', authName, npmName, { err })
+      }
+    }
+  }
+
+  onSettingsChanged (name: string, settings: any) {
+    const registered = this.getRegisteredPluginByShortName(name)
+    if (!registered) {
+      logger.error('Cannot find plugin %s to call on settings changed.', name)
+    }
+
+    for (const cb of registered.registerHelpersStore.getOnSettingsChangedCallbacks()) {
+      try {
+        cb(settings)
+      } catch (err) {
+        logger.error('Cannot run on settings changed callback for %s.', registered.npmName, { err })
+      }
+    }
+  }
+
   // ###################### Hooks ######################
 
-  async runHook <T> (hookName: ServerHookName, result?: T, params?: any): Promise<T> {
+  async runHook<T> (hookName: ServerHookName, result?: T, params?: any): Promise<T> {
     if (!this.hooks[hookName]) return Promise.resolve(result)
 
     const hookType = getHookType(hookName)
@@ -185,7 +251,6 @@ export class PluginManager implements ServerHook {
     }
 
     delete this.registeredPlugins[plugin.npmName]
-    delete this.settings[plugin.npmName]
 
     this.deleteTranslations(plugin.npmName)
 
@@ -197,7 +262,8 @@ export class PluginManager implements ServerHook {
         this.hooks[key] = this.hooks[key].filter(h => h.npmName !== npmName)
       }
 
-      this.reinitVideoConstants(plugin.npmName)
+      const store = plugin.registerHelpersStore
+      store.reinitVideoConstants(plugin.npmName)
 
       logger.info('Regenerating registered plugin CSS to global file.')
       await this.regeneratePluginGlobalCSS()
@@ -303,8 +369,11 @@ export class PluginManager implements ServerHook {
     this.sanitizeAndCheckPackageJSONOrThrow(packageJSON, plugin.type)
 
     let library: PluginLibrary
+    let registerHelpersStore: RegisterHelpersStore
     if (plugin.type === PluginType.PLUGIN) {
-      library = await this.registerPlugin(plugin, pluginPath, packageJSON)
+      const result = await this.registerPlugin(plugin, pluginPath, packageJSON)
+      library = result.library
+      registerHelpersStore = result.registerStore
     }
 
     const clientScripts: { [id: string]: ClientScript } = {}
@@ -312,7 +381,7 @@ export class PluginManager implements ServerHook {
       clientScripts[c.script] = c
     }
 
-    this.registeredPlugins[ npmName ] = {
+    this.registeredPlugins[npmName] = {
       npmName,
       name: plugin.name,
       type: plugin.type,
@@ -323,6 +392,7 @@ export class PluginManager implements ServerHook {
       staticDirs: packageJSON.staticDirs,
       clientScripts,
       css: packageJSON.css,
+      registerHelpersStore: registerHelpersStore || undefined,
       unregister: library ? library.unregister : undefined
     }
 
@@ -341,15 +411,15 @@ export class PluginManager implements ServerHook {
       throw new Error('Library code is not valid (miss register or unregister function)')
     }
 
-    const registerHelpers = this.getRegisterHelpers(npmName, plugin)
-    library.register(registerHelpers)
+    const { registerOptions, registerStore } = this.getRegisterHelpers(npmName, plugin)
+    library.register(registerOptions)
            .catch(err => logger.error('Cannot register plugin %s.', npmName, { err }))
 
     logger.info('Add plugin %s CSS to global file.', npmName)
 
     await this.addCSSToGlobalFile(pluginPath, packageJSON.css)
 
-    return library
+    return { library, registerStore }
   }
 
   // ###################### Translations ######################
@@ -432,13 +502,23 @@ export class PluginManager implements ServerHook {
     return join(CONFIG.STORAGE.PLUGINS_DIR, 'node_modules', npmName)
   }
 
+  private getAuth (npmName: string, authName: string) {
+    const plugin = this.getRegisteredPluginOrTheme(npmName)
+    if (!plugin || plugin.type !== PluginType.PLUGIN) return null
+
+    let auths: (RegisterServerAuthPassOptions | RegisterServerAuthExternalOptions)[] = plugin.registerHelpersStore.getIdAndPassAuths()
+    auths = auths.concat(plugin.registerHelpersStore.getExternalAuths())
+
+    return auths.find(a => a.authName === authName)
+  }
+
   // ###################### Private getters ######################
 
   private getRegisteredPluginsOrThemes (type: PluginType) {
     const plugins: RegisteredPlugin[] = []
 
     for (const npmName of Object.keys(this.registeredPlugins)) {
-      const plugin = this.registeredPlugins[ npmName ]
+      const plugin = this.registeredPlugins[npmName]
       if (plugin.type !== type) continue
 
       plugins.push(plugin)
@@ -449,149 +529,26 @@ export class PluginManager implements ServerHook {
 
   // ###################### Generate register helpers ######################
 
-  private getRegisterHelpers (npmName: string, plugin: PluginModel): RegisterServerOptions {
-    const registerHook = (options: RegisterServerHookOptions) => {
-      if (serverHookObject[options.target] !== true) {
-        logger.warn('Unknown hook %s of plugin %s. Skipping.', options.target, npmName)
-        return
-      }
-
+  private getRegisterHelpers (
+    npmName: string,
+    plugin: PluginModel
+  ): { registerStore: RegisterHelpersStore, registerOptions: RegisterServerOptions } {
+    const onHookAdded = (options: RegisterServerHookOptions) => {
       if (!this.hooks[options.target]) this.hooks[options.target] = []
 
       this.hooks[options.target].push({
-        npmName,
+        npmName: npmName,
         pluginName: plugin.name,
         handler: options.handler,
         priority: options.priority || 0
       })
     }
 
-    const registerSetting = (options: RegisterServerSettingOptions) => {
-      if (!this.settings[npmName]) this.settings[npmName] = []
-
-      this.settings[npmName].push(options)
-    }
-
-    const settingsManager: PluginSettingsManager = {
-      getSetting: (name: string) => PluginModel.getSetting(plugin.name, plugin.type, name),
-
-      setSetting: (name: string, value: string) => PluginModel.setSetting(plugin.name, plugin.type, name, value)
-    }
-
-    const storageManager: PluginStorageManager = {
-      getData: (key: string) => PluginModel.getData(plugin.name, plugin.type, key),
-
-      storeData: (key: string, data: any) => PluginModel.storeData(plugin.name, plugin.type, key, data)
-    }
-
-    const videoLanguageManager: PluginVideoLanguageManager = {
-      addLanguage: (key: string, label: string) => this.addConstant({ npmName, type: 'language', obj: VIDEO_LANGUAGES, key, label }),
-
-      deleteLanguage: (key: string) => this.deleteConstant({ npmName, type: 'language', obj: VIDEO_LANGUAGES, key })
-    }
-
-    const videoCategoryManager: PluginVideoCategoryManager = {
-      addCategory: (key: number, label: string) => this.addConstant({ npmName, type: 'category', obj: VIDEO_CATEGORIES, key, label }),
-
-      deleteCategory: (key: number) => this.deleteConstant({ npmName, type: 'category', obj: VIDEO_CATEGORIES, key })
-    }
-
-    const videoLicenceManager: PluginVideoLicenceManager = {
-      addLicence: (key: number, label: string) => this.addConstant({ npmName, type: 'licence', obj: VIDEO_LICENCES, key, label }),
-
-      deleteLicence: (key: number) => this.deleteConstant({ npmName, type: 'licence', obj: VIDEO_LICENCES, key })
-    }
-
-    const peertubeHelpers = {
-      logger
-    }
+    const registerHelpersStore = new RegisterHelpersStore(npmName, plugin, onHookAdded.bind(this))
 
     return {
-      registerHook,
-      registerSetting,
-      settingsManager,
-      storageManager,
-      videoLanguageManager,
-      videoCategoryManager,
-      videoLicenceManager,
-      peertubeHelpers
-    }
-  }
-
-  private addConstant <T extends string | number> (parameters: {
-    npmName: string,
-    type: AlterableVideoConstant,
-    obj: VideoConstant,
-    key: T,
-    label: string
-  }) {
-    const { npmName, type, obj, key, label } = parameters
-
-    if (obj[key]) {
-      logger.warn('Cannot add %s %s by plugin %s: key already exists.', type, npmName, key)
-      return false
-    }
-
-    if (!this.updatedVideoConstants[type][npmName]) {
-      this.updatedVideoConstants[type][npmName] = {
-        added: [],
-        deleted: []
-      }
-    }
-
-    this.updatedVideoConstants[type][npmName].added.push({ key, label })
-    obj[key] = label
-
-    return true
-  }
-
-  private deleteConstant <T extends string | number> (parameters: {
-    npmName: string,
-    type: AlterableVideoConstant,
-    obj: VideoConstant,
-    key: T
-  }) {
-    const { npmName, type, obj, key } = parameters
-
-    if (!obj[key]) {
-      logger.warn('Cannot delete %s %s by plugin %s: key does not exist.', type, npmName, key)
-      return false
-    }
-
-    if (!this.updatedVideoConstants[type][npmName]) {
-      this.updatedVideoConstants[type][npmName] = {
-        added: [],
-        deleted: []
-      }
-    }
-
-    this.updatedVideoConstants[type][npmName].deleted.push({ key, label: obj[key] })
-    delete obj[key]
-
-    return true
-  }
-
-  private reinitVideoConstants (npmName: string) {
-    const hash = {
-      language: VIDEO_LANGUAGES,
-      licence: VIDEO_LICENCES,
-      category: VIDEO_CATEGORIES
-    }
-    const types: AlterableVideoConstant[] = [ 'language', 'licence', 'category' ]
-
-    for (const type of types) {
-      const updatedConstants = this.updatedVideoConstants[type][npmName]
-      if (!updatedConstants) continue
-
-      for (const added of updatedConstants.added) {
-        delete hash[type][added.key]
-      }
-
-      for (const deleted of updatedConstants.deleted) {
-        hash[type][deleted.key] = deleted.label
-      }
-
-      delete this.updatedVideoConstants[type][npmName]
+      registerStore: registerHelpersStore,
+      registerOptions: registerHelpersStore.buildRegisterHelpers()
     }
   }
 
@@ -604,7 +561,7 @@ export class PluginManager implements ServerHook {
     const { result: packageJSONValid, badFields } = isPackageJSONValid(packageJSON, pluginType)
     if (!packageJSONValid) {
       const formattedFields = badFields.map(f => `"${f}"`)
-                              .join(', ')
+                                       .join(', ')
 
       throw new Error(`PackageJSON is invalid (invalid fields: ${formattedFields}).`)
     }

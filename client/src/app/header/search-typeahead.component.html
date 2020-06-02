@@ -1,0 +1,53 @@
+<div class="d-inline-flex position-relative" id="typeahead-container">
+  <input
+    type="text" id="search-video" name="search-video" #searchVideo i18n-placeholder placeholder="Search videos, channels…"
+    [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keyup)="handleKey($event)" (keydown.enter)="doSearch()"
+  >
+  <span class="icon icon-search" (click)="doSearch()"></span>
+
+  <div class="position-absolute jump-to-suggestions">
+    <!-- suggestions -->
+    <my-suggestions *ngIf="search && newSearch" [results]="results" [highlight]="search" (init)="initKeyboardEventsManager($event)"></my-suggestions>
+
+    <!-- suggestion help, not shown until one of the suggestions is selected and specific to that suggestion -->
+    <div *ngIf="showHelp" id="typeahead-help" class="overflow-hidden">
+      <ng-container *ngIf="activeResult.type === 'search-global'">
+        <div class="d-flex justify-content-between">
+          <label class="small-title" i18n>GLOBAL SEARCH</label>
+          <div class="advanced-search-status text-muted">
+            <span *ngIf="serverConfig" class="mr-1" i18n>using {{ serverConfig.followings.instance.autoFollowIndex.indexUrl }}</span>
+            <i class="glyphicon glyphicon-globe"></i>
+          </div>
+        </div>
+        <div class="text-muted" i18n>Results will be augmented with those of a third-party index. Only data necessary to make the query will be sent.</div>
+      </ng-container>
+    </div>
+
+    <!-- search instructions, when search input is empty -->
+    <div *ngIf="areInstructionsDisplayed" id="typeahead-instructions" class="overflow-hidden">
+      <div class="d-flex justify-content-between">
+        <label class="small-title" i18n>ADVANCED SEARCH</label>
+        <div class="advanced-search-status c-help">
+          <span [ngClass]="canSearchAnyURI ? 'text-success' : 'text-muted'" i18n-title title="Determines whether you can resolve any distant content, or if this instance only allows doing so for instances it follows.">
+            <span *ngIf="canSearchAnyURI" class="mr-1" i18n>any instance</span>
+            <span *ngIf="!canSearchAnyURI" class="mr-1" i18n>only followed instances</span>
+            <i [ngClass]="canSearchAnyURI ? 'glyphicon glyphicon-ok-sign' : 'glyphicon glyphicon-exclamation-sign'"></i>
+          </span>
+        </div>
+      </div>
+      <ul>
+        <li>
+          <em>@channel_id@domain</em> <span class="flex-auto text-muted" i18n>channel</span>
+        </li>
+        <li>
+          <em>URL</em> <span class="text-muted" i18n>channel</span>
+        </li>
+        <li>
+          <em>UUID</em> <span class="text-muted" i18n>video</span>
+        </li>
+      </ul>
+      <span class="text-muted" i18n>Any other text will return matching video or channel names.</span>
+    </div>
+  </div>
+
+</div>

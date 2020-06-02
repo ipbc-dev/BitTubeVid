@@ -4,7 +4,7 @@ registerTSPaths()
 import * as program from 'commander'
 import { resolve } from 'path'
 import { VideoModel } from '../server/models/video/video'
-import { initDatabaseModels } from '../server/initializers'
+import { initDatabaseModels } from '../server/initializers/database'
 import { JobQueue } from '../server/lib/job-queue'
 
 program
@@ -38,6 +38,6 @@ async function run () {
   }
 
   await JobQueue.Instance.init()
-  await JobQueue.Instance.createJob({ type: 'video-file-import', payload: dataInput })
+  await JobQueue.Instance.createJobWithPromise({ type: 'video-file-import', payload: dataInput })
   console.log('Import job for video %s created.', video.uuid)
 }

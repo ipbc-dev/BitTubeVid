@@ -13,8 +13,8 @@ import { WEBSERVER } from '@server/initializers/constants'
 import * as parseTorrent from 'parse-torrent'
 import * as magnetUtil from 'magnet-uri'
 import { isArray } from '@server/helpers/custom-validators/misc'
-import { extractVideo } from '@server/lib/videos'
 import { getTorrentFileName, getVideoFilePath } from '@server/lib/video-paths'
+import { extractVideo } from '@server/helpers/video'
 
 const createTorrentPromise = promisify2<string, any, any>(createTorrent)
 
@@ -39,7 +39,7 @@ async function downloadWebTorrentVideo (target: { magnetUri: string, torrentName
       if (torrent.files.length !== 1) {
         if (timer) clearTimeout(timer)
 
-        for (let file of torrent.files) {
+        for (const file of torrent.files) {
           deleteDownloadedFile({ directoryPath, filepath: file.path })
         }
 
@@ -47,15 +47,16 @@ async function downloadWebTorrentVideo (target: { magnetUri: string, torrentName
           .then(() => rej(new Error('Cannot import torrent ' + torrentId + ': there are multiple files in it')))
       }
 
-      file = torrent.files[ 0 ]
+      file = torrent.files[0]
 
       // FIXME: avoid creating another stream when https://github.com/webtorrent/webtorrent/issues/1517 is fixed
       const writeStream = createWriteStream(path)
       writeStream.on('finish', () => {
         if (timer) clearTimeout(timer)
 
-        return safeWebtorrentDestroy(webtorrent, torrentId, { directoryPath, filepath: file.path }, target.torrentName)
+        safeWebtorrentDestroy(webtorrent, torrentId, { directoryPath, filepath: file.path }, target.torrentName)
           .then(() => res(path))
+          .catch(err => logger.error('Cannot destroy webtorrent.', { err }))
       })
 
       file.createReadStream().pipe(writeStream)
@@ -63,9 +64,16 @@ async function downloadWebTorrentVideo (target: { magnetUri: string, torrentName
 
     torrent.on('error', err => rej(err))
 
-    timer = setTimeout(async () => {
-      return safeWebtorrentDestroy(webtorrent, torrentId, file ? { directoryPath, filepath: file.path } : undefined, target.torrentName)
-        .then(() => rej(new Error('Webtorrent download timeout.')))
+    timer = setTimeout(() => {
+      const err = new Error('Webtorrent download timeout.')
+
+      safeWebtorrentDestroy(webtorrent, torrentId, file ? { directoryPath, filepath: file.path } : undefined, target.torrentName)
+        .then(() => rej(err))
+        .catch(destroyErr => {
+          logger.error('Cannot destroy webtorrent.', { err: destroyErr })
+          rej(err)
+        })
+
     }, timeout)
   })
 }

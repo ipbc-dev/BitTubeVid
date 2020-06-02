@@ -45,7 +45,6 @@ export class ConfirmComponent implements OnInit {
     )
   }
 
-  @HostListener('document:keydown.enter')
   confirm () {
     if (this.openedModal) this.openedModal.close()
   }
@@ -60,7 +59,7 @@ export class ConfirmComponent implements OnInit {
   showModal () {
     this.inputValue = ''
 
-    this.openedModal = this.modalService.open(this.confirmModal)
+    this.openedModal = this.modalService.open(this.confirmModal, { centered: true })
 
     this.openedModal.result
         .then(() => this.confirmService.confirmResponse.next(true))

@@ -8,9 +8,7 @@ import { getUpdateActivityPubUrl } from '../url'
 import { broadcastToFollowers, sendVideoRelatedActivity } from './utils'
 import { audiencify, getActorsInvolvedInVideo, getAudience } from '../audience'
 import { logger } from '../../../helpers/logger'
-import { VideoCaptionModel } from '../../../models/video/video-caption'
 import { VideoPlaylistPrivacy } from '../../../../shared/models/videos/playlist/video-playlist-privacy.model'
-import { getServerActor } from '../../../helpers/utils'
 import {
   MAccountDefault,
   MActor,
@@ -21,6 +19,7 @@ import {
   MVideoPlaylistFull,
   MVideoRedundancyVideo
 } from '../../../typings/models'
+import { getServerActor } from '@server/models/application/application'
 
 async function sendUpdateVideo (videoArg: MVideoAPWithoutCaption, t: Transaction, overrodeByActor?: MActor) {
   const video = videoArg as MVideoAP
@@ -29,7 +28,7 @@ async function sendUpdateVideo (videoArg: MVideoAPWithoutCaption, t: Transaction
 
   logger.info('Creating job to update video %s.', video.url)
 
-  const byActor = overrodeByActor ? overrodeByActor : video.VideoChannel.Account.Actor
+  const byActor = overrodeByActor || video.VideoChannel.Account.Actor
 
   const url = getUpdateActivityPubUrl(video.url, video.updatedAt.toISOString())
 
@@ -85,7 +84,7 @@ async function sendUpdateCacheFile (byActor: MActorLight, redundancyModel: MVide
     return buildUpdateActivity(url, byActor, redundancyObject, audience)
   }
 
-  return sendVideoRelatedActivity(activityBuilder, { byActor, video })
+  return sendVideoRelatedActivity(activityBuilder, { byActor, video, contextType: 'CacheFile' })
 }
 
 async function sendUpdateVideoPlaylist (videoPlaylist: MVideoPlaylistFull, t: Transaction) {

@@ -7,11 +7,107 @@
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
+      "i18n": {
+        "sourceLocale": {
+          "code": "en",
+          "baseHref": "/client/en-US/"
+        },
+        "locales": {
+          "hu": {
+            "translation": "src/locale/angular.hu-HU.xlf",
+            "baseHref": "/client/hu-HU/"
+          },
+          "th": {
+            "translation": "src/locale/angular.th-TH.xlf",
+            "baseHref": "/client/th-TH/"
+          },
+          "fi": {
+            "translation": "src/locale/angular.fi-FI.xlf",
+            "baseHref": "/client/fi-FI/"
+          },
+          "nl": {
+            "translation": "src/locale/angular.nl-NL.xlf",
+            "baseHref": "/client/nl-NL/"
+          },
+          "gd": {
+            "translation": "src/locale/angular.gd.xlf",
+            "baseHref": "/client/gd/"
+          },
+          "el": {
+            "translation": "src/locale/angular.el-GR.xlf",
+            "baseHref": "/client/el-GR/"
+          },
+          "es": {
+            "translation": "src/locale/angular.es-ES.xlf",
+            "baseHref": "/client/es-ES/"
+          },
+          "pt": {
+            "translation": "src/locale/angular.pt-BR.xlf",
+            "baseHref": "/client/pt-BR/"
+          },
+          "pt-PT": {
+            "translation": "src/locale/angular.pt-PT.xlf",
+            "baseHref": "/client/pt-PT/"
+          },
+          "sv": {
+            "translation": "src/locale/angular.sv-SE.xlf",
+            "baseHref": "/client/sv-SE/"
+          },
+          "pl": {
+            "translation": "src/locale/angular.pl-PL.xlf",
+            "baseHref": "/client/pl-PL/"
+          },
+          "ru": {
+            "translation": "src/locale/angular.ru-RU.xlf",
+            "baseHref": "/client/ru-RU/"
+          },
+          "zh-Hans": {
+            "translation": "src/locale/angular.zh-Hans-CN.xlf",
+            "baseHref": "/client/zh-Hans-CN/"
+          },
+          "zh-Hant": {
+            "translation": "src/locale/angular.zh-Hant-TW.xlf",
+            "baseHref": "/client/zh-Hant-TW/"
+          },
+          "fr": {
+            "translation": "src/locale/angular.fr-FR.xlf",
+            "baseHref": "/client/fr-FR/"
+          },
+          "ja": {
+            "translation": "src/locale/angular.ja-JP.xlf",
+            "baseHref": "/client/ja-JP/"
+          },
+          "eu": {
+            "translation": "src/locale/angular.eu-ES.xlf",
+            "baseHref": "/client/eu-ES/"
+          },
+          "ca": {
+            "translation": "src/locale/angular.ca-ES.xlf",
+            "baseHref": "/client/ca-ES/"
+          },
+          "cs": {
+            "translation": "src/locale/angular.cs-CZ.xlf",
+            "baseHref": "/client/cs-CZ/"
+          },
+          "eo": {
+            "translation": "src/locale/angular.eo.xlf",
+            "baseHref": "/client/eo/"
+          },
+          "de": {
+            "translation": "src/locale/angular.de-DE.xlf",
+            "baseHref": "/client/de-DE/"
+          },
+          "it": {
+            "translation": "src/locale/angular.it-IT.xlf",
+            "baseHref": "/client/it-IT/"
+          }
+        }
+      },
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "deployUrl": "client/",
+            "aot": true,
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -53,7 +149,7 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "6kb",
-                  "maximumError": "10kb"
+                  "maximumError": "50kb"
                 }
               ],
               "fileReplacements": [
@@ -64,6 +160,12 @@
               ]
             },
             "hmr": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -72,6 +174,12 @@
               ]
             },
             "e2e": {
+              "budgets": [
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -79,12 +187,71 @@
                 }
               ]
             },
-            "fr_FR": {
-              "aot": true,
-              "outputPath": "dist/PeerTube-fr_FR",
-              "i18nFile": "src/i18n/messages.fr_FR.xlf",
-              "i18nFormat": "xlf",
-              "i18nLocale": "fr_FR"
+            "hu-HU": {
+              "localize": [ "hu" ]
+            },
+            "th-TH": {
+              "localize":  [ "th" ]
+            },
+            "fi-FI": {
+              "localize":  [ "fi" ]
+            },
+            "nl-NL": {
+              "localize":  [ "nl" ]
+            },
+            "gd": {
+              "localize":  [ "gd" ]
+            },
+            "el-GR": {
+              "localize":  [ "el" ]
+            },
+            "es-ES": {
+              "localize":  [ "es" ]
+            },
+            "pt-BR": {
+              "localize":  [ "pt" ]
+            },
+            "pt-PT": {
+              "localize":  [ "pt-PT" ]
+            },
+            "sv-SE": {
+              "localize":  [ "sv" ]
+            },
+            "pl-PL": {
+              "localize":  [ "pl" ]
+            },
+            "ru-RU": {
+              "localize":  [ "ru" ]
+            },
+            "zh-Hans-CN": {
+              "localize":  [ "zh-Hans" ]
+            },
+            "zh-Hant-TW": {
+              "localize":  [ "zh-Hant" ]
+            },
+            "fr-FR": {
+              "localize":  [ "fr" ]
+            },
+            "ja-JP": {
+              "localize":  [ "ja" ]
+            },
+            "eu-ES": {
+              "localize":  [ "eu" ]
+            },
+            "ca-ES": {
+              "localize":  [ "ca" ]
+            },
+            "cs-CZ": {
+              "localize":  [ "cs" ]
+            },
+            "eo": {
+              "localize":  [ "eo" ]
+            },
+            "de-DE": {
+              "localize":  [ "de" ]
+            },
+            "it-IT": {
+              "localize":  [ "it" ]
             }
           }
         },
@@ -106,9 +273,6 @@
             "e2e": {
               "browserTarget": "PeerTube:build:e2e",
               "proxyConfig": "e2e/proxy.config.json"
-            },
-            "fr_FR": {
-              "browserTarget": "PeerTube:build:fr_FR"
             }
           }
         },

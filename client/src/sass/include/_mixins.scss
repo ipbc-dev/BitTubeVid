@@ -11,13 +11,7 @@
   &:focus:not(.focus-visible) {
     outline: none;
   }
-
-  &::-moz-focus-inner {
-    border: 0;
-    padding: 0
-  }
 }
-
 
 @mixin ellipsis {
   white-space: nowrap;
@@ -77,11 +71,27 @@
   }
 }
 
+@mixin fill-svg-color ($color) {
+  ::ng-deep svg {
+    path {
+      fill: $color;
+    }
+  }
+}
+
+@mixin button-focus($color) {
+  &:focus,
+  &.focus-visible {
+    box-shadow: #{$focus-box-shadow-form} $color;
+  }
+}
+
 @mixin peertube-input-text($width) {
   display: inline-block;
   height: $button-height;
   width: $width;
-  background: var(--inputColor);
+  color: var(--inputForegroundColor);
+  background-color: var(--inputBackgroundColor);
   border: 1px solid #C6C6C6;
   border-radius: 3px;
   padding-left: 15px;
@@ -112,12 +122,16 @@
 @mixin peertube-textarea ($width, $height) {
   @include peertube-input-text($width);
 
+  color: var(--textareaForegroundColor);
+  background-color: var(--textareaBackgroundColor);
   height: $height;
   padding: 5px 15px;
   font-size: 15px;
 }
 
 @mixin orange-button {
+  @include button-focus(var(--mainColorLightest));
+
   &, &:active, &:focus {
     color: #fff;
     background-color: var(--mainColor);
@@ -139,14 +153,31 @@
   }
 }
 
+@mixin tertiary-button {
+  @include button-focus($grey-button-outline-color);
+
+  color: var(--greyForegroundColor);
+  background-color: transparent;
+
+  &[disabled], &.disabled {
+    cursor: default;
+  }
+
+  my-global-icon {
+    @include apply-svg-color(transparent)
+  }
+}
+
 @mixin grey-button {
+  @include button-focus($grey-button-outline-color);
+
   &, &:active, &:focus {
     background-color: $grey-background-color;
-    color: $grey-foreground-color;
+    color: var(--greyForegroundColor);
   }
 
   &:hover, &:active, &:focus, &[disabled], &.disabled {
-    color: $grey-foreground-color;
+    color: var(--greyForegroundColor);
     background-color: $grey-background-hover-color;
   }
 
@@ -155,7 +186,7 @@
   }
 
   my-global-icon {
-    @include apply-svg-color($grey-foreground-color)
+    @include apply-svg-color(var(--greyForegroundColor))
   }
 }
 
@@ -169,7 +200,6 @@
   text-align: center;
   padding: 0 17px 0 13px;
   cursor: pointer;
-  outline: 0;
 }
 
 @mixin peertube-button-link {
@@ -202,6 +232,7 @@
   overflow: hidden;
   display: inline-block;
   width: $width;
+  min-height: 30px;
 
   @include peertube-button;
   @include orange-button;
@@ -210,8 +241,8 @@
     position: absolute;
     top: 0;
     right: 0;
-    min-width: 100%;
-    min-height: 100%;
+    width: 100%;
+    height: 100%;
     font-size: 100px;
     text-align: right;
     filter: alpha(opacity=0);
@@ -250,11 +281,10 @@
 @mixin peertube-select-container ($width) {
   padding: 0;
   margin: 0;
-  border: 1px solid #C6C6C6;
   width: $width;
   border-radius: 3px;
-  overflow: hidden;
-  background: var(--inputColor);
+  color: var(--inputForegroundColor);
+  background: var(--inputBackgroundColor);
   position: relative;
   font-size: 15px;
 
@@ -279,8 +309,7 @@
     width: calc(100% + 2px);
     position: relative;
     left: 1px;
-    border: none;
-    box-shadow: none;
+    border: 1px solid #C6C6C6;
     background: transparent none;
     appearance: none;
     cursor: pointer;
@@ -346,7 +375,7 @@
   position: absolute;
 
   &:focus + span {
-    box-shadow: 0 0 0 .1rem rgba(87, 85, 217, .2);
+    box-shadow: #{$focus-box-shadow-form} var(--mainColorLightest);
   }
 
   & + span {
@@ -354,7 +383,7 @@
     width: 18px;
     min-width: 18px;
     height: 18px;
-    border: $border-width solid $fg-color;
+    border: $border-width solid #C6C6C6;
     border-radius: 3px;
     vertical-align: middle;
     cursor: pointer;
@@ -375,7 +404,7 @@
 
   &:checked + span {
     border-color: transparent;
-    background: $orange-color;
+    background: var(--mainColor);
     animation: jelly 0.6s ease;
 
     &:after {
@@ -440,10 +469,17 @@
   font-size: 13px;
 }
 
+@mixin settings-big-title {
+  text-transform: uppercase;
+  color: var(--mainColor);
+  font-weight: $font-bold;
+  font-size: 110%;
+  margin-bottom: 10px;
+}
+
 @mixin actor-owner {
   @include disable-default-a-behaviour;
 
-  display: inline-table;
   font-size: 13px;
   margin-top: 4px;
   color: var(--mainForegroundColor);
@@ -486,19 +522,24 @@
       .actor-names {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
 
         .actor-display-name {
           font-size: 23px;
           font-weight: $font-bold;
+          margin-right: 7px;
         }
 
         .actor-name {
-          margin-left: 7px;
           position: relative;
           top: 3px;
           font-size: 14px;
           color: $grey-actor-name;
         }
+      }
+
+      .actor-lower {
+        grid-area: lower;
       }
 
       .actor-followers {
@@ -513,13 +554,18 @@
 
   .links {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 
     a {
       margin-top: 0;
       margin-bottom: 0;
       text-transform: uppercase;
       font-weight: 600;
+      font-size: 110%;
+
+      @media screen and (max-width: $mobile-view) {
+        font-size: 130%;
+      }
     }
   }
 }
@@ -554,5 +600,290 @@
     margin-right: 10px;
     position: relative;
     top: -2px;
+  }
+}
+
+@mixin progressbar {
+  background-color: $grey-background-color;
+  display: flex;
+  height: 1rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+
+  .progress-bar {
+    color: var(--mainBackgroundColor);
+    background-color: var(--mainColor);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    transition: width 0.6s ease;
+
+    &.secondary {
+      background-color: var(--secondaryColor);
+    }
+  }
+}
+
+@mixin breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  list-style: none;
+  background-color: var(--submenuColor);
+  border-radius: 0.25rem;
+
+  .breadcrumb-item {
+    display: flex;
+
+    a {
+      color: var(--mainColor);
+    }
+
+    & + .breadcrumb-item {
+      padding-left: 0.5rem;
+      &::before {
+        display: inline-block;
+        padding-right: 0.5rem;
+        color: #6c757d;
+        content: "/";
+      }
+    }
+
+    &.active {
+      color: #6c757d;
+    }
+  }
+}
+
+@mixin dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -5px;
+
+  & > div {
+    box-sizing: border-box;
+    flex: 0 0 percentage(1/3);
+    padding: 0 5px;
+    margin-bottom: 10px;
+
+    & > a {
+      @include disable-default-a-behaviour;
+
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      font-size: 18px;
+
+      &:active,
+      &:focus,
+      &:hover {
+        opacity: .8;
+      }
+    }
+
+    & > a,
+    & > div {
+      padding: 20px;
+      background: var(--submenuColor);
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 100%;
+    }
+  }
+
+  .dashboard-num, .dashboard-text {
+    text-align: center;
+    font-size: 130%;
+    line-height: 21px;
+    color: var(--mainForegroundColor);
+    line-height: 30px;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-label {
+    font-size: 90%;
+    color: var(--inputPlaceholderColor);
+    text-align: center;
+  }
+}
+
+@mixin ng2-tags {
+  ::ng-deep {
+    .ng2-tag-input {
+      border: none !important;
+    }
+
+    .ng2-tags-container {
+      display: flex;
+      align-items: center;
+      border: 1px solid #C6C6C6;
+      border-radius: 3px;
+      padding: 5px !important;
+      height: max-content;
+
+      &:focus-within {
+        box-shadow: #{$focus-box-shadow-form} var(--mainColorLightest);
+      }
+    }
+
+    tag-input-form {
+      input {
+        height: 30px !important;
+        font-size: 12px !important;
+
+        background-color: var(--mainBackgroundColor) !important;
+        color: var(--mainForegroundColor) !important;
+      }
+    }
+
+    tag {
+      background-color: $grey-background-color !important;
+      color: #000 !important;
+      border-radius: 3px !important;
+      font-size: 12px !important;
+      height: 30px !important;
+      line-height: 30px !important;
+      margin: 0 5px 0 0 !important;
+      cursor: default !important;
+      padding: 0 8px 0 10px !important;
+
+      div {
+        height: 100% !important;
+      }
+    }
+
+    delete-icon {
+      cursor: pointer !important;
+      height: auto !important;
+      vertical-align: middle !important;
+      padding-left: 6px !important;
+
+      svg {
+        position: relative;
+        top: -1px;
+        height: auto !important;
+        vertical-align: middle !important;
+
+        path  {
+          fill: var(--greyForegroundColor) !important;
+        }
+      }
+
+      &:hover {
+        transform: none !important;
+      }
+    }
+  }
+}
+
+@mixin divider($color: var(--submenuColor), $background: var(--mainBackgroundColor)) {
+  width: 95%;
+  border-top: .05rem solid $color;
+  height: .05rem;
+  text-align: center;
+  display: block;
+  position: relative;
+
+  &[data-content] {
+    margin: .8rem 0;
+
+    &::after {
+      background: $background;
+      color: $color;
+      content: attr(data-content);
+      display: inline-block;
+      font-size: .7rem;
+      padding: 0 .4rem;
+      transform: translateY(-.65rem);
+    }
+  }
+}
+
+@mixin chip {
+  $avatar-height: 1.2rem;
+
+  align-items: center;
+  border-radius: 5rem;
+  display: inline-flex;
+  font-size: 90%;
+  color: var(--mainForegroundColor);
+  height: $avatar-height;
+  line-height: 1rem;
+  margin: .1rem;
+  max-width: 320px;
+  overflow: hidden;
+  padding: .2rem .4rem;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+
+  .avatar {
+    margin-left: -.4rem;
+    margin-right: .2rem;
+    height: $avatar-height;
+    width: $avatar-height;
+
+    border-radius: 50%;
+    display: inline-block;
+    line-height: 1.25;
+    position: relative;
+    vertical-align: middle;
+  }
+
+  &.two-lines {
+    $avatar-height: 2rem;
+
+    height: $avatar-height;
+
+    .avatar {
+      height: $avatar-height;
+      width: $avatar-height;
+    }
+
+    div {
+      display: flex;
+      flex-direction: column;
+      height: $avatar-height;
+      margin-left: .1rem;
+      margin-right: .1rem;
+      justify-content: center;
+    }
+  }
+}
+
+@mixin empty-state {
+  min-height: 40vh;
+  max-height: 500px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin admin-sub-header-responsive ($horizontal-margins) {
+  flex-direction: column;
+
+  .form-sub-title {
+    margin-right: 0px !important;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .admin-sub-nav {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    height: 50px;
+    padding: 10px 0;
+    width: calc(100vw - #{$horizontal-margins*2});
+
+    a {
+      margin-left: 5px;
+    }
   }
 }

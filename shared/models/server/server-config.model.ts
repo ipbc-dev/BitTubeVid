@@ -12,6 +12,22 @@ export interface ServerConfigTheme extends ServerConfigPlugin {
   css: string[]
 }
 
+export interface RegisteredExternalAuthConfig {
+  npmName: string
+  name: string
+  version: string
+  authName: string
+  authDisplayName: string
+}
+
+export interface RegisteredIdAndPassAuthConfig {
+  npmName: string
+  name: string
+  version: string
+  authName: string
+  weight: number
+}
+
 export interface ServerConfig {
   serverVersion: string
   serverCommit?: string
@@ -28,8 +44,19 @@ export interface ServerConfig {
     }
   }
 
+  search: {
+    remoteUri: {
+      users: boolean
+      anonymous: boolean
+    }
+  }
+
   plugin: {
     registered: ServerConfigPlugin[]
+
+    registeredExternalAuths: RegisteredExternalAuthConfig[]
+
+    registeredIdAndPassAuths: RegisteredIdAndPassAuthConfig[]
   }
 
   theme: {
@@ -46,7 +73,7 @@ export interface ServerConfig {
   }
 
   signup: {
-    allowed: boolean,
+    allowed: boolean
     allowedForCurrentIP: boolean
     requiresEmailVerification: boolean
   }
@@ -97,7 +124,7 @@ export interface ServerConfig {
         max: number
       }
       extensions: string[]
-    },
+    }
     file: {
       extensions: string[]
     }
@@ -107,7 +134,7 @@ export interface ServerConfig {
     file: {
       size: {
         max: number
-      },
+      }
       extensions: string[]
     }
   }
