@@ -1,6 +1,6 @@
 import * as Bluebird from 'bluebird'
 import * as express from 'express'
-import { body, param } from 'express-validator'
+import { body, param, query } from 'express-validator'
 import { omit } from 'lodash'
 import { isIdOrUUIDValid, toBooleanOrNull, toIntOrNull } from '../../helpers/custom-validators/misc'
 import {
@@ -14,6 +14,7 @@ import {
   isUserDisplayNameValid,
   isUserNSFWPolicyValid,
   isUserPasswordValid,
+  isUserPasswordValidOrEmpty,
   isUserRoleValid,
   isUserUsernameValid,
   isUserVideoLanguages,
@@ -36,11 +37,10 @@ import { doesVideoExist } from '../../helpers/middlewares'
 import { UserRole } from '../../../shared/models/users'
 import { MUserDefault } from '@server/typings/models'
 import { Hooks } from '@server/lib/plugins/hooks'
-import { isLocalVideoAccepted } from '@server/lib/moderation'
 
 const usersAddValidator = [
   body('username').custom(isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
-  body('password').custom(isUserPasswordValid).withMessage('Should have a valid password'),
+  body('password').custom(isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
   body('email').isEmail().withMessage('Should have a valid email'),
   body('videoQuota').custom(isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
   body('videoQuotaDaily').custom(isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
@@ -149,7 +149,7 @@ const usersBlockingValidator = [
 ]
 
 const deleteMeValidator = [
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user = res.locals.oauth.token.User
     if (user.username === 'root') {
       return res.status(400)
@@ -234,14 +234,19 @@ const usersUpdateMeValidator = [
   async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking usersUpdateMe parameters', { parameters: omit(req.body, 'password') })
 
+    const user = res.locals.oauth.token.User
+
     if (req.body.password || req.body.email) {
+      if (user.pluginAuth !== null) {
+        return res.status(400)
+                  .json({ error: 'You cannot update your email or password that is associated with an external auth system.' })
+      }
+
       if (!req.body.currentPassword) {
         return res.status(400)
                   .json({ error: 'currentPassword parameter is missing.' })
-                  .end()
       }
 
-      const user = res.locals.oauth.token.User
       if (await user.isPasswordMatch(req.body.currentPassword) !== true) {
         return res.status(401)
                   .json({ error: 'currentPassword is invalid.' })
@@ -256,12 +261,13 @@ const usersUpdateMeValidator = [
 
 const usersGetValidator = [
   param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
+  query('withStats').optional().isBoolean().withMessage('Should have a valid stats flag'),
 
   async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking usersGet parameters', { parameters: req.params })
 
     if (areValidationErrors(req, res)) return
-    if (!await checkUserIdExist(req.params.id, res)) return
+    if (!await checkUserIdExist(req.params.id, res, req.query.withStats)) return
 
     return next()
   }
@@ -303,7 +309,7 @@ const ensureUserRegistrationAllowed = [
 ]
 
 const ensureUserRegistrationAllowedForIP = [
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const allowed = isSignupAllowedForCurrentIP(req.ip)
 
     if (allowed === false) {
@@ -410,7 +416,7 @@ const userAutocompleteValidator = [
 ]
 
 const ensureAuthUserOwnsAccountValidator = [
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const user = res.locals.oauth.token.User
 
     if (res.locals.account.id !== user.Account.id) {
@@ -460,9 +466,9 @@ export {
 
 // ---------------------------------------------------------------------------
 
-function checkUserIdExist (idArg: number | string, res: express.Response) {
+function checkUserIdExist (idArg: number | string, res: express.Response, withStats = false) {
   const id = parseInt(idArg + '', 10)
-  return checkUserExist(() => UserModel.loadById(id), res)
+  return checkUserExist(() => UserModel.loadById(id, withStats), res)
 }
 
 function checkUserEmailExist (email: string, res: express.Response, abortResponse = true) {

@@ -21,7 +21,7 @@
       <li i18n *ngIf="!about.instance.terms">Instance terms</li>
     </ul>
 
-    <p>
+    <p i18n>
       Please consider to configure these fields to help people to choose <strong>the appropriate instance</strong>.
       Without them, your instance may not be referenced on <a target="_blank" rel="noopener noreferrer" href="https://joinpeertube.org">JoinPeerTube website</a>.
     </p>
@@ -40,7 +40,10 @@
 
     </my-peertube-checkbox>
 
-    <span i18n class="action-button action-button-cancel" (click)="hide()">Close</span>
+    <input
+      type="button" role="button" i18n-value value="Close" class="action-button action-button-cancel"
+      (click)="hide()" (key.enter)="hide()"
+    >
   </div>
 
 </ng-template>

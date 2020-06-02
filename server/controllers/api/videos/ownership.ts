@@ -1,6 +1,6 @@
 import * as express from 'express'
 import { logger } from '../../../helpers/logger'
-import { sequelizeTypescript } from '../../../initializers'
+import { sequelizeTypescript } from '../../../initializers/database'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -15,7 +15,7 @@ import { VideoChangeOwnershipModel } from '../../../models/video/video-change-ow
 import { VideoChangeOwnershipStatus, VideoState } from '../../../../shared/models/videos'
 import { VideoChannelModel } from '../../../models/video/video-channel'
 import { getFormattedObjects } from '../../../helpers/utils'
-import { changeVideoChannelShare } from '../../../lib/activitypub'
+import { changeVideoChannelShare } from '../../../lib/activitypub/share'
 import { sendUpdateVideo } from '../../../lib/activitypub/send'
 import { VideoModel } from '../../../models/video/video'
 import { MVideoFullLight } from '@server/typings/models'

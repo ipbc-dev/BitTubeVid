@@ -9,6 +9,7 @@ export type DropdownAction<T> = {
   handler?: (a: T) => any
   linkBuilder?: (a: T) => (string | number)[]
   isDisplayed?: (a: T) => boolean
+  isHeader?: boolean
 }
 
 export type DropdownButtonSize = 'normal' | 'small'
@@ -26,6 +27,7 @@ export class ActionDropdownComponent<T> {
   @Input() entry: T
 
   @Input() placement = 'bottom-left auto'
+  @Input() container: null | 'body'
 
   @Input() buttonSize: DropdownButtonSize = 'normal'
   @Input() buttonDirection: DropdownDirection = 'horizontal'
@@ -34,10 +36,10 @@ export class ActionDropdownComponent<T> {
   @Input() label: string
   @Input() theme: DropdownTheme = 'grey'
 
-  getActions () {
-    if (this.actions.length !== 0 && Array.isArray(this.actions[0])) return this.actions
+  getActions (): DropdownAction<T>[][] {
+    if (this.actions.length !== 0 && Array.isArray(this.actions[0])) return this.actions as DropdownAction<T>[][]
 
-    return [ this.actions ]
+    return [ this.actions as DropdownAction<T>[] ]
   }
 
   areActionsDisplayed (actions: Array<DropdownAction<T> | DropdownAction<T>[]>, entry: T): boolean {

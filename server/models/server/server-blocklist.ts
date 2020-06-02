@@ -2,7 +2,7 @@ import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, Updated
 import { AccountModel } from '../account/account'
 import { ServerModel } from './server'
 import { ServerBlock } from '../../../shared/models/blocklist'
-import { getSort } from '../utils'
+import { getSort, searchAttribute } from '../utils'
 import * as Bluebird from 'bluebird'
 import { MServerBlocklist, MServerBlocklistAccountServer, MServerBlocklistFormattable } from '@server/typings/models'
 import { Op } from 'sequelize'
@@ -81,7 +81,7 @@ export class ServerBlocklistModel extends Model<ServerBlocklistModel> {
       attributes: [ 'accountId', 'id' ],
       where: {
         accountId: {
-          [Op.in]: accountIds // FIXME: sequelize ANY seems broken
+          [Op.in]: accountIds
         },
         targetServerId
       },
@@ -120,13 +120,22 @@ export class ServerBlocklistModel extends Model<ServerBlocklistModel> {
     return ServerBlocklistModel.findOne(query)
   }
 
-  static listForApi (accountId: number, start: number, count: number, sort: string) {
+  static listForApi (parameters: {
+    start: number
+    count: number
+    sort: string
+    search?: string
+    accountId: number
+  }) {
+    const { start, count, sort, search, accountId } = parameters
+
     const query = {
       offset: start,
       limit: count,
       order: getSort(sort),
       where: {
-        accountId
+        accountId,
+        ...searchAttribute(search, '$BlockedServer.host$')
       }
     }
 

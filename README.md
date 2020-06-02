@@ -36,10 +36,10 @@ Be part of a network of multiple small federated, interoperable video hosting pr
   <a href="https://david-dm.org/Chocobozzz/PeerTube?path=client&type=dev">
     <img src="https://david-dm.org/Chocobozzz/PeerTube/dev-status.svg?path=client" alt="devDependency Status" />
   </a>
-  
-  <!-- <a href="https://automate.browserstack.com/public-build/cW5mYW43VDNUR1Jrb0Y5TnVoaC85Tk84SVhzSU9rS0ppWWJJYUVlRzVQRT0tLW9tVGIvK2ZmOGRld3lVVFRYTFM4aEE9PQ==--591b0056e00a2d1cbdfbcfa324634046132008ec">
-    <img src="https://automate.browserstack.com/badge.svg?badge_key=cW5mYW43VDNUR1Jrb0Y5TnVoaC85Tk84SVhzSU9rS0ppWWJJYUVlRzVQRT0tLW9tVGIvK2ZmOGRld3lVVFRYTFM4aEE9PQ==--591b0056e00a2d1cbdfbcfa324634046132008ec"/>
-  </a> -->
+
+  <a href="https://automate.browserstack.com/public-build/T2g0SVQyMTJtYVRWaEZQTE9LdU9UU1ZDSkY5dTJ6dGlNRUVIajd4QlIwST0tLVdTQ1NUZ0pUTzRZT3lyZzkvWGNSZ1E9PQ==--278d3c68ae0827ce57e245e9f5a3b8c35d6e2278%">
+    <img src="https://automate.browserstack.com/badge.svg?badge_key=T2g0SVQyMTJtYVRWaEZQTE9LdU9UU1ZDSkY5dTJ6dGlNRUVIajd4QlIwST0tLVdTQ1NUZ0pUTzRZT3lyZzkvWGNSZ1E9PQ==--278d3c68ae0827ce57e245e9f5a3b8c35d6e2278%"/>
+  </a>
 </p>
 
 <p align="center">
@@ -47,8 +47,8 @@ Be part of a network of multiple small federated, interoperable video hosting pr
 
   <br />
 
-  <a href="https://framagit.org/framasoft/peertube/PeerTube/commits/develop">
-    <img alt="pipeline status" src="https://framagit.org/framasoft/peertube/PeerTube/badges/develop/pipeline.svg" />
+  <a href="https://travis-ci.com/github/Chocobozzz/PeerTube">
+    <img alt="pipeline status" src="https://travis-ci.com/Chocobozzz/PeerTube.svg?branch=develop" />
   </a>
 
   <a href="https://david-dm.org/Chocobozzz/PeerTube">
@@ -146,6 +146,11 @@ You can also join the cheerful bunch that makes our community:
   * Facebook: **[BitTube Official](https://www.facebook.com/bit.tube.official/)**
   * Reddit: **[BitTube](https://www.reddit.com/r/BitTube/)**
     
+  * IRC : **[#peertube on chat.freenode.net:6697](https://kiwiirc.com/client/irc.freenode.net/#peertube)**
+  * Matrix (bridged on IRC and [Discord](https://discord.gg/wj8DDUT)) : **[#peertube:matrix.org](https://matrix.to/#/#peertube:matrix.org)**
+* Forum:
+  * Framacolibri: [https://framacolibri.org/c/peertube](https://framacolibri.org/c/peertube)
+
 Feel free to reach out if you have any questions or ideas! :speech_balloon:
 
 :package: Create your own instance
@@ -179,11 +184,9 @@ See [how to create your own instance](https://github.com/ipbc-dev/BitTubeVid#pac
 
 See the more general [admin documentation](https://docs.joinpeertube.org/#/admin-following-instances).
 
-#### Tools
+### Tools documentation
 
- * [Import videos (YouTube, Dailymotion, Vimeo...)](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/tools.md)
- * [Upload videos from the CLI](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/tools.md#cli-wrapper)
- * [Admin server tools (create transcoding jobs, prune storage...)](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/tools.md#server-tools)
+Learn how to import/upload videos from CLI or admin your PeerTube instance with the [tools documentation](https://docs.joinpeertube.org/#/maintain-tools).
 
 ### Technical documentation
 
@@ -210,7 +213,7 @@ Copyright (C) 2020 BitTube Contributors
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
-by the Free Software Foundation, either version 3 of the License, or 
+by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,

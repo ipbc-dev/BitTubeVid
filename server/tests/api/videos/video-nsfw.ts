@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import * as chai from 'chai'
 import 'mocha'
@@ -19,11 +19,19 @@ import {
   updateCustomConfig,
   updateMyUser
 } from '../../../../shared/extra-utils'
-import { ServerConfig } from '../../../../shared/models'
+import { ServerConfig, VideosOverview } from '../../../../shared/models'
 import { CustomConfig } from '../../../../shared/models/server/custom-config.model'
 import { User } from '../../../../shared/models/users'
+import { getVideosOverview, getVideosOverviewWithToken } from '@shared/extra-utils/overviews/overviews'
 
 const expect = chai.expect
+
+function createOverviewRes (res: any) {
+  const overview = res.body as VideosOverview
+
+  const videos = overview.categories[0].videos
+  return { body: { data: videos, total: videos.length } }
+}
 
 describe('Test video NSFW policy', function () {
   let server: ServerInfo
@@ -36,22 +44,38 @@ describe('Test video NSFW policy', function () {
         const user: User = res.body
         const videoChannelName = user.videoChannels[0].name
         const accountName = user.account.name + '@' + user.account.host
+        const hasQuery = Object.keys(query).length !== 0
+        let promises: Promise<any>[]
 
         if (token) {
-          return Promise.all([
+          promises = [
             getVideosListWithToken(server.url, token, query),
             searchVideoWithToken(server.url, 'n', token, query),
             getAccountVideos(server.url, token, accountName, 0, 5, undefined, query),
             getVideoChannelVideos(server.url, token, videoChannelName, 0, 5, undefined, query)
-          ])
+          ]
+
+          // Overviews do not support video filters
+          if (!hasQuery) {
+            promises.push(getVideosOverviewWithToken(server.url, 1, token).then(res => createOverviewRes(res)))
+          }
+
+          return Promise.all(promises)
         }
 
-        return Promise.all([
+        promises = [
           getVideosList(server.url),
           searchVideo(server.url, 'n'),
           getAccountVideos(server.url, undefined, accountName, 0, 5),
           getVideoChannelVideos(server.url, undefined, videoChannelName, 0, 5)
-        ])
+        ]
+
+        // Overviews do not support video filters
+        if (!hasQuery) {
+          promises.push(getVideosOverview(server.url, 1).then(res => createOverviewRes(res)))
+        }
+
+        return Promise.all(promises)
       })
   }
 
@@ -63,12 +87,12 @@ describe('Test video NSFW policy', function () {
     await setAccessTokensToServers([ server ])
 
     {
-      const attributes = { name: 'nsfw', nsfw: true }
+      const attributes = { name: 'nsfw', nsfw: true, category: 1 }
       await uploadVideo(server.url, server.accessToken, attributes)
     }
 
     {
-      const attributes = { name: 'normal', nsfw: false }
+      const attributes = { name: 'normal', nsfw: false, category: 1 }
       await uploadVideo(server.url, server.accessToken, attributes)
     }
 
@@ -89,8 +113,8 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(2)
-        expect(videos[ 0 ].name).to.equal('normal')
-        expect(videos[ 1 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('normal')
+        expect(videos[1].name).to.equal('nsfw')
       }
     })
 
@@ -107,7 +131,7 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(1)
-        expect(videos[ 0 ].name).to.equal('normal')
+        expect(videos[0].name).to.equal('normal')
       }
     })
 
@@ -124,8 +148,8 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(2)
-        expect(videos[ 0 ].name).to.equal('normal')
-        expect(videos[ 1 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('normal')
+        expect(videos[1].name).to.equal('nsfw')
       }
     })
   })
@@ -154,8 +178,8 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(2)
-        expect(videos[ 0 ].name).to.equal('normal')
-        expect(videos[ 1 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('normal')
+        expect(videos[1].name).to.equal('nsfw')
       }
     })
 
@@ -171,8 +195,8 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(2)
-        expect(videos[ 0 ].name).to.equal('normal')
-        expect(videos[ 1 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('normal')
+        expect(videos[1].name).to.equal('nsfw')
       }
     })
 
@@ -188,7 +212,7 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(1)
-        expect(videos[ 0 ].name).to.equal('normal')
+        expect(videos[0].name).to.equal('normal')
       }
     })
 
@@ -198,8 +222,8 @@ describe('Test video NSFW policy', function () {
 
       const videos = res.body.data
       expect(videos).to.have.lengthOf(2)
-      expect(videos[ 0 ].name).to.equal('normal')
-      expect(videos[ 1 ].name).to.equal('nsfw')
+      expect(videos[0].name).to.equal('normal')
+      expect(videos[1].name).to.equal('nsfw')
     })
 
     it('Should display NSFW videos when the nsfw param === true', async function () {
@@ -208,7 +232,7 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(1)
-        expect(videos[ 0 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('nsfw')
       }
     })
 
@@ -218,7 +242,7 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(1)
-        expect(videos[ 0 ].name).to.equal('normal')
+        expect(videos[0].name).to.equal('normal')
       }
     })
 
@@ -228,8 +252,8 @@ describe('Test video NSFW policy', function () {
 
         const videos = res.body.data
         expect(videos).to.have.lengthOf(2)
-        expect(videos[ 0 ].name).to.equal('normal')
-        expect(videos[ 1 ].name).to.equal('nsfw')
+        expect(videos[0].name).to.equal('normal')
+        expect(videos[1].name).to.equal('nsfw')
       }
     })
   })

@@ -21,7 +21,8 @@
 - [Are you going to use the Steem blockchain?](#are-you-going-to-use-the-steem-blockchain)
 - [Are you going to support advertisements?](#are-you-going-to-support-advertisements)
 - [What is "creation dynamic" and why not modify it?](#what-is-creation-dynamic-and-why-not-modify-it)
-- [I have found a security vulnerability in BitTube. Where and how should I report it?](#i-have-found-a-security-vulnerability-in-BitTube-where-and-how-should-i-report-it)
+- [I have found a security vulnerability in PeerTube. Where and how should I report it?](#i-have-found-a-security-vulnerability-in-peertube-where-and-how-should-i-report-it)
+- [Does PeerTube ensures federation compatibility with previous version?](#does-peertube-ensures-federation-compatibility-with-previous-version)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -91,7 +92,7 @@ and FLV formats when transcoding is enabled on their instance.
 
 ## I want to change my domain name, how can I do that?
 
-You can't. You'll need to reinstall an instance and reupload your videos.
+It's not officially supported, but you can try the `update-host` script: https://docs.joinpeertube.org/#/maintain-tools?id=update-hostjs
 
 
 ## Why do we have to put our Twitter username in BitTube configuration?
@@ -102,7 +103,7 @@ We need this information because Twitter requires an account for links share/vid
 
 ## How video views are calculated?
 
-Your web browser sends a view to the server after 30 seconds of playback. Then, the IP cannot send another view in the next hour.
+Your web browser sends a view to the server after 30 seconds of playback. If a video is less than 30 seconds in length, a view is sent after 75% of the video. After giving a view, that IP address cannot add another view in the next hour.
 Views are buffered, so don't panic if the view counter stays the same after you watched a video.
 
 [comment]: <> (question)
@@ -168,3 +169,8 @@ We are always open to discussion about potential PRs bringing in features, even 
 ## I have found a security vulnerability in BitTube. Where and how should I report it?
 
 We have a policy for contributions related to security. Please refer to [SECURITY.md](./SECURITY.md)
+
+## Does PeerTube ensures federation compatibility with previous version?
+
+We **try** to keep compatibility with the latest minor version (2.3.1 with 2.2 for example).
+We don't have resources to keep compatibility with other versions.

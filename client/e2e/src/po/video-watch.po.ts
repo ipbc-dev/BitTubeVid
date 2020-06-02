@@ -1,4 +1,5 @@
 import { browser, by, element, ElementFinder, ExpectedConditions } from 'protractor'
+import { browserSleep, isIOS, isMobileDevice } from '../utils'
 
 export class VideoWatchPage {
   async goOnVideosList (isMobileDevice: boolean, isSafari: boolean) {
@@ -11,10 +12,10 @@ export class VideoWatchPage {
       url = '/videos/recently-added'
     }
 
-    await browser.get(url)
+    await browser.get(url, 20000)
 
     // Waiting the following element does not work on Safari...
-    if (isSafari === true) return browser.sleep(3000)
+    if (isSafari) return browserSleep(3000)
 
     const elem = element.all(by.css('.videos .video-miniature .video-miniature-name')).first()
     return browser.wait(browser.ExpectedConditions.visibilityOf(elem))
@@ -27,13 +28,12 @@ export class VideoWatchPage {
   }
 
   waitWatchVideoName (videoName: string, isMobileDevice: boolean, isSafari: boolean) {
+    if (isSafari) return browserSleep(5000)
+
     // On mobile we display the first node, on desktop the second
     const index = isMobileDevice ? 0 : 1
 
     const elem = element.all(by.css('.video-info .video-info-name')).get(index)
-
-    if (isSafari) return browser.sleep(5000)
-
     return browser.wait(browser.ExpectedConditions.textToBePresentInElement(elem, videoName))
   }
 
@@ -48,32 +48,39 @@ export class VideoWatchPage {
     return this.getVideoNameElement().getText()
   }
 
-  async playAndPauseVideo (isAutoplay: boolean, isMobileDevice: boolean) {
-    if (isAutoplay === false) {
+  async playAndPauseVideo (isAutoplay: boolean) {
+    // Autoplay is disabled on iOS
+    if (isAutoplay === false || await isIOS()) {
       const playButton = element(by.css('.vjs-big-play-button'))
       await browser.wait(browser.ExpectedConditions.elementToBeClickable(playButton))
       await playButton.click()
     }
 
-    await browser.sleep(1000)
+    await browserSleep(2000)
     await browser.wait(browser.ExpectedConditions.invisibilityOf(element(by.css('.vjs-loading-spinner'))))
 
     const videojsEl = element(by.css('div.video-js'))
     await browser.wait(browser.ExpectedConditions.elementToBeClickable(videojsEl))
 
     // On Android, we need to click twice on "play" (BrowserStack particularity)
-    if (isMobileDevice) {
-      await browser.sleep(3000)
+    if (await isMobileDevice()) {
+      await browserSleep(5000)
+
       await videojsEl.click()
     }
 
-    await browser.sleep(7000)
+    browser.ignoreSynchronization = false
+    await browserSleep(7000)
+    browser.ignoreSynchronization = true
 
-    return videojsEl.click()
+    await videojsEl.click()
   }
 
   async clickOnVideo (videoName: string) {
-    const video = element(by.css('.videos .video-miniature .video-thumbnail[title="' + videoName + '"]'))
+    const video = element.all(by.css('.videos .video-miniature .video-miniature-name'))
+    .filter(e => e.getText().then(t => t === videoName ))
+    .first()
+
     await browser.wait(browser.ExpectedConditions.elementToBeClickable(video))
     await video.click()
 
@@ -103,7 +110,7 @@ export class VideoWatchPage {
   }
 
   async goOnP2PMediaLoaderEmbed () {
-    return browser.get('https://peertube2.cpy.re/videos/embed/969bf103-7818-43b5-94a0-de159e13de50?mode=p2p-media-loader')
+    return browser.get('https://peertube2.cpy.re/videos/embed/969bf103-7818-43b5-94a0-de159e13de50')
   }
 
   async clickOnUpdate () {
@@ -148,7 +155,7 @@ export class VideoWatchPage {
 
   private getVideoNameElement () {
     // We have 2 video info name block, pick the first that is not empty
-    return element.all(by.css('.video-bottom .video-info-name'))
+    return element.all(by.css('.video-info-first-row .video-info-name'))
                   .filter(e => e.getText().then(t => !!t))
                   .first()
   }

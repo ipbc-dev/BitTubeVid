@@ -3,11 +3,12 @@ import { getAppNumber, isTestInstance } from '../helpers/core-utils'
 import { join } from 'path'
 import { root } from '../../shared/extra-utils/miscs/miscs'
 import { getVideoChannel } from '../../shared/extra-utils/videos/video-channels'
-import { Command } from 'commander'
+import { CommanderStatic } from 'commander'
 import { VideoChannel, VideoPrivacy } from '../../shared/models/videos'
 import { createLogger, format, transports } from 'winston'
-import { getAccessToken, getMyUserInformation } from '@shared/extra-utils'
+import { getMyUserInformation } from '@shared/extra-utils/users/users'
 import { User, UserRole } from '@shared/models'
+import { getAccessToken } from '@shared/extra-utils/users/login'
 
 let configName = 'PeerTube/CLI'
 if (isTestInstance()) configName += `-${getAppNumber()}`
@@ -30,23 +31,21 @@ async function getAdminTokenOrDie (url: string, username: string, password: stri
 }
 
 interface Settings {
-  remotes: any[],
+  remotes: any[]
   default: number
 }
 
-function getSettings () {
-  return new Promise<Settings>((res, rej) => {
-    const defaultSettings = {
-      remotes: [],
-      default: -1
-    }
+async function getSettings (): Promise<Settings> {
+  const defaultSettings = {
+    remotes: [],
+    default: -1
+  }
 
-    config.read((err, data) => {
-      if (err) return rej(err)
+  const data = await config.read()
 
-      return res(Object.keys(data).length === 0 ? defaultSettings : data)
-    })
-  })
+  return Object.keys(data).length === 0
+    ? defaultSettings
+    : data
 }
 
 async function getNetrc () {
@@ -61,24 +60,12 @@ async function getNetrc () {
   return netrc
 }
 
-function writeSettings (settings) {
-  return new Promise((res, rej) => {
-    config.write(settings, err => {
-      if (err) return rej(err)
-
-      return res()
-    })
-  })
+function writeSettings (settings: Settings) {
+  return config.write(settings)
 }
 
 function deleteSettings () {
-  return new Promise((res, rej) => {
-    config.trash((err) => {
-      if (err) return rej(err)
-
-      return res()
-    })
-  })
+  return config.trash()
 }
 
 function getRemoteObjectOrDie (
@@ -89,9 +76,9 @@ function getRemoteObjectOrDie (
   if (!program['url'] || !program['username'] || !program['password']) {
     // No remote and we don't have program parameters: quit
     if (settings.remotes.length === 0 || Object.keys(netrc.machines).length === 0) {
-      if (!program[ 'url' ]) console.error('--url field is required.')
-      if (!program[ 'username' ]) console.error('--username field is required.')
-      if (!program[ 'password' ]) console.error('--password field is required.')
+      if (!program['url']) console.error('--url field is required.')
+      if (!program['username']) console.error('--username field is required.')
+      if (!program['password']) console.error('--password field is required.')
 
       return process.exit(-1)
     }
@@ -111,13 +98,13 @@ function getRemoteObjectOrDie (
   }
 
   return {
-    url: program[ 'url' ],
-    username: program[ 'username' ],
-    password: program[ 'password' ]
+    url: program['url'],
+    username: program['username'],
+    password: program['password']
   }
 }
 
-function buildCommonVideoOptions (command: Command) {
+function buildCommonVideoOptions (command: CommanderStatic) {
   function list (val) {
     return val.split(',')
   }
@@ -132,13 +119,14 @@ function buildCommonVideoOptions (command: Command) {
     .option('-d, --video-description <description>', 'Video description')
     .option('-P, --privacy <privacy_number>', 'Privacy')
     .option('-C, --channel-name <channel_name>', 'Channel name')
-    .option('-m, --comments-enabled', 'Enable comments')
+    .option('--no-comments-enabled', 'Disable video comments')
     .option('-s, --support <support>', 'Video support text')
-    .option('-w, --wait-transcoding', 'Wait transcoding before publishing the video')
+    .option('--no-wait-transcoding', 'Do not wait transcoding before publishing the video')
+    .option('--no-download-enabled', 'Disable video download')
     .option('-v, --verbose <verbose>', 'Verbosity, from 0/\'error\' to 4/\'debug\'', 'info')
 }
 
-async function buildVideoAttributesFromCommander (url: string, command: Command, defaultAttributes: any = {}) {
+async function buildVideoAttributesFromCommander (url: string, command: CommanderStatic, defaultAttributes: any = {}) {
   const defaultBooleanAttributes = {
     nsfw: false,
     commentsEnabled: true,
@@ -149,8 +137,8 @@ async function buildVideoAttributesFromCommander (url: string, command: Command,
   const booleanAttributes: { [id in keyof typeof defaultBooleanAttributes]: boolean } | {} = {}
 
   for (const key of Object.keys(defaultBooleanAttributes)) {
-    if (command[ key ] !== undefined) {
-      booleanAttributes[key] = command[ key ]
+    if (command[key] !== undefined) {
+      booleanAttributes[key] = command[key]
     } else if (defaultAttributes[key] !== undefined) {
       booleanAttributes[key] = defaultAttributes[key]
     } else {
@@ -159,19 +147,19 @@ async function buildVideoAttributesFromCommander (url: string, command: Command,
   }
 
   const videoAttributes = {
-    name: command[ 'videoName' ] || defaultAttributes.name,
-    category: command[ 'category' ] || defaultAttributes.category || undefined,
-    licence: command[ 'licence' ] || defaultAttributes.licence || undefined,
-    language: command[ 'language' ] || defaultAttributes.language || undefined,
-    privacy: command[ 'privacy' ] || defaultAttributes.privacy || VideoPrivacy.PUBLIC,
-    support: command[ 'support' ] || defaultAttributes.support || undefined,
-    description: command[ 'videoDescription' ] || defaultAttributes.description || undefined,
-    tags: command[ 'tags' ] || defaultAttributes.tags || undefined
+    name: command['videoName'] || defaultAttributes.name,
+    category: command['category'] || defaultAttributes.category || undefined,
+    licence: command['licence'] || defaultAttributes.licence || undefined,
+    language: command['language'] || defaultAttributes.language || undefined,
+    privacy: command['privacy'] || defaultAttributes.privacy || VideoPrivacy.PUBLIC,
+    support: command['support'] || defaultAttributes.support || undefined,
+    description: command['videoDescription'] || defaultAttributes.description || undefined,
+    tags: command['tags'] || defaultAttributes.tags || undefined
   }
 
   Object.assign(videoAttributes, booleanAttributes)
 
-  if (command[ 'channelName' ]) {
+  if (command['channelName']) {
     const res = await getVideoChannel(url, command['channelName'])
     const videoChannel: VideoChannel = res.body
 
@@ -187,9 +175,9 @@ async function buildVideoAttributesFromCommander (url: string, command: Command,
 
 function getServerCredentials (program: any) {
   return Promise.all([ getSettings(), getNetrc() ])
-         .then(([ settings, netrc ]) => {
-           return getRemoteObjectOrDie(program, settings, netrc)
-         })
+                .then(([ settings, netrc ]) => {
+                  return getRemoteObjectOrDie(program, settings, netrc)
+                })
 }
 
 function getLogger (logLevel = 'info') {
@@ -226,7 +214,6 @@ function getLogger (logLevel = 'info') {
 
 export {
   version,
-  config,
   getLogger,
   getSettings,
   getNetrc,

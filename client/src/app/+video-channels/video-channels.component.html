@@ -7,32 +7,40 @@
       <div class="actor-info">
         <div class="actor-names">
           <div class="actor-display-name">{{ videoChannel.displayName }}</div>
-          <div class="actor-name">{{ videoChannel.nameWithHost }}
-            <button ngxClipboard [cbContent]="videoChannel.nameWithHost" (click)="activateCopiedMessage()"
+          <div class="actor-name">
+            <span>{{ videoChannel.nameWithHost }}</span>
+            <button [cdkCopyToClipboard]="videoChannel.nameWithHostForced" (click)="activateCopiedMessage()"
                     class="btn btn-outline-secondary btn-sm copy-button"
             >
               <span class="glyphicon glyphicon-copy"></span>
             </button>
           </div>
-
-          <div class="right-buttons">
-            <a *ngIf="isChannelManageable" [routerLink]="[ '/my-account/video-channels/update', videoChannel.nameWithHost ]" class="btn btn-outline-tertiary mr-2" i18n>Manage</a>
-            <my-subscribe-button #subscribeButton [videoChannels]="[videoChannel]"></my-subscribe-button>
-          </div>
         </div>
-        <div class="actor-followers" i18n>{videoChannel.followersCount, plural, =1 {1 subscriber} other {{{ videoChannel.followersCount }} subscribers}}</div>
 
-        <a [routerLink]="[ '/accounts', videoChannel.ownerBy ]" i18n-title title="Go the owner account page" class="actor-owner">
-          <span i18n>Created by {{ videoChannel.ownerBy }}</span>
-          <img [src]="videoChannel.ownerAvatarUrl" alt="Owner account avatar" />
-        </a>
+        <div class="right-buttons">
+          <a *ngIf="isChannelManageable && !isInSmallView" [routerLink]="[ '/my-account/video-channels/update', videoChannel.nameWithHost ]" class="btn btn-outline-tertiary mr-2" i18n>
+            Manage channel
+          </a>
+          <my-subscribe-button #subscribeButton [videoChannels]="[videoChannel]"></my-subscribe-button>
+        </div>
+
+        <div class="actor-lower">
+          <div class="actor-followers" i18n>{videoChannel.followersCount, plural, =1 {1 subscriber} other {{{ videoChannel.followersCount }} subscribers}}</div>
+
+          <a [routerLink]="[ '/accounts', videoChannel.ownerBy ]" i18n-title title="Go the owner account page" class="actor-owner">
+            <span class="d-inline-flex"><span i18n class="d-none d-sm-block mr-1">Created by</span>{{ videoChannel.ownerBy }}</span>
+            <img [src]="videoChannel.ownerAvatarUrl" alt="Owner account avatar" />
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="links">
-      <a i18n routerLink="videos" routerLinkActive="active" class="title-page">Videos</a>
-      <a i18n routerLink="video-playlists" routerLinkActive="active" class="title-page">Video playlists</a>
-      <a i18n routerLink="about" routerLinkActive="active" class="title-page">About</a>
+    <div class="links w-100">
+      <ng-template #linkTemplate let-item="item">
+        <a [routerLink]="item.routerLink" routerLinkActive="active" class="title-page">{{ item.label }}</a>
+      </ng-template>
+
+      <list-overflow [items]="links" [itemTemplate]="linkTemplate"></list-overflow>
     </div>
   </div>
 

@@ -1,36 +1,49 @@
 <p-table
-  [value]="following" [lazy]="true" [paginator]="true" [totalRecords]="totalRecords" [rows]="rowsPerPage"
-  [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)"
+  [value]="following" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage" [rowsPerPageOptions]="rowsPerPageOptions"
+  [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)" (onPage)="onPage($event)"
+  [showCurrentPageReport]="true" i18n-currentPageReportTemplate
+  currentPageReportTemplate="Showing {{'{first}'}} to {{'{last}'}} of {{'{totalRecords}'}} hosts"
 >
   <ng-template pTemplate="caption">
     <div class="caption">
-      <div>
+      <div class="ml-auto has-feedback has-clear">
         <input
           type="text" name="table-filter" id="table-filter" i18n-placeholder placeholder="Filter..."
-          (keyup)="onSearch($event.target.value)"
+          (keyup)="onSearch($event)"
         >
+        <a class="glyphicon glyphicon-remove-sign form-control-feedback form-control-clear" (click)="resetSearch()"></a>
+        <span class="sr-only" i18n>Clear filters</span>
       </div>
+      <a class="ml-2 follow-button" (click)="addDomainsToFollow()" (key.enter)="addDomainsToFollow()">
+        <my-global-icon iconName="add"></my-global-icon>
+        <ng-container i18n>Follow domain</ng-container>
+      </a>
     </div>
   </ng-template>
 
   <ng-template pTemplate="header">
     <tr>
       <th i18n>Host</th>
-      <th i18n pSortableColumn="state">State <p-sortIcon field="state"></p-sortIcon></th>
-      <th i18n pSortableColumn="createdAt">Created <p-sortIcon field="createdAt"></p-sortIcon></th>
-      <th i18n pSortableColumn="redundancyAllowed">Redundancy allowed <p-sortIcon field="redundancyAllowed"></p-sortIcon></th>
-      <th></th>
+      <th style="width: 100px;" i18n pSortableColumn="state">State <p-sortIcon field="state"></p-sortIcon></th>
+      <th style="width: 150px;" i18n pSortableColumn="createdAt">Created <p-sortIcon field="createdAt"></p-sortIcon></th>
+      <th style="width: 160px;" i18n pSortableColumn="redundancyAllowed">Redundancy allowed <p-sortIcon field="redundancyAllowed"></p-sortIcon></th>
+      <th style="width: 150px;"></th>
     </tr>
   </ng-template>
 
   <ng-template pTemplate="body" let-follow>
     <tr>
-      <td>{{ follow.following.host }}</td>
+      <td>
+        <a [href]="'https://' + follow.following.host" i18n-title title="Open instance in a new tab" target="_blank" rel="noopener noreferrer">
+          {{ follow.following.host }}
+          <span class="glyphicon glyphicon-new-window"></span>
+        </a>
+      </td>
 
       <td *ngIf="follow.state === 'accepted'" i18n>Accepted</td>
       <td *ngIf="follow.state === 'pending'" i18n>Pending</td>
 
-      <td>{{ follow.createdAt }}</td>
+      <td>{{ follow.createdAt | date: 'short' }}</td>
       <td>
         <my-redundancy-checkbox
           [host]="follow.following.host" [redundancyAllowed]="follow.following.hostRedundancyAllowed"
@@ -41,4 +54,23 @@
       </td>
     </tr>
   </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td colspan="6">
+        <div class="empty-table-message">
+          <ng-container *ngIf="search" i18n>No host found matching current filters.</ng-container>
+          <ng-container *ngIf="!search" i18n>Your instance is not following anyone.</ng-container>
+        </div>
+      </td>
+    </tr>
+  </ng-template>
 </p-table>
+
+<my-batch-domains-modal #batchDomainsModal i18n-action action="Follow domains" (domains)="addFollowing($event)">
+  <ng-container ngProjectAs="warning">
+    <div i18n *ngIf="httpEnabled() === false"  class="alert alert-warning">
+      It seems that you are not on a HTTPS server. Your webserver needs to have TLS activated in order to follow servers.
+    </div>
+  </ng-container>
+</my-batch-domains-modal>

@@ -53,6 +53,7 @@ import {
   MVideoPlaylistIdWithElements
 } from '../../typings/models/video/video-playlist'
 import { MThumbnail } from '../../typings/models/video/thumbnail'
+import { MAccountId, MChannelId } from '@server/typings/models'
 
 enum ScopeNames {
   AVAILABLE_FOR_LIST = 'AVAILABLE_FOR_LIST',
@@ -68,12 +69,12 @@ type AvailableForListOptions = {
   type?: VideoPlaylistType
   accountId?: number
   videoChannelId?: number
-  listMyPlaylists?: boolean,
+  listMyPlaylists?: boolean
   search?: string
 }
 
 @Scopes(() => ({
-  [ ScopeNames.WITH_THUMBNAIL ]: {
+  [ScopeNames.WITH_THUMBNAIL]: {
     include: [
       {
         model: ThumbnailModel,
@@ -81,7 +82,7 @@ type AvailableForListOptions = {
       }
     ]
   },
-  [ ScopeNames.WITH_VIDEOS_LENGTH ]: {
+  [ScopeNames.WITH_VIDEOS_LENGTH]: {
     attributes: {
       include: [
         [
@@ -91,7 +92,7 @@ type AvailableForListOptions = {
       ]
     }
   } as FindOptions,
-  [ ScopeNames.WITH_ACCOUNT ]: {
+  [ScopeNames.WITH_ACCOUNT]: {
     include: [
       {
         model: AccountModel,
@@ -99,7 +100,7 @@ type AvailableForListOptions = {
       }
     ]
   },
-  [ ScopeNames.WITH_ACCOUNT_AND_CHANNEL_SUMMARY ]: {
+  [ScopeNames.WITH_ACCOUNT_AND_CHANNEL_SUMMARY]: {
     include: [
       {
         model: AccountModel.scope(AccountScopeNames.SUMMARY),
@@ -111,7 +112,7 @@ type AvailableForListOptions = {
       }
     ]
   },
-  [ ScopeNames.WITH_ACCOUNT_AND_CHANNEL ]: {
+  [ScopeNames.WITH_ACCOUNT_AND_CHANNEL]: {
     include: [
       {
         model: AccountModel,
@@ -123,7 +124,7 @@ type AvailableForListOptions = {
       }
     ]
   },
-  [ ScopeNames.AVAILABLE_FOR_LIST ]: (options: AvailableForListOptions) => {
+  [ScopeNames.AVAILABLE_FOR_LIST]: (options: AvailableForListOptions) => {
 
     let whereActor: WhereOptions = {}
 
@@ -138,13 +139,13 @@ type AvailableForListOptions = {
       const inQueryInstanceFollow = buildServerIdsFollowedBy(options.followerActorId)
 
       whereActor = {
-        [ Op.or ]: [
+        [Op.or]: [
           {
             serverId: null
           },
           {
             serverId: {
-              [ Op.in ]: literal(inQueryInstanceFollow)
+              [Op.in]: literal(inQueryInstanceFollow)
             }
           }
         ]
@@ -172,7 +173,7 @@ type AvailableForListOptions = {
     if (options.search) {
       whereAnd.push({
         name: {
-          [ Op.iLike ]: '%' + options.search + '%'
+          [Op.iLike]: '%' + options.search + '%'
         }
       })
     }
@@ -230,7 +231,7 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
 
   @AllowNull(true)
   @Is('VideoPlaylistDescription', value => throwIfNotValid(value, isVideoPlaylistDescriptionValid, 'description', true))
-  @Column
+  @Column(DataType.STRING(CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.DESCRIPTION.max))
   description: string
 
   @AllowNull(false)
@@ -299,13 +300,13 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
 
   static listForApi (options: {
     followerActorId: number
-    start: number,
-    count: number,
-    sort: string,
-    type?: VideoPlaylistType,
-    accountId?: number,
-    videoChannelId?: number,
-    listMyPlaylists?: boolean,
+    start: number
+    count: number
+    sort: string
+    type?: VideoPlaylistType
+    accountId?: number
+    videoChannelId?: number
+    listMyPlaylists?: boolean
     search?: string
   }) {
     const query = {
@@ -340,15 +341,24 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
       })
   }
 
-  static listPublicUrlsOfForAP (accountId: number, start: number, count: number) {
+  static listPublicUrlsOfForAP (options: { account?: MAccountId, channel?: MChannelId }, start: number, count: number) {
+    const where = {
+      privacy: VideoPlaylistPrivacy.PUBLIC
+    }
+
+    if (options.account) {
+      Object.assign(where, { ownerAccountId: options.account.id })
+    }
+
+    if (options.channel) {
+      Object.assign(where, { videoChannelId: options.channel.id })
+    }
+
     const query = {
       attributes: [ 'url' ],
       offset: start,
       limit: count,
-      where: {
-        ownerAccountId: accountId,
-        privacy: VideoPlaylistPrivacy.PUBLIC
-      }
+      where
     }
 
     return VideoPlaylistModel.findAndCountAll(query)
@@ -369,7 +379,7 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
           model: VideoPlaylistElementModel.unscoped(),
           where: {
             videoId: {
-              [Op.in]: videoIds // FIXME: sequelize ANY seems broken
+              [Op.in]: videoIds
             }
           },
           required: true
@@ -522,7 +532,9 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
       updatedAt: this.updatedAt,
 
       ownerAccount: this.OwnerAccount.toFormattedSummaryJSON(),
-      videoChannel: this.VideoChannel ? this.VideoChannel.toFormattedSummaryJSON() : null
+      videoChannel: this.VideoChannel
+        ? this.VideoChannel.toFormattedSummaryJSON()
+        : null
     }
   }
 

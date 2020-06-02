@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { Notifier, ServerService } from '@app/core'
 import { ConfirmService } from '../../../core'
 import { RestPagination, RestTable, VideoBlacklistService } from '../../../shared'
@@ -17,8 +17,7 @@ import { MarkdownService } from '@app/shared/renderer'
 export class VideoBlacklistListComponent extends RestTable implements OnInit {
   blacklist: (VideoBlacklist & { reasonHtml?: string })[] = []
   totalRecords = 0
-  rowsPerPage = 10
-  sort: SortMeta = { field: 'createdAt', order: 1 }
+  sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
   listBlacklistTypeFilter: VideoBlacklistType = undefined
 
@@ -38,7 +37,7 @@ export class VideoBlacklistListComponent extends RestTable implements OnInit {
   ngOnInit () {
     this.serverService.getConfig()
         .subscribe(config => {
-          // don't filter if auto-blacklist not enabled as this will be only list
+          // don't filter if auto-blacklist is not enabled as this will be the only list
           if (config.autoBlacklist.videos.ofUsers.enabled) {
             this.listBlacklistTypeFilter = VideoBlacklistType.MANUAL
           }
@@ -52,6 +51,10 @@ export class VideoBlacklistListComponent extends RestTable implements OnInit {
         handler: videoBlacklist => this.removeVideoFromBlacklist(videoBlacklist)
       }
     ]
+  }
+
+  getIdentifier () {
+    return 'VideoBlacklistListComponent'
   }
 
   getVideoUrl (videoBlacklist: VideoBlacklist) {
@@ -87,7 +90,12 @@ export class VideoBlacklistListComponent extends RestTable implements OnInit {
   }
 
   protected loadData () {
-    this.videoBlacklistService.listBlacklist(this.pagination, this.sort, this.listBlacklistTypeFilter)
+    this.videoBlacklistService.listBlacklist({
+      pagination: this.pagination,
+      sort: this.sort,
+      search: this.search,
+      type: this.listBlacklistTypeFilter
+    })
       .subscribe(
         async resultList => {
           this.totalRecords = resultList.total

@@ -1,6 +1,10 @@
 @import '_variables';
 @import '_mixins';
 
+.peertube-container {
+  padding-bottom: 20px;
+}
+
 .main-row {
   min-height: calc(100vh - #{$header-height} - #{$footer-height} - #{$footer-margin});
 }
@@ -8,6 +12,7 @@
 .sub-header-container {
   margin-top: $header-height;
   background-color: var(--mainBackgroundColor);
+  width: 100%;
 }
 
 .header {
@@ -16,12 +21,12 @@
   top: 0;
   width: 100%;
   background-color: var(--mainBackgroundColor);
-  z-index: 1000;
+  z-index: z(header);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
   display: flex;
 
   .top-left-block {
-    z-index: 1001;
+    z-index: 1;
     height: $header-height;
     display: flex;
     align-items: center;
@@ -63,7 +68,7 @@
       }
     }
 
-    @media screen and (max-width: 500px) {
+    @media screen and (max-width: $mobile-view) {
       width: 70px;
 
       .peertube-title {
@@ -84,12 +89,4 @@
     white-space: nowrap;
     flex: 1;
   }
-}
-
-footer {
-  padding: 10px 0;
-  font-size: 11px;
-  margin-top: $footer-margin;
-  height: $footer-height;
-  justify-content: center;
 }

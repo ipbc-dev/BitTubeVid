@@ -1,17 +1,36 @@
-<div class="root" [ngStyle]="{ 'flex-direction': flexDirection }">
-  <textarea
+<div class="root" [ngClass]="{ 'maximized': isMaximized }" [ngStyle]="{ 'max-width': textareaMaxWidth }">
+  <textarea #textarea
     [(ngModel)]="content" (ngModelChange)="onModelChange()"
-    [ngClass]="classes" [ngStyle]="{ width: textareaWidth, height: textareaHeight, 'margin-right': textareaMarginRight }"
+    class="form-control" [ngClass]="classes"
+    [ngStyle]="{ height: textareaHeight }"
     [id]="name" [name]="name">
   </textarea>
 
-  <ngb-tabset *ngIf="arePreviewsDisplayed()" class="previews" type="pills">
-    <ngb-tab *ngIf="truncate !== undefined" i18n-title title="Truncated preview">
-      <ng-template ngbTabContent><div [innerHTML]="truncatedPreviewHTML"></div></ng-template>
-    </ngb-tab>
+  <div ngbNav #nav="ngbNav" class="nav-pills nav-preview">
+    <ng-container ngbNavItem *ngIf="truncate !== undefined">
+      <a ngbNavLink i18n>Truncated preview</a>
 
-    <ngb-tab i18n-title title="Complete preview">
-      <ng-template ngbTabContent><div [innerHTML]="previewHTML"></div></ng-template>
-    </ngb-tab>
-  </ngb-tabset>
+      <ng-template ngbNavContent>
+        <div [innerHTML]="truncatedPreviewHTML"></div>
+      </ng-template>
+    </ng-container>
+
+    <ng-container ngbNavItem>
+      <a ngbNavLink i18n>Complete preview</a>
+
+      <ng-template ngbNavContent>
+        <div [innerHTML]="previewHTML"></div>
+      </ng-template>
+    </ng-container>
+
+    <my-button
+      *ngIf="!isMaximized" icon="fullscreen" (click)="onMaximizeClick()"
+    ></my-button>
+
+    <my-button
+      *ngIf="isMaximized" icon="exit-fullscreen" (click)="onMaximizeClick()"
+    ></my-button>
+  </div>
+
+  <div [ngbNavOutlet]="nav"></div>
 </div>

@@ -1,5 +1,5 @@
 import * as express from 'express'
-import { getFormattedObjects, getServerActor } from '../../helpers/utils'
+import { getFormattedObjects } from '../../helpers/utils'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -21,7 +21,7 @@ import { sendUpdateActor } from '../../lib/activitypub/send'
 import { VideoChannelCreate, VideoChannelUpdate } from '../../../shared'
 import { createLocalVideoChannel, federateAllVideosOfChannel } from '../../lib/video-channel'
 import { buildNSFWFilter, createReqFiles, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
-import { setAsyncActorKeys } from '../../lib/activitypub'
+import { setAsyncActorKeys } from '../../lib/activitypub/actor'
 import { AccountModel } from '../../models/account/account'
 import { MIMETYPES } from '../../initializers/constants'
 import { logger } from '../../helpers/logger'
@@ -36,6 +36,7 @@ import { commonVideoPlaylistFiltersValidator } from '../../middlewares/validator
 import { CONFIG } from '../../initializers/config'
 import { sequelizeTypescript } from '../../initializers/database'
 import { MChannelAccountDefault } from '@server/typings/models'
+import { getServerActor } from '@server/models/application/application'
 
 const auditLogger = auditLoggerFactory('channels')
 const reqAvatarFile = createReqFiles([ 'avatarfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: CONFIG.STORAGE.TMP_DIR })
@@ -119,7 +120,7 @@ async function listVideoChannels (req: express.Request, res: express.Response) {
 }
 
 async function updateVideoChannelAvatar (req: express.Request, res: express.Response) {
-  const avatarPhysicalFile = req.files[ 'avatarfile' ][ 0 ]
+  const avatarPhysicalFile = req.files['avatarfile'][0]
   const videoChannel = res.locals.videoChannel
   const oldVideoChannelAuditKeys = new VideoChannelAuditView(videoChannel.toFormattedJSON())
 
@@ -232,7 +233,6 @@ async function getVideoChannel (req: express.Request, res: express.Response) {
 
   if (videoChannelWithVideos.isOutdated()) {
     JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'actor', url: videoChannelWithVideos.Actor.url } })
-            .catch(err => logger.error('Cannot create AP refresher job for actor %s.', videoChannelWithVideos.Actor.url, { err }))
   }
 
   return res.json(videoChannelWithVideos.toFormattedJSON())

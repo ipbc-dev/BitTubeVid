@@ -1,10 +1,14 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { UserRight } from '../../../../shared/models/users/user-right.enum'
-import { AuthService, AuthStatus, RedirectService, ServerService, ThemeService } from '../core'
-import { User } from '../shared/users/user.model'
+import { AuthService, AuthStatus, RedirectService, ServerService } from '../core'
+import { User } from '@app/shared/users/user.model'
+import { UserService } from '@app/shared/users/user.service'
 import { LanguageChooserComponent } from '@app/menu/language-chooser.component'
 import { HotkeysService } from 'angular2-hotkeys'
-import { ServerConfig } from '@shared/models'
+import { ServerConfig, VideoConstant } from '@shared/models'
+import { QuickSettingsModalComponent } from '@app/modal/quick-settings-modal.component'
+import { I18n } from '@ngx-translate/i18n-polyfill'
+import { ScreenService } from '@app/shared/misc/screen.service'
 
 @Component({
   selector: 'my-menu',
@@ -13,12 +17,17 @@ import { ServerConfig } from '@shared/models'
 })
 export class MenuComponent implements OnInit {
   @ViewChild('languageChooserModal', { static: true }) languageChooserModal: LanguageChooserComponent
+  @ViewChild('quickSettingsModal', { static: true }) quickSettingsModal: QuickSettingsModalComponent
 
   user: User
   isLoggedIn: boolean
+
   userHasAdminAccess = false
   helpVisible = false
 
+  videoLanguages: string[] = []
+
+  private languages: VideoConstant<string>[] = []
   private serverConfig: ServerConfig
   private routesPerRight: { [ role in UserRight ]?: string } = {
     [UserRight.MANAGE_USERS]: '/admin/users',
@@ -31,10 +40,25 @@ export class MenuComponent implements OnInit {
 
   constructor (
     private authService: AuthService,
+    private userService: UserService,
     private serverService: ServerService,
     private redirectService: RedirectService,
-    private hotkeysService: HotkeysService
-  ) {}
+    private hotkeysService: HotkeysService,
+    private screenService: ScreenService,
+    private i18n: I18n
+  ) { }
+
+  get isInMobileView () {
+    return this.screenService.isInMobileView()
+  }
+
+  get placement () {
+    if (this.isInMobileView) {
+      return 'left-top auto'
+    } else {
+      return 'right-top auto'
+    }
+  }
 
   ngOnInit () {
     this.serverConfig = this.serverService.getTmpConfig()
@@ -63,9 +87,35 @@ export class MenuComponent implements OnInit {
       }
     )
 
-    this.hotkeysService.cheatSheetToggle.subscribe(isOpen => {
-      this.helpVisible = isOpen
-    })
+    this.hotkeysService.cheatSheetToggle
+        .subscribe(isOpen => this.helpVisible = isOpen)
+
+    this.serverService.getVideoLanguages()
+        .subscribe(languages => {
+          this.languages = languages
+
+          this.authService.userInformationLoaded
+              .subscribe(() => this.buildUserLanguages())
+        })
+  }
+
+  get language () {
+    return this.languageChooserModal.getCurrentLanguage()
+  }
+
+  get nsfwPolicy () {
+    if (!this.user) return
+
+    switch (this.user.nsfwPolicy) {
+      case 'do_not_list':
+        return this.i18n('hide')
+
+      case 'blur':
+        return this.i18n('blur')
+
+      case 'display':
+        return this.i18n('display')
+    }
   }
 
   isRegistrationAllowed () {
@@ -115,6 +165,40 @@ export class MenuComponent implements OnInit {
 
   openHotkeysCheatSheet () {
     this.hotkeysService.cheatSheetToggle.next(!this.helpVisible)
+  }
+
+  openQuickSettings () {
+    this.quickSettingsModal.show()
+  }
+
+  toggleUseP2P () {
+    if (!this.user) return
+    this.user.webTorrentEnabled = !this.user.webTorrentEnabled
+
+    this.userService.updateMyProfile({ webTorrentEnabled: this.user.webTorrentEnabled })
+        .subscribe(() => this.authService.refreshUserInformation())
+  }
+
+  langForLocale (localeId: string) {
+    if (localeId === '_unknown') return this.i18n('Unknown')
+
+    return this.languages.find(lang => lang.id === localeId).label
+  }
+
+  private buildUserLanguages () {
+    if (!this.user) {
+      this.videoLanguages = []
+      return
+    }
+
+    if (!this.user.videoLanguages) {
+      this.videoLanguages = [ this.i18n('any language') ]
+      return
+    }
+
+    this.videoLanguages = this.user.videoLanguages
+                              .map(locale => this.langForLocale(locale))
+                              .map(value => value === undefined ? '?' : value)
   }
 
   private computeIsUserHasAdminAccess () {

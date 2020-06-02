@@ -1,23 +1,22 @@
+import { Hooks } from '@server/lib/plugins/hooks'
 import * as express from 'express'
+import { remove, writeJSON } from 'fs-extra'
 import { snakeCase } from 'lodash'
-import { ServerConfig, UserRight } from '../../../shared'
+import validator from 'validator'
+import { RegisteredExternalAuthConfig, RegisteredIdAndPassAuthConfig, ServerConfig, UserRight } from '../../../shared'
 import { About } from '../../../shared/models/server/about.model'
 import { CustomConfig } from '../../../shared/models/server/custom-config.model'
-import { isSignupAllowed, isSignupAllowedForCurrentIP } from '../../helpers/signup'
-import { CONSTRAINTS_FIELDS, DEFAULT_THEME_NAME, PEERTUBE_VERSION } from '../../initializers/constants'
-import { asyncMiddleware, authenticate, ensureUserHasRight } from '../../middlewares'
-import { customConfigUpdateValidator } from '../../middlewares/validators/config'
-import { ClientHtml } from '../../lib/client-html'
 import { auditLoggerFactory, CustomConfigAuditView, getAuditIdFromRes } from '../../helpers/audit-logger'
-import { remove, writeJSON } from 'fs-extra'
-import { getServerCommit } from '../../helpers/utils'
-import { Emailer } from '../../lib/emailer'
-import validator from 'validator'
 import { objectConverter } from '../../helpers/core-utils'
-import { CONFIG, reloadConfig } from '../../initializers/config'
+import { isSignupAllowed, isSignupAllowedForCurrentIP } from '../../helpers/signup'
+import { getServerCommit } from '../../helpers/utils'
+import { CONFIG, isEmailEnabled, reloadConfig } from '../../initializers/config'
+import { CONSTRAINTS_FIELDS, DEFAULT_THEME_NAME, PEERTUBE_VERSION } from '../../initializers/constants'
+import { ClientHtml } from '../../lib/client-html'
 import { PluginManager } from '../../lib/plugins/plugin-manager'
 import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
-import { Hooks } from '@server/lib/plugins/hooks'
+import { asyncMiddleware, authenticate, ensureUserHasRight } from '../../middlewares'
+import { customConfigUpdateValidator } from '../../middlewares/validators/config'
 
 const configRouter = express.Router()
 
@@ -31,12 +30,12 @@ configRouter.get('/',
 configRouter.get('/custom',
   authenticate,
   ensureUserHasRight(UserRight.MANAGE_CONFIGURATION),
-  asyncMiddleware(getCustomConfig)
+  getCustomConfig
 )
 configRouter.put('/custom',
   authenticate,
   ensureUserHasRight(UserRight.MANAGE_CONFIGURATION),
-  asyncMiddleware(customConfigUpdateValidator),
+  customConfigUpdateValidator,
   asyncMiddleware(updateCustomConfig)
 )
 configRouter.delete('/custom',
@@ -73,15 +72,23 @@ async function getConfig (req: express.Request, res: express.Response) {
         css: CONFIG.INSTANCE.CUSTOMIZATIONS.CSS
       }
     },
+    search: {
+      remoteUri: {
+        users: CONFIG.SEARCH.REMOTE_URI.USERS,
+        anonymous: CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+      }
+    },
     plugin: {
-      registered: getRegisteredPlugins()
+      registered: getRegisteredPlugins(),
+      registeredExternalAuths: getExternalAuthsPlugins(),
+      registeredIdAndPassAuths: getIdAndPassAuthPlugins()
     },
     theme: {
       registered: getRegisteredThemes(),
       default: defaultTheme
     },
     email: {
-      enabled: Emailer.isEnabled()
+      enabled: isEmailEnabled()
     },
     contactForm: {
       enabled: CONFIG.CONTACT_FORM.ENABLED
@@ -196,7 +203,7 @@ function getAbout (req: express.Request, res: express.Response) {
   return res.json(about).end()
 }
 
-async function getCustomConfig (req: express.Request, res: express.Response) {
+function getCustomConfig (req: express.Request, res: express.Response) {
   const data = customConfig()
 
   return res.json(data).end()
@@ -250,7 +257,7 @@ function getRegisteredThemes () {
 
 function getEnabledResolutions () {
   return Object.keys(CONFIG.TRANSCODING.RESOLUTIONS)
-               .filter(key => CONFIG.TRANSCODING.ENABLED && CONFIG.TRANSCODING.RESOLUTIONS[ key ] === true)
+               .filter(key => CONFIG.TRANSCODING.ENABLED && CONFIG.TRANSCODING.RESOLUTIONS[key] === true)
                .map(r => parseInt(r, 10))
 }
 
@@ -262,6 +269,42 @@ function getRegisteredPlugins () {
                         description: p.description,
                         clientScripts: p.clientScripts
                       }))
+}
+
+function getIdAndPassAuthPlugins () {
+  const result: RegisteredIdAndPassAuthConfig[] = []
+
+  for (const p of PluginManager.Instance.getIdAndPassAuths()) {
+    for (const auth of p.idAndPassAuths) {
+      result.push({
+        npmName: p.npmName,
+        name: p.name,
+        version: p.version,
+        authName: auth.authName,
+        weight: auth.getWeight()
+      })
+    }
+  }
+
+  return result
+}
+
+function getExternalAuthsPlugins () {
+  const result: RegisteredExternalAuthConfig[] = []
+
+  for (const p of PluginManager.Instance.getExternalAuths()) {
+    for (const auth of p.externalAuths) {
+      result.push({
+        npmName: p.npmName,
+        name: p.name,
+        version: p.version,
+        authName: auth.authName,
+        authDisplayName: auth.authDisplayName()
+      })
+    }
+  }
+
+  return result
 }
 
 // ---------------------------------------------------------------------------
@@ -340,13 +383,13 @@ function customConfig (): CustomConfig {
       allowAudioFiles: CONFIG.TRANSCODING.ALLOW_AUDIO_FILES,
       threads: CONFIG.TRANSCODING.THREADS,
       resolutions: {
-        '0p': CONFIG.TRANSCODING.RESOLUTIONS[ '0p' ],
-        '240p': CONFIG.TRANSCODING.RESOLUTIONS[ '240p' ],
-        '360p': CONFIG.TRANSCODING.RESOLUTIONS[ '360p' ],
-        '480p': CONFIG.TRANSCODING.RESOLUTIONS[ '480p' ],
-        '720p': CONFIG.TRANSCODING.RESOLUTIONS[ '720p' ],
-        '1080p': CONFIG.TRANSCODING.RESOLUTIONS[ '1080p' ],
-        '2160p': CONFIG.TRANSCODING.RESOLUTIONS[ '2160p' ]
+        '0p': CONFIG.TRANSCODING.RESOLUTIONS['0p'],
+        '240p': CONFIG.TRANSCODING.RESOLUTIONS['240p'],
+        '360p': CONFIG.TRANSCODING.RESOLUTIONS['360p'],
+        '480p': CONFIG.TRANSCODING.RESOLUTIONS['480p'],
+        '720p': CONFIG.TRANSCODING.RESOLUTIONS['720p'],
+        '1080p': CONFIG.TRANSCODING.RESOLUTIONS['1080p'],
+        '2160p': CONFIG.TRANSCODING.RESOLUTIONS['2160p']
       },
       webtorrent: {
         enabled: CONFIG.TRANSCODING.WEBTORRENT.ENABLED

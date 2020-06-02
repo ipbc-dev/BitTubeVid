@@ -13,14 +13,13 @@ import { RedundancyService } from '@app/shared/video/redundancy.service'
 @Component({
   selector: 'my-video-redundancies-list',
   templateUrl: './video-redundancies-list.component.html',
-  styleUrls: [ './video-redundancies-list.component.scss' ]
+  styleUrls: [ '../follows.component.scss', './video-redundancies-list.component.scss' ]
 })
 export class VideoRedundanciesListComponent extends RestTable implements OnInit {
   private static LOCAL_STORAGE_DISPLAY_TYPE = 'video-redundancies-list-display-type'
 
   videoRedundancies: VideoRedundancy[] = []
   totalRecords = 0
-  rowsPerPage = 10
 
   sort: SortMeta = { field: 'name', order: 1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
@@ -44,6 +43,10 @@ export class VideoRedundanciesListComponent extends RestTable implements OnInit 
     this.bytesPipe = new BytesPipe()
   }
 
+  getIdentifier () {
+    return 'VideoRedundanciesListComponent'
+  }
+
   ngOnInit () {
     this.loadSelectLocalStorage()
 
@@ -59,6 +62,12 @@ export class VideoRedundanciesListComponent extends RestTable implements OnInit 
             this.buildPieData(r)
           }
         })
+  }
+
+  getColspan () {
+    if (this.isDisplayingRemoteVideos()) return 5
+
+    return 4
   }
 
   isDisplayingRemoteVideos () {

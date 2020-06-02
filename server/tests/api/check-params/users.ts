@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import { omit } from 'lodash'
 import 'mocha'
@@ -16,12 +16,14 @@ import {
   getMyUserVideoRating,
   getUsersList,
   immutableAssign,
+  killallServers,
   makeGetRequest,
   makePostBodyRequest,
   makePutBodyRequest,
   makeUploadRequest,
   registerUser,
   removeUser,
+  reRunServer,
   ServerInfo,
   setAccessTokensToServers,
   unblockUser,
@@ -39,6 +41,7 @@ import { VideoPrivacy } from '../../../../shared/models/videos'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
 import { expect } from 'chai'
 import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
+import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
 
 describe('Test users API validators', function () {
   const path = '/api/v1/users/'
@@ -50,6 +53,9 @@ describe('Test users API validators', function () {
   let serverWithRegistrationDisabled: ServerInfo
   let userAccessToken = ''
   let moderatorAccessToken = ''
+  let emailPort: number
+  let overrideConfig: Object
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let channelId: number
 
   // ---------------------------------------------------------------
@@ -57,9 +63,14 @@ describe('Test users API validators', function () {
   before(async function () {
     this.timeout(30000)
 
+    const emails: object[] = []
+    emailPort = await MockSmtpServer.Instance.collectEmails(emails)
+
+    overrideConfig = { signup: { limit: 8 } }
+
     {
       const res = await Promise.all([
-        flushAndRunServer(1, { signup: { limit: 7 } }),
+        flushAndRunServer(1, overrideConfig),
         flushAndRunServer(2)
       ])
 
@@ -120,7 +131,7 @@ describe('Test users API validators', function () {
 
     {
       const res = await getMyUserInformation(server.url, server.accessToken)
-      channelId = res.body.videoChannels[ 0 ].id
+      channelId = res.body.videoChannels[0].id
     }
 
     {
@@ -226,6 +237,40 @@ describe('Test users API validators', function () {
       const fields = immutableAssign(baseCorrectParams, { password: 'super'.repeat(61) })
 
       await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields })
+    })
+
+    it('Should fail with empty password and no smtp configured', async function () {
+      const fields = immutableAssign(baseCorrectParams, { password: '' })
+
+      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields })
+    })
+
+    it('Should succeed with no password on a server with smtp enabled', async function () {
+      this.timeout(10000)
+
+      killallServers([ server ])
+
+      const config = immutableAssign(overrideConfig, {
+        smtp: {
+          hostname: 'localhost',
+          port: emailPort
+        }
+      })
+      await reRunServer(server, config)
+
+      const fields = immutableAssign(baseCorrectParams, {
+        password: '',
+        username: 'create_password',
+        email: 'create_password@example.com'
+      })
+
+      await makePostBodyRequest({
+        url: server.url,
+        path: path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: 200
+      })
     })
 
     it('Should fail with invalid admin flags', async function () {
@@ -529,7 +574,7 @@ describe('Test users API validators', function () {
     it('Should fail without an incorrect input file', async function () {
       const fields = {}
       const attaches = {
-        'avatarfile': join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
+        avatarfile: join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
       }
       await makeUploadRequest({ url: server.url, path: path + '/me/avatar/pick', token: server.accessToken, fields, attaches })
     })
@@ -537,7 +582,7 @@ describe('Test users API validators', function () {
     it('Should fail with a big file', async function () {
       const fields = {}
       const attaches = {
-        'avatarfile': join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+        avatarfile: join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
       }
       await makeUploadRequest({ url: server.url, path: path + '/me/avatar/pick', token: server.accessToken, fields, attaches })
     })
@@ -545,7 +590,7 @@ describe('Test users API validators', function () {
     it('Should fail with an unauthenticated user', async function () {
       const fields = {}
       const attaches = {
-        'avatarfile': join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+        avatarfile: join(__dirname, '..', '..', 'fixtures', 'avatar.png')
       }
       await makeUploadRequest({
         url: server.url,
@@ -559,7 +604,7 @@ describe('Test users API validators', function () {
     it('Should succeed with the correct params', async function () {
       const fields = {}
       const attaches = {
-        'avatarfile': join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+        avatarfile: join(__dirname, '..', '..', 'fixtures', 'avatar.png')
       }
       await makeUploadRequest({
         url: server.url,
@@ -999,7 +1044,7 @@ describe('Test users API validators', function () {
       }
       await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { targetUrl: getYoutubeVideoUrl() }))
       await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { magnetUri: getMagnetURI() }))
-      await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { torrentfile: 'video-720p.torrent' }))
+      await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { torrentfile: 'video-720p.torrent' as any }))
 
       await waitJobs([ server ])
 
@@ -1101,6 +1146,8 @@ describe('Test users API validators', function () {
   })
 
   after(async function () {
+    MockSmtpServer.Instance.kill()
+
     await cleanupTests([ server, serverWithRegistrationDisabled ])
   })
 })

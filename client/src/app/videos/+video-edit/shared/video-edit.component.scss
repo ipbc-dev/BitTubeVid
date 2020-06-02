@@ -1,5 +1,16 @@
-@import '_variables';
-@import '_mixins';
+// Bootstrap grid utilities require functions, variables and mixins
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+@import 'node_modules/bootstrap/scss/grid';
+
+@import 'variables';
+@import 'mixins';
+
+label {
+  font-weight: $font-regular;
+  font-size: 100%;
+}
 
 .peertube-select-container {
   @include peertube-select-container(auto);
@@ -17,6 +28,10 @@
 my-peertube-checkbox {
   display: block;
   margin-bottom: 1rem;
+}
+
+.nav-tabs {
+  margin-bottom: 15px;
 }
 
 .video-edit {
@@ -45,6 +60,7 @@ my-peertube-checkbox {
 
   .captions-header {
     text-align: right;
+    margin-bottom: 1rem;
 
     .create-caption {
       @include create-button;
@@ -59,6 +75,7 @@ my-peertube-checkbox {
     a.caption-entry-label {
       @include disable-default-a-behaviour;
 
+      flex-grow: 1;
       color: #000;
 
       &:hover {
@@ -105,7 +122,7 @@ my-peertube-checkbox {
     display: inline-block;
     margin-right: 25px;
 
-    color: $grey-foreground-color;
+    color: var(--greyForegroundColor);
     font-size: 15px;
   }
 
@@ -144,69 +161,37 @@ p-calendar {
   }
 }
 
-::ng-deep {
-  .root-tabset > .nav {
-    margin-bottom: 15px;
-  }
+@include ng2-tags;
 
-  .ng2-tag-input {
-    border: none !important;
-  }
+// columns for the video
+.col-video-edit {
+  @include make-col-ready();
 
-  .ng2-tags-container {
-    display: flex;
-    align-items: center;
-    border: 1px solid #C6C6C6;
-    border-radius: 3px;
-    padding: 5px !important;
-    height: max-content;
-  }
+  @include media-breakpoint-up(md) {
+    @include make-col(7);
 
-  tag-input-form {
-    input {
-      height: 30px !important;
-      font-size: 12px !important;
-
-      background-color: var(--mainBackgroundColor) !important;
-      color: var(--mainForegroundColor) !important;
+    & + .col-video-edit {
+      @include make-col(5);
     }
   }
 
-  tag {
-    background-color: $grey-background-color !important;
-    color: #000 !important;
-    border-radius: 3px !important;
-    font-size: 12px !important;
-    height: 30px !important;
-    line-height: 30px !important;
-    margin: 0 5px 0 0 !important;
-    cursor: default !important;
-    padding: 0 8px 0 10px !important;
+  @include media-breakpoint-up(xl) {
+    @include make-col(8);
 
-    div {
-      height: 100% !important;
+    & + .col-video-edit {
+      @include make-col(4);
     }
   }
+}
 
-  delete-icon {
-    cursor: pointer !important;
-    height: auto !important;
-    vertical-align: middle !important;
-    padding-left: 6px !important;
+:host-context(.expanded) {
+  .col-video-edit {
+    @include media-breakpoint-up(md) {
+      @include make-col(8);
 
-    svg {
-      position: relative;
-      top: -1px;
-      height: auto !important;
-      vertical-align: middle !important;
-
-      path  {
-        fill: $grey-foreground-color !important;
+      & + .col-video-edit {
+        @include make-col(4);
       }
-    }
-
-    &:hover {
-      transform: none !important;
     }
   }
 }

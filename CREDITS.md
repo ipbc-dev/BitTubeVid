@@ -2,67 +2,91 @@
 
  * Chocobozzz
  * Rigel Kent
+ * Filip Bengtsson
  * Felix Ableitner
  * Gérald Niel
+ * Julien Maulny
  * Jorropo
  * Josh Morel
- * Julien Maulny
+ * Kim
  * BO41
- * Filip Bengtsson
  * Francesc
+ * Phongpanot
  * Frank Sträter
- * buoyantair
+ * Tirifto
  * John Livingston
+ * Xabi
+ * buoyantair
+ * Jeff Huang
+ * kimsible
  * Attila F
+ * Balázs Úr
  * Benjamin Bouvier
  * Jan Keromnes
  * Lucas Declercq
- * Phongpanot
+ * knuxify
  * matograine
+ * Александр
  * David Libeau
  * Florent F
  * Luc Didry
  * Nassim Bounouas
+ * josé m
  * Anne-Gaelle Moulun
  * BRAINS YUM
+ * Berto Te
  * Côme 744
  * Dimitri Gilbert
  * Florent Poinsaut
  * Green-Star
  * Micah Elizabeth Scott
+ * Quentin PAGÈS
  * SVNET Libre
  * Thomas Kuntz
  * William Lahti
  * Wirebrass
  * Angristan
+ * Chris Sakura 佐倉くりす on Youtube
+ * DontUseGithub
  * GunChleoc
+ * Marcin Mikołajczak
+ * NorbiPeti
  * Okhin
  * Pierre-Alain TORET
+ * Serge Victor
  * Thomas Citharel
  * clementbrizard
  * kaiyou
+ * Alberto Teira
  * Andréas Livet
  * Andrés Maldonado
  * Aurélien Bertron
  * Hans Meiser
  * Jefferson Hernandez
  * Kemal Oktay Aktoğan
+ * Kiro
  * LecygneNoir
  * Leopere
  * Manuela Silva
- * Marcin Mikołajczak
  * Yohan Boniface
  * am97
  * anotheranonymoususer
  * dada
  * frankdelange
  * jonathanraes
+ * Al-Hassan Abdel-Raouf
  * Andrew Morgan
+ * Arne Uplegger
  * Aurélien Béranger
+ * Average Dude
  * Axel Viala
+ * Balázs Meskó
+ * BitTube
  * ButterflyOfFire
+ * Ch
  * Dashie
  * Dirk Kelly
+ * EndoGai
  * Florent Fayolle
  * Florian
  * Frank de Lange
@@ -72,17 +96,27 @@
  * Julien Lemaire
  * Lucas Teixeira
  * Lukas Winkler
+ * Manuel Viens
  * Millicent Billette
- * NorbiPeti
+ * Mondo Xíbaro
+ * Moritz Warning
+ * Nojus
  * Pierre Jaury
  * Quentin
  * Ronan
  * SerCom_KC
  * Valvin
  * ahmadsharifian
+ * framail
+ * les
+ * libertas
+ * merty
  * taziden
  * victor héry
+ * Àngel Pérez Beroy
+ * 3risian
  * Acid Chicken (硫酸鶏)
+ * Adam Adamsky
  * Adam Gauthier
  * Adam Magnier
  * Adnane Belmadiaf
@@ -99,28 +133,35 @@
  * Benjamin EWFT
  * Brad Johnson
  * Cale
- * Ch
  * Charles de Lacombe
+ * Chris Sakura 佐倉くりす on Youtube - 日本語は第二言語やけ、間違っとったら思いっきり叩いてくださいｗ つたない日本語ばっかりやけど頑張りまーす♪
+ * Christoph Geschwind
  * Claude
  * Clément Brizard
+ * David Dobryakov
  * DeeJayBro
- * DontUseGithub
  * Edouard SCHWEISGUTH
  * Edwin Alberto Amado Baron
+ * Emmanuel Pret
  * Eric Brehault
  * Erwan Croze
  * Fabio Agreles Bezerra
  * Fernandez, ReK2
+ * Florian CUNY
  * Glandos
  * Haelwenn (lanodan) Monnier
  * HesioZ
+ * ICabaleiro
+ * Ismaël Bouya
+ * Iván Cabaleiro
  * Jacen
  * Jacob
  * Jacques Foucry
  * Jagannath Bhat
  * Jarosław Maciejewski
- * Jeff Huang
  * Jessica Fairchild
+ * Jorge Silva
+ * Jos
  * Julien Le Bras
  * Knackie
  * Kody
@@ -130,16 +171,18 @@
  * LiPeK
  * Lint
  * LoveIsGrief
+ * Lucien A
  * Léo Andrès
  * ManMade-cube42
- * Manuel Viens
  * Marco Zehe
+ * Marian Steinbach
  * Markus Richter
  * Martin Trigaux
  * Mateusz Piotrowski
  * Mathieu Agopian
  * Matthieu De Beule
  * Michael Koppmann
+ * Miguel Mayol Tur
  * Mike
  * MrGiga
  * Mélanie Pin
@@ -157,8 +200,11 @@
  * Quentí
  * ROPEDE
  * Raphael
+ * Raphaël Droz
+ * Rech
  * Robin
  * Sankar
+ * Sebastian Paweł Wolski
  * Simon Gilliot
  * Simounet
  * Stefan Schüller
@@ -168,12 +214,15 @@
  * Yann Sionneau
  * Yorwba
  * Yun
+ * Yury Bulka
  * Zig-03
+ * [ Bie ] Watcharapong Suriyawan
  * anmol26s
  * augier
  * bikepunk
  * bsky
  * ctlaltdefeat
+ * dingycle
  * jomo
  * libertysoft3
  * lsde
@@ -191,6 +240,7 @@
  * tomamplius
  * tuxayo
  * victor-long
+ * xcffl
  * zacharystenger
  * ‮noisawe
  * abdhessuk
@@ -320,4 +370,5 @@
 
  * [Robbie Pearce](https://robbiepearce.com/softies/)
  * [Fork-Awesome](https://github.com/ForkAwesome/Fork-Awesome)
- * playlist add by Google
+ * `playlist add` by Material UI
+ * `language` by Aaron Jin

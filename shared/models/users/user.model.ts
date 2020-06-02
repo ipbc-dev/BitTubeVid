@@ -1,6 +1,5 @@
 import { Account } from '../actors'
 import { VideoChannel } from '../videos/channel/video-channel.model'
-import { VideoPlaylist } from '../videos/playlist/video-playlist.model'
 import { UserRole } from './user-role'
 import { NSFWPolicyType } from '../videos/nsfw-policy.type'
 import { UserNotificationSetting } from './user-notification-setting.model'
@@ -32,6 +31,11 @@ export interface User {
   videoQuotaDaily: number
   videoQuotaUsed?: number
   videoQuotaUsedDaily?: number
+  videosCount?: number
+  videoAbusesCount?: number
+  videoAbusesAcceptedCount?: number
+  videoAbusesCreatedCount?: number
+  videoCommentsCount? : number
 
   theme: string
 
@@ -46,6 +50,10 @@ export interface User {
   noWelcomeModal: boolean
 
   createdAt: Date
+
+  pluginAuth: string | null
+
+  lastLoginDate: Date | null
 }
 
 export interface MyUserSpecialPlaylist {
