@@ -199,7 +199,7 @@ describe('Test video playlists', function () {
                     playlistServer2Id2 = res.body.videoPlaylist.id;
                     playlistServer2UUID2 = res.body.videoPlaylist.uuid;
                 }
-                for (let id of [playlistServer2Id1, playlistServer2Id2]) {
+                for (const id of [playlistServer2Id1, playlistServer2Id2]) {
                     yield extra_utils_1.addVideoInPlaylist({
                         url: servers[1].url,
                         token: servers[1].accessToken,

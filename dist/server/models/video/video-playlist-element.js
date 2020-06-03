@@ -175,7 +175,9 @@ let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylis
             return video_playlist_element_model_1.VideoPlaylistElementType.DELETED;
         if (accountId && video.VideoChannel.Account.id === accountId)
             return video_playlist_element_model_1.VideoPlaylistElementType.REGULAR;
-        if (video.privacy === videos_1.VideoPrivacy.PRIVATE)
+        if (video.privacy === videos_1.VideoPrivacy.INTERNAL && accountId)
+            return video_playlist_element_model_1.VideoPlaylistElementType.REGULAR;
+        if (video.privacy === videos_1.VideoPrivacy.PRIVATE || video.privacy === videos_1.VideoPrivacy.INTERNAL)
             return video_playlist_element_model_1.VideoPlaylistElementType.PRIVATE;
         if (video.isBlacklisted() || video.isBlocked())
             return video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE;

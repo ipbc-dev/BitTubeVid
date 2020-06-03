@@ -9,13 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const application_1 = require("../models/application/application");
 const core_utils_1 = require("./core-utils");
 const logger_1 = require("./logger");
 const path_1 = require("path");
 const fs_extra_1 = require("fs-extra");
-const memoizee = require("memoizee");
 const config_1 = require("../initializers/config");
+const videos_1 = require("./custom-validators/videos");
 function deleteFileAsync(path) {
     fs_extra_1.remove(path)
         .catch(err => logger_1.logger.error('Cannot delete the file %s asynchronously.', path, { err }));
@@ -23,7 +22,7 @@ function deleteFileAsync(path) {
 exports.deleteFileAsync = deleteFileAsync;
 function generateRandomString(size) {
     return __awaiter(this, void 0, void 0, function* () {
-        const raw = yield core_utils_1.pseudoRandomBytesPromise(size);
+        const raw = yield core_utils_1.randomBytesPromise(size);
         return raw.toString('hex');
     });
 }
@@ -36,21 +35,16 @@ function getFormattedObjects(objects, objectsTotal, formattedArg) {
     };
 }
 exports.getFormattedObjects = getFormattedObjects;
-const getServerActor = memoizee(function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        const application = yield application_1.ApplicationModel.load();
-        if (!application)
-            throw Error('Could not load Application from database.');
-        const actor = application.Account.Actor;
-        actor.Account = application.Account;
-        return actor;
-    });
-}, { promise: true });
-exports.getServerActor = getServerActor;
-function generateVideoImportTmpPath(target) {
-    const id = typeof target === 'string' ? target : target.infoHash;
+function generateVideoImportTmpPath(target, extensionArg) {
+    const id = typeof target === 'string'
+        ? target
+        : target.infoHash;
+    let extension = '.mp4';
+    if (extensionArg && videos_1.isVideoFileExtnameValid(extensionArg)) {
+        extension = extensionArg;
+    }
     const hash = core_utils_1.sha256(id);
-    return path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, hash + '-import.mp4');
+    return path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, `${hash}-import${extension}`);
 }
 exports.generateVideoImportTmpPath = generateVideoImportTmpPath;
 function getSecureTorrentName(originalName) {

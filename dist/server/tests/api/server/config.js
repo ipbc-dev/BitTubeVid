@@ -15,8 +15,7 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const expect = chai.expect;
 function checkInitialConfig(server, data) {
     expect(data.instance.name).to.equal('PeerTube');
-    expect(data.instance.shortDescription).to.equal('PeerTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in the web browser ' +
-        'with WebTorrent and Angular.');
+    expect(data.instance.shortDescription).to.equal('PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.');
     expect(data.instance.description).to.equal('Welcome to this PeerTube instance!');
     expect(data.instance.terms).to.equal('No terms for now.');
     expect(data.instance.creationReason).to.be.empty;
@@ -63,7 +62,7 @@ function checkInitialConfig(server, data) {
     expect(data.followers.instance.manualApproval).to.be.false;
     expect(data.followings.instance.autoFollowBack.enabled).to.be.false;
     expect(data.followings.instance.autoFollowIndex.enabled).to.be.false;
-    expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('https://instances.joinpeertube.org');
+    expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('');
 }
 function checkUpdatedConfig(data) {
     expect(data.instance.name).to.equal('PeerTube updated');

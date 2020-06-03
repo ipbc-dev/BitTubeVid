@@ -28,6 +28,7 @@ const path_1 = require("path");
 const logger_1 = require("../../helpers/logger");
 const fs_extra_1 = require("fs-extra");
 const config_1 = require("../../initializers/config");
+const activitypub_1 = require("@server/helpers/activitypub");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_VIDEO_UUID_AND_REMOTE"] = "WITH_VIDEO_UUID_AND_REMOTE";
@@ -66,10 +67,11 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
         };
         return VideoCaptionModel_1.findOne(query);
     }
-    static insertOrReplaceLanguage(videoId, language, transaction) {
+    static insertOrReplaceLanguage(videoId, language, fileUrl, transaction) {
         const values = {
             videoId,
-            language
+            language,
+            fileUrl
         };
         return VideoCaptionModel_1.upsert(values, { transaction, returning: true })
             .then(([caption]) => caption);
@@ -116,6 +118,15 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
     removeCaptionFile() {
         return fs_extra_1.remove(config_1.CONFIG.STORAGE.CAPTIONS_DIR + this.getCaptionName());
     }
+    getFileUrl(video) {
+        if (!this.Video)
+            this.Video = video;
+        if (video.isOwned())
+            return constants_1.WEBSERVER.URL + this.getCaptionStaticPath();
+        if (this.fileUrl)
+            return this.fileUrl;
+        return activitypub_1.buildRemoteVideoBaseUrl(video, this.getCaptionStaticPath());
+    }
 };
 __decorate([
     sequelize_typescript_1.CreatedAt,
@@ -131,6 +142,11 @@ __decorate([
     sequelize_typescript_1.Column,
     __metadata("design:type", String)
 ], VideoCaptionModel.prototype, "language", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.COMMONS.URL.max)),
+    __metadata("design:type", String)
+], VideoCaptionModel.prototype, "fileUrl", void 0);
 __decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,

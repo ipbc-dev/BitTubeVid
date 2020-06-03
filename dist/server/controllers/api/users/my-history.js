@@ -13,7 +13,7 @@ const express = require("express");
 const middlewares_1 = require("../../../middlewares");
 const utils_1 = require("../../../helpers/utils");
 const user_video_history_1 = require("../../../models/account/user-video-history");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const myVideosHistoryRouter = express.Router();
 exports.myVideosHistoryRouter = myVideosHistoryRouter;
 myVideosHistoryRouter.get('/me/history/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listMyVideosHistory));
@@ -29,7 +29,7 @@ function removeUserHistory(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const beforeDate = req.body.beforeDate || null;
-        yield initializers_1.sequelizeTypescript.transaction(t => {
+        yield database_1.sequelizeTypescript.transaction(t => {
             return user_video_history_1.UserVideoHistoryModel.removeUserHistoryBefore(user, beforeDate, t);
         });
         return res.type('json').status(204).end();

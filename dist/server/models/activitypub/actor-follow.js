@@ -22,14 +22,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_1 = require("lodash");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const logger_1 = require("../../helpers/logger");
-const utils_1 = require("../../helpers/utils");
 const constants_1 = require("../../initializers/constants");
 const server_1 = require("../server/server");
-const utils_2 = require("../utils");
+const utils_1 = require("../utils");
 const actor_1 = require("./actor");
 const video_channel_1 = require("../video/video-channel");
 const account_1 = require("../account/account");
 const sequelize_1 = require("sequelize");
+const video_1 = require("@server/models/video/video");
+const application_1 = require("@server/models/application/application");
 let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends sequelize_typescript_1.Model {
     static incrementFollowerAndFollowingCount(instance, options) {
         if (instance.state !== 'accepted')
@@ -70,6 +71,16 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             if (numberOfActorFollowsRemoved)
                 logger_1.logger.info('Removed bad %d actor follows.', numberOfActorFollowsRemoved);
         });
+    }
+    static isFollowedBy(actorId, followerActorId) {
+        const query = 'SELECT 1 FROM "actorFollow" WHERE "actorId" = $followerActorId AND "targetActorId" = $actorId LIMIT 1';
+        const options = {
+            type: sequelize_1.QueryTypes.SELECT,
+            bind: { actorId, followerActorId },
+            raw: true
+        };
+        return video_1.VideoModel.sequelize.query(query, options)
+            .then(results => results.length === 1);
     }
     static loadByActorAndTarget(actorId, targetActorId, t) {
         const query = {
@@ -136,7 +147,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         };
         return ActorFollowModel_1.findOne(query)
             .then(result => {
-            if (result && result.ActorFollowing.VideoChannel) {
+            if (result === null || result === void 0 ? void 0 : result.ActorFollowing.VideoChannel) {
                 result.ActorFollowing.VideoChannel.Actor = result.ActorFollowing;
             }
             return result;
@@ -149,10 +160,10 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
                 return {
                     [sequelize_1.Op.and]: [
                         {
-                            '$preferredUsername$': t.name
+                            $preferredUsername$: t.name
                         },
                         {
-                            '$host$': t.host
+                            $host$: t.host
                         }
                     ]
                 };
@@ -160,10 +171,10 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             return {
                 [sequelize_1.Op.and]: [
                     {
-                        '$preferredUsername$': t.name
+                        $preferredUsername$: t.name
                     },
                     {
-                        '$serverId$': null
+                        $serverId$: null
                     }
                 ]
             };
@@ -217,7 +228,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             distinct: true,
             offset: start,
             limit: count,
-            order: utils_2.getFollowsSort(sort),
+            order: utils_1.getFollowsSort(sort),
             where: followWhere,
             include: [
                 {
@@ -270,7 +281,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             distinct: true,
             offset: start,
             limit: count,
-            order: utils_2.getFollowsSort(sort),
+            order: utils_1.getFollowsSort(sort),
             where: followWhere,
             include: [
                 {
@@ -310,7 +321,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             distinct: true,
             offset: start,
             limit: count,
-            order: utils_2.getSort(sort),
+            order: utils_1.getSort(sort),
             where: {
                 actorId: actorId
             },
@@ -361,7 +372,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
     }
     static keepUnfollowedInstance(hosts) {
         return __awaiter(this, void 0, void 0, function* () {
-            const followerId = (yield utils_1.getServerActor()).id;
+            const followerId = (yield application_1.getServerActor()).id;
             const query = {
                 attributes: ['id'],
                 where: {
@@ -407,7 +418,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
     }
     static getStats() {
         return __awaiter(this, void 0, void 0, function* () {
-            const serverActor = yield utils_1.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             const totalInstanceFollowing = yield ActorFollowModel_1.count({
                 where: {
                     actorId: serverActor.id
@@ -441,8 +452,8 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         return __awaiter(this, void 0, void 0, function* () {
             if (serverIds.length === 0)
                 return;
-            const me = yield utils_1.getServerActor();
-            const serverIdsString = utils_2.createSafeIn(ActorFollowModel_1, serverIds);
+            const me = yield application_1.getServerActor();
+            const serverIdsString = utils_1.createSafeIn(ActorFollowModel_1, serverIds);
             const query = `UPDATE "actorFollow" SET "score" = LEAST("score" + ${value}, ${constants_1.ACTOR_FOLLOW_SCORE.MAX}) ` +
                 'WHERE id IN (' +
                 'SELECT "actorFollow"."id" FROM "actorFollow" ' +
@@ -476,7 +487,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
                 selections.push(`"Follows"."${columnUrl}" AS "selectionUrl"`);
             selections.push('COUNT(*) AS "total"');
             const tasks = [];
-            for (let selection of selections) {
+            for (const selection of selections) {
                 let query = 'SELECT ' + selection + ' FROM "actor" ' +
                     'INNER JOIN "actorFollow" ON "actorFollow"."' + firstJoin + '" = "actor"."id" ' +
                     'INNER JOIN "actor" AS "Follows" ON "actorFollow"."' + secondJoin + '" = "Follows"."id" ' +

@@ -11,13 +11,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_utils_1 = require("../../../helpers/database-utils");
 const logger_1 = require("../../../helpers/logger");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const video_comments_1 = require("../video-comments");
 const videos_1 = require("../videos");
 const utils_1 = require("../send/utils");
 const cache_file_1 = require("../cache-file");
 const notifier_1 = require("../../notifier");
 const playlist_1 = require("../playlist");
+const redundancy_1 = require("@server/lib/redundancy");
 function processCreateActivity(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
@@ -52,9 +53,11 @@ function processCreateVideo(activity, notify) {
 }
 function processCreateCacheFile(activity, byActor) {
     return __awaiter(this, void 0, void 0, function* () {
+        if ((yield redundancy_1.isRedundancyAccepted(activity, byActor)) !== true)
+            return;
         const cacheFile = activity.object;
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: cacheFile.object });
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             return cache_file_1.createOrUpdateCacheFile(cacheFile, video, byActor, t);
         }));
         if (video.isOwned()) {

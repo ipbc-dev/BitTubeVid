@@ -27,7 +27,7 @@ describe('Test video blacklist', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const res = yield index_1.getVideosList(server.url);
             const videos = res.body.data;
-            for (let video of videos) {
+            for (const video of videos) {
                 yield index_1.addVideoToBlacklist(server.url, server.accessToken, video.id, 'super reason');
             }
         });
@@ -302,9 +302,9 @@ describe('Test video blacklist', function () {
                 this.timeout(20000);
                 index_1.killallServers([servers[0]]);
                 const config = {
-                    'auto_blacklist': {
+                    auto_blacklist: {
                         videos: {
-                            'of_users': {
+                            of_users: {
                                 enabled: true
                             }
                         }

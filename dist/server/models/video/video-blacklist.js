@@ -19,7 +19,8 @@ const videos_1 = require("../../../shared/models/videos");
 const constants_1 = require("../../initializers/constants");
 const thumbnail_1 = require("./thumbnail");
 let VideoBlacklistModel = VideoBlacklistModel_1 = class VideoBlacklistModel extends sequelize_typescript_1.Model {
-    static listForApi(start, count, sort, type) {
+    static listForApi(parameters) {
+        const { start, count, sort, search, type } = parameters;
         function buildBaseQuery() {
             return {
                 offset: start,
@@ -33,6 +34,7 @@ let VideoBlacklistModel = VideoBlacklistModel_1 = class VideoBlacklistModel exte
             {
                 model: video_1.VideoModel,
                 required: true,
+                where: utils_1.searchAttribute(search, 'name'),
                 include: [
                     {
                         model: video_channel_1.VideoChannelModel.scope({ method: [video_channel_1.ScopeNames.SUMMARY, { withAccount: true }] }),

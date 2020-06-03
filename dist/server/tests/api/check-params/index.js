@@ -25,3 +25,4 @@ require("./video-playlists");
 require("./videos");
 require("./videos-filter");
 require("./videos-history");
+require("./videos-overviews");

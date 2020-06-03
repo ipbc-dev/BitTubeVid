@@ -22,8 +22,10 @@ const addVideoCaptionValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid video id'),
     express_validator_1.param('captionLanguage').custom(video_captions_1.isVideoCaptionLanguageValid).not().isEmpty().withMessage('Should have a valid caption language'),
     express_validator_1.body('captionfile')
-        .custom((_, { req }) => video_captions_1.isVideoCaptionFile(req.files, 'captionfile')).withMessage(`This caption file is not supported or too large. Please, make sure it is under ${constants_1.CONSTRAINTS_FIELDS.VIDEO_CAPTIONS.CAPTION_FILE.FILE_SIZE} and one of the following mimetypes: `
-        + Object.keys(constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT).map(key => `${key} (${constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT[key]})`).join(', ')),
+        .custom((_, { req }) => video_captions_1.isVideoCaptionFile(req.files, 'captionfile'))
+        .withMessage('This caption file is not supported or too large. ' +
+        `Please, make sure it is under ${constants_1.CONSTRAINTS_FIELDS.VIDEO_CAPTIONS.CAPTION_FILE.FILE_SIZE} and one of the following mimetypes: ` +
+        Object.keys(constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT).map(key => `${key} (${constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT[key]})`).join(', ')),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking addVideoCaption parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))

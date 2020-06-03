@@ -63,7 +63,7 @@ function isVideoViewsValid(value) {
 }
 exports.isVideoViewsValid = isVideoViewsValid;
 function isVideoRatingTypeValid(value) {
-    return value === 'none' || lodash_1.values(constants_1.VIDEO_RATE_TYPES).indexOf(value) !== -1;
+    return value === 'none' || lodash_1.values(constants_1.VIDEO_RATE_TYPES).includes(value);
 }
 exports.isVideoRatingTypeValid = isVideoRatingTypeValid;
 function isVideoFileExtnameValid(value) {

@@ -52,17 +52,15 @@ clientsRouter.use('/client/*', (req, res) => {
 });
 clientsRouter.use('/(:language)?', middlewares_1.asyncMiddleware(serveIndexHTML));
 function serveServerTranslations(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const locale = req.params.locale;
-        const file = req.params.file;
-        if (i18n_1.is18nLocale(locale) && i18n_1.LOCALE_FILES.indexOf(file) !== -1) {
-            const completeLocale = i18n_1.getCompleteLocale(locale);
-            const completeFileLocale = i18n_1.buildFileLocale(completeLocale);
-            const path = path_1.join(__dirname, `../../../client/dist/locale/${file}.${completeFileLocale}.json`);
-            return res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
-        }
-        return res.sendStatus(404);
-    });
+    const locale = req.params.locale;
+    const file = req.params.file;
+    if (i18n_1.is18nLocale(locale) && i18n_1.LOCALE_FILES.includes(file)) {
+        const completeLocale = i18n_1.getCompleteLocale(locale);
+        const completeFileLocale = i18n_1.buildFileLocale(completeLocale);
+        const path = path_1.join(__dirname, `../../../client/dist/locale/${file}.${completeFileLocale}.json`);
+        return res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
+    }
+    return res.sendStatus(404);
 }
 function serveIndexHTML(req, res) {
     return __awaiter(this, void 0, void 0, function* () {

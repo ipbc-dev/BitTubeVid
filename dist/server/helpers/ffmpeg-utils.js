@@ -18,6 +18,53 @@ const logger_1 = require("./logger");
 const checker_before_init_1 = require("../initializers/checker-before-init");
 const fs_extra_1 = require("fs-extra");
 const config_1 = require("../initializers/config");
+const video_file_metadata_1 = require("@shared/models/videos/video-file-metadata");
+var audio;
+(function (audio) {
+    audio.get = (videoPath) => {
+        return new Promise((res, rej) => {
+            function parseFfprobe(err, data) {
+                if (err)
+                    return rej(err);
+                if ('streams' in data) {
+                    const audioStream = data.streams.find(stream => stream['codec_type'] === 'audio');
+                    if (audioStream) {
+                        return res({
+                            absolutePath: data.format.filename,
+                            audioStream
+                        });
+                    }
+                }
+                return res({ absolutePath: data.format.filename });
+            }
+            return ffmpeg.ffprobe(videoPath, parseFfprobe);
+        });
+    };
+    let bitrate;
+    (function (bitrate_1) {
+        const baseKbitrate = 384;
+        const toBits = (kbits) => kbits * 8000;
+        bitrate_1.aac = (bitrate) => {
+            switch (true) {
+                case bitrate > toBits(baseKbitrate):
+                    return baseKbitrate;
+                default:
+                    return -1;
+            }
+        };
+        bitrate_1.mp3 = (bitrate) => {
+            switch (true) {
+                case bitrate <= toBits(192):
+                    return 128;
+                case bitrate <= toBits(384):
+                    return 256;
+                default:
+                    return baseKbitrate;
+            }
+        };
+    })(bitrate = audio.bitrate || (audio.bitrate = {}));
+})(audio || (audio = {}));
+exports.audio = audio;
 function computeResolutionsToTranscode(videoFileHeight) {
     const resolutionsEnabled = [];
     const configResolutions = config_1.CONFIG.TRANSCODING.RESOLUTIONS;
@@ -54,16 +101,18 @@ function getVideoStreamCodec(path) {
             return '';
         const videoCodec = videoStream.codec_tag_string;
         const baseProfileMatrix = {
-            'High': '6400',
-            'Main': '4D40',
-            'Baseline': '42E0'
+            High: '6400',
+            Main: '4D40',
+            Baseline: '42E0'
         };
         let baseProfile = baseProfileMatrix[videoStream.profile];
         if (!baseProfile) {
             logger_1.logger.warn('Cannot get video profile codec of %s.', path, { videoStream });
             baseProfile = baseProfileMatrix['High'];
         }
-        const level = videoStream.level.toString(16);
+        let level = videoStream.level.toString(16);
+        if (level.length === 1)
+            level = `0${level}`;
         return `${videoCodec}.${baseProfile}${level}`;
     });
 }
@@ -111,28 +160,31 @@ function getVideoFileFPS(path) {
     });
 }
 exports.getVideoFileFPS = getVideoFileFPS;
-function getVideoFileBitrate(path) {
+function getMetadataFromFile(path, cb = metadata => metadata) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((res, rej) => {
             ffmpeg.ffprobe(path, (err, metadata) => {
                 if (err)
                     return rej(err);
-                return res(metadata.format.bit_rate);
+                return res(cb(new video_file_metadata_1.VideoFileMetadata(metadata)));
             });
         });
     });
 }
-exports.getVideoFileBitrate = getVideoFileBitrate;
-function getDurationFromVideoFile(path) {
-    return new Promise((res, rej) => {
-        ffmpeg.ffprobe(path, (err, metadata) => {
-            if (err)
-                return rej(err);
-            return res(Math.floor(metadata.format.duration));
-        });
+exports.getMetadataFromFile = getMetadataFromFile;
+function getVideoFileBitrate(path) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return getMetadataFromFile(path, metadata => metadata.format.bit_rate);
     });
 }
+exports.getVideoFileBitrate = getVideoFileBitrate;
+function getDurationFromVideoFile(path) {
+    return getMetadataFromFile(path, metadata => Math.floor(metadata.format.duration));
+}
 exports.getDurationFromVideoFile = getDurationFromVideoFile;
+function getVideoStreamFromFile(path) {
+    return getMetadataFromFile(path, metadata => metadata.streams.find(s => s.codec_type === 'video') || null);
+}
 function generateImageFromVideoFile(fromPath, folder, imageName, size) {
     return __awaiter(this, void 0, void 0, function* () {
         const pendingImageName = 'pending-' + imageName;
@@ -170,7 +222,7 @@ function transcode(options) {
             let command = ffmpeg(options.inputPath, { niceness: constants_1.FFMPEG_NICE.TRANSCODING })
                 .output(options.outputPath);
             if (options.type === 'quick-transcode') {
-                command = yield buildQuickTranscodeCommand(command);
+                command = buildQuickTranscodeCommand(command);
             }
             else if (options.type === 'hls') {
                 command = yield buildHLSCommand(command, options);
@@ -179,7 +231,7 @@ function transcode(options) {
                 command = yield buildAudioMergeCommand(command, options);
             }
             else if (options.type === 'only-audio') {
-                command = yield buildOnlyAudioCommand(command, options);
+                command = buildOnlyAudioCommand(command, options);
             }
             else {
                 command = yield buildx264Command(command, options);
@@ -233,13 +285,17 @@ function canDoQuickTranscode(path) {
     });
 }
 exports.canDoQuickTranscode = canDoQuickTranscode;
+function getClosestFramerateStandard(fps, type) {
+    return constants_1.VIDEO_TRANSCODING_FPS[type].slice(0)
+        .sort((a, b) => fps % a - fps % b)[0];
+}
 function buildx264Command(command, options) {
     return __awaiter(this, void 0, void 0, function* () {
         let fps = yield getVideoFileFPS(options.inputPath);
         if (options.resolution !== undefined &&
             options.resolution < constants_1.VIDEO_TRANSCODING_FPS.KEEP_ORIGIN_FPS_RESOLUTION_MIN &&
             fps > constants_1.VIDEO_TRANSCODING_FPS.AVERAGE) {
-            fps = constants_1.VIDEO_TRANSCODING_FPS.AVERAGE;
+            fps = getClosestFramerateStandard(fps, 'STANDARD');
         }
         command = yield presetH264(command, options.inputPath, options.resolution, fps);
         if (options.resolution !== undefined) {
@@ -248,7 +304,7 @@ function buildx264Command(command, options) {
         }
         if (fps) {
             if (fps > constants_1.VIDEO_TRANSCODING_FPS.MAX)
-                fps = constants_1.VIDEO_TRANSCODING_FPS.MAX;
+                fps = getClosestFramerateStandard(fps, 'HD_STANDARD');
             else if (fps < constants_1.VIDEO_TRANSCODING_FPS.MIN)
                 fps = constants_1.VIDEO_TRANSCODING_FPS.MIN;
             command = command.withFPS(fps);
@@ -268,24 +324,22 @@ function buildAudioMergeCommand(command, options) {
     });
 }
 function buildOnlyAudioCommand(command, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        command = yield presetOnlyAudio(command);
-        return command;
-    });
+    command = presetOnlyAudio(command);
+    return command;
 }
 function buildQuickTranscodeCommand(command) {
-    return __awaiter(this, void 0, void 0, function* () {
-        command = yield presetCopy(command);
-        command = command.outputOption('-map_metadata -1')
-            .outputOption('-movflags faststart');
-        return command;
-    });
+    command = presetCopy(command);
+    command = command.outputOption('-map_metadata -1')
+        .outputOption('-movflags faststart');
+    return command;
 }
 function buildHLSCommand(command, options) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoPath = getHLSVideoPath(options);
         if (options.copyCodecs)
-            command = yield presetCopy(command);
+            command = presetCopy(command);
+        else if (options.resolution === videos_1.VideoResolution.H_NOVIDEO)
+            command = presetOnlyAudio(command);
         else
             command = yield buildx264Command(command, options);
         command = command.outputOption('-hls_time 4')
@@ -313,16 +367,6 @@ function fixHLSPlaylistIfNeeded(options) {
         yield fs_extra_1.writeFile(options.outputPath, newContent);
     });
 }
-function getVideoStreamFromFile(path) {
-    return new Promise((res, rej) => {
-        ffmpeg.ffprobe(path, (err, metadata) => {
-            if (err)
-                return rej(err);
-            const videoStream = metadata.streams.find(s => s.codec_type === 'video');
-            return res(videoStream || null);
-        });
-    });
-}
 function presetH264VeryFast(command, input, resolution, fps) {
     return __awaiter(this, void 0, void 0, function* () {
         let localCommand = yield presetH264(command, input, resolution, fps);
@@ -332,52 +376,6 @@ function presetH264VeryFast(command, input, resolution, fps) {
         return localCommand;
     });
 }
-var audio;
-(function (audio) {
-    audio.get = (videoPath) => {
-        return new Promise((res, rej) => {
-            function parseFfprobe(err, data) {
-                if (err)
-                    return rej(err);
-                if ('streams' in data) {
-                    const audioStream = data.streams.find(stream => stream['codec_type'] === 'audio');
-                    if (audioStream) {
-                        return res({
-                            absolutePath: data.format.filename,
-                            audioStream
-                        });
-                    }
-                }
-                return res({ absolutePath: data.format.filename });
-            }
-            return ffmpeg.ffprobe(videoPath, parseFfprobe);
-        });
-    };
-    let bitrate;
-    (function (bitrate_1) {
-        const baseKbitrate = 384;
-        const toBits = (kbits) => kbits * 8000;
-        bitrate_1.aac = (bitrate) => {
-            switch (true) {
-                case bitrate > toBits(baseKbitrate):
-                    return baseKbitrate;
-                default:
-                    return -1;
-            }
-        };
-        bitrate_1.mp3 = (bitrate) => {
-            switch (true) {
-                case bitrate <= toBits(192):
-                    return 128;
-                case bitrate <= toBits(384):
-                    return 256;
-                default:
-                    return baseKbitrate;
-            }
-        };
-    })(bitrate = audio.bitrate || (audio.bitrate = {}));
-})(audio || (audio = {}));
-exports.audio = audio;
 function presetH264(command, input, resolution, fps) {
     return __awaiter(this, void 0, void 0, function* () {
         let localCommand = command
@@ -412,18 +410,14 @@ function presetH264(command, input, resolution, fps) {
     });
 }
 function presetCopy(command) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return command
-            .format('mp4')
-            .videoCodec('copy')
-            .audioCodec('copy');
-    });
+    return command
+        .format('mp4')
+        .videoCodec('copy')
+        .audioCodec('copy');
 }
 function presetOnlyAudio(command) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return command
-            .format('mp4')
-            .audioCodec('copy')
-            .noVideo();
-    });
+    return command
+        .format('mp4')
+        .audioCodec('copy')
+        .noVideo();
 }

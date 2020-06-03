@@ -27,7 +27,7 @@ function getStats(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const { totalLocalVideos, totalLocalVideoViews, totalVideos } = yield video_1.VideoModel.getStats();
         const { totalLocalVideoComments, totalVideoComments } = yield video_comment_1.VideoCommentModel.getStats();
-        const { totalUsers } = yield user_1.UserModel.getStats();
+        const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = yield user_1.UserModel.getStats();
         const { totalInstanceFollowers, totalInstanceFollowing } = yield actor_follow_1.ActorFollowModel.getStats();
         const { totalLocalVideoFilesSize } = yield video_file_1.VideoFileModel.getStats();
         const strategies = config_1.CONFIG.REDUNDANCY.VIDEOS.STRATEGIES
@@ -48,6 +48,9 @@ function getStats(req, res) {
             totalVideos,
             totalVideoComments,
             totalUsers,
+            totalDailyActiveUsers,
+            totalWeeklyActiveUsers,
+            totalMonthlyActiveUsers,
             totalInstanceFollowers,
             totalInstanceFollowing,
             videosRedundancy: videosRedundancyStats

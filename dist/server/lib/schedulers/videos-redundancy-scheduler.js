@@ -16,15 +16,15 @@ const video_redundancy_1 = require("../../models/redundancy/video-redundancy");
 const webtorrent_1 = require("../../helpers/webtorrent");
 const path_1 = require("path");
 const fs_extra_1 = require("fs-extra");
-const utils_1 = require("../../helpers/utils");
 const send_1 = require("../activitypub/send");
 const url_1 = require("../activitypub/url");
 const redundancy_1 = require("../redundancy");
-const activitypub_1 = require("../activitypub");
+const videos_1 = require("../activitypub/videos");
 const hls_1 = require("../hls");
 const config_1 = require("../../initializers/config");
 const video_paths_1 = require("../video-paths");
 const video_1 = require("@server/models/video/video");
+const application_1 = require("@server/models/application/application");
 function isMVideoRedundancyFileVideo(o) {
     return !!o.VideoFile;
 }
@@ -177,7 +177,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             }
             const file = fileArg;
             file.Video = video;
-            const serverActor = yield utils_1.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             logger_1.logger.info('Duplicating %s - %d in videos redundancy with "%s" strategy.', video.url, file.resolution, strategy);
             const { baseUrlHttp, baseUrlWs } = video.getBaseUrls();
             const magnetUri = webtorrent_1.generateMagnetUri(video, file, baseUrlHttp, baseUrlWs);
@@ -207,7 +207,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             }
             const playlist = playlistArg;
             playlist.Video = video;
-            const serverActor = yield utils_1.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             logger_1.logger.info('Duplicating %s streaming playlist in videos redundancy with "%s" strategy.', video.url, strategy);
             const destDirectory = path_1.join(constants_1.HLS_REDUNDANCY_DIRECTORY, video.uuid);
             yield hls_1.downloadPlaylistSegments(playlist.playlistUrl, destDirectory, constants_1.VIDEO_IMPORT_TIMEOUT);
@@ -227,7 +227,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
     extendsExpirationOf(redundancy, expiresAfterMs) {
         return __awaiter(this, void 0, void 0, function* () {
             logger_1.logger.info('Extending expiration of %s.', redundancy.url);
-            const serverActor = yield utils_1.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             redundancy.expiresOn = this.buildNewExpiration(expiresAfterMs);
             yield redundancy.save();
             yield send_1.sendUpdateCacheFile(serverActor, redundancy);
@@ -275,7 +275,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
                 syncParam: { likes: false, dislikes: false, shares: false, comments: false, thumbnail: false, refreshVideo: true },
                 fetchType: 'all'
             };
-            const { video } = yield activitypub_1.getOrCreateVideoAndAccountAndChannel(getVideoOptions);
+            const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel(getVideoOptions);
             return video;
         });
     }

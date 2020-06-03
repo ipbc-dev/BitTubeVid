@@ -16,9 +16,9 @@ const account_blocklist_1 = require("../../models/account/account-blocklist");
 const servers_1 = require("../../helpers/custom-validators/servers");
 const server_blocklist_1 = require("../../models/server/server-blocklist");
 const server_1 = require("../../models/server/server");
-const utils_2 = require("../../helpers/utils");
 const constants_1 = require("../../initializers/constants");
 const middlewares_1 = require("../../helpers/middlewares");
+const application_1 = require("@server/models/application/application");
 const blockAccountValidator = [
     express_validator_1.body('accountName').exists().withMessage('Should have an account name with host'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -63,7 +63,7 @@ const unblockAccountByServerValidator = [
             return;
         if (!(yield middlewares_1.doesAccountNameWithHostExist(req.params.accountName, res)))
             return;
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const targetAccount = res.locals.account;
         if (!(yield doesUnblockAccountExist(serverActor.Account.id, targetAccount.id, res)))
             return;
@@ -83,12 +83,7 @@ const blockServerValidator = [
                 .send({ error: 'You cannot block your own server.' })
                 .end();
         }
-        const server = yield server_1.ServerModel.loadByHost(host);
-        if (!server) {
-            return res.status(404)
-                .send({ error: 'Server host not found.' })
-                .end();
-        }
+        const server = yield server_1.ServerModel.loadOrCreateByHost(host);
         res.locals.server = server;
         return next();
     })
@@ -113,7 +108,7 @@ const unblockServerByServerValidator = [
         logger_1.logger.debug('Checking unblockServerByServerValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         if (!(yield doesUnblockServerExist(serverActor.Account.id, req.params.host, res)))
             return;
         return next();

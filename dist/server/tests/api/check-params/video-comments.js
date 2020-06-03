@@ -21,6 +21,7 @@ describe('Test video comments API validator', function () {
     let server;
     let videoUUID;
     let userAccessToken;
+    let userAccessToken2;
     let commentId;
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
@@ -38,12 +39,14 @@ describe('Test video comments API validator', function () {
                 pathComment = '/api/v1/videos/' + videoUUID + '/comments/' + commentId;
             }
             {
-                const user = {
-                    username: 'user1',
-                    password: 'my super password'
-                };
+                const user = { username: 'user1', password: 'my super password' };
                 yield extra_utils_1.createUser({ url: server.url, accessToken: server.accessToken, username: user.username, password: user.password });
                 userAccessToken = yield extra_utils_1.userLogin(server, user);
+            }
+            {
+                const user = { username: 'user2', password: 'my super password' };
+                yield extra_utils_1.createUser({ url: server.url, accessToken: server.accessToken, username: user.username, password: user.password });
+                userAccessToken2 = yield extra_utils_1.userLogin(server, user);
             }
         });
     });
@@ -128,7 +131,7 @@ describe('Test video comments API validator', function () {
         it('Should fail with a long comment', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {
-                    text: 'h'.repeat(3001)
+                    text: 'h'.repeat(10001)
                 };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: pathThread, token: server.accessToken, fields });
             });
@@ -177,7 +180,7 @@ describe('Test video comments API validator', function () {
         it('Should fail with a long comment', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {
-                    text: 'h'.repeat(3001)
+                    text: 'h'.repeat(10001)
                 };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: pathComment, token: server.accessToken, fields });
             });
@@ -230,6 +233,35 @@ describe('Test video comments API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const path = '/api/v1/videos/' + videoUUID + '/comments/124';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: 404 });
+            });
+        });
+        it('Should succeed with the same user', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                let commentToDelete;
+                {
+                    const res = yield video_comments_1.addVideoCommentThread(server.url, userAccessToken, videoUUID, 'hello');
+                    commentToDelete = res.body.comment.id;
+                }
+                const path = '/api/v1/videos/' + videoUUID + '/comments/' + commentToDelete;
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path, token: userAccessToken2, statusCodeExpected: 403 });
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 204 });
+            });
+        });
+        it('Should succeed with the owner of the video', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                let commentToDelete;
+                let anotherVideoUUID;
+                {
+                    const res = yield extra_utils_1.uploadVideo(server.url, userAccessToken, { name: 'video' });
+                    anotherVideoUUID = res.body.video.uuid;
+                }
+                {
+                    const res = yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, anotherVideoUUID, 'hello');
+                    commentToDelete = res.body.comment.id;
+                }
+                const path = '/api/v1/videos/' + anotherVideoUUID + '/comments/' + commentToDelete;
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path, token: userAccessToken2, statusCodeExpected: 403 });
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 204 });
             });
         });
         it('Should succeed with the correct parameters', function () {

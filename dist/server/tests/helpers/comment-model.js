@@ -25,7 +25,7 @@ describe('Comment model', function () {
             const comment = new CommentMock();
             comment.text = '@florian @jean@localhost:9000 @flo @another@localhost:9000 @flo2@jean.com hello ' +
                 'email@localhost:9000 coucou.com no? @chocobozzz @chocobozzz @end';
-            const result = comment.extractMentions().sort();
+            const result = comment.extractMentions().sort((a, b) => a.localeCompare(b));
             expect(result).to.deep.equal(['another', 'chocobozzz', 'end', 'flo', 'florian', 'jean']);
         });
     });

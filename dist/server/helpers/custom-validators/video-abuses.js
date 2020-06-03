@@ -16,3 +16,8 @@ function isVideoAbuseStateValid(value) {
     return misc_1.exists(value) && constants_1.VIDEO_ABUSE_STATES[value] !== undefined;
 }
 exports.isVideoAbuseStateValid = isVideoAbuseStateValid;
+function isAbuseVideoIsValid(value) {
+    return misc_1.exists(value) && (value === 'deleted' ||
+        value === 'blacklisted');
+}
+exports.isAbuseVideoIsValid = isAbuseVideoIsValid;

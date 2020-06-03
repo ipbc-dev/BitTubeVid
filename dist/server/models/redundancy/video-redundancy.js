@@ -25,7 +25,6 @@ const utils_1 = require("../utils");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
 const video_file_1 = require("../video/video-file");
-const utils_2 = require("../../helpers/utils");
 const video_1 = require("../video/video");
 const logger_1 = require("../../helpers/logger");
 const shared_1 = require("../../../shared");
@@ -36,6 +35,7 @@ const core_utils_1 = require("../../helpers/core-utils");
 const sequelize_1 = require("sequelize");
 const video_streaming_playlist_1 = require("../video/video-streaming-playlist");
 const config_1 = require("../../initializers/config");
+const application_1 = require("@server/models/application/application");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_VIDEO"] = "WITH_VIDEO";
@@ -64,7 +64,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static loadLocalByFileId(videoFileId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 where: {
                     actorId: actor.id,
@@ -76,7 +76,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static loadLocalByStreamingPlaylistId(videoStreamingPlaylistId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 where: {
                     actorId: actor.id,
@@ -104,7 +104,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static isLocalByVideoUUIDExists(uuid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 raw: true,
                 attributes: ['id'],
@@ -204,7 +204,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         return __awaiter(this, void 0, void 0, function* () {
             const expiredDate = new Date();
             expiredDate.setMilliseconds(expiredDate.getMilliseconds() - expiresAfterMs);
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 where: {
                     actorId: actor.id,
@@ -219,7 +219,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static getTotalDuplicated(strategy) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const redundancyInclude = {
                 attributes: [],
                 model: VideoRedundancyModel_1,
@@ -261,7 +261,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static listLocalExpired() {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 where: {
                     actorId: actor.id,
@@ -275,7 +275,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static listRemoteExpired() {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 where: {
                     actorId: {
@@ -292,7 +292,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static listLocalOfServer(serverId) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const buildVideoInclude = () => ({
                 model: video_1.VideoModel,
                 required: true,
@@ -336,8 +336,8 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static listForApi(options) {
         const { start, count, sort, target, strategy } = options;
-        let redundancyWhere = {};
-        let videosWhere = {};
+        const redundancyWhere = {};
+        const videosWhere = {};
         let redundancySqlSuffix = '';
         if (target === 'my-videos') {
             Object.assign(videosWhere, { remote: false });
@@ -384,7 +384,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
             include: [
                 {
                     required: false,
-                    model: video_file_1.VideoFileModel.unscoped(),
+                    model: video_file_1.VideoFileModel,
                     include: [
                         {
                             model: VideoRedundancyModel_1.unscoped(),
@@ -403,7 +403,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                             where: redundancyWhere
                         },
                         {
-                            model: video_file_1.VideoFileModel.unscoped(),
+                            model: video_file_1.VideoFileModel,
                             required: false
                         }
                     ]
@@ -421,7 +421,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static getStats(strategy) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const query = {
                 raw: true,
                 attributes: [
@@ -450,8 +450,8 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static toFormattedJSONStatic(video) {
-        let filesRedundancies = [];
-        let streamingPlaylistsRedundancies = [];
+        const filesRedundancies = [];
+        const streamingPlaylistsRedundancies = [];
         for (const file of video.VideoFiles) {
             for (const redundancy of file.RedundancyVideos) {
                 filesRedundancies.push({
@@ -529,13 +529,13 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static buildVideoFileForDuplication() {
         return __awaiter(this, void 0, void 0, function* () {
-            const actor = yield utils_2.getServerActor();
+            const actor = yield application_1.getServerActor();
             const notIn = sequelize_1.literal('(' +
                 `SELECT "videoFileId" FROM "videoRedundancy" WHERE "actorId" = ${actor.id} AND "videoFileId" IS NOT NULL` +
                 ')');
             return {
                 attributes: [],
-                model: video_file_1.VideoFileModel.unscoped(),
+                model: video_file_1.VideoFileModel,
                 required: true,
                 where: {
                     id: {

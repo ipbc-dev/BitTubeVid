@@ -1,14 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1590078011862,
-  "index": "/index.html",
+  "timestamp": 1591113961185,
+  "index": "/client/fi-FI/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
       "urls": [
-        "/index.html"
+        "/client/fi-FI/index.html",
+        "/client/fi-FI/manifest.webmanifest"
       ],
       "patterns": []
     },
@@ -22,7 +23,8 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/index.html": "30f5722f835cff1bd3e9ea3911f6a04ecc8bb0b0"
+    "/client/fi-FI/index.html": "a606d3083afef94498592576fd4914bcb67e5ac3",
+    "/client/fi-FI/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
     {

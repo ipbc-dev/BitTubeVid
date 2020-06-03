@@ -7,7 +7,7 @@ const misc_2 = require("./misc");
 const servers_1 = require("../servers");
 const core_utils_1 = require("@server/helpers/core-utils");
 function isActorEndpointsObjectValid(endpointObject) {
-    if (endpointObject && endpointObject.sharedInbox) {
+    if (endpointObject === null || endpointObject === void 0 ? void 0 : endpointObject.sharedInbox) {
         return misc_2.isActivityPubUrlValid(endpointObject.sharedInbox);
     }
     return true;
@@ -27,7 +27,7 @@ function isActorPublicKeyValid(publicKey) {
     return misc_1.exists(publicKey) &&
         typeof publicKey === 'string' &&
         publicKey.startsWith('-----BEGIN PUBLIC KEY-----') &&
-        publicKey.indexOf('-----END PUBLIC KEY-----') !== -1 &&
+        publicKey.includes('-----END PUBLIC KEY-----') &&
         validator_1.default.isLength(publicKey, constants_1.CONSTRAINTS_FIELDS.ACTORS.PUBLIC_KEY);
 }
 exports.isActorPublicKeyValid = isActorPublicKeyValid;
@@ -42,7 +42,7 @@ function isActorPrivateKeyValid(privateKey) {
     return misc_1.exists(privateKey) &&
         typeof privateKey === 'string' &&
         privateKey.startsWith('-----BEGIN RSA PRIVATE KEY-----') &&
-        privateKey.indexOf('-----END RSA PRIVATE KEY-----') !== -1 &&
+        privateKey.includes('-----END RSA PRIVATE KEY-----') &&
         validator_1.default.isLength(privateKey, constants_1.CONSTRAINTS_FIELDS.ACTORS.PRIVATE_KEY);
 }
 exports.isActorPrivateKeyValid = isActorPrivateKeyValid;
@@ -94,7 +94,6 @@ function normalizeActor(actor) {
             actor.summary = null;
         }
     }
-    return;
 }
 exports.normalizeActor = normalizeActor;
 function isValidActorHandle(handle) {

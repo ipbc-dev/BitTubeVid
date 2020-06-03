@@ -10,17 +10,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_validator_1 = require("express-validator");
+const moderation_1 = require("@server/lib/moderation");
+const hooks_1 = require("@server/lib/plugins/hooks");
 const misc_1 = require("../../../helpers/custom-validators/misc");
-const logger_1 = require("../../../helpers/logger");
-const utils_1 = require("../utils");
-const videos_1 = require("./videos");
 const video_imports_1 = require("../../../helpers/custom-validators/video-imports");
+const videos_1 = require("../../../helpers/custom-validators/videos");
 const express_utils_1 = require("../../../helpers/express-utils");
-const videos_2 = require("../../../helpers/custom-validators/videos");
+const logger_1 = require("../../../helpers/logger");
+const middlewares_1 = require("../../../helpers/middlewares");
 const config_1 = require("../../../initializers/config");
 const constants_1 = require("../../../initializers/constants");
-const middlewares_1 = require("../../../helpers/middlewares");
-const videoImportAddValidator = videos_1.getCommonVideoEditAttributes().concat([
+const utils_1 = require("../utils");
+const videos_2 = require("./videos");
+const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
     express_validator_1.body('channelId')
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.isIdValid).withMessage('Should have correct video channel id'),
@@ -29,13 +31,14 @@ const videoImportAddValidator = videos_1.getCommonVideoEditAttributes().concat([
         .custom(video_imports_1.isVideoImportTargetUrlValid).withMessage('Should have a valid video import target URL'),
     express_validator_1.body('magnetUri')
         .optional()
-        .custom(videos_2.isVideoMagnetUriValid).withMessage('Should have a valid video magnet URI'),
+        .custom(videos_1.isVideoMagnetUriValid).withMessage('Should have a valid video magnet URI'),
     express_validator_1.body('torrentfile')
-        .custom((value, { req }) => video_imports_1.isVideoImportTorrentFile(req.files)).withMessage('This torrent file is not supported or too large. Please, make sure it is of the following type: '
-        + constants_1.CONSTRAINTS_FIELDS.VIDEO_IMPORTS.TORRENT_FILE.EXTNAME.join(', ')),
+        .custom((value, { req }) => video_imports_1.isVideoImportTorrentFile(req.files))
+        .withMessage('This torrent file is not supported or too large. Please, make sure it is of the following type: ' +
+        constants_1.CONSTRAINTS_FIELDS.VIDEO_IMPORTS.TORRENT_FILE.EXTNAME.join(', ')),
     express_validator_1.body('name')
         .optional()
-        .custom(videos_2.isVideoNameValid).withMessage('Should have a valid name'),
+        .custom(videos_1.isVideoNameValid).withMessage('Should have a valid name'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoImportAddValidator parameters', { parameters: req.body });
         const user = res.locals.oauth.token.User;
@@ -62,7 +65,29 @@ const videoImportAddValidator = videos_1.getCommonVideoEditAttributes().concat([
                 .json({ error: 'Should have a magnetUri or a targetUrl or a torrent file.' })
                 .end();
         }
+        if (!(yield isImportAccepted(req, res)))
+            return express_utils_1.cleanUpReqFiles(req);
         return next();
     })
 ]);
 exports.videoImportAddValidator = videoImportAddValidator;
+function isImportAccepted(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const body = req.body;
+        const hookName = body.targetUrl
+            ? 'filter:api.video.pre-import-url.accept.result'
+            : 'filter:api.video.pre-import-torrent.accept.result';
+        const acceptParameters = {
+            videoImportBody: body,
+            user: res.locals.oauth.token.User
+        };
+        const acceptedResult = yield hooks_1.Hooks.wrapFun(moderation_1.isPreImportVideoAccepted, acceptParameters, hookName);
+        if (!acceptedResult || acceptedResult.accepted !== true) {
+            logger_1.logger.info('Refused to import video.', { acceptedResult, acceptParameters });
+            res.status(403)
+                .json({ error: acceptedResult.errorMessage || 'Refused to import video' });
+            return false;
+        }
+        return true;
+    });
+}

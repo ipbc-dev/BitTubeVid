@@ -23,13 +23,13 @@ const webfingerValidator = [
             return;
         const nameWithHost = express_utils_1.getHostWithPort(req.query.resource.substr(5));
         const [name] = nameWithHost.split('@');
-        const actor = yield actor_1.ActorModel.loadLocalByName(name);
+        const actor = yield actor_1.ActorModel.loadLocalUrlByName(name);
         if (!actor) {
             return res.status(404)
                 .send({ error: 'Actor not found' })
                 .end();
         }
-        res.locals.actorFull = actor;
+        res.locals.actorUrl = actor;
         return next();
     })
 ];

@@ -33,9 +33,9 @@ class Redis {
         this.prefix = 'redis-' + constants_1.WEBSERVER.HOST + '-';
     }
     static getRedisClientOptions() {
-        return Object.assign({}, (config_1.CONFIG.REDIS.AUTH && config_1.CONFIG.REDIS.AUTH != null) ? { password: config_1.CONFIG.REDIS.AUTH } : {}, (config_1.CONFIG.REDIS.DB) ? { db: config_1.CONFIG.REDIS.DB } : {}, (config_1.CONFIG.REDIS.HOSTNAME && config_1.CONFIG.REDIS.PORT) ?
-            { host: config_1.CONFIG.REDIS.HOSTNAME, port: config_1.CONFIG.REDIS.PORT } :
-            { path: config_1.CONFIG.REDIS.SOCKET });
+        return Object.assign({}, (config_1.CONFIG.REDIS.AUTH && config_1.CONFIG.REDIS.AUTH != null) ? { password: config_1.CONFIG.REDIS.AUTH } : {}, (config_1.CONFIG.REDIS.DB) ? { db: config_1.CONFIG.REDIS.DB } : {}, (config_1.CONFIG.REDIS.HOSTNAME && config_1.CONFIG.REDIS.PORT)
+            ? { host: config_1.CONFIG.REDIS.HOSTNAME, port: config_1.CONFIG.REDIS.PORT }
+            : { path: config_1.CONFIG.REDIS.SOCKET });
     }
     getClient() {
         return this.client;
@@ -47,6 +47,13 @@ class Redis {
         return __awaiter(this, void 0, void 0, function* () {
             const generatedString = yield utils_1.generateRandomString(32);
             yield this.setValue(this.generateResetPasswordKey(userId), generatedString, constants_1.USER_PASSWORD_RESET_LIFETIME);
+            return generatedString;
+        });
+    }
+    setCreatePasswordVerificationString(userId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const generatedString = yield utils_1.generateRandomString(32);
+            yield this.setValue(this.generateResetPasswordKey(userId), generatedString, constants_1.USER_PASSWORD_CREATE_LIFETIME);
             return generatedString;
         });
     }
@@ -92,9 +99,7 @@ class Redis {
         });
     }
     setCachedRoute(req, body, lifetime, contentType, statusCode) {
-        const cached = Object.assign({}, {
-            body: body.toString()
-        }, (contentType) ? { contentType } : null, (statusCode) ? { statusCode: statusCode.toString() } : null);
+        const cached = Object.assign({}, { body: body.toString() }, (contentType) ? { contentType } : null, (statusCode) ? { statusCode: statusCode.toString() } : null);
         return this.setObject(this.generateCachedRouteKey(req), cached, lifetime);
     }
     addVideoView(videoId) {

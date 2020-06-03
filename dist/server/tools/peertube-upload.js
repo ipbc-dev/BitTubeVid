@@ -45,7 +45,8 @@ cli_1.getServerCredentials(command)
         console.error(err);
         process.exit(-1);
     });
-});
+})
+    .catch(err => console.error(err));
 function run(url, username, password) {
     return __awaiter(this, void 0, void 0, function* () {
         const accessToken = yield extra_utils_1.getAccessToken(url, username, password);

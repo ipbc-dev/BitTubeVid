@@ -31,7 +31,13 @@ describe('Test users', function () {
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
-            server = yield extra_utils_1.flushAndRunServer(1);
+            server = yield extra_utils_1.flushAndRunServer(1, {
+                rates_limit: {
+                    login: {
+                        max: 30
+                    }
+                }
+            });
             yield login_1.setAccessTokensToServers([server]);
             yield extra_utils_1.installPlugin({ url: server.url, accessToken: server.accessToken, npmName: 'peertube-theme-background-red' });
         });
@@ -93,11 +99,11 @@ describe('Test users', function () {
         it('Should be able to login with an insensitive username', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const user = { username: 'RoOt', password: server.user.password };
-                const res = yield extra_utils_1.login(server.url, server.client, user, 200);
+                yield extra_utils_1.login(server.url, server.client, user, 200);
                 const user2 = { username: 'rOoT', password: server.user.password };
-                const res2 = yield extra_utils_1.login(server.url, server.client, user2, 200);
+                yield extra_utils_1.login(server.url, server.client, user2, 200);
                 const user3 = { username: 'ROOt', password: server.user.password };
-                const res3 = yield extra_utils_1.login(server.url, server.client, user3, 200);
+                yield extra_utils_1.login(server.url, server.client, user3, 200);
             });
         });
     });
@@ -168,10 +174,21 @@ describe('Test users', function () {
         });
     });
     describe('Logout', function () {
-        it('Should logout (revoke token)');
-        it('Should not be able to get the user information');
-        it('Should not be able to upload a video');
-        it('Should not be able to remove a video');
+        it('Should logout (revoke token)', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield login_1.logout(server.url, server.accessToken);
+            });
+        });
+        it('Should not be able to get the user information', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getMyUserInformation(server.url, server.accessToken, 401);
+            });
+        });
+        it('Should not be able to upload a video', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video' }, 401);
+            });
+        });
         it('Should not be able to rate a video', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const path = '/api/v1/videos/';
@@ -188,10 +205,18 @@ describe('Test users', function () {
                 yield extra_utils_1.makePutBodyRequest(options);
             });
         });
-        it('Should be able to login again');
+        it('Should be able to login again', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                server.accessToken = yield login_1.serverLogin(server);
+            });
+        });
         it('Should have an expired access token');
         it('Should refresh the token');
-        it('Should be able to upload a video again');
+        it('Should be able to get my user information again', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getMyUserInformation(server.url, server.accessToken);
+            });
+        });
     });
     describe('Creating a user', function () {
         it('Should be able to create a new user', function () {
@@ -215,7 +240,7 @@ describe('Test users', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const res1 = yield extra_utils_1.getMyUserInformation(server.url, accessTokenUser);
                 const userMe = res1.body;
-                const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, userMe.id);
+                const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, userMe.id, true);
                 const userGet = res2.body;
                 for (const user of [userMe, userGet]) {
                     expect(user.username).to.equal('user_1');
@@ -231,13 +256,21 @@ describe('Test users', function () {
                 expect(userGet.adminFlags).to.equal(user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST);
                 expect(userMe.specialPlaylists).to.have.lengthOf(1);
                 expect(userMe.specialPlaylists[0].type).to.equal(index_1.VideoPlaylistType.WATCH_LATER);
+                expect(userGet.videosCount).to.be.a('number');
+                expect(userGet.videosCount).to.equal(0);
+                expect(userGet.videoCommentsCount).to.be.a('number');
+                expect(userGet.videoCommentsCount).to.equal(0);
+                expect(userGet.videoAbusesCount).to.be.a('number');
+                expect(userGet.videoAbusesCount).to.equal(0);
+                expect(userGet.videoAbusesAcceptedCount).to.be.a('number');
+                expect(userGet.videoAbusesAcceptedCount).to.equal(0);
             });
         });
     });
     describe('My videos & quotas', function () {
         it('Should be able to upload a video with this user', function () {
             return __awaiter(this, void 0, void 0, function* () {
-                this.timeout(5000);
+                this.timeout(10000);
                 const videoAttributes = {
                     name: 'super user video',
                     fixture: 'video_short.webm'
@@ -284,6 +317,32 @@ describe('Test users', function () {
                 }
             });
         });
+        it('Should disable webtorrent, enable HLS, and update my quota', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                this.timeout(60000);
+                {
+                    const res = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
+                    const config = res.body;
+                    config.transcoding.webtorrent.enabled = false;
+                    config.transcoding.hls.enabled = true;
+                    config.transcoding.enabled = true;
+                    yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, config);
+                }
+                {
+                    const videoAttributes = {
+                        name: 'super user video 2',
+                        fixture: 'video_short.webm'
+                    };
+                    yield extra_utils_1.uploadVideo(server.url, accessTokenUser, videoAttributes);
+                    yield extra_utils_1.waitJobs([server]);
+                }
+                {
+                    const res = yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser);
+                    const data = res.body;
+                    expect(data.videoQuotaUsed).to.be.greaterThan(220000);
+                }
+            });
+        });
     });
     describe('Users listing', function () {
         it('Should list all the users', function () {
@@ -303,6 +362,8 @@ describe('Test users', function () {
                 expect(rootUser.username).to.equal('root');
                 expect(rootUser.email).to.equal('admin' + server.internalServerNumber + '@example.com');
                 expect(user.nsfwPolicy).to.equal('display');
+                expect(rootUser.lastLoginDate).to.exist;
+                expect(user.lastLoginDate).to.exist;
                 userId = user.id;
             });
         });
@@ -623,6 +684,7 @@ describe('Test users', function () {
         });
     });
     describe('Registering a new user', function () {
+        let user15AccessToken;
         it('Should register a new user', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const user = { displayName: 'super user 15', username: 'user_15', password: 'my super password' };
@@ -636,19 +698,19 @@ describe('Test users', function () {
                     username: 'user_15',
                     password: 'my super password'
                 };
-                accessToken = yield extra_utils_1.userLogin(server, user15);
+                user15AccessToken = yield extra_utils_1.userLogin(server, user15);
             });
         });
         it('Should have the correct display name', function () {
             return __awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.getMyUserInformation(server.url, accessToken);
+                const res = yield extra_utils_1.getMyUserInformation(server.url, user15AccessToken);
                 const user = res.body;
                 expect(user.account.displayName).to.equal('super user 15');
             });
         });
         it('Should have the correct video quota', function () {
             return __awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.getMyUserInformation(server.url, accessToken);
+                const res = yield extra_utils_1.getMyUserInformation(server.url, user15AccessToken);
                 const user = res.body;
                 expect(user.videoQuota).to.equal(5 * 1024 * 1024);
             });
@@ -665,7 +727,7 @@ describe('Test users', function () {
                     const res = yield extra_utils_1.getUsersList(server.url, server.accessToken);
                     expect(res.body.data.find(u => u.username === 'user_15')).to.not.be.undefined;
                 }
-                yield extra_utils_1.deleteMe(server.url, accessToken);
+                yield extra_utils_1.deleteMe(server.url, user15AccessToken);
                 {
                     const res = yield extra_utils_1.getUsersList(server.url, server.accessToken);
                     expect(res.body.data.find(u => u.username === 'user_15')).to.be.undefined;
@@ -674,6 +736,8 @@ describe('Test users', function () {
         });
     });
     describe('User blocking', function () {
+        let user16Id;
+        let user16AccessToken;
         it('Should block and unblock a user', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const user16 = {
@@ -686,15 +750,81 @@ describe('Test users', function () {
                     username: user16.username,
                     password: user16.password
                 });
-                const user16Id = resUser.body.user.id;
-                accessToken = yield extra_utils_1.userLogin(server, user16);
-                yield extra_utils_1.getMyUserInformation(server.url, accessToken, 200);
+                user16Id = resUser.body.user.id;
+                user16AccessToken = yield extra_utils_1.userLogin(server, user16);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 200);
                 yield extra_utils_1.blockUser(server.url, user16Id, server.accessToken);
-                yield extra_utils_1.getMyUserInformation(server.url, accessToken, 401);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 401);
                 yield extra_utils_1.userLogin(server, user16, 400);
                 yield extra_utils_1.unblockUser(server.url, user16Id, server.accessToken);
-                accessToken = yield extra_utils_1.userLogin(server, user16);
-                yield extra_utils_1.getMyUserInformation(server.url, accessToken, 200);
+                user16AccessToken = yield extra_utils_1.userLogin(server, user16);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 200);
+            });
+        });
+    });
+    describe('User stats', function () {
+        let user17Id;
+        let user17AccessToken;
+        it('Should report correct initial statistics about a user', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const user17 = {
+                    username: 'user_17',
+                    password: 'my super password'
+                };
+                const resUser = yield extra_utils_1.createUser({
+                    url: server.url,
+                    accessToken: server.accessToken,
+                    username: user17.username,
+                    password: user17.password
+                });
+                user17Id = resUser.body.user.id;
+                user17AccessToken = yield extra_utils_1.userLogin(server, user17);
+                const res = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
+                const user = res.body;
+                expect(user.videosCount).to.equal(0);
+                expect(user.videoCommentsCount).to.equal(0);
+                expect(user.videoAbusesCount).to.equal(0);
+                expect(user.videoAbusesCreatedCount).to.equal(0);
+                expect(user.videoAbusesAcceptedCount).to.equal(0);
+            });
+        });
+        it('Should report correct videos count', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const videoAttributes = {
+                    name: 'video to test user stats'
+                };
+                yield extra_utils_1.uploadVideo(server.url, user17AccessToken, videoAttributes);
+                const res1 = yield extra_utils_1.getVideosList(server.url);
+                videoId = res1.body.data.find(video => video.name === videoAttributes.name).id;
+                const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
+                const user = res2.body;
+                expect(user.videosCount).to.equal(1);
+            });
+        });
+        it('Should report correct video comments for user', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const text = 'super comment';
+                yield extra_utils_1.addVideoCommentThread(server.url, user17AccessToken, videoId, text);
+                const res = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
+                const user = res.body;
+                expect(user.videoCommentsCount).to.equal(1);
+            });
+        });
+        it('Should report correct video abuses counts', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const reason = 'my super bad reason';
+                yield extra_utils_1.reportVideoAbuse(server.url, user17AccessToken, videoId, reason);
+                const res1 = yield extra_utils_1.getVideoAbusesList({ url: server.url, token: server.accessToken });
+                const abuseId = res1.body.data[0].id;
+                const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
+                const user2 = res2.body;
+                expect(user2.videoAbusesCount).to.equal(1);
+                expect(user2.videoAbusesCreatedCount).to.equal(1);
+                const body = { state: index_1.VideoAbuseState.ACCEPTED };
+                yield extra_utils_1.updateVideoAbuse(server.url, server.accessToken, videoId, abuseId, body);
+                const res3 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
+                const user3 = res3.body;
+                expect(user3.videoAbusesAcceptedCount).to.equal(1);
             });
         });
     });

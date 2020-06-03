@@ -19,7 +19,7 @@ let UserVideoHistoryModel = UserVideoHistoryModel_1 = class UserVideoHistoryMode
         return video_1.VideoModel.listForApi({
             start,
             count,
-            sort: '-UserVideoHistories.updatedAt',
+            sort: '-"userVideoHistory"."updatedAt"',
             nsfw: null,
             includeLocalVideos: true,
             withFiles: false,

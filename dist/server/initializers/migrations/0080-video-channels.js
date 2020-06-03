@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Sequelize = require("sequelize");
-const uuidv4 = require("uuid/v4");
+const uuid_1 = require("uuid");
 function up(utils) {
     return __awaiter(this, void 0, void 0, function* () {
         const q = utils.queryInterface;
@@ -23,7 +23,7 @@ function up(utils) {
         {
             const authors = yield utils.db.Author.findAll();
             for (const author of authors) {
-                author.uuid = uuidv4();
+                author.uuid = uuid_1.v4();
                 yield author.save();
             }
         }

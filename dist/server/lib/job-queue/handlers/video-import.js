@@ -9,27 +9,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const logger_1 = require("../../../helpers/logger");
-const youtube_dl_1 = require("../../../helpers/youtube-dl");
-const video_import_1 = require("../../../models/video/video-import");
-const videos_1 = require("../../../../shared/models/videos");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
-const path_1 = require("path");
-const video_file_1 = require("../../../models/video/video-file");
-const constants_1 = require("../../../initializers/constants");
-const shared_1 = require("../../../../shared");
-const index_1 = require("../index");
-const activitypub_1 = require("../../activitypub");
-const video_1 = require("../../../models/video/video");
-const webtorrent_1 = require("../../../helpers/webtorrent");
-const utils_1 = require("../../../helpers/utils");
 const fs_extra_1 = require("fs-extra");
-const notifier_1 = require("../../notifier");
-const config_1 = require("../../../initializers/config");
-const database_1 = require("../../../initializers/database");
-const thumbnail_1 = require("../../thumbnail");
-const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.type");
+const path_1 = require("path");
+const video_1 = require("@server/helpers/video");
+const moderation_1 = require("@server/lib/moderation");
+const hooks_1 = require("@server/lib/plugins/hooks");
 const video_paths_1 = require("@server/lib/video-paths");
+const shared_1 = require("../../../../shared");
+const videos_1 = require("../../../../shared/models/videos");
+const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.type");
+const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
+const logger_1 = require("../../../helpers/logger");
+const utils_1 = require("../../../helpers/utils");
+const webtorrent_1 = require("../../../helpers/webtorrent");
+const youtube_dl_1 = require("../../../helpers/youtube-dl");
+const config_1 = require("../../../initializers/config");
+const constants_1 = require("../../../initializers/constants");
+const database_1 = require("../../../initializers/database");
+const video_2 = require("../../../models/video/video");
+const video_file_1 = require("../../../models/video/video-file");
+const video_import_1 = require("../../../models/video/video-import");
+const videos_2 = require("../../activitypub/videos");
+const notifier_1 = require("../../notifier");
+const thumbnail_1 = require("../../thumbnail");
 function processVideoImport(job) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
@@ -45,9 +47,8 @@ function processTorrentImport(job, payload) {
         logger_1.logger.info('Processing torrent video import in job %d.', job.id);
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
+            type: payload.type,
             videoImportId: payload.videoImportId,
-            downloadThumbnail: false,
-            downloadPreview: false,
             generateThumbnail: true,
             generatePreview: true
         };
@@ -63,14 +64,12 @@ function processYoutubeDLImport(job, payload) {
         logger_1.logger.info('Processing youtubeDL video import in job %d.', job.id);
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
+            type: payload.type,
             videoImportId: videoImport.id,
-            downloadThumbnail: payload.downloadThumbnail,
-            downloadPreview: payload.downloadPreview,
-            thumbnailUrl: payload.thumbnailUrl,
-            generateThumbnail: false,
-            generatePreview: false
+            generateThumbnail: payload.generateThumbnail,
+            generatePreview: payload.generatePreview
         };
-        return processFile(() => youtube_dl_1.downloadYoutubeDLVideo(videoImport.targetUrl, constants_1.VIDEO_IMPORT_TIMEOUT), videoImport, options);
+        return processFile(() => youtube_dl_1.downloadYoutubeDLVideo(videoImport.targetUrl, payload.fileExt, constants_1.VIDEO_IMPORT_TIMEOUT), videoImport, options);
     });
 }
 function getVideoImportOrDie(videoImportId) {
@@ -105,29 +104,40 @@ function processFile(downloader, videoImport, options) {
                 videoId: videoImport.videoId
             };
             videoFile = new video_file_1.VideoFileModel(videoFileData);
+            const hookName = options.type === 'youtube-dl'
+                ? 'filter:api.video.post-import-url.accept.result'
+                : 'filter:api.video.post-import-torrent.accept.result';
+            const acceptParameters = {
+                videoImport,
+                video: videoImport.Video,
+                videoFilePath: tempVideoPath,
+                videoFile,
+                user: videoImport.User
+            };
+            const acceptedResult = yield hooks_1.Hooks.wrapFun(moderation_1.isPostImportVideoAccepted, acceptParameters, hookName);
+            if (acceptedResult.accepted !== true) {
+                logger_1.logger.info('Refused imported video.', { acceptedResult, acceptParameters });
+                videoImport.state = videos_1.VideoImportState.REJECTED;
+                yield videoImport.save();
+                throw new Error(acceptedResult.errorMessage);
+            }
             const videoWithFiles = Object.assign(videoImport.Video, { VideoFiles: [videoFile], VideoStreamingPlaylists: [] });
             const videoImportWithFiles = Object.assign(videoImport, { Video: videoWithFiles });
             videoDestFile = video_paths_1.getVideoFilePath(videoImportWithFiles.Video, videoFile);
             yield fs_extra_1.move(tempVideoPath, videoDestFile);
             tempVideoPath = null;
             let thumbnailModel;
-            if (options.downloadThumbnail && options.thumbnailUrl) {
-                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(options.thumbnailUrl, videoImportWithFiles.Video, thumbnail_type_1.ThumbnailType.MINIATURE);
-            }
-            else if (options.generateThumbnail || options.downloadThumbnail) {
+            if (options.generateThumbnail) {
                 thumbnailModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, thumbnail_type_1.ThumbnailType.MINIATURE);
             }
             let previewModel;
-            if (options.downloadPreview && options.thumbnailUrl) {
-                previewModel = yield thumbnail_1.createVideoMiniatureFromUrl(options.thumbnailUrl, videoImportWithFiles.Video, thumbnail_type_1.ThumbnailType.PREVIEW);
-            }
-            else if (options.generatePreview || options.downloadPreview) {
+            if (options.generatePreview) {
                 previewModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
             }
             yield webtorrent_1.createTorrentAndSetInfoHash(videoImportWithFiles.Video, videoFile);
             const { videoImportUpdated, video } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
                 const videoImportToUpdate = videoImportWithFiles;
-                const video = yield video_1.VideoModel.load(videoImportToUpdate.videoId, t);
+                const video = yield video_2.VideoModel.load(videoImportToUpdate.videoId, t);
                 if (!video)
                     throw new Error('Video linked to import ' + videoImportToUpdate.videoId + ' does not exist anymore.');
                 const videoFileCreated = yield videoFile.save({ transaction: t });
@@ -139,8 +149,8 @@ function processFile(downloader, videoImport, options) {
                     yield video.addAndSaveThumbnail(thumbnailModel, t);
                 if (previewModel)
                     yield video.addAndSaveThumbnail(previewModel, t);
-                const videoForFederation = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
-                yield activitypub_1.federateVideoIfNeeded(videoForFederation, true, t);
+                const videoForFederation = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
+                yield videos_2.federateVideoIfNeeded(videoForFederation, true, t);
                 videoImportToUpdate.state = videos_1.VideoImportState.SUCCESS;
                 const videoImportUpdated = yield videoImportToUpdate.save({ transaction: t });
                 videoImportUpdated.Video = video;
@@ -156,12 +166,7 @@ function processFile(downloader, videoImport, options) {
                 notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
             }
             if (video.state === shared_1.VideoState.TO_TRANSCODE) {
-                const dataInput = {
-                    type: 'optimize',
-                    videoUUID: videoImportUpdated.Video.uuid,
-                    isNewVideo: true
-                };
-                yield index_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput });
+                yield video_1.addOptimizeOrMergeAudioJob(videoImportUpdated.Video, videoFile);
             }
         }
         catch (err) {
@@ -173,7 +178,9 @@ function processFile(downloader, videoImport, options) {
                 logger_1.logger.warn('Cannot cleanup files after a video import error.', { err: errUnlink });
             }
             videoImport.error = err.message;
-            videoImport.state = videos_1.VideoImportState.FAILED;
+            if (videoImport.state !== videos_1.VideoImportState.REJECTED) {
+                videoImport.state = videos_1.VideoImportState.FAILED;
+            }
             yield videoImport.save();
             notifier_1.Notifier.Instance.notifyOnFinishedVideoImport(videoImport, false);
             throw err;

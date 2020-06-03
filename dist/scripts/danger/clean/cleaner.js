@@ -4,11 +4,11 @@ const register_ts_paths_1 = require("../../../server/helpers/register-ts-paths")
 register_ts_paths_1.registerTSPaths();
 const Promise = require("bluebird");
 const rimraf = require("rimraf");
-const initializers_1 = require("../../../server/initializers");
+const database_1 = require("../../../server/initializers/database");
 const config_1 = require("../../../server/initializers/config");
-initializers_1.initDatabaseModels(true)
+database_1.initDatabaseModels(true)
     .then(() => {
-    return initializers_1.sequelizeTypescript.drop();
+    return database_1.sequelizeTypescript.drop();
 })
     .then(() => {
     console.info('Tables of %s deleted.', config_1.CONFIG.DATABASE.DBNAME);

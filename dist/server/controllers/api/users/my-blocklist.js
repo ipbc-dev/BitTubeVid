@@ -28,7 +28,13 @@ myBlocklistRouter.delete('/me/blocklist/servers/:host', middlewares_1.authentica
 function listBlockedAccounts(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
-        const resultList = yield account_blocklist_1.AccountBlocklistModel.listForApi(user.Account.id, req.query.start, req.query.count, req.query.sort);
+        const resultList = yield account_blocklist_1.AccountBlocklistModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            accountId: user.Account.id
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
@@ -50,7 +56,13 @@ function unblockAccount(req, res) {
 function listBlockedServers(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
-        const resultList = yield server_blocklist_1.ServerBlocklistModel.listForApi(user.Account.id, req.query.start, req.query.count, req.query.sort);
+        const resultList = yield server_blocklist_1.ServerBlocklistModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            accountId: user.Account.id
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

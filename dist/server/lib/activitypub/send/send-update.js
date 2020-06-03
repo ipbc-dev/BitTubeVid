@@ -18,14 +18,14 @@ const utils_1 = require("./utils");
 const audience_1 = require("../audience");
 const logger_1 = require("../../../helpers/logger");
 const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
-const utils_2 = require("../../../helpers/utils");
+const application_1 = require("@server/models/application/application");
 function sendUpdateVideo(videoArg, t, overrodeByActor) {
     return __awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
         if (!video.hasPrivacyForFederation())
             return undefined;
         logger_1.logger.info('Creating job to update video %s.', video.url);
-        const byActor = overrodeByActor ? overrodeByActor : video.VideoChannel.Account.Actor;
+        const byActor = overrodeByActor || video.VideoChannel.Account.Actor;
         const url = url_1.getUpdateActivityPubUrl(video.url, video.updatedAt.toISOString());
         if (!video.VideoCaptions) {
             video.VideoCaptions = yield video.$get('VideoCaptions', { transaction: t });
@@ -69,7 +69,7 @@ function sendUpdateCacheFile(byActor, redundancyModel) {
             const url = url_1.getUpdateActivityPubUrl(redundancyModel.url, redundancyModel.updatedAt.toISOString());
             return buildUpdateActivity(url, byActor, redundancyObject, audience);
         };
-        return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video });
+        return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video, contextType: 'CacheFile' });
     });
 }
 exports.sendUpdateCacheFile = sendUpdateCacheFile;
@@ -83,7 +83,7 @@ function sendUpdateVideoPlaylist(videoPlaylist, t) {
         const object = yield videoPlaylist.toActivityPubObject(null, t);
         const audience = audience_1.getAudience(byActor, videoPlaylist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC);
         const updateActivity = buildUpdateActivity(url, byActor, object, audience);
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const toFollowersOf = [byActor, serverActor];
         if (videoPlaylist.VideoChannel)
             toFollowersOf.push(videoPlaylist.VideoChannel.Actor);

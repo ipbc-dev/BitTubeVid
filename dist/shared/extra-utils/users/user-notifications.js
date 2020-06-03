@@ -91,11 +91,11 @@ function checkNotification(base, notificationChecker, emailNotificationFinder, c
             });
             if (checkType === 'presence') {
                 const obj = util_1.inspect(base.socketNotifications, { depth: 5 });
-                chai_1.expect(socketNotification, 'The socket notification is absent. ' + obj).to.not.be.undefined;
+                chai_1.expect(socketNotification, 'The socket notification is absent when is should be present. ' + obj).to.not.be.undefined;
             }
             else {
                 const obj = util_1.inspect(socketNotification, { depth: 5 });
-                chai_1.expect(socketNotification, 'The socket notification is present. ' + obj).to.be.undefined;
+                chai_1.expect(socketNotification, 'The socket notification is present when is should not be present. ' + obj).to.be.undefined;
             }
         }
         if (check.mail) {
@@ -104,10 +104,10 @@ function checkNotification(base, notificationChecker, emailNotificationFinder, c
                 .reverse()
                 .find(e => emailNotificationFinder(e));
             if (checkType === 'presence') {
-                chai_1.expect(email, 'The email is absent. ' + util_1.inspect(base.emails)).to.not.be.undefined;
+                chai_1.expect(email, 'The email is absent when is should be present. ' + util_1.inspect(base.emails)).to.not.be.undefined;
             }
             else {
-                chai_1.expect(email, 'The email is present. ' + util_1.inspect(email)).to.be.undefined;
+                chai_1.expect(email, 'The email is present when is should not be present. ' + util_1.inspect(email)).to.be.undefined;
             }
         }
     });
@@ -149,11 +149,11 @@ function checkNewVideoFromSubscription(base, videoName, videoUUID, type) {
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.indexOf(videoUUID) !== -1 && text.indexOf('Your subscription') !== -1;
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkNewVideoFromSubscription = checkNewVideoFromSubscription;
@@ -171,11 +171,11 @@ function checkVideoIsPublished(base, videoName, videoUUID, type) {
                 chai_1.expect(notification.video).to.satisfy(v => v === undefined || v.name !== videoName);
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.includes(videoUUID) && text.includes('Your video');
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkVideoIsPublished = checkVideoIsPublished;
@@ -194,12 +194,12 @@ function checkMyVideoImportIsFinished(base, videoName, videoUUID, url, success, 
                 chai_1.expect(notification.videoImport).to.satisfy(i => i === undefined || i.targetUrl !== url);
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             const toFind = success ? ' finished' : ' error';
             return text.includes(url) && text.includes(toFind);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkMyVideoImportIsFinished = checkMyVideoImportIsFinished;
@@ -217,11 +217,11 @@ function checkUserRegistered(base, username, type) {
                 chai_1.expect(notification).to.satisfy(n => n.type !== notificationType || n.account.name !== username);
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
-            return text.includes(' registered ') && text.includes(username);
+            return text.includes(' registered.') && text.includes(username);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkUserRegistered = checkUserRegistered;
@@ -247,11 +247,11 @@ function checkNewActorFollow(base, followType, followerName, followerDisplayName
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
-            return text.includes('Your ' + followType) && text.includes(followingDisplayName) && text.includes(followerDisplayName);
+            return text.includes(followType) && text.includes(followingDisplayName) && text.includes(followerDisplayName);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkNewActorFollow = checkNewActorFollow;
@@ -273,11 +273,11 @@ function checkNewInstanceFollower(base, followerHost, type) {
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.includes('instance has a new follower') && text.includes(followerHost);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkNewInstanceFollower = checkNewInstanceFollower;
@@ -301,11 +301,11 @@ function checkAutoInstanceFollowing(base, followerHost, followingHost, type) {
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.includes(' automatically followed a new instance') && text.includes(followingHost);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkAutoInstanceFollowing = checkAutoInstanceFollowing;
@@ -325,11 +325,11 @@ function checkCommentMention(base, uuid, commentId, threadId, byAccountDisplayNa
                 chai_1.expect(notification).to.satisfy(n => n.type !== notificationType || n.comment.id !== commentId);
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.includes(' mentioned ') && text.includes(uuid) && text.includes(byAccountDisplayName);
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkCommentMention = checkCommentMention;
@@ -352,10 +352,10 @@ function checkNewCommentOnMyVideo(base, uuid, commentId, threadId, type) {
             }
         }
         const commentUrl = `http://localhost:${base.server.port}/videos/watch/${uuid};threadId=${threadId}`;
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             return email['text'].indexOf(commentUrl) !== -1;
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
         if (type === 'presence') {
             chai_1.expect(base.emails).to.have.length.above(lastEmailCount);
             lastEmailCount = base.emails.length;
@@ -379,11 +379,11 @@ function checkNewVideoAbuseForModerators(base, videoUUID, videoName, type) {
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.indexOf(videoUUID) !== -1 && text.indexOf('abuse') !== -1;
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkNewVideoAbuseForModerators = checkNewVideoAbuseForModerators;
@@ -403,11 +403,11 @@ function checkVideoAutoBlacklistForModerators(base, videoUUID, videoName, type) 
                 });
             }
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.indexOf(videoUUID) !== -1 && email['text'].indexOf('video-auto-blacklist/list') !== -1;
         }
-        yield checkNotification(base, notificationChecker, emailFinder, type);
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
     });
 }
 exports.checkVideoAutoBlacklistForModerators = checkVideoAutoBlacklistForModerators;
@@ -422,11 +422,11 @@ function checkNewBlacklistOnMyVideo(base, videoUUID, videoName, blacklistType) {
             const video = blacklistType === 'blacklist' ? notification.videoBlacklist.video : notification.video;
             checkVideo(video, videoName, videoUUID);
         }
-        function emailFinder(email) {
+        function emailNotificationFinder(email) {
             const text = email['text'];
             return text.indexOf(videoUUID) !== -1 && text.indexOf(' ' + blacklistType) !== -1;
         }
-        yield checkNotification(base, notificationChecker, emailFinder, 'presence');
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, 'presence');
     });
 }
 exports.checkNewBlacklistOnMyVideo = checkNewBlacklistOnMyVideo;

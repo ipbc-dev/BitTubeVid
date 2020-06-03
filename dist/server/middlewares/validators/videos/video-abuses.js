@@ -11,10 +11,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_validator_1 = require("express-validator");
 const misc_1 = require("../../../helpers/custom-validators/misc");
-const logger_1 = require("../../../helpers/logger");
-const utils_1 = require("../utils");
 const video_abuses_1 = require("../../../helpers/custom-validators/video-abuses");
+const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
+const utils_1 = require("../utils");
 const videoAbuseReportValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.body('reason').custom(video_abuses_1.isVideoAbuseReasonValid).withMessage('Should have a valid reason'),
@@ -35,9 +35,7 @@ const videoAbuseGetValidator = [
         logger_1.logger.debug('Checking videoAbuseGetValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
-        if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
-            return;
-        if (!(yield middlewares_1.doesVideoAbuseExist(req.params.id, res.locals.videoAll.id, res)))
+        if (!(yield middlewares_1.doesVideoAbuseExist(req.params.id, req.params.videoId, res)))
             return;
         return next();
     })
@@ -56,11 +54,42 @@ const videoAbuseUpdateValidator = [
         logger_1.logger.debug('Checking videoAbuseUpdateValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
-        if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
-            return;
-        if (!(yield middlewares_1.doesVideoAbuseExist(req.params.id, res.locals.videoAll.id, res)))
+        if (!(yield middlewares_1.doesVideoAbuseExist(req.params.id, req.params.videoId, res)))
             return;
         return next();
     })
 ];
 exports.videoAbuseUpdateValidator = videoAbuseUpdateValidator;
+const videoAbuseListValidator = [
+    express_validator_1.query('id')
+        .optional()
+        .custom(misc_1.isIdValid).withMessage('Should have a valid id'),
+    express_validator_1.query('search')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid search'),
+    express_validator_1.query('state')
+        .optional()
+        .custom(video_abuses_1.isVideoAbuseStateValid).withMessage('Should have a valid video abuse state'),
+    express_validator_1.query('videoIs')
+        .optional()
+        .custom(video_abuses_1.isAbuseVideoIsValid).withMessage('Should have a valid "video is" attribute'),
+    express_validator_1.query('searchReporter')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid reporter search'),
+    express_validator_1.query('searchReportee')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid reportee search'),
+    express_validator_1.query('searchVideo')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid video search'),
+    express_validator_1.query('searchVideoChannel')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid video channel search'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking videoAbuseListValidator parameters', { parameters: req.body });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.videoAbuseListValidator = videoAbuseListValidator;

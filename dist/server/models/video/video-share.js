@@ -13,11 +13,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_typescript_1 = require("sequelize-typescript");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
-const account_1 = require("../account/account");
 const actor_1 = require("../activitypub/actor");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
-const video_channel_1 = require("./video-channel");
 const sequelize_1 = require("sequelize");
 var ScopeNames;
 (function (ScopeNames) {
@@ -59,63 +57,40 @@ let VideoShareModel = VideoShareModel_1 = class VideoShareModel extends sequeliz
             .then((res) => res.map(r => r.Actor));
     }
     static loadActorsWhoSharedVideosOf(actorOwnerId, t) {
+        const safeOwnerId = parseInt(actorOwnerId + '', 10);
         const query = {
-            attributes: [],
-            include: [
-                {
-                    model: actor_1.ActorModel,
-                    required: true
-                },
-                {
-                    attributes: [],
-                    model: video_1.VideoModel,
-                    required: true,
-                    include: [
-                        {
-                            attributes: [],
-                            model: video_channel_1.VideoChannelModel.unscoped(),
-                            required: true,
-                            include: [
-                                {
-                                    attributes: [],
-                                    model: account_1.AccountModel.unscoped(),
-                                    required: true,
-                                    where: {
-                                        actorId: actorOwnerId
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ],
+            where: {
+                [sequelize_1.Op.and]: [
+                    sequelize_1.literal(`EXISTS (` +
+                        `  SELECT 1 FROM "videoShare" ` +
+                        `  INNER JOIN "video" ON "videoShare"."videoId" = "video"."id" ` +
+                        `  INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ` +
+                        `  INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ` +
+                        `  WHERE "videoShare"."actorId" = "ActorModel"."id" AND "account"."actorId" = ${safeOwnerId} ` +
+                        `  LIMIT 1` +
+                        `)`)
+                ]
+            },
             transaction: t
         };
-        return VideoShareModel_1.scope(ScopeNames.FULL).findAll(query)
-            .then(res => res.map(r => r.Actor));
+        return actor_1.ActorModel.findAll(query);
     }
     static loadActorsByVideoChannel(videoChannelId, t) {
+        const safeChannelId = parseInt(videoChannelId + '', 10);
         const query = {
-            attributes: [],
-            include: [
-                {
-                    model: actor_1.ActorModel,
-                    required: true
-                },
-                {
-                    attributes: [],
-                    model: video_1.VideoModel,
-                    required: true,
-                    where: {
-                        channelId: videoChannelId
-                    }
-                }
-            ],
+            where: {
+                [sequelize_1.Op.and]: [
+                    sequelize_1.literal(`EXISTS (` +
+                        `  SELECT 1 FROM "videoShare" ` +
+                        `  INNER JOIN "video" ON "videoShare"."videoId" = "video"."id" ` +
+                        `  WHERE "videoShare"."actorId" = "ActorModel"."id" AND "video"."channelId" = ${safeChannelId} ` +
+                        `  LIMIT 1` +
+                        `)`)
+                ]
+            },
             transaction: t
         };
-        return VideoShareModel_1.scope(ScopeNames.FULL)
-            .findAll(query)
-            .then(res => res.map(r => r.Actor));
+        return actor_1.ActorModel.findAll(query);
     }
     static listAndCountByVideoId(videoId, start, count, t) {
         const query = {

@@ -23,16 +23,16 @@ const video_1 = require("../../../models/video/video");
 const video_ownership_1 = require("../../../helpers/custom-validators/video-ownership");
 const account_1 = require("../../../models/account/account");
 const search_1 = require("../../../helpers/custom-validators/search");
-const utils_2 = require("../../../helpers/utils");
 const config_1 = require("../../../initializers/config");
 const moderation_1 = require("../../../lib/moderation");
 const hooks_1 = require("../../../lib/plugins/hooks");
 const middlewares_1 = require("../../../helpers/middlewares");
 const video_2 = require("../../../helpers/video");
+const application_1 = require("@server/models/application/application");
 const videosAddValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.body('videofile')
-        .custom((value, { req }) => videos_1.isVideoFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type: '
-        + constants_1.CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')),
+        .custom((value, { req }) => videos_1.isVideoFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type: ' +
+        constants_1.CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')),
     express_validator_1.body('name').custom(videos_1.isVideoNameValid).withMessage('Should have a valid name'),
     express_validator_1.body('channelId')
         .customSanitizer(misc_1.toIntOrNull)
@@ -106,7 +106,7 @@ function checkVideoFollowConstraints(req, res, next) {
         }
         if (config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS === true)
             return next();
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         if ((yield video_1.VideoModel.checkVideoHasInstanceFollow(video.id, serverActor.id)) === true)
             return next();
         return res.status(403)
@@ -125,6 +125,8 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
                 return;
             if (!(yield middlewares_1.doesVideoExist(req.params.id, res, fetchType)))
                 return;
+            if (fetchType === 'only-immutable-attributes')
+                return next();
             const video = video_2.getVideoWithAttributes(res);
             const videoAll = video;
             if (videoAll.requiresAuth()) {
@@ -151,6 +153,19 @@ const videosGetValidator = videosCustomGetValidator('all');
 exports.videosGetValidator = videosGetValidator;
 const videosDownloadValidator = videosCustomGetValidator('all', true);
 exports.videosDownloadValidator = videosDownloadValidator;
+const videoFileMetadataGetValidator = getCommonVideoEditAttributes().concat([
+    express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
+    express_validator_1.param('videoFileId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid videoFileId'),
+    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        logger_1.logger.debug('Checking videoFileMetadataGet parameters', { parameters: req.params });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        if (!(yield middlewares_1.doesVideoFileOfVideoExist(+req.params.videoFileId, req.params.id, res)))
+            return;
+        return next();
+    })
+]);
+exports.videoFileMetadataGetValidator = videoFileMetadataGetValidator;
 const videosRemoveValidator = [
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -196,18 +211,13 @@ const videosTerminateChangeOwnershipValidator = [
             return;
         if (!video_ownership_1.checkUserCanTerminateOwnershipChange(res.locals.oauth.token.User, res.locals.videoChangeOwnership, res))
             return;
-        return next();
-    }),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         const videoChangeOwnership = res.locals.videoChangeOwnership;
-        if (videoChangeOwnership.status === shared_1.VideoChangeOwnershipStatus.WAITING) {
-            return next();
-        }
-        else {
+        if (videoChangeOwnership.status !== shared_1.VideoChangeOwnershipStatus.WAITING) {
             res.status(403)
                 .json({ error: 'Ownership already accepted or refused' });
             return;
         }
+        return next();
     })
 ];
 exports.videosTerminateChangeOwnershipValidator = videosTerminateChangeOwnershipValidator;
@@ -228,14 +238,26 @@ const videosAcceptChangeOwnershipValidator = [
     })
 ];
 exports.videosAcceptChangeOwnershipValidator = videosAcceptChangeOwnershipValidator;
+const videosOverviewValidator = [
+    express_validator_1.query('page')
+        .optional()
+        .isInt({ min: 1, max: constants_1.OVERVIEWS.VIDEOS.SAMPLES_COUNT })
+        .withMessage('Should have a valid pagination'),
+    (req, res, next) => {
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.videosOverviewValidator = videosOverviewValidator;
 function getCommonVideoEditAttributes() {
     return [
         express_validator_1.body('thumbnailfile')
-            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'thumbnailfile')).withMessage('This thumbnail file is not supported or too large. Please, make sure it is of the following type: '
-            + constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')),
+            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'thumbnailfile')).withMessage('This thumbnail file is not supported or too large. Please, make sure it is of the following type: ' +
+            constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')),
         express_validator_1.body('previewfile')
-            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'previewfile')).withMessage('This preview file is not supported or too large. Please, make sure it is of the following type: '
-            + constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')),
+            .custom((value, { req }) => videos_1.isVideoImage(req.files, 'previewfile')).withMessage('This preview file is not supported or too large. Please, make sure it is of the following type: ' +
+            constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')),
         express_validator_1.body('category')
             .optional()
             .customSanitizer(misc_1.toIntOrNull)

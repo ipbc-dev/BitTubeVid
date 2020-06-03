@@ -13,7 +13,7 @@ const express = require("express");
 const lodash_1 = require("lodash");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const video_comment_1 = require("../../../lib/video-comment");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
@@ -80,7 +80,7 @@ function listVideoThreadComments(req, res) {
 function addVideoCommentThread(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoCommentInfo = req.body;
-        const comment = yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const comment = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const account = yield account_1.AccountModel.load(res.locals.oauth.token.User.Account.id, t);
             return video_comment_1.createVideoComment({
                 text: videoCommentInfo.text,
@@ -100,7 +100,7 @@ function addVideoCommentThread(req, res) {
 function addVideoCommentReply(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoCommentInfo = req.body;
-        const comment = yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const comment = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const account = yield account_1.AccountModel.load(res.locals.oauth.token.User.Account.id, t);
             return video_comment_1.createVideoComment({
                 text: videoCommentInfo.text,
@@ -119,7 +119,7 @@ function removeVideoComment(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoCommentInstance = res.locals.videoCommentFull;
         const videoCommentInstanceBefore = lodash_1.cloneDeep(videoCommentInstance);
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             if (videoCommentInstance.isOwned() || videoCommentInstance.Video.isOwned()) {
                 yield send_1.sendDeleteVideoComment(videoCommentInstance, t);
             }

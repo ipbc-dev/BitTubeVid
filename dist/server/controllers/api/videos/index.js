@@ -18,7 +18,7 @@ const audit_logger_1 = require("../../../helpers/audit-logger");
 const utils_1 = require("../../../helpers/utils");
 const video_blacklist_1 = require("../../../lib/video-blacklist");
 const constants_1 = require("../../../initializers/constants");
-const activitypub_1 = require("../../../lib/activitypub");
+const videos_1 = require("../../../lib/activitypub/videos");
 const job_queue_1 = require("../../../lib/job-queue");
 const redis_1 = require("../../../lib/redis");
 const middlewares_1 = require("../../../middlewares");
@@ -46,6 +46,11 @@ const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.typ
 const hooks_1 = require("../../../lib/plugins/hooks");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("@server/lib/video-paths");
+const toInt_1 = require("validator/lib/toInt");
+const video_2 = require("@server/helpers/video");
+const application_1 = require("@server/models/application/application");
+const share_1 = require("@server/lib/activitypub/share");
+const url_1 = require("@server/lib/activitypub/url");
 const auditLogger = audit_logger_1.auditLoggerFactory('videos');
 const videosRouter = express.Router();
 exports.videosRouter = videosRouter;
@@ -74,8 +79,9 @@ videosRouter.get('/', middlewares_1.paginationValidator, middlewares_1.videosSor
 videosRouter.put('/:id', middlewares_1.authenticate, reqVideoFileUpdate, middlewares_1.asyncMiddleware(middlewares_1.videosUpdateValidator), middlewares_1.asyncRetryTransactionMiddleware(updateVideo));
 videosRouter.post('/upload', middlewares_1.authenticate, reqVideoFileAdd, middlewares_1.asyncMiddleware(middlewares_1.videosAddValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideo));
 videosRouter.get('/:id/description', middlewares_1.asyncMiddleware(middlewares_1.videosGetValidator), middlewares_1.asyncMiddleware(getVideoDescription));
+videosRouter.get('/:id/metadata/:videoFileId', middlewares_1.asyncMiddleware(middlewares_1.videoFileMetadataGetValidator), middlewares_1.asyncMiddleware(getVideoFileMetadata));
 videosRouter.get('/:id', middlewares_1.optionalAuthenticate, middlewares_1.asyncMiddleware(middlewares_1.videosCustomGetValidator('only-video-with-rights')), middlewares_1.asyncMiddleware(middlewares_1.checkVideoFollowConstraints), middlewares_1.asyncMiddleware(getVideo));
-videosRouter.post('/:id/views', middlewares_1.asyncMiddleware(middlewares_1.videosGetValidator), middlewares_1.asyncMiddleware(viewVideo));
+videosRouter.post('/:id/views', middlewares_1.asyncMiddleware(middlewares_1.videosCustomGetValidator('only-immutable-attributes')), middlewares_1.asyncMiddleware(viewVideo));
 videosRouter.delete('/:id', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.videosRemoveValidator), middlewares_1.asyncRetryTransactionMiddleware(removeVideo));
 function listVideoCategories(req, res) {
     res.json(constants_1.VIDEO_CATEGORIES);
@@ -116,11 +122,12 @@ function addVideo(req, res) {
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
         const video = new video_1.VideoModel(videoData);
-        video.url = activitypub_1.getVideoActivityPubUrl(video);
+        video.url = url_1.getVideoActivityPubUrl(video);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
             size: videoPhysicalFile.size,
-            videoStreamingPlaylistId: null
+            videoStreamingPlaylistId: null,
+            metadata: yield ffmpeg_utils_1.getMetadataFromFile(videoPhysicalFile.path)
         });
         if (videoFile.isAudio()) {
             videoFile.resolution = constants_1.DEFAULT_AUDIO_RESOLUTION;
@@ -170,30 +177,14 @@ function addVideo(req, res) {
                 isNew: true,
                 transaction: t
             });
-            yield activitypub_1.federateVideoIfNeeded(video, true, t);
+            yield videos_1.federateVideoIfNeeded(video, true, t);
             auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoCreated.toFormattedDetailsJSON()));
             logger_1.logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
             return { videoCreated };
         }));
         notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
         if (video.state === shared_1.VideoState.TO_TRANSCODE) {
-            let dataInput;
-            if (videoFile.isAudio()) {
-                dataInput = {
-                    type: 'merge-audio',
-                    resolution: constants_1.DEFAULT_AUDIO_RESOLUTION,
-                    videoUUID: videoCreated.uuid,
-                    isNewVideo: true
-                };
-            }
-            else {
-                dataInput = {
-                    type: 'optimize',
-                    videoUUID: videoCreated.uuid,
-                    isNewVideo: true
-                };
-            }
-            yield job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: dataInput });
+            yield video_2.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
         }
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
         return res.json({
@@ -268,7 +259,7 @@ function updateVideo(req, res) {
                     yield videoInstanceUpdated.$set('VideoChannel', res.locals.videoChannel, { transaction: t });
                     videoInstanceUpdated.VideoChannel = res.locals.videoChannel;
                     if (hadPrivacyForFederation === true)
-                        yield activitypub_1.changeVideoChannelShare(videoInstanceUpdated, oldVideoChannel, t);
+                        yield share_1.changeVideoChannelShare(videoInstanceUpdated, oldVideoChannel, t);
                 }
                 if (videoInfoToUpdate.scheduleUpdate) {
                     yield schedule_video_update_1.ScheduleVideoUpdateModel.upsert({
@@ -287,7 +278,7 @@ function updateVideo(req, res) {
                     isNew: false,
                     transaction: t
                 });
-                yield activitypub_1.federateVideoIfNeeded(videoInstanceUpdated, isNewVideo, t);
+                yield videos_1.federateVideoIfNeeded(videoInstanceUpdated, isNewVideo, t);
                 auditLogger.update(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoInstanceUpdated.toFormattedDetailsJSON()), oldVideoAuditView);
                 logger_1.logger.info('Video with name %s and uuid %s updated.', videoInstance.name, videoInstance.uuid);
                 return videoInstanceUpdated;
@@ -309,15 +300,14 @@ function getVideo(req, res) {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : null;
         const video = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
         if (video.isOutdated()) {
-            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: video.url } })
-                .catch(err => logger_1.logger.error('Cannot create AP refresher job for video %s.', video.url, { err }));
+            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: video.url } });
         }
         return res.json(video.toFormattedDetailsJSON());
     });
 }
 function viewVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const videoInstance = res.locals.videoAll;
+        const videoInstance = res.locals.onlyImmutableVideo;
         const ip = req.ip;
         const exists = yield redis_1.Redis.Instance.doesVideoIPViewExist(ip, videoInstance.uuid);
         if (exists) {
@@ -328,7 +318,7 @@ function viewVideo(req, res) {
             redis_1.Redis.Instance.addVideoView(videoInstance.id),
             redis_1.Redis.Instance.setIPVideoView(ip, videoInstance.uuid)
         ]);
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         yield send_view_1.sendView(serverActor, videoInstance, undefined);
         hooks_1.Hooks.runAction('action:api.video.viewed', { video: videoInstance, ip });
         return res.status(204).end();
@@ -342,9 +332,15 @@ function getVideoDescription(req, res) {
             description = videoInstance.description;
         }
         else {
-            description = yield activitypub_1.fetchRemoteVideoDescription(videoInstance);
+            description = yield videos_1.fetchRemoteVideoDescription(videoInstance);
         }
         return res.json({ description });
+    });
+}
+function getVideoFileMetadata(req, res) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const videoFile = yield video_file_1.VideoFileModel.loadWithMetadata(toInt_1.default(req.params.videoFileId));
+        return res.json(videoFile.metadata);
     });
 }
 function listVideos(req, res) {

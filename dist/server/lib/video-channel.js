@@ -9,15 +9,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const uuidv4 = require("uuid/v4");
+const uuid_1 = require("uuid");
 const video_channel_1 = require("../models/video/video-channel");
-const activitypub_1 = require("./activitypub");
+const actor_1 = require("./activitypub/actor");
 const video_1 = require("../models/video/video");
+const url_1 = require("./activitypub/url");
+const videos_1 = require("./activitypub/videos");
 function createLocalVideoChannel(videoChannelInfo, account, t) {
     return __awaiter(this, void 0, void 0, function* () {
-        const uuid = uuidv4();
-        const url = activitypub_1.getVideoChannelActivityPubUrl(videoChannelInfo.name);
-        const actorInstance = activitypub_1.buildActorInstance('Group', url, videoChannelInfo.name, uuid);
+        const uuid = uuid_1.v4();
+        const url = url_1.getVideoChannelActivityPubUrl(videoChannelInfo.name);
+        const actorInstance = actor_1.buildActorInstance('Group', url, videoChannelInfo.name, uuid);
         const actorInstanceCreated = yield actorInstance.save({ transaction: t });
         const videoChannelData = {
             name: videoChannelInfo.displayName,
@@ -40,7 +42,7 @@ function federateAllVideosOfChannel(videoChannel) {
         const videoIds = yield video_1.VideoModel.getAllIdsFromChannel(videoChannel);
         for (const videoId of videoIds) {
             const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoId);
-            yield activitypub_1.federateVideoIfNeeded(video, false);
+            yield videos_1.federateVideoIfNeeded(video, false);
         }
     });
 }

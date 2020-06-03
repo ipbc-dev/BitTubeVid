@@ -15,7 +15,7 @@ const utils_1 = require("./utils");
 const audience_1 = require("../audience");
 const logger_1 = require("../../../helpers/logger");
 const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
-const utils_2 = require("../../../helpers/utils");
+const application_1 = require("@server/models/application/application");
 function sendCreateVideo(video, t) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!video.hasPrivacyForFederation())
@@ -36,7 +36,8 @@ function sendCreateCacheFile(byActor, video, fileRedundancy) {
             byActor,
             video,
             url: fileRedundancy.url,
-            object: fileRedundancy.toActivityPubObject()
+            object: fileRedundancy.toActivityPubObject(),
+            contextType: 'CacheFile'
         });
     });
 }
@@ -50,7 +51,7 @@ function sendCreateVideoPlaylist(playlist, t) {
         const audience = audience_1.getAudience(byActor, playlist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC);
         const object = yield playlist.toActivityPubObject(null, t);
         const createActivity = buildCreateActivity(playlist.url, byActor, object, audience);
-        const serverActor = yield utils_2.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const toFollowersOf = [byActor, serverActor];
         if (playlist.VideoChannel)
             toFollowersOf.push(playlist.VideoChannel.Actor);
@@ -67,7 +68,8 @@ function sendCreateVideoComment(comment, t) {
         const commentObject = comment.toActivityPubObject(threadParentComments);
         const actorsInvolvedInComment = yield audience_1.getActorsInvolvedInVideo(comment.Video, t);
         actorsInvolvedInComment.push(byActor);
-        const parentsCommentActors = threadParentComments.map(c => c.Account.Actor);
+        const parentsCommentActors = threadParentComments.filter(c => !c.isDeleted())
+            .map(c => c.Account.Actor);
         let audience;
         if (isOrigin) {
             audience = audience_1.getVideoCommentAudience(comment, threadParentComments, actorsInvolvedInComment, isOrigin);

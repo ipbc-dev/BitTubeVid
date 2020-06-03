@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
-const RateLimit = require("express-rate-limit");
 const config_1 = require("./config");
 const jobs_1 = require("./jobs");
 const oauth_clients_1 = require("./oauth-clients");
@@ -17,6 +16,7 @@ const overviews_1 = require("./overviews");
 const video_playlist_1 = require("./video-playlist");
 const config_2 = require("../../initializers/config");
 const plugins_1 = require("./plugins");
+const RateLimit = require("express-rate-limit");
 const apiRouter = express.Router();
 exports.apiRouter = apiRouter;
 apiRouter.use(cors({

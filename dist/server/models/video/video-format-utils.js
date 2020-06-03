@@ -3,9 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const video_1 = require("./video");
 const constants_1 = require("../../initializers/constants");
 const video_caption_1 = require("./video-caption");
-const activitypub_1 = require("../../lib/activitypub");
+const url_1 = require("../../lib/activitypub/url");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const webtorrent_1 = require("@server/helpers/webtorrent");
+const video_2 = require("@server/helpers/video");
 function videoModelToFormattedJSON(video, options) {
     const userHistory = misc_1.isArray(video.UserVideoHistories) ? video.UserVideoHistories[0] : undefined;
     const videoObject = {
@@ -125,13 +126,13 @@ function streamingPlaylistsModelToFormattedJSON(video, playlists) {
     });
 }
 function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFiles) {
+    const video = video_2.extractVideo(model);
     return videoFiles
         .map(videoFile => {
-        let resolutionLabel = videoFile.resolution + 'p';
         return {
             resolution: {
                 id: videoFile.resolution,
-                label: resolutionLabel
+                label: videoFile.resolution + 'p'
             },
             magnetUri: webtorrent_1.generateMagnetUri(model, videoFile, baseUrlHttp, baseUrlWs),
             size: videoFile.size,
@@ -139,7 +140,8 @@ function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFile
             torrentUrl: model.getTorrentUrl(videoFile, baseUrlHttp),
             torrentDownloadUrl: model.getTorrentDownloadUrl(videoFile, baseUrlHttp),
             fileUrl: model.getVideoFileUrl(videoFile, baseUrlHttp),
-            fileDownloadUrl: model.getVideoFileDownloadUrl(videoFile, baseUrlHttp)
+            fileDownloadUrl: model.getVideoFileDownloadUrl(videoFile, baseUrlHttp),
+            metadataUrl: video.getVideoFileMetadataUrl(videoFile, baseUrlHttp)
         };
     })
         .sort((a, b) => {
@@ -159,6 +161,14 @@ function addVideoFilesInAPAcc(acc, model, baseUrlHttp, baseUrlWs, files) {
             href: model.getVideoFileUrl(file, baseUrlHttp),
             height: file.resolution,
             size: file.size,
+            fps: file.fps
+        });
+        acc.push({
+            type: 'Link',
+            rel: ['metadata', constants_1.MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname]],
+            mediaType: 'application/json',
+            href: video_2.extractVideo(model).getVideoFileMetadataUrl(file, baseUrlHttp),
+            height: file.resolution,
             fps: file.fps
         });
         acc.push({
@@ -213,8 +223,7 @@ function videoModelToActivityPubObject(video) {
     ];
     addVideoFilesInAPAcc(url, video, baseUrlHttp, baseUrlWs, video.VideoFiles || []);
     for (const playlist of (video.VideoStreamingPlaylists || [])) {
-        let tag;
-        tag = playlist.p2pMediaLoaderInfohashes
+        const tag = playlist.p2pMediaLoaderInfohashes
             .map(i => ({ type: 'Infohash', name: i }));
         tag.push({
             type: 'Link',
@@ -235,7 +244,8 @@ function videoModelToActivityPubObject(video) {
     for (const caption of video.VideoCaptions) {
         subtitleLanguage.push({
             identifier: caption.language,
-            name: video_caption_1.VideoCaptionModel.getLanguageLabel(caption.language)
+            name: video_caption_1.VideoCaptionModel.getLanguageLabel(caption.language),
+            url: caption.getFileUrl(video)
         });
     }
     const miniature = video.getMiniature();
@@ -264,16 +274,16 @@ function videoModelToActivityPubObject(video) {
         subtitleLanguage,
         icon: {
             type: 'Image',
-            url: miniature.getFileUrl(video.isOwned()),
+            url: miniature.getFileUrl(video),
             mediaType: 'image/jpeg',
             width: miniature.width,
             height: miniature.height
         },
         url,
-        likes: activitypub_1.getVideoLikesActivityPubUrl(video),
-        dislikes: activitypub_1.getVideoDislikesActivityPubUrl(video),
-        shares: activitypub_1.getVideoSharesActivityPubUrl(video),
-        comments: activitypub_1.getVideoCommentsActivityPubUrl(video),
+        likes: url_1.getVideoLikesActivityPubUrl(video),
+        dislikes: url_1.getVideoDislikesActivityPubUrl(video),
+        shares: url_1.getVideoSharesActivityPubUrl(video),
+        comments: url_1.getVideoCommentsActivityPubUrl(video),
         attributedTo: [
             {
                 type: 'Person',

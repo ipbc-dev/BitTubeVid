@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const video_comment_1 = require("../models/video/video-comment");
-const activitypub_1 = require("./activitypub");
+const url_1 = require("./activitypub/url");
 const send_1 = require("./activitypub/send");
 function createVideoComment(obj, t) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -28,7 +28,7 @@ function createVideoComment(obj, t) {
             accountId: obj.account.id,
             url: new Date().toISOString()
         }, { transaction: t, validate: false });
-        comment.url = activitypub_1.getVideoCommentActivityPubUrl(obj.video, comment);
+        comment.url = url_1.getVideoCommentActivityPubUrl(obj.video, comment);
         const savedComment = yield comment.save({ transaction: t });
         savedComment.InReplyToVideoComment = obj.inReplyToComment;
         savedComment.Video = obj.video;

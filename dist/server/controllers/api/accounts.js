@@ -19,22 +19,21 @@ const video_1 = require("../../models/video/video");
 const express_utils_1 = require("../../helpers/express-utils");
 const video_channel_1 = require("../../models/video/video-channel");
 const job_queue_1 = require("../../lib/job-queue");
-const logger_1 = require("../../helpers/logger");
 const video_playlist_1 = require("../../models/video/video-playlist");
 const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
+const application_1 = require("@server/models/application/application");
 const accountsRouter = express.Router();
 exports.accountsRouter = accountsRouter;
 accountsRouter.get('/', middlewares_1.paginationValidator, validators_1.accountsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listAccounts));
 accountsRouter.get('/:accountName', middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), getAccount);
 accountsRouter.get('/:accountName/videos', middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(listAccountVideos));
-accountsRouter.get('/:accountName/video-channels', middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), middlewares_1.paginationValidator, validators_1.videoChannelsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listAccountChannels));
+accountsRouter.get('/:accountName/video-channels', middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), validators_1.videoChannelStatsValidator, middlewares_1.paginationValidator, validators_1.videoChannelsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listAccountChannels));
 accountsRouter.get('/:accountName/video-playlists', middlewares_1.optionalAuthenticate, middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), middlewares_1.paginationValidator, middlewares_1.videoPlaylistsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, video_playlists_1.commonVideoPlaylistFiltersValidator, video_playlists_1.videoPlaylistsSearchValidator, middlewares_1.asyncMiddleware(listAccountPlaylists));
 accountsRouter.get('/:accountName/ratings', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.accountNameWithHostGetValidator), validators_1.ensureAuthUserOwnsAccountValidator, middlewares_1.paginationValidator, middlewares_1.videoRatesSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.videoRatingValidator, middlewares_1.asyncMiddleware(listAccountRatings));
 function getAccount(req, res) {
     const account = res.locals.account;
     if (account.isOutdated()) {
-        job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'actor', url: account.Actor.url } })
-            .catch(err => logger_1.logger.error('Cannot create AP refresher job for actor %s.', account.Actor.url, { err }));
+        job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'actor', url: account.Actor.url } });
     }
     return res.json(account.toFormattedJSON());
 }
@@ -50,7 +49,8 @@ function listAccountChannels(req, res) {
             accountId: res.locals.account.id,
             start: req.query.start,
             count: req.query.count,
-            sort: req.query.sort
+            sort: req.query.sort,
+            withStats: req.query.withStats
         };
         const resultList = yield video_channel_1.VideoChannelModel.listByAccount(options);
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
@@ -58,7 +58,7 @@ function listAccountChannels(req, res) {
 }
 function listAccountPlaylists(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         let listMyPlaylists = false;
         if (res.locals.oauth && res.locals.oauth.token.User.Account.id === res.locals.account.id) {
             listMyPlaylists = true;

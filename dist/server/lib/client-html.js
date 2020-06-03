@@ -104,7 +104,7 @@ class ClientHtml {
             lang = paramLang;
             res.cookie('clientLanguage', lang, {
                 secure: constants_1.WEBSERVER.SCHEME === 'https',
-                sameSite: true,
+                sameSite: 'none',
                 maxAge: 1000 * 3600 * 24 * 90
             });
         }
@@ -184,14 +184,14 @@ class ClientHtml {
         const schemaTags = {
             '@context': 'http://schema.org',
             '@type': 'VideoObject',
-            name: videoNameEscaped,
-            description: videoDescriptionEscaped,
-            thumbnailUrl: previewUrl,
-            uploadDate: video.createdAt.toISOString(),
-            duration: video_format_utils_1.getActivityStreamDuration(video.duration),
-            contentUrl: videoUrl,
-            embedUrl: embedUrl,
-            interactionCount: video.views
+            'name': videoNameEscaped,
+            'description': videoDescriptionEscaped,
+            'thumbnailUrl': previewUrl,
+            'uploadDate': video.createdAt.toISOString(),
+            'duration': video_format_utils_1.getActivityStreamDuration(video.duration),
+            'contentUrl': videoUrl,
+            'embedUrl': embedUrl,
+            'interactionCount': video.views
         };
         let tagsString = '';
         Object.keys(openGraphMetaTags).forEach(tagName => {

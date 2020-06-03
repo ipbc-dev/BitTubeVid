@@ -14,27 +14,29 @@ const actor_1 = require("../../../models/activitypub/actor");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
 const job_queue_1 = require("../../job-queue");
 const audience_1 = require("../audience");
-const utils_1 = require("../../../helpers/utils");
 const database_utils_1 = require("../../../helpers/database-utils");
+const application_1 = require("@server/models/application/application");
 function sendVideoRelatedActivity(activityBuilder, options) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        const { byActor, video, transaction } = options;
+        const { byActor, video, transaction, contextType } = options;
         const actorsInvolvedInVideo = yield audience_1.getActorsInvolvedInVideo(video, transaction);
         if (video.isOwned() === false) {
-            const audience = audience_1.getRemoteVideoAudience(video, actorsInvolvedInVideo);
+            const accountActor = ((_b = (_a = video.VideoChannel) === null || _a === void 0 ? void 0 : _a.Account) === null || _b === void 0 ? void 0 : _b.Actor) || (yield actor_1.ActorModel.loadAccountActorByVideoId(video.id));
+            const audience = audience_1.getRemoteVideoAudience(accountActor, actorsInvolvedInVideo);
             const activity = activityBuilder(audience);
             return database_utils_1.afterCommitIfTransaction(transaction, () => {
-                return unicastTo(activity, byActor, video.VideoChannel.Account.Actor.getSharedInbox());
+                return unicastTo(activity, byActor, accountActor.getSharedInbox(), contextType);
             });
         }
         const audience = audience_1.getAudienceFromFollowersOf(actorsInvolvedInVideo);
         const activity = activityBuilder(audience);
         const actorsException = [byActor];
-        return broadcastToFollowers(activity, byActor, actorsInvolvedInVideo, transaction, actorsException);
+        return broadcastToFollowers(activity, byActor, actorsInvolvedInVideo, transaction, actorsException, contextType);
     });
 }
 exports.sendVideoRelatedActivity = sendVideoRelatedActivity;
-function forwardVideoRelatedActivity(activity, t, followersException = [], video) {
+function forwardVideoRelatedActivity(activity, t, followersException, video) {
     return __awaiter(this, void 0, void 0, function* () {
         const additionalActors = yield audience_1.getActorsInvolvedInVideo(video, t);
         const additionalFollowerUrls = additionalActors.map(a => a.followersUrl);
@@ -68,37 +70,39 @@ function forwardActivity(activity, t, followersException = [], additionalFollowe
     });
 }
 exports.forwardActivity = forwardActivity;
-function broadcastToFollowers(data, byActor, toFollowersOf, t, actorsException = []) {
+function broadcastToFollowers(data, byActor, toFollowersOf, t, actorsException = [], contextType) {
     return __awaiter(this, void 0, void 0, function* () {
         const uris = yield computeFollowerUris(toFollowersOf, actorsException, t);
-        return database_utils_1.afterCommitIfTransaction(t, () => broadcastTo(uris, data, byActor));
+        return database_utils_1.afterCommitIfTransaction(t, () => broadcastTo(uris, data, byActor, contextType));
     });
 }
 exports.broadcastToFollowers = broadcastToFollowers;
-function broadcastToActors(data, byActor, toActors, t, actorsException = []) {
+function broadcastToActors(data, byActor, toActors, t, actorsException = [], contextType) {
     return __awaiter(this, void 0, void 0, function* () {
         const uris = yield computeUris(toActors, actorsException);
-        return database_utils_1.afterCommitIfTransaction(t, () => broadcastTo(uris, data, byActor));
+        return database_utils_1.afterCommitIfTransaction(t, () => broadcastTo(uris, data, byActor, contextType));
     });
 }
 exports.broadcastToActors = broadcastToActors;
-function broadcastTo(uris, data, byActor) {
+function broadcastTo(uris, data, byActor, contextType) {
     if (uris.length === 0)
         return undefined;
     logger_1.logger.debug('Creating broadcast job.', { uris });
     const payload = {
         uris,
         signatureActorId: byActor.id,
-        body: data
+        body: data,
+        contextType
     };
     return job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-http-broadcast', payload });
 }
-function unicastTo(data, byActor, toActorUrl) {
+function unicastTo(data, byActor, toActorUrl, contextType) {
     logger_1.logger.debug('Creating unicast job.', { uri: toActorUrl });
     const payload = {
         uri: toActorUrl,
         signatureActorId: byActor.id,
-        body: data
+        body: data,
+        contextType
     };
     job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-http-unicast', payload });
 }
@@ -108,24 +112,24 @@ function computeFollowerUris(toFollowersOf, actorsException, t) {
         const toActorFollowerIds = toFollowersOf.map(a => a.id);
         const result = yield actor_follow_1.ActorFollowModel.listAcceptedFollowerSharedInboxUrls(toActorFollowerIds, t);
         const sharedInboxesException = yield buildSharedInboxesException(actorsException);
-        return result.data.filter(sharedInbox => sharedInboxesException.indexOf(sharedInbox) === -1);
+        return result.data.filter(sharedInbox => sharedInboxesException.includes(sharedInbox) === false);
     });
 }
 function computeUris(toActors, actorsException = []) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const targetUrls = toActors
             .filter(a => a.id !== serverActor.id)
             .map(a => a.getSharedInbox());
         const toActorSharedInboxesSet = new Set(targetUrls);
         const sharedInboxesException = yield buildSharedInboxesException(actorsException);
         return Array.from(toActorSharedInboxesSet)
-            .filter(sharedInbox => sharedInboxesException.indexOf(sharedInbox) === -1);
+            .filter(sharedInbox => sharedInboxesException.includes(sharedInbox) === false);
     });
 }
 function buildSharedInboxesException(actorsException) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         return actorsException
             .map(f => f.getSharedInbox())
             .concat([serverActor.sharedInboxUrl]);

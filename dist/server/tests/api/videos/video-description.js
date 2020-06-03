@@ -19,7 +19,7 @@ describe('Test video description', function () {
     let servers = [];
     let videoUUID = '';
     let videoId;
-    let longDescription = 'my super description for server 1'.repeat(50);
+    const longDescription = 'my super description for server 1'.repeat(50);
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(40000);

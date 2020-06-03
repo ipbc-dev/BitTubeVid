@@ -64,7 +64,6 @@ describe('Test users with multiple servers', function () {
             });
             const res = yield index_1.getMyUserInformation(servers[0].url, servers[0].accessToken);
             user = res.body;
-            const account = user.account;
             expect(user.account.displayName).to.equal('my super display name');
             yield jobs_1.waitJobs(servers);
         });

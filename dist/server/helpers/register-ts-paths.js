@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
-const tsConfigPaths = require('tsconfig-paths');
+const tsConfigPaths = require("tsconfig-paths");
 const tsConfig = require('../../tsconfig.json');
 function registerTSPaths() {
     tsConfigPaths.register({

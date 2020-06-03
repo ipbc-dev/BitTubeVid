@@ -119,7 +119,6 @@ function installPluginCLI(options) {
         catch (err) {
             console.error('Cannot install plugin.', err);
             process.exit(-1);
-            return;
         }
         console.log('Plugin installed.');
         process.exit(0);
@@ -149,7 +148,6 @@ function updatePluginCLI(options) {
         catch (err) {
             console.error('Cannot update plugin.', err);
             process.exit(-1);
-            return;
         }
         console.log('Plugin updated.');
         process.exit(0);
@@ -174,7 +172,6 @@ function uninstallPluginCLI(options) {
         catch (err) {
             console.error('Cannot uninstall plugin.', err);
             process.exit(-1);
-            return;
         }
         console.log('Plugin uninstalled.');
         process.exit(0);

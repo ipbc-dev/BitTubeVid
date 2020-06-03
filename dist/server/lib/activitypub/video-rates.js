@@ -58,7 +58,6 @@ function createRates(ratesUrl, video, rate) {
             const field = rate === 'like' ? 'likes' : 'dislikes';
             yield video.increment(field, { by: rateCounts });
         }
-        return;
     });
 }
 exports.createRates = createRates;

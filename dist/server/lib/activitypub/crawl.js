@@ -26,13 +26,13 @@ function crawlCollectionPage(uri, handler, cleaner) {
         const startDate = new Date();
         const response = yield requests_1.doRequest(options);
         const firstBody = response.body;
-        let limit = constants_1.ACTIVITY_PUB.FETCH_PAGE_LIMIT;
+        const limit = constants_1.ACTIVITY_PUB.FETCH_PAGE_LIMIT;
         let i = 0;
         let nextLink = firstBody.first;
         while (nextLink && i < limit) {
             let body;
             if (typeof nextLink === 'string') {
-                const remoteHost = url_1.parse(nextLink).host;
+                const remoteHost = new url_1.URL(nextLink).host;
                 if (remoteHost === constants_1.WEBSERVER.HOST)
                     continue;
                 options.uri = nextLink;

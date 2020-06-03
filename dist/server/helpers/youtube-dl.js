@@ -22,48 +22,89 @@ const processOptions = {
     maxBuffer: 1024 * 1024 * 10
 };
 function getYoutubeDLInfo(url, opts) {
-    return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+    return new Promise((res, rej) => {
         let args = opts || ['-j', '--flat-playlist'];
         args = wrapWithProxyOptions(args);
-        const youtubeDL = yield safeGetYoutubeDL();
-        youtubeDL.getInfo(url, args, processOptions, (err, info) => {
-            if (err)
-                return rej(err);
-            if (info.is_live === true)
-                return rej(new Error('Cannot download a live streaming.'));
-            const obj = buildVideoInfo(normalizeObject(info));
-            if (obj.name && obj.name.length < constants_1.CONSTRAINTS_FIELDS.VIDEOS.NAME.min)
-                obj.name += ' video';
-            return res(obj);
-        });
-    }));
+        safeGetYoutubeDL()
+            .then(youtubeDL => {
+            youtubeDL.getInfo(url, args, processOptions, (err, info) => {
+                if (err)
+                    return rej(err);
+                if (info.is_live === true)
+                    return rej(new Error('Cannot download a live streaming.'));
+                const obj = buildVideoInfo(normalizeObject(info));
+                if (obj.name && obj.name.length < constants_1.CONSTRAINTS_FIELDS.VIDEOS.NAME.min)
+                    obj.name += ' video';
+                return res(obj);
+            });
+        })
+            .catch(err => rej(err));
+    });
 }
 exports.getYoutubeDLInfo = getYoutubeDLInfo;
-function downloadYoutubeDLVideo(url, timeout) {
-    const path = utils_1.generateVideoImportTmpPath(url);
+function getYoutubeDLSubs(url, opts) {
+    return new Promise((res, rej) => {
+        const cwd = config_1.CONFIG.STORAGE.TMP_DIR;
+        const options = opts || { all: true, format: 'vtt', cwd };
+        safeGetYoutubeDL()
+            .then(youtubeDL => {
+            youtubeDL.getSubs(url, options, (err, files) => {
+                if (err)
+                    return rej(err);
+                logger_1.logger.debug('Get subtitles from youtube dl.', { url, files });
+                const subtitles = files.reduce((acc, filename) => {
+                    const matched = filename.match(/\.([a-z]{2})\.(vtt|ttml)/i);
+                    if (matched[1]) {
+                        return [
+                            ...acc,
+                            {
+                                language: matched[1],
+                                path: path_1.join(cwd, filename),
+                                filename
+                            }
+                        ];
+                    }
+                }, []);
+                return res(subtitles);
+            });
+        })
+            .catch(err => rej(err));
+    });
+}
+exports.getYoutubeDLSubs = getYoutubeDLSubs;
+function downloadYoutubeDLVideo(url, extension, timeout) {
+    const path = utils_1.generateVideoImportTmpPath(url, extension);
     let timer;
-    logger_1.logger.info('Importing youtubeDL video %s', url);
+    logger_1.logger.info('Importing youtubeDL video %s to %s', url, path);
     let options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', '-o', path];
     options = wrapWithProxyOptions(options);
     if (process.env.FFMPEG_PATH) {
         options = options.concat(['--ffmpeg-location', process.env.FFMPEG_PATH]);
     }
-    return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
-        const youtubeDL = yield safeGetYoutubeDL();
-        youtubeDL.exec(url, options, processOptions, err => {
-            clearTimeout(timer);
-            if (err) {
+    return new Promise((res, rej) => {
+        safeGetYoutubeDL()
+            .then(youtubeDL => {
+            youtubeDL.exec(url, options, processOptions, err => {
+                clearTimeout(timer);
+                if (err) {
+                    fs_extra_1.remove(path)
+                        .catch(err => logger_1.logger.error('Cannot delete path on YoutubeDL error.', { err }));
+                    return rej(err);
+                }
+                return res(path);
+            });
+            timer = setTimeout(() => {
+                const err = new Error('YoutubeDL download timeout.');
                 fs_extra_1.remove(path)
-                    .catch(err => logger_1.logger.error('Cannot delete path on YoutubeDL error.', { err }));
-                return rej(err);
-            }
-            return res(path);
-        });
-        timer = setTimeout(() => __awaiter(this, void 0, void 0, function* () {
-            yield fs_extra_1.remove(path);
-            return rej(new Error('YoutubeDL download timeout.'));
-        }), timeout);
-    }));
+                    .finally(() => rej(err))
+                    .catch(err => {
+                    logger_1.logger.error('Cannot remove %s in youtubeDL timeout.', path, { err });
+                    return rej(err);
+                });
+            }, timeout);
+        })
+            .catch(err => rej(err));
+    });
 }
 exports.downloadYoutubeDLVideo = downloadYoutubeDLVideo;
 function updateYoutubeDLBinary() {
@@ -163,10 +204,12 @@ function buildVideoInfo(obj) {
         description: descriptionTruncation(obj.description),
         category: getCategory(obj.categories),
         licence: getLicence(obj.license),
+        language: getLanguage(obj.language),
         nsfw: isNSFW(obj),
         tags: getTags(obj.tags),
         thumbnailUrl: obj.thumbnail || undefined,
-        originallyPublishedAt: buildOriginallyPublishedAt(obj)
+        originallyPublishedAt: buildOriginallyPublishedAt(obj),
+        fileExt: obj.ext
     };
 }
 function titleTruncation(title) {
@@ -199,8 +242,13 @@ function getTags(tags) {
 function getLicence(licence) {
     if (!licence)
         return undefined;
-    if (licence.indexOf('Creative Commons Attribution') !== -1)
+    if (licence.includes('Creative Commons Attribution'))
         return 1;
+    for (const key of Object.keys(constants_1.VIDEO_LICENCES)) {
+        const peertubeLicence = constants_1.VIDEO_LICENCES[key];
+        if (peertubeLicence.toLowerCase() === licence.toLowerCase())
+            return parseInt(key, 10);
+    }
     return undefined;
 }
 function getCategory(categories) {
@@ -217,6 +265,9 @@ function getCategory(categories) {
             return parseInt(key, 10);
     }
     return undefined;
+}
+function getLanguage(language) {
+    return constants_1.VIDEO_LANGUAGES[language] ? language : undefined;
 }
 function wrapWithProxyOptions(options) {
     if (config_1.CONFIG.IMPORT.VIDEOS.HTTP.PROXY.ENABLED) {

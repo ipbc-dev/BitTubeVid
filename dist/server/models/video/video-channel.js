@@ -31,22 +31,14 @@ const server_1 = require("../server/server");
 const sequelize_1 = require("sequelize");
 const avatar_1 = require("../avatar/avatar");
 const video_playlist_1 = require("./video-playlist");
-const indexes = [
-    utils_1.buildTrigramSearchIndex('video_channel_name_trigram', 'name'),
-    {
-        fields: ['accountId']
-    },
-    {
-        fields: ['actorId']
-    }
-];
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FOR_API"] = "FOR_API";
+    ScopeNames["SUMMARY"] = "SUMMARY";
     ScopeNames["WITH_ACCOUNT"] = "WITH_ACCOUNT";
     ScopeNames["WITH_ACTOR"] = "WITH_ACTOR";
     ScopeNames["WITH_VIDEOS"] = "WITH_VIDEOS";
-    ScopeNames["SUMMARY"] = "SUMMARY";
+    ScopeNames["WITH_STATS"] = "WITH_STATS";
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends sequelize_typescript_1.Model {
     static sendDeleteIfOwned(instance, options) {
@@ -147,7 +139,14 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
                 }
             ]
         };
+        const scopes = [ScopeNames.WITH_ACTOR];
+        if (options.withStats) {
+            scopes.push({
+                method: [ScopeNames.WITH_STATS, { daysPrior: 30 }]
+            });
+        }
         return VideoChannelModel_1
+            .scope(scopes)
             .findAndCountAll(query)
             .then(({ rows, count }) => {
             return { total: count, data: rows };
@@ -258,6 +257,7 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
         };
     }
     toFormattedJSON() {
+        const viewsPerDay = this.get('viewsPerDay');
         const actor = this.Actor.toFormattedJSON();
         const videoChannel = {
             id: this.id,
@@ -267,7 +267,16 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             isLocal: this.Actor.isOwned(),
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
-            ownerAccount: undefined
+            ownerAccount: undefined,
+            viewsPerDay: viewsPerDay !== undefined
+                ? viewsPerDay.split(',').map(v => {
+                    const o = v.split('|');
+                    return {
+                        date: new Date(o[0]),
+                        views: +o[1]
+                    };
+                })
+                : undefined
         };
         if (this.Account)
             videoChannel.ownerAccount = this.Account.toFormattedJSON();
@@ -386,38 +395,6 @@ VideoChannelModel = VideoChannelModel_1 = __decorate([
         ]
     })),
     sequelize_typescript_1.Scopes(() => ({
-        [ScopeNames.SUMMARY]: (options = {}) => {
-            const base = {
-                attributes: ['id', 'name', 'description', 'actorId'],
-                include: [
-                    {
-                        attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
-                        model: actor_1.ActorModel.unscoped(),
-                        required: true,
-                        include: [
-                            {
-                                attributes: ['host'],
-                                model: server_1.ServerModel.unscoped(),
-                                required: false
-                            },
-                            {
-                                model: avatar_1.AvatarModel.unscoped(),
-                                required: false
-                            }
-                        ]
-                    }
-                ]
-            };
-            if (options.withAccount === true) {
-                base.include.push({
-                    model: account_1.AccountModel.scope({
-                        method: [account_1.ScopeNames.SUMMARY, { withAccountBlockerIds: options.withAccountBlockerIds }]
-                    }),
-                    required: true
-                });
-            }
-            return base;
-        },
         [ScopeNames.FOR_API]: (options) => {
             const inQueryInstanceFollow = utils_1.buildServerIdsFollowedBy(options.actorId);
             return {
@@ -456,6 +433,38 @@ VideoChannelModel = VideoChannelModel_1 = __decorate([
                 ]
             };
         },
+        [ScopeNames.SUMMARY]: (options = {}) => {
+            const base = {
+                attributes: ['id', 'name', 'description', 'actorId'],
+                include: [
+                    {
+                        attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
+                        model: actor_1.ActorModel.unscoped(),
+                        required: true,
+                        include: [
+                            {
+                                attributes: ['host'],
+                                model: server_1.ServerModel.unscoped(),
+                                required: false
+                            },
+                            {
+                                model: avatar_1.AvatarModel.unscoped(),
+                                required: false
+                            }
+                        ]
+                    }
+                ]
+            };
+            if (options.withAccount === true) {
+                base.include.push({
+                    model: account_1.AccountModel.scope({
+                        method: [account_1.ScopeNames.SUMMARY, { withAccountBlockerIds: options.withAccountBlockerIds }]
+                    }),
+                    required: true
+                });
+            }
+            return base;
+        },
         [ScopeNames.WITH_ACCOUNT]: {
             include: [
                 {
@@ -464,20 +473,62 @@ VideoChannelModel = VideoChannelModel_1 = __decorate([
                 }
             ]
         },
+        [ScopeNames.WITH_ACTOR]: {
+            include: [
+                actor_1.ActorModel
+            ]
+        },
         [ScopeNames.WITH_VIDEOS]: {
             include: [
                 video_1.VideoModel
             ]
         },
-        [ScopeNames.WITH_ACTOR]: {
-            include: [
-                actor_1.ActorModel
-            ]
+        [ScopeNames.WITH_STATS]: (options = { daysPrior: 30 }) => {
+            const daysPrior = parseInt(options.daysPrior + '', 10);
+            return {
+                attributes: {
+                    include: [
+                        [
+                            sequelize_1.literal('(' +
+                                `SELECT string_agg(concat_ws('|', t.day, t.views), ',') ` +
+                                'FROM ( ' +
+                                'WITH ' +
+                                'days AS ( ' +
+                                `SELECT generate_series(date_trunc('day', now()) - '${daysPrior} day'::interval, ` +
+                                `date_trunc('day', now()), '1 day'::interval) AS day ` +
+                                '), ' +
+                                'views AS ( ' +
+                                'SELECT v.* ' +
+                                'FROM "videoView" AS v ' +
+                                'INNER JOIN "video" ON "video"."id" = v."videoId" ' +
+                                'WHERE "video"."channelId" = "VideoChannelModel"."id" ' +
+                                ') ' +
+                                'SELECT days.day AS day, ' +
+                                'COALESCE(SUM(views.views), 0) AS views ' +
+                                'FROM days ' +
+                                `LEFT JOIN views ON date_trunc('day', "views"."startDate") = date_trunc('day', days.day) ` +
+                                'GROUP BY day ' +
+                                'ORDER BY day ' +
+                                ') t' +
+                                ')'),
+                            'viewsPerDay'
+                        ]
+                    ]
+                }
+            };
         }
     })),
     sequelize_typescript_1.Table({
         tableName: 'videoChannel',
-        indexes
+        indexes: [
+            utils_1.buildTrigramSearchIndex('video_channel_name_trigram', 'name'),
+            {
+                fields: ['accountId']
+            },
+            {
+                fields: ['actorId']
+            }
+        ]
     })
 ], VideoChannelModel);
 exports.VideoChannelModel = VideoChannelModel;

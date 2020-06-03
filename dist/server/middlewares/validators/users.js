@@ -28,7 +28,7 @@ const users_2 = require("../../../shared/models/users");
 const hooks_1 = require("@server/lib/plugins/hooks");
 const usersAddValidator = [
     express_validator_1.body('username').custom(users_1.isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
-    express_validator_1.body('password').custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
+    express_validator_1.body('password').custom(users_1.isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
     express_validator_1.body('email').isEmail().withMessage('Should have a valid email'),
     express_validator_1.body('videoQuota').custom(users_1.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
     express_validator_1.body('videoQuotaDaily').custom(users_1.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
@@ -126,7 +126,7 @@ const usersBlockingValidator = [
 ];
 exports.usersBlockingValidator = usersBlockingValidator;
 const deleteMeValidator = [
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         const user = res.locals.oauth.token.User;
         if (user.username === 'root') {
             return res.status(400)
@@ -134,7 +134,7 @@ const deleteMeValidator = [
                 .end();
         }
         return next();
-    })
+    }
 ];
 exports.deleteMeValidator = deleteMeValidator;
 const usersUpdateValidator = [
@@ -206,13 +206,16 @@ const usersUpdateMeValidator = [
         .custom(v => users_1.isUserAutoPlayNextVideoValid(v)).withMessage('Should have a valid autoPlayNextVideo boolean'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersUpdateMe parameters', { parameters: lodash_1.omit(req.body, 'password') });
+        const user = res.locals.oauth.token.User;
         if (req.body.password || req.body.email) {
+            if (user.pluginAuth !== null) {
+                return res.status(400)
+                    .json({ error: 'You cannot update your email or password that is associated with an external auth system.' });
+            }
             if (!req.body.currentPassword) {
                 return res.status(400)
-                    .json({ error: 'currentPassword parameter is missing.' })
-                    .end();
+                    .json({ error: 'currentPassword parameter is missing.' });
             }
-            const user = res.locals.oauth.token.User;
             if ((yield user.isPasswordMatch(req.body.currentPassword)) !== true) {
                 return res.status(401)
                     .json({ error: 'currentPassword is invalid.' });
@@ -226,11 +229,12 @@ const usersUpdateMeValidator = [
 exports.usersUpdateMeValidator = usersUpdateMeValidator;
 const usersGetValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
+    express_validator_1.query('withStats').optional().isBoolean().withMessage('Should have a valid stats flag'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersGet parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
-        if (!(yield checkUserIdExist(req.params.id, res)))
+        if (!(yield checkUserIdExist(req.params.id, res, req.query.withStats)))
             return;
         return next();
     })
@@ -264,14 +268,14 @@ const ensureUserRegistrationAllowed = [
 ];
 exports.ensureUserRegistrationAllowed = ensureUserRegistrationAllowed;
 const ensureUserRegistrationAllowedForIP = [
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         const allowed = signup_1.isSignupAllowedForCurrentIP(req.ip);
         if (allowed === false) {
             return res.status(403)
                 .json({ error: 'You are not on a network authorized for registration.' });
         }
         return next();
-    })
+    }
 ];
 exports.ensureUserRegistrationAllowedForIP = ensureUserRegistrationAllowedForIP;
 const usersAskResetPasswordValidator = [
@@ -355,14 +359,14 @@ const userAutocompleteValidator = [
 ];
 exports.userAutocompleteValidator = userAutocompleteValidator;
 const ensureAuthUserOwnsAccountValidator = [
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         const user = res.locals.oauth.token.User;
         if (res.locals.account.id !== user.Account.id) {
             return res.status(403)
                 .json({ error: 'Only owner can access ratings list.' });
         }
         return next();
-    })
+    }
 ];
 exports.ensureAuthUserOwnsAccountValidator = ensureAuthUserOwnsAccountValidator;
 const ensureCanManageUser = [
@@ -378,9 +382,9 @@ const ensureCanManageUser = [
     }
 ];
 exports.ensureCanManageUser = ensureCanManageUser;
-function checkUserIdExist(idArg, res) {
+function checkUserIdExist(idArg, res, withStats = false) {
     const id = parseInt(idArg + '', 10);
-    return checkUserExist(() => user_1.UserModel.loadById(id), res);
+    return checkUserExist(() => user_1.UserModel.loadById(id, withStats), res);
 }
 function checkUserEmailExist(email, res, abortResponse = true) {
     return checkUserExist(() => user_1.UserModel.loadByEmail(email), res, abortResponse);

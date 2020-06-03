@@ -329,6 +329,85 @@ describe('Test video transcoding', function () {
             }
         });
     });
+    it('Should downscale to the closest divisor standard framerate', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(160000);
+            let tempFixturePath;
+            {
+                tempFixturePath = yield extra_utils_1.generateVideoWithFramerate(59);
+                const fps = yield ffmpeg_utils_1.getVideoFileFPS(tempFixturePath);
+                expect(fps).to.be.equal(59);
+            }
+            const videoAttributes = {
+                name: '59fps video',
+                description: '59fps video',
+                fixture: tempFixturePath
+            };
+            yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, videoAttributes);
+            yield extra_utils_1.waitJobs(servers);
+            for (const server of servers) {
+                const res = yield extra_utils_1.getVideosList(server.url);
+                const video = res.body.data.find(v => v.name === videoAttributes.name);
+                {
+                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4');
+                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                    expect(fps).to.be.equal(25);
+                }
+                {
+                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-720.mp4');
+                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                    expect(fps).to.be.equal(59);
+                }
+            }
+        });
+    });
+    it('Should provide valid ffprobe data', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(160000);
+            const videoUUID = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'ffprobe data' })).uuid;
+            yield extra_utils_1.waitJobs(servers);
+            {
+                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', videoUUID + '-240.mp4');
+                const metadata = yield ffmpeg_utils_1.getMetadataFromFile(path);
+                for (const p of [
+                    'tags.encoder',
+                    'format_long_name',
+                    'size',
+                    'bit_rate'
+                ]) {
+                    expect(metadata.format).to.have.nested.property(p);
+                }
+                for (const p of [
+                    'codec_long_name',
+                    'profile',
+                    'width',
+                    'height',
+                    'display_aspect_ratio',
+                    'avg_frame_rate',
+                    'pix_fmt'
+                ]) {
+                    expect(metadata.streams[0]).to.have.nested.property(p);
+                }
+                expect(metadata).to.not.have.nested.property('format.filename');
+            }
+            for (const server of servers) {
+                const res2 = yield extra_utils_1.getVideo(server.url, videoUUID);
+                const videoDetails = res2.body;
+                const videoFiles = videoDetails.files
+                    .concat(videoDetails.streamingPlaylists[0].files);
+                expect(videoFiles).to.have.lengthOf(8);
+                for (const file of videoFiles) {
+                    expect(file.metadata).to.be.undefined;
+                    expect(file.metadataUrl).to.exist;
+                    expect(file.metadataUrl).to.contain(servers[1].url);
+                    expect(file.metadataUrl).to.contain(videoUUID);
+                    const res3 = yield extra_utils_1.getVideoFileMetadataUrl(file.metadataUrl);
+                    const metadata = res3.body;
+                    expect(metadata).to.have.nested.property('format.size');
+                }
+            }
+        });
+    });
     after(function () {
         return __awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);

@@ -66,10 +66,10 @@ function up(utils) {
           type, uuid, "preferredUsername", url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl",
           "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt"
         )
-        SELECT 
+        SELECT
           'Application', uuid, name, url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl",
-          "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt" 
-        FROM account 
+          "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt"
+        FROM account
         WHERE "applicationId" IS NOT NULL
         `;
             yield utils.sequelize.query(query1);
@@ -79,10 +79,10 @@ function up(utils) {
           type, uuid, "preferredUsername", url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl",
           "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt"
         )
-        SELECT 
+        SELECT
           'Person', uuid, name, url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl",
-          "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt" 
-        FROM account 
+          "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt"
+        FROM account
         WHERE "applicationId" IS NULL
         `;
             yield utils.sequelize.query(query2);
@@ -104,17 +104,17 @@ function up(utils) {
             yield utils.queryInterface.changeColumn('account', 'actorId', data);
         }
         {
-            const query = `  
-    INSERT INTO actor 
+            const query = `
+    INSERT INTO actor
     (
-    type, uuid, "preferredUsername", url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl", 
+    type, uuid, "preferredUsername", url, "publicKey", "privateKey", "followersCount", "followingCount", "inboxUrl", "outboxUrl",
     "sharedInboxUrl", "followersUrl", "followingUrl", "avatarId", "serverId", "createdAt", "updatedAt"
     )
-    SELECT 
-    'Group', "videoChannel".uuid, "videoChannel".uuid, "videoChannel".url, null, null, 0, 0, "videoChannel".url || '/inbox', 
+    SELECT
+    'Group', "videoChannel".uuid, "videoChannel".uuid, "videoChannel".url, null, null, 0, 0, "videoChannel".url || '/inbox',
     "videoChannel".url || '/outbox', "videoChannel".url || '/inbox', "videoChannel".url || '/followers', "videoChannel".url || '/following',
-     null, account."serverId", "videoChannel"."createdAt", "videoChannel"."updatedAt" 
-     FROM "videoChannel" 
+     null, account."serverId", "videoChannel"."createdAt", "videoChannel"."updatedAt"
+     FROM "videoChannel"
      INNER JOIN "account" on "videoChannel"."accountId" = "account".id
     `;
             yield utils.sequelize.query(query);
@@ -148,12 +148,12 @@ function up(utils) {
                 yield utils.queryInterface.removeConstraint('actorFollow', 'accountFollow_targetAccountId_fkey');
             }
             {
-                const query1 = `UPDATE "actorFollow" 
-      SET "actorId" = 
+                const query1 = `UPDATE "actorFollow"
+      SET "actorId" =
       (SELECT "account"."actorId" FROM account WHERE "account"."id" = "actorFollow"."actorId")`;
                 yield utils.sequelize.query(query1);
-                const query2 = `UPDATE "actorFollow" 
-      SET "targetActorId" = 
+                const query2 = `UPDATE "actorFollow"
+      SET "targetActorId" =
       (SELECT "account"."actorId" FROM account WHERE "account"."id" = "actorFollow"."targetActorId")`;
                 yield utils.sequelize.query(query2);
             }
@@ -174,8 +174,8 @@ function up(utils) {
             catch (_b) {
                 yield utils.queryInterface.removeConstraint('videoShare', 'videoShare_accountId_fkey');
             }
-            const query = `UPDATE "videoShare" 
-      SET "actorId" = 
+            const query = `UPDATE "videoShare"
+      SET "actorId" =
       (SELECT "actorId" FROM account WHERE id = "videoShare"."actorId")`;
             yield utils.sequelize.query(query);
             {

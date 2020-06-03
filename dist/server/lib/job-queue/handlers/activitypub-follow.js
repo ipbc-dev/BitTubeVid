@@ -34,6 +34,10 @@ function processActivityPubFollow(job) {
             const actorUrl = yield webfinger_1.loadActorUrlOrGetFromWebfinger(payload.name + '@' + sanitizedHost);
             targetActor = yield actor_1.getOrCreateActorAndServerAndModel(actorUrl, 'all');
         }
+        if (payload.assertIsChannel && !targetActor.VideoChannel) {
+            logger_1.logger.warn('Do not follow %s@%s because it is not a channel.', payload.name, host);
+            return;
+        }
         const fromActor = yield actor_2.ActorModel.load(payload.followerActorId);
         return database_utils_1.retryTransactionWrapper(follow, fromActor, targetActor, payload.isAutoFollow);
     });

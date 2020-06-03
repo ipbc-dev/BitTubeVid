@@ -103,12 +103,12 @@ exports.updateServerRedundancyValidator = updateServerRedundancyValidator;
 const listVideoRedundanciesValidator = [
     express_validator_1.query('target')
         .custom(video_redundancies_1.isVideoRedundancyTarget).withMessage('Should have a valid video redundancies target'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => {
         logger_1.logger.debug('Checking listVideoRedundanciesValidator parameters', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))
             return;
         return next();
-    })
+    }
 ];
 exports.listVideoRedundanciesValidator = listVideoRedundanciesValidator;
 const addVideoRedundancyValidator = [

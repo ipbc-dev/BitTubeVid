@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./action-hooks");
+require("./id-and-pass-auth");
+require("./external-auth");
 require("./filter-hooks");
 require("./translations");
 require("./video-constants");
+require("./plugin-helpers");
+require("./plugin-router");
+require("./plugin-storage");

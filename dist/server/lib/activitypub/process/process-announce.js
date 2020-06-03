@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_utils_1 = require("../../../helpers/database-utils");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const video_share_1 = require("../../../models/video/video-share");
 const utils_1 = require("../send/utils");
 const videos_1 = require("../videos");
@@ -38,7 +38,7 @@ function processVideoShare(actorAnnouncer, activity, notify) {
             logger_1.logger.debug('Cannot process share of %s. Maybe this is not a video object, so just skipping.', objectUri, { err });
             return;
         }
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const share = {
                 actorId: actorAnnouncer.id,
                 videoId: video.id,

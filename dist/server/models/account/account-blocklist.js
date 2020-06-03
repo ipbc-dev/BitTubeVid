@@ -49,15 +49,25 @@ let AccountBlocklistModel = AccountBlocklistModel_1 = class AccountBlocklistMode
         };
         return AccountBlocklistModel_1.findOne(query);
     }
-    static listForApi(accountId, start, count, sort) {
+    static listForApi(parameters) {
+        const { start, count, sort, search, accountId } = parameters;
         const query = {
             offset: start,
             limit: count,
-            order: utils_1.getSort(sort),
-            where: {
-                accountId
-            }
+            order: utils_1.getSort(sort)
         };
+        const where = {
+            accountId
+        };
+        if (search) {
+            Object.assign(where, {
+                [sequelize_1.Op.or]: [
+                    utils_1.searchAttribute(search, '$BlockedAccount.name$'),
+                    utils_1.searchAttribute(search, '$BlockedAccount.Actor.url$')
+                ]
+            });
+        }
+        Object.assign(query, { where });
         return AccountBlocklistModel_1
             .scope([ScopeNames.WITH_ACCOUNTS])
             .findAndCountAll(query)

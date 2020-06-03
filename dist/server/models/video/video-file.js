@@ -28,6 +28,12 @@ const video_streaming_playlist_1 = require("./video-streaming-playlist");
 const sequelize_1 = require("sequelize");
 const constants_1 = require("../../initializers/constants");
 const memoizee = require("memoizee");
+const validator_1 = require("validator");
+var ScopeNames;
+(function (ScopeNames) {
+    ScopeNames["WITH_VIDEO"] = "WITH_VIDEO";
+    ScopeNames["WITH_METADATA"] = "WITH_METADATA";
+})(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_typescript_1.Model {
     static doesInfohashExist(infoHash) {
         const query = 'SELECT 1 FROM "videoFile" WHERE "infoHash" = $infoHash LIMIT 1';
@@ -39,16 +45,51 @@ let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_t
         return video_1.VideoModel.sequelize.query(query, options)
             .then(results => results.length === 1);
     }
+    static doesVideoExistForVideoFile(id, videoIdOrUUID) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const videoFile = yield VideoFileModel_1.loadWithVideoOrPlaylist(id, videoIdOrUUID);
+            return !!videoFile;
+        });
+    }
+    static loadWithMetadata(id) {
+        return VideoFileModel_1.scope(ScopeNames.WITH_METADATA).findByPk(id);
+    }
     static loadWithVideo(id) {
+        return VideoFileModel_1.scope(ScopeNames.WITH_VIDEO).findByPk(id);
+    }
+    static loadWithVideoOrPlaylist(id, videoIdOrUUID) {
+        const whereVideo = validator_1.default.isUUID(videoIdOrUUID + '')
+            ? { uuid: videoIdOrUUID }
+            : { id: videoIdOrUUID };
         const options = {
+            where: {
+                id
+            },
             include: [
                 {
                     model: video_1.VideoModel.unscoped(),
-                    required: true
+                    required: false,
+                    where: whereVideo
+                },
+                {
+                    model: video_streaming_playlist_1.VideoStreamingPlaylistModel.unscoped(),
+                    required: false,
+                    include: [
+                        {
+                            model: video_1.VideoModel.unscoped(),
+                            required: true,
+                            where: whereVideo
+                        }
+                    ]
                 }
             ]
         };
-        return VideoFileModel_1.findByPk(id, options);
+        return VideoFileModel_1.findOne(options)
+            .then(file => {
+            if (!file.Video && !file.VideoStreamingPlaylist)
+                return null;
+            return file;
+        });
     }
     static listByStreamingPlaylist(streamingPlaylistId, transaction) {
         const query = {
@@ -167,6 +208,16 @@ __decorate([
     __metadata("design:type", Number)
 ], VideoFileModel.prototype, "fps", void 0);
 __decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.JSONB),
+    __metadata("design:type", Object)
+], VideoFileModel.prototype, "metadata", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Column,
+    __metadata("design:type", String)
+], VideoFileModel.prototype, "metadataUrl", void 0);
+__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
     __metadata("design:type", Number)
@@ -205,6 +256,26 @@ __decorate([
     __metadata("design:type", Array)
 ], VideoFileModel.prototype, "RedundancyVideos", void 0);
 VideoFileModel = VideoFileModel_1 = __decorate([
+    sequelize_typescript_1.DefaultScope(() => ({
+        attributes: {
+            exclude: ['metadata']
+        }
+    })),
+    sequelize_typescript_1.Scopes(() => ({
+        [ScopeNames.WITH_VIDEO]: {
+            include: [
+                {
+                    model: video_1.VideoModel.unscoped(),
+                    required: true
+                }
+            ]
+        },
+        [ScopeNames.WITH_METADATA]: {
+            attributes: {
+                include: ['metadata']
+            }
+        }
+    })),
     sequelize_typescript_1.Table({
         tableName: 'videoFile',
         indexes: [

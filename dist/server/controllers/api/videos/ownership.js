@@ -11,13 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const logger_1 = require("../../../helpers/logger");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const middlewares_1 = require("../../../middlewares");
 const video_change_ownership_1 = require("../../../models/video/video-change-ownership");
 const videos_1 = require("../../../../shared/models/videos");
 const video_channel_1 = require("../../../models/video/video-channel");
 const utils_1 = require("../../../helpers/utils");
-const activitypub_1 = require("../../../lib/activitypub");
+const share_1 = require("../../../lib/activitypub/share");
 const send_1 = require("../../../lib/activitypub/send");
 const video_1 = require("../../../models/video/video");
 const ownershipVideoRouter = express.Router();
@@ -31,7 +31,7 @@ function giveVideoOwnership(req, res) {
         const videoInstance = res.locals.videoAll;
         const initiatorAccountId = res.locals.oauth.token.User.Account.id;
         const nextOwner = res.locals.nextOwner;
-        yield initializers_1.sequelizeTypescript.transaction(t => {
+        yield database_1.sequelizeTypescript.transaction(t => {
             return video_change_ownership_1.VideoChangeOwnershipModel.findOrCreate({
                 where: {
                     initiatorAccountId,
@@ -61,7 +61,7 @@ function listVideoOwnership(req, res) {
 }
 function acceptOwnership(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        return initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const videoChangeOwnership = res.locals.videoChangeOwnership;
             const channel = res.locals.videoChannel;
             const targetVideo = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoChangeOwnership.Video.id);
@@ -70,7 +70,7 @@ function acceptOwnership(req, res) {
             const targetVideoUpdated = yield targetVideo.save({ transaction: t });
             targetVideoUpdated.VideoChannel = channel;
             if (targetVideoUpdated.hasPrivacyForFederation() && targetVideoUpdated.state === videos_1.VideoState.PUBLISHED) {
-                yield activitypub_1.changeVideoChannelShare(targetVideoUpdated, oldVideoChannel, t);
+                yield share_1.changeVideoChannelShare(targetVideoUpdated, oldVideoChannel, t);
                 yield send_1.sendUpdateVideo(targetVideoUpdated, t, oldVideoChannel.Account.Actor);
             }
             videoChangeOwnership.status = videos_1.VideoChangeOwnershipStatus.ACCEPTED;
@@ -81,7 +81,7 @@ function acceptOwnership(req, res) {
 }
 function refuseOwnership(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        return initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const videoChangeOwnership = res.locals.videoChangeOwnership;
             videoChangeOwnership.status = videos_1.VideoChangeOwnershipStatus.REFUSED;
             yield videoChangeOwnership.save({ transaction: t });

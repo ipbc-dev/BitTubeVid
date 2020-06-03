@@ -14,13 +14,10 @@ register_ts_paths_1.registerTSPaths();
 const repl = require("repl");
 const path = require("path");
 const _ = require("lodash");
-const uuidv1 = require("uuid/v1");
-const uuidv3 = require("uuid/v3");
-const uuidv4 = require("uuid/v4");
-const uuidv5 = require("uuid/v5");
+const uuid_1 = require("uuid");
 const Sequelize = require("sequelize");
 const YoutubeDL = require("youtube-dl");
-const initializers_1 = require("../initializers");
+const database_1 = require("../initializers/database");
 const cli = require("../tools/cli");
 const logger_1 = require("../helpers/logger");
 const constants = require("../initializers/constants");
@@ -32,22 +29,39 @@ const signupUtils = require("../helpers/signup");
 const utils = require("../helpers/utils");
 const YoutubeDLUtils = require("../helpers/youtube-dl");
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
-    yield initializers_1.initDatabaseModels(true);
+    yield database_1.initDatabaseModels(true);
     const versionCommitHash = yield utils.getServerCommit();
     const initContext = (replServer) => {
         return (context) => {
             const properties = {
-                context, repl: replServer, env: process.env,
-                lodash: _, path,
-                uuidv1, uuidv3, uuidv4, uuidv5,
-                cli, logger: logger_1.logger, constants,
-                Sequelize, sequelizeTypescript: initializers_1.sequelizeTypescript, modelsUtils,
-                models: initializers_1.sequelizeTypescript.models, transaction: initializers_1.sequelizeTypescript.transaction,
-                query: initializers_1.sequelizeTypescript.query, queryInterface: initializers_1.sequelizeTypescript.getQueryInterface(),
+                context,
+                repl: replServer,
+                env: process.env,
+                lodash: _,
+                path,
+                uuidv1: uuid_1.uuidv1,
+                uuidv3: uuid_1.uuidv3,
+                uuidv4: uuid_1.uuidv4,
+                uuidv5: uuid_1.uuidv5,
+                cli,
+                logger: logger_1.logger,
+                constants,
+                Sequelize,
+                sequelizeTypescript: database_1.sequelizeTypescript,
+                modelsUtils,
+                models: database_1.sequelizeTypescript.models,
+                transaction: database_1.sequelizeTypescript.transaction,
+                query: database_1.sequelizeTypescript.query,
+                queryInterface: database_1.sequelizeTypescript.getQueryInterface(),
                 YoutubeDL,
-                coreUtils, ffmpegUtils, peertubeCryptoUtils, signupUtils, utils, YoutubeDLUtils
+                coreUtils,
+                ffmpegUtils,
+                peertubeCryptoUtils,
+                signupUtils,
+                utils,
+                YoutubeDLUtils
             };
-            for (let prop in properties) {
+            for (const prop in properties) {
                 Object.defineProperty(context, prop, {
                     configurable: false,
                     enumerable: true,

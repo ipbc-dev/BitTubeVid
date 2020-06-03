@@ -102,6 +102,7 @@ function updatePluginSettings(req, res) {
         const plugin = res.locals.plugin;
         plugin.settings = req.body.settings;
         yield plugin.save();
+        yield plugin_manager_1.PluginManager.Instance.onSettingsChanged(plugin.name, plugin.settings);
         return res.sendStatus(204);
     });
 }

@@ -24,7 +24,8 @@ function processCreateView(activity, byActor) {
         const videoObject = activity.type === 'View' ? activity.object : activity.object.object;
         const options = {
             videoObject,
-            fetchType: 'only-video'
+            fetchType: 'only-immutable-attributes',
+            allowRefresh: false
         };
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel(options);
         yield redis_1.Redis.Instance.addVideoView(video.id);

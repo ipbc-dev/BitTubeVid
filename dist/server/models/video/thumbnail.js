@@ -19,6 +19,7 @@ const config_1 = require("../../initializers/config");
 const video_1 = require("./video");
 const video_playlist_1 = require("./video-playlist");
 const thumbnail_type_1 = require("../../../shared/models/videos/thumbnail.type");
+const activitypub_1 = require("@server/helpers/activitypub");
 let ThumbnailModel = ThumbnailModel_1 = class ThumbnailModel extends sequelize_typescript_1.Model {
     static removeFiles(instance) {
         logger_1.logger.info('Removing %s file %s.', ThumbnailModel_1.types[instance.type].label, instance.filename);
@@ -36,11 +37,13 @@ let ThumbnailModel = ThumbnailModel_1 = class ThumbnailModel extends sequelize_t
     static generateDefaultPreviewName(videoUUID) {
         return videoUUID + '.jpg';
     }
-    getFileUrl(isLocal) {
-        if (isLocal === false)
+    getFileUrl(video) {
+        const staticPath = ThumbnailModel_1.types[this.type].staticPath + this.filename;
+        if (video.isOwned())
+            return constants_1.WEBSERVER.URL + staticPath;
+        if (this.fileUrl)
             return this.fileUrl;
-        const staticPath = ThumbnailModel_1.types[this.type].staticPath;
-        return constants_1.WEBSERVER.URL + staticPath + this.filename;
+        return activitypub_1.buildRemoteVideoBaseUrl(video, staticPath);
     }
     getPath() {
         const directory = ThumbnailModel_1.types[this.type].directory;

@@ -20,6 +20,7 @@ const videos_1 = require("../../../../shared/models/videos");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const chai_1 = require("chai");
 const user_flag_model_1 = require("../../../../shared/models/users/user-flag.model");
+const email_1 = require("../../../../shared/extra-utils/miscs/email");
 describe('Test users API validators', function () {
     const path = '/api/v1/users/';
     let userId;
@@ -30,13 +31,18 @@ describe('Test users API validators', function () {
     let serverWithRegistrationDisabled;
     let userAccessToken = '';
     let moderatorAccessToken = '';
+    let emailPort;
+    let overrideConfig;
     let channelId;
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
+            const emails = [];
+            emailPort = yield email_1.MockSmtpServer.Instance.collectEmails(emails);
+            overrideConfig = { signup: { limit: 8 } };
             {
                 const res = yield Promise.all([
-                    extra_utils_1.flushAndRunServer(1, { signup: { limit: 7 } }),
+                    extra_utils_1.flushAndRunServer(1, overrideConfig),
                     extra_utils_1.flushAndRunServer(2)
                 ]);
                 server = res[0];
@@ -194,6 +200,37 @@ describe('Test users API validators', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: 'super'.repeat(61) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
+            });
+        });
+        it('Should fail with empty password and no smtp configured', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: '' });
+                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
+            });
+        });
+        it('Should succeed with no password on a server with smtp enabled', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                extra_utils_1.killallServers([server]);
+                const config = extra_utils_1.immutableAssign(overrideConfig, {
+                    smtp: {
+                        hostname: 'localhost',
+                        port: emailPort
+                    }
+                });
+                yield extra_utils_1.reRunServer(server, config);
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, {
+                    password: '',
+                    username: 'create_password',
+                    email: 'create_password@example.com'
+                });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path: path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: 200
+                });
             });
         });
         it('Should fail with invalid admin flags', function () {
@@ -499,7 +536,7 @@ describe('Test users API validators', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/me/avatar/pick', token: server.accessToken, fields, attaches });
             });
@@ -508,7 +545,7 @@ describe('Test users API validators', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/me/avatar/pick', token: server.accessToken, fields, attaches });
             });
@@ -517,7 +554,7 @@ describe('Test users API validators', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -532,7 +569,7 @@ describe('Test users API validators', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -1087,6 +1124,7 @@ describe('Test users API validators', function () {
     });
     after(function () {
         return __awaiter(this, void 0, void 0, function* () {
+            email_1.MockSmtpServer.Instance.kill();
             yield extra_utils_1.cleanupTests([server, serverWithRegistrationDisabled]);
         });
     });

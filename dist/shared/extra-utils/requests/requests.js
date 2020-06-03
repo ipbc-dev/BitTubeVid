@@ -4,12 +4,13 @@ const request = require("supertest");
 const miscs_1 = require("../miscs/miscs");
 const path_1 = require("path");
 const url_1 = require("url");
+const querystring_1 = require("querystring");
 function get4KFileUrl() {
     return 'https://download.cpy.re/peertube/4k_file.txt';
 }
 exports.get4KFileUrl = get4KFileUrl;
 function makeRawRequest(url, statusCodeExpected, range) {
-    const { host, protocol, pathname } = url_1.parse(url);
+    const { host, protocol, pathname } = new url_1.URL(url);
     return makeGetRequest({ url: `${protocol}//${host}`, path: pathname, statusCodeExpected, range });
 }
 exports.makeRawRequest = makeRawRequest;
@@ -27,6 +28,8 @@ function makeGetRequest(options) {
         req.query(options.query);
     if (options.range)
         req.set('Range', options.range);
+    if (options.redirects)
+        req.redirects(options.redirects);
     return req.expect(options.statusCodeExpected);
 }
 exports.makeGetRequest = makeGetRequest;
@@ -130,3 +133,7 @@ function updateAvatarRequest(options) {
     });
 }
 exports.updateAvatarRequest = updateAvatarRequest;
+function decodeQueryString(path) {
+    return querystring_1.decode(path.split('?')[1]);
+}
+exports.decodeQueryString = decodeQueryString;

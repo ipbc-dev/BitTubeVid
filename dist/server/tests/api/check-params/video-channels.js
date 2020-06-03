@@ -249,7 +249,7 @@ describe('Test video channels API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/avatar/pick', token: server.accessToken, fields, attaches });
             });
@@ -258,7 +258,7 @@ describe('Test video channels API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/avatar/pick', token: server.accessToken, fields, attaches });
             });
@@ -267,7 +267,7 @@ describe('Test video channels API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -282,7 +282,7 @@ describe('Test video channels API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
-                    'avatarfile': path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,

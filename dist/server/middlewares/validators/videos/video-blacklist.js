@@ -76,6 +76,10 @@ const videosBlacklistFiltersValidator = [
     express_validator_1.query('type')
         .optional()
         .custom(video_blacklist_1.isVideoBlacklistTypeValid).withMessage('Should have a valid video blacklist type attribute'),
+    express_validator_1.query('search')
+        .optional()
+        .not()
+        .isEmpty().withMessage('Should have a valid search'),
     (req, res, next) => {
         logger_1.logger.debug('Checking videos blacklist filters query', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))

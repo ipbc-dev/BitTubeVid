@@ -10,9 +10,10 @@ function isUserNotificationTypeValid(value) {
 exports.isUserNotificationTypeValid = isUserNotificationTypeValid;
 function isUserNotificationSettingValid(value) {
     return misc_1.exists(value) &&
-        validator_1.default.isInt('' + value) && (value === user_notification_setting_model_1.UserNotificationSettingValue.NONE ||
-        value === user_notification_setting_model_1.UserNotificationSettingValue.WEB ||
-        value === user_notification_setting_model_1.UserNotificationSettingValue.EMAIL ||
-        value === (user_notification_setting_model_1.UserNotificationSettingValue.WEB | user_notification_setting_model_1.UserNotificationSettingValue.EMAIL));
+        validator_1.default.isInt('' + value) &&
+        (value === user_notification_setting_model_1.UserNotificationSettingValue.NONE ||
+            value === user_notification_setting_model_1.UserNotificationSettingValue.WEB ||
+            value === user_notification_setting_model_1.UserNotificationSettingValue.EMAIL ||
+            value === (user_notification_setting_model_1.UserNotificationSettingValue.WEB | user_notification_setting_model_1.UserNotificationSettingValue.EMAIL));
 }
 exports.isUserNotificationSettingValid = isUserNotificationSettingValid;

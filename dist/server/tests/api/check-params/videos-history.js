@@ -9,14 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const expect = chai.expect;
 describe('Test videos history API validator', function () {
+    const myHistoryPath = '/api/v1/users/me/history/videos';
+    const myHistoryRemove = myHistoryPath + '/remove';
     let watchingPath;
-    let myHistoryPath = '/api/v1/users/me/history/videos';
-    let myHistoryRemove = myHistoryPath + '/remove';
     let server;
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {

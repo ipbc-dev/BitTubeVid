@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const register_ts_paths_1 = require("./server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
-require('tls').DEFAULT_ECDH_CURVE = 'auto';
 const core_utils_1 = require("./server/helpers/core-utils");
 if (core_utils_1.isTestInstance()) {
     require('source-map-support').install();
@@ -68,7 +67,7 @@ migrator_1.migrate()
     process.exit(-1);
 });
 constants_1.loadLanguages();
-const initializers_1 = require("./server/initializers");
+const installer_1 = require("./server/initializers/installer");
 const emailer_1 = require("./server/lib/emailer");
 const job_queue_1 = require("./server/lib/job-queue");
 const files_cache_1 = require("./server/lib/files-cache");
@@ -159,7 +158,7 @@ function startApplication() {
     return __awaiter(this, void 0, void 0, function* () {
         const port = config_1.CONFIG.LISTEN.PORT;
         const hostname = config_1.CONFIG.LISTEN.HOSTNAME;
-        yield initializers_1.installApplication();
+        yield installer_1.installApplication();
         checker_after_init_1.checkActivityPubUrls()
             .catch(err => {
             logger_1.logger.error('Error in ActivityPub URLs checker.', { err });

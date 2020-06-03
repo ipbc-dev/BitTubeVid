@@ -12,9 +12,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const constants_1 = require("../../initializers/constants");
 const actor_1 = require("../../models/activitypub/actor");
 const video_share_1 = require("../../models/video/video-share");
-function getRemoteVideoAudience(video, actorsInvolvedInVideo) {
+function getRemoteVideoAudience(accountActor, actorsInvolvedInVideo) {
     return {
-        to: [video.VideoChannel.Account.Actor.url],
+        to: [accountActor.url],
         cc: actorsInvolvedInVideo.map(a => a.followersUrl)
     };
 }
@@ -27,6 +27,8 @@ function getVideoCommentAudience(videoComment, threadParentComments, actorsInvol
     }
     cc.push(videoComment.Account.Actor.followersUrl);
     for (const parentComment of threadParentComments) {
+        if (parentComment.isDeleted())
+            continue;
         cc.push(parentComment.Account.Actor.url);
     }
     return {

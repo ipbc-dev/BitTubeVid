@@ -46,7 +46,7 @@ describe('Test video abuses', function () {
     });
     it('Should not have video abuses', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+            const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.be.an('array');
             expect(res.body.data.length).to.equal(0);
@@ -62,7 +62,7 @@ describe('Test video abuses', function () {
     });
     it('Should have 1 video abuses on server 1 and 0 on server 2', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            const res1 = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+            const res1 = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res1.body.total).to.equal(1);
             expect(res1.body.data).to.be.an('array');
             expect(res1.body.data.length).to.equal(1);
@@ -71,7 +71,12 @@ describe('Test video abuses', function () {
             expect(abuse.reporterAccount.name).to.equal('root');
             expect(abuse.reporterAccount.host).to.equal('localhost:' + servers[0].port);
             expect(abuse.video.id).to.equal(servers[0].video.id);
-            const res2 = yield index_1.getVideoAbusesList(servers[1].url, servers[1].accessToken);
+            expect(abuse.video.channel).to.exist;
+            expect(abuse.count).to.equal(1);
+            expect(abuse.nth).to.equal(1);
+            expect(abuse.countReportsForReporter).to.equal(1);
+            expect(abuse.countReportsForReportee).to.equal(1);
+            const res2 = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
             expect(res2.body.total).to.equal(0);
             expect(res2.body.data).to.be.an('array');
             expect(res2.body.data.length).to.equal(0);
@@ -87,7 +92,7 @@ describe('Test video abuses', function () {
     });
     it('Should have 2 video abuses on server 1 and 1 on server 2', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            const res1 = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+            const res1 = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res1.body.total).to.equal(2);
             expect(res1.body.data).to.be.an('array');
             expect(res1.body.data.length).to.equal(2);
@@ -99,6 +104,8 @@ describe('Test video abuses', function () {
             expect(abuse1.state.id).to.equal(videos_1.VideoAbuseState.PENDING);
             expect(abuse1.state.label).to.equal('Pending');
             expect(abuse1.moderationComment).to.be.null;
+            expect(abuse1.count).to.equal(1);
+            expect(abuse1.nth).to.equal(1);
             const abuse2 = res1.body.data[1];
             expect(abuse2.reason).to.equal('my super bad reason 2');
             expect(abuse2.reporterAccount.name).to.equal('root');
@@ -107,7 +114,7 @@ describe('Test video abuses', function () {
             expect(abuse2.state.id).to.equal(videos_1.VideoAbuseState.PENDING);
             expect(abuse2.state.label).to.equal('Pending');
             expect(abuse2.moderationComment).to.be.null;
-            const res2 = yield index_1.getVideoAbusesList(servers[1].url, servers[1].accessToken);
+            const res2 = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
             expect(res2.body.total).to.equal(1);
             expect(res2.body.data).to.be.an('array');
             expect(res2.body.data.length).to.equal(1);
@@ -124,7 +131,7 @@ describe('Test video abuses', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const body = { state: videos_1.VideoAbuseState.REJECTED };
             yield index_1.updateVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id, body);
-            const res = yield index_1.getVideoAbusesList(servers[1].url, servers[1].accessToken);
+            const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
             expect(res.body.data[0].state.id).to.equal(videos_1.VideoAbuseState.REJECTED);
         });
     });
@@ -132,7 +139,7 @@ describe('Test video abuses', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const body = { state: videos_1.VideoAbuseState.ACCEPTED, moderationComment: 'It is valid' };
             yield index_1.updateVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id, body);
-            const res = yield index_1.getVideoAbusesList(servers[1].url, servers[1].accessToken);
+            const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
             expect(res.body.data[0].state.id).to.equal(videos_1.VideoAbuseState.ACCEPTED);
             expect(res.body.data[0].moderationComment).to.equal('It is valid');
         });
@@ -143,20 +150,20 @@ describe('Test video abuses', function () {
             {
                 yield index_1.reportVideoAbuse(servers[1].url, servers[1].accessToken, servers[0].video.uuid, 'will mute this');
                 yield jobs_1.waitJobs(servers);
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(3);
             }
             const accountToBlock = 'root@localhost:' + servers[1].port;
             {
                 yield blocklist_1.addAccountToServerBlocklist(servers[0].url, servers[0].accessToken, accountToBlock);
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(2);
                 const abuse = res.body.data.find(a => a.reason === 'will mute this');
                 expect(abuse).to.be.undefined;
             }
             {
                 yield blocklist_1.removeAccountFromServerBlocklist(servers[0].url, servers[0].accessToken, accountToBlock);
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(3);
             }
         });
@@ -166,15 +173,64 @@ describe('Test video abuses', function () {
             const serverToBlock = servers[1].host;
             {
                 yield blocklist_1.addServerToServerBlocklist(servers[0].url, servers[0].accessToken, servers[1].host);
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(2);
                 const abuse = res.body.data.find(a => a.reason === 'will mute this');
                 expect(abuse).to.be.undefined;
             }
             {
                 yield blocklist_1.removeServerFromServerBlocklist(servers[0].url, servers[0].accessToken, serverToBlock);
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(3);
+            }
+        });
+    });
+    it('Should keep the video abuse when deleting the video', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
+            yield index_1.removeVideo(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid);
+            yield jobs_1.waitJobs(servers);
+            const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
+            expect(res.body.total).to.equal(2, "wrong number of videos returned");
+            expect(res.body.data.length).to.equal(2, "wrong number of videos returned");
+            expect(res.body.data[0].id).to.equal(abuseServer2.id, "wrong origin server id for first video");
+            const abuse = res.body.data[0];
+            expect(abuse.video.id).to.equal(abuseServer2.video.id, "wrong video id");
+            expect(abuse.video.channel).to.exist;
+            expect(abuse.video.deleted).to.be.true;
+        });
+    });
+    it('Should include counts of reports from reporter and reportee', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
+            const user = { username: 'user2', password: 'password' };
+            yield index_1.createUser(Object.assign({ url: servers[0].url, accessToken: servers[0].accessToken }, user));
+            const userAccessToken = yield index_1.userLogin(servers[0], user);
+            const video3Attributes = {
+                name: 'my second super name for server 1',
+                description: 'my second super description for server 1'
+            };
+            yield index_1.uploadVideo(servers[0].url, userAccessToken, video3Attributes);
+            const res1 = yield index_1.getVideosList(servers[0].url);
+            const videos = res1.body.data;
+            const video3 = videos.find(video => video.name === 'my second super name for server 1');
+            const reason3 = 'my super bad reason 3';
+            yield index_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, video3.id, reason3);
+            const reason4 = 'my super bad reason 4';
+            yield index_1.reportVideoAbuse(servers[0].url, userAccessToken, servers[0].video.id, reason4);
+            const res2 = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
+            {
+                for (const abuse of res2.body.data) {
+                    if (abuse.video.id === video3.id) {
+                        expect(abuse.count).to.equal(1, "wrong reports count for video 3");
+                        expect(abuse.nth).to.equal(1, "wrong report position in report list for video 3");
+                        expect(abuse.countReportsForReportee).to.equal(1, "wrong reports count for reporter on video 3 abuse");
+                        expect(abuse.countReportsForReporter).to.equal(3, "wrong reports count for reportee on video 3 abuse");
+                    }
+                    if (abuse.video.id === servers[0].video.id) {
+                        expect(abuse.countReportsForReportee).to.equal(3, "wrong reports count for reporter on video 1 abuse");
+                    }
+                }
             }
         });
     });
@@ -184,15 +240,45 @@ describe('Test video abuses', function () {
             yield index_1.deleteVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id);
             yield jobs_1.waitJobs(servers);
             {
-                const res = yield index_1.getVideoAbusesList(servers[1].url, servers[1].accessToken);
+                const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
                 expect(res.body.total).to.equal(1);
                 expect(res.body.data.length).to.equal(1);
                 expect(res.body.data[0].id).to.not.equal(abuseServer2.id);
             }
             {
-                const res = yield index_1.getVideoAbusesList(servers[0].url, servers[0].accessToken);
-                expect(res.body.total).to.equal(3);
+                const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
+                expect(res.body.total).to.equal(5);
             }
+        });
+    });
+    it('Should list and filter video abuses', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            function list(query) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const options = {
+                        url: servers[0].url,
+                        token: servers[0].accessToken
+                    };
+                    Object.assign(options, query);
+                    const res = yield index_1.getVideoAbusesList(options);
+                    return res.body.data;
+                });
+            }
+            expect(yield list({ id: 56 })).to.have.lengthOf(0);
+            expect(yield list({ id: 1 })).to.have.lengthOf(1);
+            expect(yield list({ search: 'my super name for server 1' })).to.have.lengthOf(3);
+            expect(yield list({ search: 'aaaaaaaaaaaaaaaaaaaaaaaaaa' })).to.have.lengthOf(0);
+            expect(yield list({ searchVideo: 'my second super name for server 1' })).to.have.lengthOf(1);
+            expect(yield list({ searchVideoChannel: 'root' })).to.have.lengthOf(3);
+            expect(yield list({ searchVideoChannel: 'aaaa' })).to.have.lengthOf(0);
+            expect(yield list({ searchReporter: 'user2' })).to.have.lengthOf(1);
+            expect(yield list({ searchReporter: 'root' })).to.have.lengthOf(4);
+            expect(yield list({ searchReportee: 'root' })).to.have.lengthOf(3);
+            expect(yield list({ searchReportee: 'aaaa' })).to.have.lengthOf(0);
+            expect(yield list({ videoIs: 'deleted' })).to.have.lengthOf(1);
+            expect(yield list({ videoIs: 'blacklisted' })).to.have.lengthOf(0);
+            expect(yield list({ state: videos_1.VideoAbuseState.ACCEPTED })).to.have.lengthOf(0);
+            expect(yield list({ state: videos_1.VideoAbuseState.PENDING })).to.have.lengthOf(5);
         });
     });
     after(function () {

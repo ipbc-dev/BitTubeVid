@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const register_ts_paths_1 = require("../../server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
-const initializers_1 = require("../../server/initializers");
+const database_1 = require("../../server/initializers/database");
 const Sequelize = require("sequelize");
 const path_1 = require("path");
 const constants_1 = require("@server/initializers/constants");
@@ -29,7 +29,7 @@ run()
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating torrents and updating database for HSL files.');
-        yield initializers_1.initDatabaseModels(true);
+        yield database_1.initDatabaseModels(true);
         const query = 'select "videoFile".id as id, "videoFile".resolution as resolution, "video".uuid as uuid from "videoFile" ' +
             'inner join "videoStreamingPlaylist" ON "videoStreamingPlaylist".id = "videoFile"."videoStreamingPlaylistId" ' +
             'inner join video ON video.id = "videoStreamingPlaylist"."videoId" ' +
@@ -37,7 +37,7 @@ function run() {
         const options = {
             type: Sequelize.QueryTypes.SELECT
         };
-        const res = yield initializers_1.sequelizeTypescript.query(query, options);
+        const res = yield database_1.sequelizeTypescript.query(query, options);
         for (const row of res) {
             const videoFilename = `${row['uuid']}-${row['resolution']}-fragmented.mp4`;
             const videoFilePath = path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, row['uuid'], videoFilename);
@@ -68,7 +68,7 @@ function run() {
                 type: Sequelize.QueryTypes.UPDATE,
                 replacements: [infoHash, size, row['id']]
             };
-            yield initializers_1.sequelizeTypescript.query(queryUpdate, options);
+            yield database_1.sequelizeTypescript.query(queryUpdate, options);
         }
     });
 }

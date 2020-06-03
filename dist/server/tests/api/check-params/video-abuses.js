@@ -66,6 +66,26 @@ describe('Test video abuses API validators', function () {
                 });
             });
         });
+        it('Should fail with a bad id filter', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query: { id: 'toto' } });
+            });
+        });
+        it('Should fail with a bad state filter', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query: { state: 'toto' } });
+            });
+        });
+        it('Should fail with a bad videoIs filter', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query: { videoIs: 'toto' } });
+            });
+        });
+        it('Should succeed with the correct params', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query: { id: 13 }, statusCodeExpected: 200 });
+            });
+        });
     });
     describe('When reporting a video abuse', function () {
         const basePath = '/api/v1/videos/';

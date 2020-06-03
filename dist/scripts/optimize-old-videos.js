@@ -16,7 +16,7 @@ const ffmpeg_utils_1 = require("../server/helpers/ffmpeg-utils");
 const videos_1 = require("../shared/models/videos");
 const video_1 = require("../server/models/video/video");
 const video_transcoding_1 = require("../server/lib/video-transcoding");
-const initializers_1 = require("../server/initializers");
+const database_1 = require("../server/initializers/database");
 const path_1 = require("path");
 const fs_extra_1 = require("fs-extra");
 const webtorrent_1 = require("@server/helpers/webtorrent");
@@ -39,7 +39,7 @@ process.on('SIGINT', function () {
 });
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield initializers_1.initDatabaseModels(true);
+        yield database_1.initDatabaseModels(true);
         const localVideos = yield video_1.VideoModel.listLocal();
         for (const video of localVideos) {
             currentVideoId = video.id;

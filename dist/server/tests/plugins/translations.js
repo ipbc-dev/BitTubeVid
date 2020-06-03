@@ -44,7 +44,7 @@ describe('Test plugin translations', function () {
             const res = yield extra_utils_1.getPluginTranslations({ url: server.url, locale: 'fr-FR' });
             expect(res.body).to.deep.equal({
                 'peertube-plugin-test': {
-                    'Hi': 'Coucou'
+                    Hi: 'Coucou'
                 },
                 'peertube-plugin-test-two': {
                     'Hello world': 'Bonjour le monde'
@@ -69,7 +69,7 @@ describe('Test plugin translations', function () {
                 const res = yield extra_utils_1.getPluginTranslations({ url: server.url, locale: 'fr-FR' });
                 expect(res.body).to.deep.equal({
                     'peertube-plugin-test': {
-                        'Hi': 'Coucou'
+                        Hi: 'Coucou'
                     }
                 });
             }

@@ -10,11 +10,11 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var PluginModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-const sequelize_typescript_1 = require("sequelize-typescript");
-const utils_1 = require("../utils");
-const plugins_1 = require("../../helpers/custom-validators/plugins");
-const plugin_type_1 = require("../../../shared/models/plugins/plugin.type");
 const sequelize_1 = require("sequelize");
+const sequelize_typescript_1 = require("sequelize-typescript");
+const plugin_type_1 = require("../../../shared/models/plugins/plugin.type");
+const plugins_1 = require("../../helpers/custom-validators/plugins");
+const utils_1 = require("../utils");
 let PluginModel = PluginModel_1 = class PluginModel extends sequelize_typescript_1.Model {
     static listEnabledPluginsAndThemes() {
         const query = {
@@ -36,7 +36,7 @@ let PluginModel = PluginModel_1 = class PluginModel extends sequelize_typescript
         };
         return PluginModel_1.findOne(query);
     }
-    static getSetting(pluginName, pluginType, settingName) {
+    static getSetting(pluginName, pluginType, settingName, registeredSettings) {
         const query = {
             attributes: ['settings'],
             where: {
@@ -46,9 +46,38 @@ let PluginModel = PluginModel_1 = class PluginModel extends sequelize_typescript
         };
         return PluginModel_1.findOne(query)
             .then(p => {
-            if (!p || !p.settings)
-                return undefined;
+            if (!p || !p.settings || p.settings === undefined) {
+                const registered = registeredSettings.find(s => s.name === settingName);
+                if (!registered || registered.default === undefined)
+                    return undefined;
+                return registered.default;
+            }
             return p.settings[settingName];
+        });
+    }
+    static getSettings(pluginName, pluginType, settingNames, registeredSettings) {
+        const query = {
+            attributes: ['settings'],
+            where: {
+                name: pluginName,
+                type: pluginType
+            }
+        };
+        return PluginModel_1.findOne(query)
+            .then(p => {
+            const result = {};
+            for (const name of settingNames) {
+                if (!p || !p.settings || p.settings[name] === undefined) {
+                    const registered = registeredSettings.find(s => s.name === name);
+                    if ((registered === null || registered === void 0 ? void 0 : registered.default) !== undefined) {
+                        result[name] = registered.default;
+                    }
+                }
+                else {
+                    result[name] = p.settings[name];
+                }
+            }
+            return result;
         });
     }
     static setSetting(pluginName, pluginType, settingName, settingValue) {
@@ -90,16 +119,14 @@ let PluginModel = PluginModel_1 = class PluginModel extends sequelize_typescript
         });
     }
     static storeData(pluginName, pluginType, key, data) {
-        const query = {
-            where: {
-                name: pluginName,
-                type: pluginType
-            }
+        const query = 'UPDATE "plugin" SET "storage" = jsonb_set(coalesce("storage", \'{}\'), :key, :data::jsonb) ' +
+            'WHERE "name" = :pluginName AND "type" = :pluginType';
+        const jsonPath = '{' + key + '}';
+        const options = {
+            replacements: { pluginName, pluginType, key: jsonPath, data: JSON.stringify(data) },
+            type: sequelize_1.QueryTypes.UPDATE
         };
-        const toSave = {
-            [`storage.${key}`]: data
-        };
-        return PluginModel_1.update(toSave, query)
+        return PluginModel_1.sequelize.query(query, options)
             .then(() => undefined);
     }
     static listForApi(options) {

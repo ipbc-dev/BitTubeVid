@@ -8,7 +8,7 @@ const lodash_1 = require("lodash");
 const video_playlist_privacy_model_1 = require("../../shared/models/videos/playlist/video-playlist-privacy.model");
 const video_playlist_type_model_1 = require("../../shared/models/videos/playlist/video-playlist-type.model");
 const config_1 = require("./config");
-const LAST_MIGRATION_VERSION = 475;
+const LAST_MIGRATION_VERSION = 510;
 exports.LAST_MIGRATION_VERSION = LAST_MIGRATION_VERSION;
 const API_VERSION = 'v1';
 exports.API_VERSION = API_VERSION;
@@ -50,8 +50,8 @@ const SORTABLE_COLUMNS = {
     BLACKLISTS: ['id', 'name', 'duration', 'views', 'likes', 'dislikes', 'uuid', 'createdAt'],
     FOLLOWERS: ['createdAt', 'state', 'score'],
     FOLLOWING: ['createdAt', 'redundancyAllowed', 'state'],
-    VIDEOS: ['name', 'duration', 'createdAt', 'publishedAt', 'views', 'likes', 'trending'],
-    VIDEOS_SEARCH: ['name', 'duration', 'createdAt', 'publishedAt', 'views', 'likes', 'match'],
+    VIDEOS: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending'],
+    VIDEOS_SEARCH: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match'],
     VIDEO_CHANNELS_SEARCH: ['match', 'displayName', 'createdAt'],
     ACCOUNTS_BLOCKLIST: ['createdAt'],
     SERVERS_BLOCKLIST: ['createdAt'],
@@ -74,9 +74,6 @@ const ROUTE_CACHE_LIFETIME = {
     SECURITYTXT: '2 hours',
     NODEINFO: '10 minutes',
     DNT_POLICY: '1 week',
-    OVERVIEWS: {
-        VIDEOS: '1 hour'
-    },
     ACTIVITY_PUB: {
         VIDEOS: '1 second'
     },
@@ -131,7 +128,7 @@ exports.JOB_CONCURRENCY = JOB_CONCURRENCY;
 const JOB_TTL = {
     'activitypub-http-broadcast': 60000 * 10,
     'activitypub-http-unicast': 60000 * 10,
-    'activitypub-http-fetcher': 60000 * 10,
+    'activitypub-http-fetcher': 1000 * 3600 * 10,
     'activitypub-follow': 60000 * 10,
     'video-file-import': 1000 * 3600,
     'video-transcoding': 1000 * 3600 * 48,
@@ -169,10 +166,6 @@ const SCHEDULER_INTERVALS_MS = {
     removeOldHistory: 60000 * 60 * 24
 };
 exports.SCHEDULER_INTERVALS_MS = SCHEDULER_INTERVALS_MS;
-const INSTANCES_INDEX = {
-    HOSTS_PATH: '/api/v1/instances/hosts'
-};
-exports.INSTANCES_INDEX = INSTANCES_INDEX;
 const CONSTRAINTS_FIELDS = {
     USERS: {
         NAME: { min: 1, max: 120 },
@@ -272,7 +265,7 @@ const CONSTRAINTS_FIELDS = {
         COUNT: { min: 0 }
     },
     VIDEO_COMMENTS: {
-        TEXT: { min: 1, max: 3000 },
+        TEXT: { min: 1, max: 10000 },
         URL: { min: 3, max: 2000 }
     },
     VIDEO_SHARE: {
@@ -297,6 +290,8 @@ let CONTACT_FORM_LIFETIME = 60000 * 60;
 exports.CONTACT_FORM_LIFETIME = CONTACT_FORM_LIFETIME;
 const VIDEO_TRANSCODING_FPS = {
     MIN: 10,
+    STANDARD: [24, 25, 30],
+    HD_STANDARD: [50, 60],
     AVERAGE: 30,
     MAX: 60,
     KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720
@@ -345,7 +340,7 @@ const VIDEO_LICENCES = {
     7: 'Public Domain Dedication'
 };
 exports.VIDEO_LICENCES = VIDEO_LICENCES;
-let VIDEO_LANGUAGES = {};
+const VIDEO_LANGUAGES = {};
 exports.VIDEO_LANGUAGES = VIDEO_LANGUAGES;
 const VIDEO_PRIVACIES = {
     [videos_1.VideoPrivacy.PUBLIC]: 'Public',
@@ -363,7 +358,8 @@ exports.VIDEO_STATES = VIDEO_STATES;
 const VIDEO_IMPORT_STATES = {
     [videos_1.VideoImportState.FAILED]: 'Failed',
     [videos_1.VideoImportState.PENDING]: 'Pending',
-    [videos_1.VideoImportState.SUCCESS]: 'Success'
+    [videos_1.VideoImportState.SUCCESS]: 'Success',
+    [videos_1.VideoImportState.REJECTED]: 'Rejected'
 };
 exports.VIDEO_IMPORT_STATES = VIDEO_IMPORT_STATES;
 const VIDEO_ABUSE_STATES = {
@@ -406,7 +402,8 @@ const MIMETYPES = {
             'image/png': '.png',
             'image/jpg': '.jpg',
             'image/jpeg': '.jpg'
-        }
+        },
+        EXT_MIMETYPE: null
     },
     VIDEO_CAPTIONS: {
         MIMETYPE_EXT: {
@@ -423,10 +420,11 @@ const MIMETYPES = {
 };
 exports.MIMETYPES = MIMETYPES;
 MIMETYPES.AUDIO.EXT_MIMETYPE = lodash_1.invert(MIMETYPES.AUDIO.MIMETYPE_EXT);
+MIMETYPES.IMAGE.EXT_MIMETYPE = lodash_1.invert(MIMETYPES.IMAGE.MIMETYPE_EXT);
 const OVERVIEWS = {
     VIDEOS: {
         SAMPLE_THRESHOLD: 6,
-        SAMPLES_COUNT: 2
+        SAMPLES_COUNT: 20
     }
 };
 exports.OVERVIEWS = OVERVIEWS;
@@ -445,7 +443,7 @@ const ACTIVITY_PUB = {
     ACCEPT_HEADER: 'application/activity+json, application/ld+json',
     PUBLIC: 'https://www.w3.org/ns/activitystreams#Public',
     COLLECTION_ITEMS_PER_PAGE: 10,
-    FETCH_PAGE_LIMIT: 100,
+    FETCH_PAGE_LIMIT: 2000,
     URL_MIME_TYPES: {
         VIDEO: [],
         TORRENT: ['application/x-bittorrent'],
@@ -478,6 +476,8 @@ const BCRYPT_SALT_SIZE = 10;
 exports.BCRYPT_SALT_SIZE = BCRYPT_SALT_SIZE;
 const USER_PASSWORD_RESET_LIFETIME = 60000 * 60;
 exports.USER_PASSWORD_RESET_LIFETIME = USER_PASSWORD_RESET_LIFETIME;
+const USER_PASSWORD_CREATE_LIFETIME = 60000 * 60 * 24 * 7;
+exports.USER_PASSWORD_CREATE_LIFETIME = USER_PASSWORD_CREATE_LIFETIME;
 const USER_EMAIL_VERIFY_LIFETIME = 60000 * 60;
 exports.USER_EMAIL_VERIFY_LIFETIME = USER_EMAIL_VERIFY_LIFETIME;
 const NSFW_POLICY_TYPES = {
@@ -511,19 +511,21 @@ const LAZY_STATIC_PATHS = {
     VIDEO_CAPTIONS: '/static/video-captions/'
 };
 exports.LAZY_STATIC_PATHS = LAZY_STATIC_PATHS;
-let STATIC_MAX_AGE = {
+const STATIC_MAX_AGE = {
     SERVER: '2h',
     CLIENT: '30d'
 };
 exports.STATIC_MAX_AGE = STATIC_MAX_AGE;
 const THUMBNAILS_SIZE = {
     width: 223,
-    height: 122
+    height: 122,
+    minWidth: 150
 };
 exports.THUMBNAILS_SIZE = THUMBNAILS_SIZE;
 const PREVIEWS_SIZE = {
     width: 850,
-    height: 480
+    height: 480,
+    minWidth: 400
 };
 exports.PREVIEWS_SIZE = PREVIEWS_SIZE;
 const AVATARS_SIZE = {
@@ -614,6 +616,8 @@ const PLUGIN_GLOBAL_CSS_FILE_NAME = 'plugins-global.css';
 exports.PLUGIN_GLOBAL_CSS_FILE_NAME = PLUGIN_GLOBAL_CSS_FILE_NAME;
 const PLUGIN_GLOBAL_CSS_PATH = path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, PLUGIN_GLOBAL_CSS_FILE_NAME);
 exports.PLUGIN_GLOBAL_CSS_PATH = PLUGIN_GLOBAL_CSS_PATH;
+let PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 1000 * 60 * 5;
+exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME;
 const DEFAULT_THEME_NAME = 'default';
 exports.DEFAULT_THEME_NAME = DEFAULT_THEME_NAME;
 const DEFAULT_USER_THEME_NAME = 'instance-default';
@@ -641,8 +645,9 @@ if (core_utils_1.isTestInstance() === true) {
     exports.CONTACT_FORM_LIFETIME = CONTACT_FORM_LIFETIME = 1000;
     JOB_ATTEMPTS['email'] = 1;
     FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE = 3000;
-    MEMOIZE_TTL.OVERVIEWS_SAMPLE = 1;
-    ROUTE_CACHE_LIFETIME.OVERVIEWS.VIDEOS = '0ms';
+    MEMOIZE_TTL.OVERVIEWS_SAMPLE = 3000;
+    OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD = 2;
+    exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 5000;
 }
 updateWebserverUrls();
 updateWebserverConfig();
@@ -700,32 +705,32 @@ function buildLanguages() {
     const iso639 = require('iso-639-3');
     const languages = {};
     const additionalLanguages = {
-        'sgn': true,
-        'ase': true,
-        'sdl': true,
-        'bfi': true,
-        'bzs': true,
-        'csl': true,
-        'cse': true,
-        'dsl': true,
-        'fsl': true,
-        'gsg': true,
-        'pks': true,
-        'jsl': true,
-        'sfs': true,
-        'swl': true,
-        'rsl': true,
-        'epo': true,
-        'tlh': true,
-        'jbo': true,
-        'avk': true
+        sgn: true,
+        ase: true,
+        sdl: true,
+        bfi: true,
+        bzs: true,
+        csl: true,
+        cse: true,
+        dsl: true,
+        fsl: true,
+        gsg: true,
+        pks: true,
+        jsl: true,
+        sfs: true,
+        swl: true,
+        rsl: true,
+        epo: true,
+        tlh: true,
+        jbo: true,
+        avk: true
     };
     iso639
         .filter(l => {
-        return (l.iso6391 !== null && l.type === 'living') ||
+        return (l.iso6391 !== undefined && l.type === 'living') ||
             additionalLanguages[l.iso6393] === true;
     })
-        .forEach(l => languages[l.iso6391 || l.iso6393] = l.name);
+        .forEach(l => { languages[l.iso6391 || l.iso6393] = l.name; });
     languages['oc'] = 'Occitan';
     languages['el'] = 'Greek';
     return languages;

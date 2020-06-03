@@ -24,8 +24,8 @@ const utils_1 = require("../utils");
 const video_channel_1 = require("../video/video-channel");
 const actor_follow_1 = require("./actor-follow");
 const video_1 = require("../video/video");
-const Bluebird = require("bluebird");
 const sequelize_1 = require("sequelize");
+const model_cache_1 = require("@server/models/model-cache");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FULL"] = "FULL";
@@ -101,23 +101,42 @@ let ActorModel = ActorModel_1 = class ActorModel extends sequelize_typescript_1.
         return ActorModel_1.scope(ScopeNames.FULL).findAll(query);
     }
     static loadLocalByName(preferredUsername, transaction) {
-        if (preferredUsername === constants_1.SERVER_ACTOR_NAME && ActorModel_1.cache[preferredUsername]) {
-            return Bluebird.resolve(ActorModel_1.cache[preferredUsername]);
-        }
-        const query = {
-            where: {
-                preferredUsername,
-                serverId: null
-            },
-            transaction
+        const fun = () => {
+            const query = {
+                where: {
+                    preferredUsername,
+                    serverId: null
+                },
+                transaction
+            };
+            return ActorModel_1.scope(ScopeNames.FULL)
+                .findOne(query);
         };
-        return ActorModel_1.scope(ScopeNames.FULL)
-            .findOne(query)
-            .then(actor => {
-            if (preferredUsername === constants_1.SERVER_ACTOR_NAME) {
-                ActorModel_1.cache[preferredUsername] = actor;
-            }
-            return actor;
+        return model_cache_1.ModelCache.Instance.doCache({
+            cacheType: 'local-actor-name',
+            key: preferredUsername,
+            whitelist: () => preferredUsername === constants_1.SERVER_ACTOR_NAME,
+            fun
+        });
+    }
+    static loadLocalUrlByName(preferredUsername, transaction) {
+        const fun = () => {
+            const query = {
+                attributes: ['url'],
+                where: {
+                    preferredUsername,
+                    serverId: null
+                },
+                transaction
+            };
+            return ActorModel_1.unscoped()
+                .findOne(query);
+        };
+        return model_cache_1.ModelCache.Instance.doCache({
+            cacheType: 'local-actor-name',
+            key: preferredUsername,
+            whitelist: () => preferredUsername === constants_1.SERVER_ACTOR_NAME,
+            fun
         });
     }
     static loadByNameAndHost(preferredUsername, host) {
@@ -184,6 +203,34 @@ let ActorModel = ActorModel_1 = class ActorModel extends sequelize_typescript_1.
             [columnToUpdate]: sequelize_1.literal(`(SELECT COUNT(*) FROM "actorFollow" WHERE "${columnOfCount}" = ${sanitizedOfId})`)
         }, { where, transaction });
     }
+    static loadAccountActorByVideoId(videoId) {
+        const query = {
+            include: [
+                {
+                    attributes: ['id'],
+                    model: account_1.AccountModel.unscoped(),
+                    required: true,
+                    include: [
+                        {
+                            attributes: ['id', 'accountId'],
+                            model: video_channel_1.VideoChannelModel.unscoped(),
+                            required: true,
+                            include: [
+                                {
+                                    attributes: ['id', 'channelId'],
+                                    model: video_1.VideoModel.unscoped(),
+                                    where: {
+                                        id: videoId
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+        return ActorModel_1.unscoped().findOne(query);
+    }
     getSharedInbox() {
         return this.sharedInboxUrl || this.inboxUrl;
     }
@@ -211,7 +258,7 @@ let ActorModel = ActorModel_1 = class ActorModel extends sequelize_typescript_1.
         });
     }
     toActivityPubObject(name) {
-        let icon = undefined;
+        let icon;
         if (this.avatarId) {
             const extension = path_1.extname(this.Avatar.filename);
             icon = {
@@ -301,7 +348,6 @@ let ActorModel = ActorModel_1 = class ActorModel extends sequelize_typescript_1.
         return utils_1.isOutdated(this, constants_1.ACTIVITY_PUB.ACTOR_REFRESH_INTERVAL);
     }
 };
-ActorModel.cache = {};
 __decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ENUM(...lodash_1.values(constants_1.ACTIVITY_PUB_ACTOR_TYPES))),
@@ -507,6 +553,13 @@ ActorModel = ActorModel_1 = __decorate([
                     serverId: {
                         [sequelize_1.Op.ne]: null
                     }
+                }
+            },
+            {
+                fields: ['preferredUsername'],
+                unique: true,
+                where: {
+                    serverId: null
                 }
             },
             {

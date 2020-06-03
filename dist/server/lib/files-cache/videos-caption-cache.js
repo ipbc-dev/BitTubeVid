@@ -16,7 +16,7 @@ const video_caption_1 = require("../../models/video/video-caption");
 const abstract_video_static_file_cache_1 = require("./abstract-video-static-file-cache");
 const config_1 = require("../../initializers/config");
 const logger_1 = require("../../helpers/logger");
-const activitypub_1 = require("../activitypub");
+const requests_1 = require("@server/helpers/requests");
 class VideosCaptionCache extends abstract_video_static_file_cache_1.AbstractVideoStaticFileCache {
     constructor() {
         super();
@@ -47,9 +47,9 @@ class VideosCaptionCache extends abstract_video_static_file_cache_1.AbstractVide
             const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoId);
             if (!video)
                 return undefined;
-            const remoteStaticPath = videoCaption.getCaptionStaticPath();
+            const remoteUrl = videoCaption.getFileUrl(video);
             const destPath = path_1.join(constants_1.FILES_CACHE.VIDEO_CAPTIONS.DIRECTORY, videoCaption.getCaptionName());
-            yield activitypub_1.fetchRemoteVideoStaticFile(video, remoteStaticPath, destPath);
+            yield requests_1.doRequestAndSaveToFile({ uri: remoteUrl }, destPath);
             return { isOwned: false, path: destPath };
         });
     }

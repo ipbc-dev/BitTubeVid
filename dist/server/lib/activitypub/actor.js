@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const url = require("url");
-const uuidv4 = require("uuid/v4");
+const url_1 = require("url");
+const uuid_1 = require("uuid");
 const activitypub_1 = require("../../helpers/activitypub");
 const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
@@ -26,9 +26,10 @@ const avatar_1 = require("../../models/avatar/avatar");
 const server_1 = require("../../models/server/server");
 const video_channel_1 = require("../../models/video/video-channel");
 const job_queue_1 = require("../job-queue");
-const utils_1 = require("../../helpers/utils");
 const actor_3 = require("../../helpers/actor");
 const database_1 = require("../../initializers/database");
+const path_1 = require("path");
+const application_1 = require("@server/models/application/application");
 function setAsyncActorKeys(actor) {
     return peertube_crypto_1.createPrivateAndPublicKeys()
         .then(({ publicKey, privateKey }) => {
@@ -83,14 +84,14 @@ function getOrCreateActorAndServerAndModel(activityActor, fetchType = 'associati
             actor.VideoChannel.Actor = actor;
         const { actor: actorRefreshed, refreshed } = yield database_utils_1.retryTransactionWrapper(refreshActorIfNeeded, actor, fetchType);
         if (!actorRefreshed)
-            throw new Error('Actor ' + actorRefreshed.url + ' does not exist anymore.');
+            throw new Error('Actor ' + actor.url + ' does not exist anymore.');
         if ((created === true || refreshed === true) && updateCollections === true) {
             const payload = { uri: actor.outboxUrl, type: 'activity' };
-            yield job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload });
+            yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload });
         }
         if (created === true && actor.Account && accountPlaylistsUrl) {
             const payload = { uri: accountPlaylistsUrl, accountId: actor.Account.id, type: 'account-playlists' };
-            yield job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload });
+            yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload });
         }
         return actorRefreshed;
     });
@@ -179,22 +180,30 @@ function fetchActorTotalItems(url) {
 }
 exports.fetchActorTotalItems = fetchActorTotalItems;
 function getAvatarInfoIfExists(actorJSON) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (actorJSON.icon && actorJSON.icon.type === 'Image' && constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT[actorJSON.icon.mediaType] !== undefined &&
-            misc_1.isActivityPubUrlValid(actorJSON.icon.url)) {
-            const extension = constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT[actorJSON.icon.mediaType];
-            return {
-                name: uuidv4() + extension,
-                fileUrl: actorJSON.icon.url
-            };
-        }
+    const mimetypes = constants_1.MIMETYPES.IMAGE;
+    const icon = actorJSON.icon;
+    if (!icon || icon.type !== 'Image' || !misc_1.isActivityPubUrlValid(icon.url))
         return undefined;
-    });
+    let extension;
+    if (icon.mediaType) {
+        extension = mimetypes.MIMETYPE_EXT[icon.mediaType];
+    }
+    else {
+        const tmp = path_1.extname(icon.url);
+        if (mimetypes.EXT_MIMETYPE[tmp] !== undefined)
+            extension = tmp;
+    }
+    if (!extension)
+        return undefined;
+    return {
+        name: uuid_1.v4() + extension,
+        fileUrl: icon.url
+    };
 }
 exports.getAvatarInfoIfExists = getAvatarInfoIfExists;
 function addFetchOutboxJob(actor) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         if (serverActor.id === actor.id) {
             logger_1.logger.error('Cannot fetch our own outbox!');
             return undefined;
@@ -226,7 +235,9 @@ function refreshActorIfNeeded(actorArg, fetchedType) {
             const { result, statusCode } = yield fetchRemoteActor(actorUrl);
             if (statusCode === 404) {
                 logger_1.logger.info('Deleting actor %s because there is a 404 in refresh actor.', actor.url);
-                actor.Account ? actor.Account.destroy() : actor.VideoChannel.destroy();
+                actor.Account
+                    ? yield actor.Account.destroy()
+                    : yield actor.VideoChannel.destroy();
                 return { actor: undefined, refreshed: false };
             }
             if (result === undefined) {
@@ -267,13 +278,13 @@ function refreshActorIfNeeded(actorArg, fetchedType) {
 }
 exports.refreshActorIfNeeded = refreshActorIfNeeded;
 function saveActorAndServerAndModelIfNotExist(result, ownerActor, t) {
-    let actor = result.actor;
+    const actor = result.actor;
     if (t !== undefined)
         return save(t);
     return database_1.sequelizeTypescript.transaction(t => save(t));
     function save(t) {
         return __awaiter(this, void 0, void 0, function* () {
-            const actorHost = url.parse(actor.url).host;
+            const actorHost = new url_1.URL(actor.url).host;
             const serverOptions = {
                 where: {
                     host: actorHost

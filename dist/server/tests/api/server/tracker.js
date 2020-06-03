@@ -42,7 +42,7 @@ describe('Test tracker', function () {
         torrent.on('error', done);
         torrent.on('warning', warn => {
             const message = typeof warn === 'string' ? warn : warn.message;
-            if (message.indexOf('Unknown infoHash ') !== -1)
+            if (message.includes('Unknown infoHash '))
                 return done();
         });
         torrent.on('done', () => done(new Error('No error on infohash')));
@@ -54,13 +54,14 @@ describe('Test tracker', function () {
         torrent.on('error', done);
         torrent.on('warning', warn => {
             const message = typeof warn === 'string' ? warn : warn.message;
-            if (message.indexOf('Unknown infoHash ') !== -1)
+            if (message.includes('Unknown infoHash '))
                 return done(new Error('Error on infohash'));
         });
         torrent.on('done', done);
     });
     it('Should disable the tracker', function (done) {
         this.timeout(20000);
+        const errCb = () => done(new Error('Tracker is enabled'));
         extra_utils_1.killallServers([server]);
         extra_utils_1.reRunServer(server, { tracker: { enabled: false } })
             .then(() => {
@@ -69,10 +70,12 @@ describe('Test tracker', function () {
             torrent.on('error', done);
             torrent.on('warning', warn => {
                 const message = typeof warn === 'string' ? warn : warn.message;
-                if (message.indexOf('disabled ') !== -1)
+                if (message.includes('disabled ')) {
+                    torrent.off('done', errCb);
                     return done();
+                }
             });
-            torrent.on('done', () => done(new Error('Tracker is enabled')));
+            torrent.on('done', errCb);
         });
     });
     after(function () {

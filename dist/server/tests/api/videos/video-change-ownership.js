@@ -26,7 +26,7 @@ describe('Test video change ownership - nominal', function () {
     };
     let firstUserAccessToken = '';
     let secondUserAccessToken = '';
-    let lastRequestChangeOwnershipId = undefined;
+    let lastRequestChangeOwnershipId = '';
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
@@ -178,7 +178,7 @@ describe('Test video change ownership - nominal', function () {
     });
 });
 describe('Test video change ownership - quota too small', function () {
-    let server = undefined;
+    let server;
     const firstUser = {
         username: 'first',
         password: 'My great password'
@@ -189,7 +189,7 @@ describe('Test video change ownership - quota too small', function () {
     };
     let firstUserAccessToken = '';
     let secondUserAccessToken = '';
-    let lastRequestChangeOwnershipId = undefined;
+    let lastRequestChangeOwnershipId = '';
     before(function () {
         return __awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);

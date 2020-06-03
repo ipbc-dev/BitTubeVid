@@ -159,3 +159,15 @@ function getPluginTestPath(suffix = '') {
     return path_1.join(miscs_1.root(), 'server', 'tests', 'fixtures', 'peertube-plugin-test' + suffix);
 }
 exports.getPluginTestPath = getPluginTestPath;
+function getExternalAuth(options) {
+    const { url, npmName, npmVersion, authName, statusCodeExpected, query } = options;
+    const path = '/plugins/' + npmName + '/' + npmVersion + '/auth/' + authName;
+    return requests_1.makeGetRequest({
+        url,
+        path,
+        query,
+        statusCodeExpected: statusCodeExpected || 200,
+        redirects: 0
+    });
+}
+exports.getExternalAuth = getExternalAuth;

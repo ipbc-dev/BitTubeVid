@@ -122,7 +122,6 @@ function initDatabaseModels(silent) {
         yield createFunctions();
         if (!silent)
             logger_1.logger.info('Database %s is ready.', dbname);
-        return;
     });
 }
 exports.initDatabaseModels = initDatabaseModels;

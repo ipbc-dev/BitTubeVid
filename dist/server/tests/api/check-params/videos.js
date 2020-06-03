@@ -182,7 +182,7 @@ describe('Test videos API validator', function () {
     describe('When adding a video', function () {
         let baseCorrectParams;
         const baseCorrectAttaches = {
-            'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.webm')
+            videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.webm')
         };
         before(function () {
             baseCorrectParams = {
@@ -327,7 +327,7 @@ describe('Test videos API validator', function () {
         });
         it('Should fail with a bad originally published at attribute', function () {
             return __awaiter(this, void 0, void 0, function* () {
-                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { 'originallyPublishedAt': 'toto' });
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { originallyPublishedAt: 'toto' });
                 const attaches = baseCorrectAttaches;
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -343,11 +343,11 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 let attaches = {
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short_fake.webm')
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short_fake.webm')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
                 attaches = {
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mkv')
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mkv')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -356,8 +356,8 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -366,8 +366,8 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -376,8 +376,8 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -386,8 +386,8 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
-                    'videofile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
+                    videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -561,7 +561,7 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -577,7 +577,7 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'thumbnailfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -593,7 +593,7 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -609,7 +609,7 @@ describe('Test videos API validator', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    'previewfile': path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,

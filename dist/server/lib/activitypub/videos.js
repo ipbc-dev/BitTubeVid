@@ -45,6 +45,7 @@ const thumbnail_type_1 = require("../../../shared/models/videos/thumbnail.type")
 const path_1 = require("path");
 const video_blacklist_1 = require("../video-blacklist");
 const files_cache_1 = require("../files-cache");
+const lodash_1 = require("lodash");
 function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
     return __awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
@@ -98,15 +99,6 @@ function fetchRemoteVideoDescription(video) {
     });
 }
 exports.fetchRemoteVideoDescription = fetchRemoteVideoDescription;
-function fetchRemoteVideoStaticFile(video, path, destPath) {
-    const url = buildRemoteBaseUrl(video, path);
-    return requests_1.doRequestAndSaveToFile({ uri: url }, destPath);
-}
-exports.fetchRemoteVideoStaticFile = fetchRemoteVideoStaticFile;
-function buildRemoteBaseUrl(video, path) {
-    const host = video.VideoChannel.Account.Actor.Server.host;
-    return constants_1.REMOTE_SCHEME.HTTP + '://' + host + path;
-}
 function getOrCreateVideoChannelFromVideoObject(videoObject) {
     const channel = videoObject.attributedTo.find(a => a.type === 'Group');
     if (!channel)
@@ -125,7 +117,7 @@ function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
             const handler = items => video_rates_1.createRates(items, video, 'like');
             const cleaner = crawlStartDate => account_video_rate_1.AccountVideoRateModel.cleanOldRatesOf(video.id, 'like', crawlStartDate);
             yield crawl_1.crawlCollectionPage(fetchedVideo.likes, handler, cleaner)
-                .catch(err => logger_1.logger.error('Cannot add likes of video %s.', video.uuid, { err }));
+                .catch(err => logger_1.logger.error('Cannot add likes of video %s.', video.uuid, { err, rootUrl: fetchedVideo.likes }));
         }
         else {
             jobPayloads.push({ uri: fetchedVideo.likes, videoId: video.id, type: 'video-likes' });
@@ -134,7 +126,7 @@ function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
             const handler = items => video_rates_1.createRates(items, video, 'dislike');
             const cleaner = crawlStartDate => account_video_rate_1.AccountVideoRateModel.cleanOldRatesOf(video.id, 'dislike', crawlStartDate);
             yield crawl_1.crawlCollectionPage(fetchedVideo.dislikes, handler, cleaner)
-                .catch(err => logger_1.logger.error('Cannot add dislikes of video %s.', video.uuid, { err }));
+                .catch(err => logger_1.logger.error('Cannot add dislikes of video %s.', video.uuid, { err, rootUrl: fetchedVideo.dislikes }));
         }
         else {
             jobPayloads.push({ uri: fetchedVideo.dislikes, videoId: video.id, type: 'video-dislikes' });
@@ -143,7 +135,7 @@ function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
             const handler = items => share_1.addVideoShares(items, video);
             const cleaner = crawlStartDate => video_share_1.VideoShareModel.cleanOldSharesOf(video.id, crawlStartDate);
             yield crawl_1.crawlCollectionPage(fetchedVideo.shares, handler, cleaner)
-                .catch(err => logger_1.logger.error('Cannot add shares of video %s.', video.uuid, { err }));
+                .catch(err => logger_1.logger.error('Cannot add shares of video %s.', video.uuid, { err, rootUrl: fetchedVideo.shares }));
         }
         else {
             jobPayloads.push({ uri: fetchedVideo.shares, videoId: video.id, type: 'video-shares' });
@@ -152,12 +144,12 @@ function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
             const handler = items => video_comments_1.addVideoComments(items);
             const cleaner = crawlStartDate => video_comment_1.VideoCommentModel.cleanOldCommentsOf(video.id, crawlStartDate);
             yield crawl_1.crawlCollectionPage(fetchedVideo.comments, handler, cleaner)
-                .catch(err => logger_1.logger.error('Cannot add comments of video %s.', video.uuid, { err }));
+                .catch(err => logger_1.logger.error('Cannot add comments of video %s.', video.uuid, { err, rootUrl: fetchedVideo.comments }));
         }
         else {
             jobPayloads.push({ uri: fetchedVideo.comments, videoId: video.id, type: 'video-comments' });
         }
-        yield Bluebird.map(jobPayloads, payload => job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload }));
+        yield Bluebird.map(jobPayloads, payload => job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload }));
     });
 }
 function getOrCreateVideoAndAccountAndChannel(options) {
@@ -168,16 +160,21 @@ function getOrCreateVideoAndAccountAndChannel(options) {
         const videoUrl = activitypub_1.getAPId(options.videoObject);
         let videoFromDatabase = yield video_2.fetchVideoByUrl(videoUrl, fetchType);
         if (videoFromDatabase) {
-            if (videoFromDatabase.isOutdated() && allowRefresh === true) {
+            if (allowRefresh === true && videoFromDatabase.isOutdated()) {
                 const refreshOptions = {
                     video: videoFromDatabase,
                     fetchedType: fetchType,
                     syncParam
                 };
-                if (syncParam.refreshVideo === true)
+                if (syncParam.refreshVideo === true) {
                     videoFromDatabase = yield refreshVideoIfNeeded(refreshOptions);
-                else
-                    yield job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: videoFromDatabase.url } });
+                }
+                else {
+                    yield job_queue_1.JobQueue.Instance.createJobWithPromise({
+                        type: 'activitypub-refresher',
+                        payload: { type: 'video', url: videoFromDatabase.url }
+                    });
+                }
             }
             return { video: videoFromDatabase, created: false };
         }
@@ -202,7 +199,7 @@ function updateVideoFromAP(options) {
         try {
             let thumbnailModel;
             try {
-                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(videoObject.icon.url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
+                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
             }
             catch (err) {
                 logger_1.logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err });
@@ -214,7 +211,7 @@ function updateVideoFromAP(options) {
                 if (videoChannel.Account.id !== account.id) {
                     throw new Error('Account ' + account.Actor.url + ' does not own video channel ' + videoChannel.Actor.url);
                 }
-                const to = overrideTo ? overrideTo : videoObject.to;
+                const to = overrideTo || videoObject.to;
                 const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, to);
                 video.name = videoData.name;
                 video.uuid = videoData.uuid;
@@ -239,9 +236,11 @@ function updateVideoFromAP(options) {
                 const videoUpdated = yield video.save(sequelizeOptions);
                 if (thumbnailModel)
                     yield videoUpdated.addAndSaveThumbnail(thumbnailModel, t);
-                const previewUrl = buildRemoteBaseUrl(videoUpdated, path_1.join(constants_1.STATIC_PATHS.PREVIEWS, videoUpdated.getPreview().filename));
-                const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
-                yield videoUpdated.addAndSaveThumbnail(previewModel, t);
+                if (videoUpdated.getPreview()) {
+                    const previewUrl = videoUpdated.getPreview().getFileUrl(videoUpdated);
+                    const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
+                    yield videoUpdated.addAndSaveThumbnail(previewModel, t);
+                }
                 {
                     const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoUpdated, videoObject.url);
                     const newVideoFiles = videoFileAttributes.map(a => new video_file_1.VideoFileModel(a));
@@ -282,7 +281,7 @@ function updateVideoFromAP(options) {
                 {
                     yield video_caption_1.VideoCaptionModel.deleteAllCaptionsOfRemoteVideo(videoUpdated.id, t);
                     const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-                        return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, t);
+                        return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, c.url, t);
                     });
                     yield Promise.all(videoCaptionsPromises);
                 }
@@ -353,7 +352,7 @@ exports.refreshVideoIfNeeded = refreshVideoIfNeeded;
 function isAPVideoUrlObject(url) {
     const mimeTypes = Object.keys(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT);
     const urlMediaType = url.mediaType;
-    return mimeTypes.indexOf(urlMediaType) !== -1 && urlMediaType.startsWith('video/');
+    return mimeTypes.includes(urlMediaType) && urlMediaType.startsWith('video/');
 }
 function isAPStreamingPlaylistUrlObject(url) {
     return url && url.mediaType === 'application/x-mpegURL';
@@ -372,7 +371,11 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
         logger_1.logger.debug('Adding remote video %s.', videoObject.id);
         const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to);
         const video = video_1.VideoModel.build(videoData);
-        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl(videoObject.icon.url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
+        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, thumbnail_type_1.ThumbnailType.MINIATURE)
+            .catch(err => {
+            logger_1.logger.error('Cannot create miniature from url.', { err });
+            return undefined;
+        });
         let thumbnailModel;
         if (waitThumbnail === true) {
             thumbnailModel = yield promiseThumbnail;
@@ -383,8 +386,11 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
             videoCreated.VideoChannel = channel;
             if (thumbnailModel)
                 yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
-            const previewUrl = buildRemoteBaseUrl(videoCreated, path_1.join(constants_1.STATIC_PATHS.PREVIEWS, video.generatePreviewName()));
-            const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
+            const previewIcon = getPreviewFromIcons(videoObject);
+            const previewUrl = previewIcon
+                ? previewIcon.url
+                : activitypub_1.buildRemoteVideoBaseUrl(videoCreated, path_1.join(constants_1.STATIC_PATHS.PREVIEWS, video.generatePreviewName()));
+            const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, videoCreated, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
             if (thumbnailModel)
                 yield videoCreated.addAndSaveThumbnail(previewModel, t);
             const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url);
@@ -405,7 +411,7 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
             const tagInstances = yield tag_1.TagModel.findOrCreateTags(tags, t);
             yield videoCreated.$set('Tags', tagInstances, sequelizeOptions);
             const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-                return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, t);
+                return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, c.url, t);
             });
             yield Promise.all(videoCaptionsPromises);
             videoCreated.VideoFiles = videoFiles;
@@ -422,6 +428,8 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
         }));
         if (waitThumbnail === false) {
             promiseThumbnail.then(thumbnailModel => {
+                if (!thumbnailModel)
+                    return;
                 thumbnailModel = videoCreated.id;
                 return thumbnailModel.save();
             });
@@ -430,50 +438,48 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
     });
 }
 function videoActivityObjectToDBAttributes(videoChannel, videoObject, to = []) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const privacy = to.indexOf(constants_1.ACTIVITY_PUB.PUBLIC) !== -1 ? videos_1.VideoPrivacy.PUBLIC : videos_1.VideoPrivacy.UNLISTED;
-        const duration = videoObject.duration.replace(/[^\d]+/, '');
-        let language;
-        if (videoObject.language) {
-            language = videoObject.language.identifier;
-        }
-        let category;
-        if (videoObject.category) {
-            category = parseInt(videoObject.category.identifier, 10);
-        }
-        let licence;
-        if (videoObject.licence) {
-            licence = parseInt(videoObject.licence.identifier, 10);
-        }
-        const description = videoObject.content || null;
-        const support = videoObject.support || null;
-        return {
-            name: videoObject.name,
-            uuid: videoObject.uuid,
-            url: videoObject.id,
-            category,
-            licence,
-            language,
-            description,
-            support,
-            nsfw: videoObject.sensitive,
-            commentsEnabled: videoObject.commentsEnabled,
-            downloadEnabled: videoObject.downloadEnabled,
-            waitTranscoding: videoObject.waitTranscoding,
-            state: videoObject.state,
-            channelId: videoChannel.id,
-            duration: parseInt(duration, 10),
-            createdAt: new Date(videoObject.published),
-            publishedAt: new Date(videoObject.published),
-            originallyPublishedAt: videoObject.originallyPublishedAt ? new Date(videoObject.originallyPublishedAt) : null,
-            updatedAt: new Date(videoObject.updated),
-            views: videoObject.views,
-            likes: 0,
-            dislikes: 0,
-            remote: true,
-            privacy
-        };
-    });
+    var _a;
+    const privacy = to.includes(constants_1.ACTIVITY_PUB.PUBLIC)
+        ? videos_1.VideoPrivacy.PUBLIC
+        : videos_1.VideoPrivacy.UNLISTED;
+    const duration = videoObject.duration.replace(/[^\d]+/, '');
+    const language = (_a = videoObject.language) === null || _a === void 0 ? void 0 : _a.identifier;
+    const category = videoObject.category
+        ? parseInt(videoObject.category.identifier, 10)
+        : undefined;
+    const licence = videoObject.licence
+        ? parseInt(videoObject.licence.identifier, 10)
+        : undefined;
+    const description = videoObject.content || null;
+    const support = videoObject.support || null;
+    return {
+        name: videoObject.name,
+        uuid: videoObject.uuid,
+        url: videoObject.id,
+        category,
+        licence,
+        language,
+        description,
+        support,
+        nsfw: videoObject.sensitive,
+        commentsEnabled: videoObject.commentsEnabled,
+        downloadEnabled: videoObject.downloadEnabled,
+        waitTranscoding: videoObject.waitTranscoding,
+        state: videoObject.state,
+        channelId: videoChannel.id,
+        duration: parseInt(duration, 10),
+        createdAt: new Date(videoObject.published),
+        publishedAt: new Date(videoObject.published),
+        originallyPublishedAt: videoObject.originallyPublishedAt
+            ? new Date(videoObject.originallyPublishedAt)
+            : null,
+        updatedAt: new Date(videoObject.updated),
+        views: videoObject.views,
+        likes: 0,
+        dislikes: 0,
+        remote: true,
+        privacy
+    };
 }
 function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
     const fileUrls = urls.filter(u => isAPVideoUrlObject(u));
@@ -489,6 +495,12 @@ function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
         if (!parsed || videos_3.isVideoFileInfoHashValid(parsed.infoHash) === false) {
             throw new Error('Cannot parse magnet URI ' + magnet.href);
         }
+        const metadata = urls.filter(videos_2.isAPVideoFileMetadataObject)
+            .find(u => {
+            return u.height === fileUrl.height &&
+                u.fps === fileUrl.fps &&
+                u.rel.includes(fileUrl.mediaType);
+        });
         const mediaType = fileUrl.mediaType;
         const attribute = {
             extname: constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT[mediaType],
@@ -496,6 +508,7 @@ function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
             resolution: fileUrl.height,
             size: fileUrl.size,
             fps: fileUrl.fps || -1,
+            metadataUrl: metadata === null || metadata === void 0 ? void 0 : metadata.href,
             videoId: videoOrPlaylist.playlistUrl ? null : videoOrPlaylist.id,
             videoStreamingPlaylistId: videoOrPlaylist.playlistUrl ? videoOrPlaylist.id : null
         };
@@ -529,4 +542,14 @@ function streamingPlaylistActivityUrlToDBAttributes(video, videoObject, videoFil
         attributes.push(attribute);
     }
     return attributes;
+}
+function getThumbnailFromIcons(videoObject) {
+    let validIcons = videoObject.icon.filter(i => i.width > constants_1.THUMBNAILS_SIZE.minWidth);
+    if (validIcons.length === 0)
+        validIcons = videoObject.icon;
+    return lodash_1.minBy(validIcons, 'width');
+}
+function getPreviewFromIcons(videoObject) {
+    const validIcons = videoObject.icon.filter(i => i.width > constants_1.PREVIEWS_SIZE.minWidth);
+    return lodash_1.maxBy(validIcons, 'width');
 }

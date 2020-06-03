@@ -36,7 +36,7 @@ const sequelize_1 = require("sequelize");
 const account_blocklist_1 = require("./account-blocklist");
 const server_blocklist_1 = require("../server/server-blocklist");
 const actor_follow_1 = require("../activitypub/actor-follow");
-const Bluebird = require("bluebird");
+const model_cache_1 = require("@server/models/model-cache");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["SUMMARY"] = "SUMMARY";
@@ -64,40 +64,39 @@ let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescr
         return AccountModel_1.loadByNameAndHost(accountName, host);
     }
     static loadLocalByName(name) {
-        if (name === constants_1.SERVER_ACTOR_NAME && AccountModel_1.cache[name]) {
-            return Bluebird.resolve(AccountModel_1.cache[name]);
-        }
-        const query = {
-            where: {
-                [sequelize_1.Op.or]: [
-                    {
-                        userId: {
-                            [sequelize_1.Op.ne]: null
+        const fun = () => {
+            const query = {
+                where: {
+                    [sequelize_1.Op.or]: [
+                        {
+                            userId: {
+                                [sequelize_1.Op.ne]: null
+                            }
+                        },
+                        {
+                            applicationId: {
+                                [sequelize_1.Op.ne]: null
+                            }
                         }
-                    },
+                    ]
+                },
+                include: [
                     {
-                        applicationId: {
-                            [sequelize_1.Op.ne]: null
+                        model: actor_1.ActorModel,
+                        required: true,
+                        where: {
+                            preferredUsername: name
                         }
                     }
                 ]
-            },
-            include: [
-                {
-                    model: actor_1.ActorModel,
-                    required: true,
-                    where: {
-                        preferredUsername: name
-                    }
-                }
-            ]
+            };
+            return AccountModel_1.findOne(query);
         };
-        return AccountModel_1.findOne(query)
-            .then(account => {
-            if (name === constants_1.SERVER_ACTOR_NAME) {
-                AccountModel_1.cache[name] = account;
-            }
-            return account;
+        return model_cache_1.ModelCache.Instance.doCache({
+            cacheType: 'local-account-name',
+            key: name,
+            fun,
+            whitelist: () => name === constants_1.SERVER_ACTOR_NAME
         });
     }
     static loadByNameAndHost(name, host) {
@@ -213,7 +212,6 @@ let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescr
         return this.BlockedAccounts && this.BlockedAccounts.length !== 0;
     }
 };
-AccountModel.cache = {};
 __decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,

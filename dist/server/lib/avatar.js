@@ -12,11 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("multer");
 const send_1 = require("./activitypub/send");
 const constants_1 = require("../initializers/constants");
-const activitypub_1 = require("./activitypub");
+const actor_1 = require("./activitypub/actor");
 const image_utils_1 = require("../helpers/image-utils");
 const path_1 = require("path");
 const database_utils_1 = require("../helpers/database-utils");
-const uuidv4 = require("uuid/v4");
+const uuid_1 = require("uuid");
 const config_1 = require("../initializers/config");
 const database_1 = require("../initializers/database");
 const LRUCache = require("lru-cache");
@@ -25,7 +25,7 @@ const requests_1 = require("../helpers/requests");
 function updateActorAvatarFile(avatarPhysicalFile, accountOrChannel) {
     return __awaiter(this, void 0, void 0, function* () {
         const extension = path_1.extname(avatarPhysicalFile.filename);
-        const avatarName = uuidv4() + extension;
+        const avatarName = uuid_1.v4() + extension;
         const destination = path_1.join(config_1.CONFIG.STORAGE.AVATARS_DIR, avatarName);
         yield image_utils_1.processImage(avatarPhysicalFile.path, destination, constants_1.AVATARS_SIZE);
         return database_utils_1.retryTransactionWrapper(() => {
@@ -35,7 +35,7 @@ function updateActorAvatarFile(avatarPhysicalFile, accountOrChannel) {
                     fileUrl: null,
                     onDisk: true
                 };
-                const updatedActor = yield activitypub_1.updateActorAvatarInstance(accountOrChannel.Actor, avatarInfo, t);
+                const updatedActor = yield actor_1.updateActorAvatarInstance(accountOrChannel.Actor, avatarInfo, t);
                 yield updatedActor.save({ transaction: t });
                 yield send_1.sendUpdateActor(accountOrChannel, t);
                 return updatedActor.Avatar;

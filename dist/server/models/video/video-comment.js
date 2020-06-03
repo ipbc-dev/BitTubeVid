@@ -27,11 +27,12 @@ const actor_1 = require("../activitypub/actor");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
 const video_channel_1 = require("./video-channel");
-const utils_2 = require("../../helpers/utils");
 const actor_2 = require("../../helpers/custom-validators/activitypub/actor");
 const regexp_1 = require("../../helpers/regexp");
 const lodash_1 = require("lodash");
 const sequelize_1 = require("sequelize");
+const models_1 = require("@shared/models");
+const application_1 = require("@server/models/application/application");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ACCOUNT"] = "WITH_ACCOUNT";
@@ -91,7 +92,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
     static listThreadsForApi(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const { videoId, start, count, sort, user } = parameters;
-            const serverActor = yield utils_2.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             const serverAccountId = serverActor.Account.id;
             const userAccountId = user ? user.Account.id : undefined;
             const query = {
@@ -123,7 +124,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
     static listThreadCommentsForApi(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             const { videoId, threadId, user } = parameters;
-            const serverActor = yield utils_2.getServerActor();
+            const serverActor = yield application_1.getServerActor();
             const serverAccountId = serverActor.Account.id;
             const userAccountId = user ? user.Account.id : undefined;
             const query = {
@@ -189,24 +190,35 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
         return VideoCommentModel_1.findAndCountAll(query);
     }
     static listForFeed(start, count, videoId) {
-        const query = {
-            order: [['createdAt', 'DESC']],
-            offset: start,
-            limit: count,
-            where: {},
-            include: [
-                {
-                    attributes: ['name', 'uuid'],
-                    model: video_1.VideoModel.unscoped(),
-                    required: true
-                }
-            ]
-        };
-        if (videoId)
-            query.where['videoId'] = videoId;
-        return VideoCommentModel_1
-            .scope([ScopeNames.WITH_ACCOUNT])
-            .findAll(query);
+        return __awaiter(this, void 0, void 0, function* () {
+            const serverActor = yield application_1.getServerActor();
+            const query = {
+                order: [['createdAt', 'DESC']],
+                offset: start,
+                limit: count,
+                where: {
+                    deletedAt: null,
+                    accountId: {
+                        [sequelize_1.Op.notIn]: sequelize_1.Sequelize.literal('(' + utils_1.buildBlockedAccountSQL(serverActor.Account.id) + ')')
+                    }
+                },
+                include: [
+                    {
+                        attributes: ['name', 'uuid'],
+                        model: video_1.VideoModel.unscoped(),
+                        required: true,
+                        where: {
+                            privacy: models_1.VideoPrivacy.PUBLIC
+                        }
+                    }
+                ]
+            };
+            if (videoId)
+                query.where['videoId'] = videoId;
+            return VideoCommentModel_1
+                .scope([ScopeNames.WITH_ACCOUNT])
+                .findAll(query);
+        });
     }
     static getStats() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -261,7 +273,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
         return this.Account.isOwned();
     }
     isDeleted() {
-        return null !== this.deletedAt;
+        return this.deletedAt !== null;
     }
     extractMentions() {
         let result = [];

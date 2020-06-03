@@ -14,11 +14,11 @@ const shared_1 = require("../../../../shared");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const video_comments_1 = require("../../../helpers/custom-validators/video-comments");
 const logger_1 = require("../../../helpers/logger");
+const middlewares_1 = require("../../../helpers/middlewares");
+const moderation_1 = require("../../../lib/moderation");
+const hooks_1 = require("../../../lib/plugins/hooks");
 const video_comment_1 = require("../../../models/video/video-comment");
 const utils_1 = require("../utils");
-const hooks_1 = require("../../../lib/plugins/hooks");
-const moderation_1 = require("../../../lib/moderation");
-const middlewares_1 = require("../../../helpers/middlewares");
 const listVideoCommentThreadsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -177,11 +177,12 @@ function checkUserCanDeleteVideoComment(user, videoComment, res) {
             .end();
         return false;
     }
-    const account = videoComment.Account;
-    if (user.hasRight(shared_1.UserRight.REMOVE_ANY_VIDEO_COMMENT) === false && account.userId !== user.id) {
+    const userAccount = user.Account;
+    if (user.hasRight(shared_1.UserRight.REMOVE_ANY_VIDEO_COMMENT) === false &&
+        videoComment.accountId !== userAccount.id &&
+        videoComment.Video.VideoChannel.accountId !== userAccount.id) {
         res.status(403)
-            .json({ error: 'Cannot remove video comment of another user' })
-            .end();
+            .json({ error: 'Cannot remove video comment of another user' });
         return false;
     }
     return true;

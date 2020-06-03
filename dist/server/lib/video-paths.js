@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const models_1 = require("@server/typings/models");
-const videos_1 = require("./videos");
 const path_1 = require("path");
 const config_1 = require("@server/initializers/config");
 const constants_1 = require("@server/initializers/constants");
+const video_1 = require("@server/helpers/video");
 function getVideoFilename(videoOrPlaylist, videoFile) {
-    const video = videos_1.extractVideo(videoOrPlaylist);
+    const video = video_1.extractVideo(videoOrPlaylist);
     if (models_1.isStreamingPlaylist(videoOrPlaylist)) {
         return generateVideoStreamingPlaylistName(video.uuid, videoFile.resolution);
     }
@@ -23,7 +23,7 @@ function generateWebTorrentVideoName(uuid, resolution, extname) {
 exports.generateWebTorrentVideoName = generateWebTorrentVideoName;
 function getVideoFilePath(videoOrPlaylist, videoFile, isRedundancy = false) {
     if (models_1.isStreamingPlaylist(videoOrPlaylist)) {
-        const video = videos_1.extractVideo(videoOrPlaylist);
+        const video = video_1.extractVideo(videoOrPlaylist);
         return path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid, getVideoFilename(videoOrPlaylist, videoFile));
     }
     const baseDir = isRedundancy ? config_1.CONFIG.STORAGE.REDUNDANCY_DIR : config_1.CONFIG.STORAGE.VIDEOS_DIR;
@@ -36,7 +36,7 @@ function getHLSDirectory(video, isRedundancy = false) {
 }
 exports.getHLSDirectory = getHLSDirectory;
 function getTorrentFileName(videoOrPlaylist, videoFile) {
-    const video = videos_1.extractVideo(videoOrPlaylist);
+    const video = video_1.extractVideo(videoOrPlaylist);
     const extension = '.torrent';
     if (models_1.isStreamingPlaylist(videoOrPlaylist)) {
         return `${video.uuid}-${videoFile.resolution}-${videoOrPlaylist.getStringType()}${extension}`;

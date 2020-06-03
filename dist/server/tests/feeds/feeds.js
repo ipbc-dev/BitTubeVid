@@ -15,6 +15,8 @@ const extra_utils_1 = require("../../../shared/extra-utils");
 const libxmljs = require("libxmljs");
 const video_comments_1 = require("../../../shared/extra-utils/videos/video-comments");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
+const models_1 = require("@shared/models");
+const blocklist_1 = require("@shared/extra-utils/users/blocklist");
 chai.use(require('chai-xml'));
 chai.use(require('chai-json-schema'));
 chai.config.includeStack = true;
@@ -61,6 +63,12 @@ describe('Test syndication feeds', () => {
                 yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoId, 'super comment 1');
                 yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoId, 'super comment 2');
             }
+            {
+                const videoAttributes = { name: 'unlisted video', privacy: models_1.VideoPrivacy.UNLISTED };
+                const res = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes);
+                const videoId = res.body.video.id;
+                yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoId, 'comment on unlisted video');
+            }
             yield jobs_1.waitJobs(servers);
         });
     });
@@ -79,7 +87,7 @@ describe('Test syndication feeds', () => {
             return __awaiter(this, void 0, void 0, function* () {
                 for (const feed of ['video-comments', 'videos']) {
                     const json = yield extra_utils_1.getJSONfeed(servers[0].url, feed);
-                    expect(JSON.parse(json.text)).to.be.jsonSchema({ 'type': 'object' });
+                    expect(JSON.parse(json.text)).to.be.jsonSchema({ type: 'object' });
                 }
             });
         });
@@ -178,7 +186,7 @@ describe('Test syndication feeds', () => {
         });
     });
     describe('Video comments feed', function () {
-        it('Should contain valid comments (covers JSON feed 1.0 endpoint)', function () {
+        it('Should contain valid comments (covers JSON feed 1.0 endpoint) and not from unlisted videos', function () {
             return __awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const json = yield extra_utils_1.getJSONfeed(server.url, 'video-comments');
@@ -186,6 +194,16 @@ describe('Test syndication feeds', () => {
                     expect(jsonObj.items.length).to.be.equal(2);
                     expect(jsonObj.items[0].html_content).to.equal('super comment 2');
                     expect(jsonObj.items[1].html_content).to.equal('super comment 1');
+                }
+            });
+        });
+        it('Should not list comments from muted accounts or instances', function () {
+            return __awaiter(this, void 0, void 0, function* () {
+                yield blocklist_1.addAccountToServerBlocklist(servers[1].url, servers[1].accessToken, 'root@localhost:' + servers[0].port);
+                {
+                    const json = yield extra_utils_1.getJSONfeed(servers[1].url, 'video-comments', { version: 2 });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(0);
                 }
             });
         });

@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_utils_1 = require("../../../helpers/database-utils");
 const logger_1 = require("../../../helpers/logger");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const actor_1 = require("../../../models/activitypub/actor");
 const video_channel_1 = require("../../../models/video/video-channel");
 const actor_2 = require("../actor");
@@ -21,6 +21,7 @@ const cache_file_1 = require("../../../helpers/custom-validators/activitypub/cac
 const cache_file_2 = require("../cache-file");
 const utils_1 = require("../send/utils");
 const playlist_1 = require("../playlist");
+const redundancy_1 = require("@server/lib/redundancy");
 function processUpdateActivity(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
@@ -66,13 +67,15 @@ function processUpdateVideo(actor, activity) {
 }
 function processUpdateCacheFile(byActor, activity) {
     return __awaiter(this, void 0, void 0, function* () {
+        if ((yield redundancy_1.isRedundancyAccepted(activity, byActor)) !== true)
+            return;
         const cacheFileObject = activity.object;
         if (!cache_file_1.isCacheFileObjectValid(cacheFileObject)) {
             logger_1.logger.debug('Cache file object sent by update is not valid.', { cacheFileObject });
             return undefined;
         }
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: cacheFileObject.object });
-        yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             yield cache_file_2.createOrUpdateCacheFile(cacheFileObject, video, byActor, t);
         }));
         if (video.isOwned()) {
@@ -90,7 +93,7 @@ function processUpdateActor(actor, activity) {
         let accountOrChannelFieldsSave;
         const avatarInfo = yield actor_2.getAvatarInfoIfExists(actorAttributesToUpdate);
         try {
-            yield initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
                 actorFieldsSave = actor.toJSON();
                 if (actorAttributesToUpdate.type === 'Group')
                     accountOrChannelInstance = actor.VideoChannel;

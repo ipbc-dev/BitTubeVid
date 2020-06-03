@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const middlewares_1 = require("../middlewares");
 const constants_1 = require("../initializers/constants");
-const sitemapModule = require("sitemap");
+const sitemap_1 = require("sitemap");
 const video_1 = require("../models/video/video");
 const video_channel_1 = require("../models/video/video-channel");
 const account_1 = require("../models/account/account");
@@ -28,11 +28,12 @@ function getSitemap(req, res) {
         urls = urls.concat(yield getSitemapLocalVideoUrls());
         urls = urls.concat(yield getSitemapVideoChannelUrls());
         urls = urls.concat(yield getSitemapAccountUrls());
-        const sitemap = sitemapModule.createSitemap({
-            hostname: constants_1.WEBSERVER.URL,
-            urls: urls
-        });
-        const xml = sitemap.toXML();
+        const sitemapStream = new sitemap_1.SitemapStream({ hostname: constants_1.WEBSERVER.URL });
+        for (const urlObj of urls) {
+            sitemapStream.write(urlObj);
+        }
+        sitemapStream.end();
+        const xml = yield sitemap_1.streamToPromise(sitemapStream);
         res.header('Content-Type', 'application/xml');
         res.send(xml);
     });

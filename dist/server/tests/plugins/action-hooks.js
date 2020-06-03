@@ -9,11 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const chai = require("chai");
 require("mocha");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const extra_utils_1 = require("../../../shared/extra-utils");
-const expect = chai.expect;
 describe('Test plugin action hooks', function () {
     let servers;
     let videoUUID;

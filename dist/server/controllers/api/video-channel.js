@@ -17,7 +17,7 @@ const validators_1 = require("../../middlewares/validators");
 const send_1 = require("../../lib/activitypub/send");
 const video_channel_2 = require("../../lib/video-channel");
 const express_utils_1 = require("../../helpers/express-utils");
-const activitypub_1 = require("../../lib/activitypub");
+const actor_1 = require("../../lib/activitypub/actor");
 const account_1 = require("../../models/account/account");
 const constants_1 = require("../../initializers/constants");
 const logger_1 = require("../../helpers/logger");
@@ -31,6 +31,7 @@ const video_playlist_1 = require("../../models/video/video-playlist");
 const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
 const config_1 = require("../../initializers/config");
 const database_1 = require("../../initializers/database");
+const application_1 = require("@server/models/application/application");
 const auditLogger = audit_logger_1.auditLoggerFactory('channels');
 const reqAvatarFile = express_utils_1.createReqFiles(['avatarfile'], constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: config_1.CONFIG.STORAGE.TMP_DIR });
 const videoChannelRouter = express.Router();
@@ -45,7 +46,7 @@ videoChannelRouter.get('/:nameWithHost/video-playlists', middlewares_1.asyncMidd
 videoChannelRouter.get('/:nameWithHost/videos', middlewares_1.asyncMiddleware(validators_1.videoChannelsNameWithHostValidator), middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(listVideoChannelVideos));
 function listVideoChannels(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const resultList = yield video_channel_1.VideoChannelModel.listForApi(serverActor.id, req.query.start, req.query.count, req.query.sort);
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
@@ -71,7 +72,7 @@ function addVideoChannel(req, res) {
             const account = yield account_1.AccountModel.load(res.locals.oauth.token.User.Account.id, t);
             return video_channel_2.createLocalVideoChannel(videoChannelInfo, account, t);
         }));
-        activitypub_1.setAsyncActorKeys(videoChannelCreated.Actor)
+        actor_1.setAsyncActorKeys(videoChannelCreated.Actor)
             .catch(err => logger_1.logger.error('Cannot set async actor keys for account %s.', videoChannelCreated.Actor.url, { err }));
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoChannelAuditView(videoChannelCreated.toFormattedJSON()));
         logger_1.logger.info('Video channel %s created.', videoChannelCreated.Actor.url);
@@ -139,15 +140,14 @@ function getVideoChannel(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const videoChannelWithVideos = yield video_channel_1.VideoChannelModel.loadAndPopulateAccountAndVideos(res.locals.videoChannel.id);
         if (videoChannelWithVideos.isOutdated()) {
-            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'actor', url: videoChannelWithVideos.Actor.url } })
-                .catch(err => logger_1.logger.error('Cannot create AP refresher job for actor %s.', videoChannelWithVideos.Actor.url, { err }));
+            job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'actor', url: videoChannelWithVideos.Actor.url } });
         }
         return res.json(videoChannelWithVideos.toFormattedJSON());
     });
 }
 function listVideoChannelPlaylists(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        const serverActor = yield utils_1.getServerActor();
+        const serverActor = yield application_1.getServerActor();
         const resultList = yield video_playlist_1.VideoPlaylistModel.listForApi({
             followerActorId: serverActor.id,
             start: req.query.start,

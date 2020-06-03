@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_utils_1 = require("../../../helpers/database-utils");
-const initializers_1 = require("../../../initializers");
+const database_1 = require("../../../initializers/database");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
 const utils_1 = require("../send/utils");
 const videos_1 = require("../videos");
@@ -30,7 +30,7 @@ function processLikeVideo(byActor, activity) {
         if (!byAccount)
             throw new Error('Cannot create like with the non account actor ' + byActor.url);
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: videoUrl });
-        return initializers_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const url = url_1.getVideoLikeActivityPubUrl(byActor, video);
             const existingRate = yield account_video_rate_1.AccountVideoRateModel.loadByAccountAndVideoOrUrl(byAccount.id, video.id, url);
             if (existingRate && existingRate.type === 'like')

@@ -64,6 +64,14 @@ function getVideo(url, id, expectedStatus = 200) {
         .expect(expectedStatus);
 }
 exports.getVideo = getVideo;
+function getVideoFileMetadataUrl(url) {
+    return request(url)
+        .get('/')
+        .set('Accept', 'application/json')
+        .expect(200)
+        .expect('Content-Type', /json/);
+}
+exports.getVideoFileMetadataUrl = getVideoFileMetadataUrl;
 function viewVideo(url, id, expectedStatus = 204, xForwardedFor) {
     const path = '/api/v1/videos/' + id + '/views';
     const req = request(url)
@@ -466,8 +474,7 @@ function completeVideoCheck(url, video, attributes) {
             chai_1.expect(file.resolution.label).to.equal(attributeFile.resolution + 'p');
             const minSize = attributeFile.size - ((10 * attributeFile.size) / 100);
             const maxSize = attributeFile.size + ((10 * attributeFile.size) / 100);
-            chai_1.expect(file.size, 'File size for resolution ' + file.resolution.label + ' outside confidence interval (' + minSize + '> size <' + maxSize + ')')
-                .to.be.above(minSize).and.below(maxSize);
+            chai_1.expect(file.size, 'File size for resolution ' + file.resolution.label + ' outside confidence interval (' + minSize + '> size <' + maxSize + ')').to.be.above(minSize).and.below(maxSize);
             const torrent = yield miscs_1.webtorrentAdd(file.magnetUri, true);
             chai_1.expect(torrent.files).to.be.an('array');
             chai_1.expect(torrent.files.length).to.equal(1);

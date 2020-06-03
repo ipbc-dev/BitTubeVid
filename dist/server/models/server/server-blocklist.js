@@ -59,14 +59,13 @@ let ServerBlocklistModel = ServerBlocklistModel_1 = class ServerBlocklistModel e
         };
         return ServerBlocklistModel_1.findOne(query);
     }
-    static listForApi(accountId, start, count, sort) {
+    static listForApi(parameters) {
+        const { start, count, sort, search, accountId } = parameters;
         const query = {
             offset: start,
             limit: count,
             order: utils_1.getSort(sort),
-            where: {
-                accountId
-            }
+            where: Object.assign({ accountId }, utils_1.searchAttribute(search, '$BlockedServer.host$'))
         };
         return ServerBlocklistModel_1
             .scope([ScopeNames.WITH_ACCOUNT, ScopeNames.WITH_SERVER])

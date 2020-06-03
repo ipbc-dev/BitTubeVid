@@ -12,15 +12,27 @@ function reportVideoAbuse(url, token, videoId, reason, specialStatus = 200) {
         .expect(specialStatus);
 }
 exports.reportVideoAbuse = reportVideoAbuse;
-function getVideoAbusesList(url, token) {
+function getVideoAbusesList(options) {
+    const { url, token, id, search, state, videoIs, searchReporter, searchReportee, searchVideo, searchVideoChannel } = options;
     const path = '/api/v1/videos/abuse';
-    return request(url)
-        .get(path)
-        .query({ sort: 'createdAt' })
-        .set('Accept', 'application/json')
-        .set('Authorization', 'Bearer ' + token)
-        .expect(200)
-        .expect('Content-Type', /json/);
+    const query = {
+        sort: 'createdAt',
+        id,
+        search,
+        state,
+        videoIs,
+        searchReporter,
+        searchReportee,
+        searchVideo,
+        searchVideoChannel
+    };
+    return requests_1.makeGetRequest({
+        url,
+        path,
+        token,
+        query,
+        statusCodeExpected: 200
+    });
 }
 exports.getVideoAbusesList = getVideoAbusesList;
 function updateVideoAbuse(url, token, videoId, videoAbuseId, body, statusCodeExpected = 204) {

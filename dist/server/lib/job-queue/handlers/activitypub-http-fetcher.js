@@ -14,7 +14,8 @@ const process_1 = require("../../activitypub/process");
 const video_comments_1 = require("../../activitypub/video-comments");
 const crawl_1 = require("../../activitypub/crawl");
 const video_1 = require("../../../models/video/video");
-const activitypub_1 = require("../../activitypub");
+const share_1 = require("../../activitypub/share");
+const video_rates_1 = require("../../activitypub/video-rates");
 const playlist_1 = require("../../activitypub/playlist");
 const account_1 = require("../../../models/account/account");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
@@ -32,9 +33,9 @@ function processActivityPubHttpFetcher(job) {
             account = yield account_1.AccountModel.load(payload.accountId);
         const fetcherType = {
             'activity': items => process_1.processActivities(items, { outboxUrl: payload.uri, fromFetch: true }),
-            'video-likes': items => activitypub_1.createRates(items, video, 'like'),
-            'video-dislikes': items => activitypub_1.createRates(items, video, 'dislike'),
-            'video-shares': items => activitypub_1.addVideoShares(items, video),
+            'video-likes': items => video_rates_1.createRates(items, video, 'like'),
+            'video-dislikes': items => video_rates_1.createRates(items, video, 'dislike'),
+            'video-shares': items => share_1.addVideoShares(items, video),
             'video-comments': items => video_comments_1.addVideoComments(items),
             'account-playlists': items => playlist_1.createAccountPlaylists(items, account)
         };
