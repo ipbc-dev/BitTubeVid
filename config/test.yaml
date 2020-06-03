@@ -56,6 +56,10 @@ redundancy:
         strategy: 'recently-added'
         min_views: 1
 
+remote_redundancy:
+  videos:
+    accept_from: 'anybody'
+
 cache:
   previews:
     size: 1
