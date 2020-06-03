@@ -64,6 +64,10 @@
         <input type="submit" i18n-value value="Login" [disabled]="!form.valid">
       </form>
 
+      <a href='#' (click)="social_login($event, 'facebook')">Login with Facebook</a>&nbsp;
+      <a href='#' (click)="social_login($event, 'google')">Login with Google</a>&nbsp;
+      <a href='#' (click)="social_login($event, 'twitter')">Login with Twitter</a>
+
       <div class="external-login-blocks" *ngIf="getExternalLogins().length !== 0">
         <div class="block-title" i18n>Or sign in with</div>
 
