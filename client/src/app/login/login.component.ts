@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { Component, ElementRef, OnInit, ViewChild, AfterViewInit } from '@angular/core'
 import { Notifier, RedirectService } from '@app/core'
 import { UserService } from '@app/shared'
 import { AuthService } from '../core'
@@ -8,8 +8,10 @@ import { FormValidatorService } from '@app/shared/forms/form-validators/form-val
 import { LoginValidatorsService } from '@app/shared/forms/form-validators/login-validators.service'
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap'
 import { ActivatedRoute } from '@angular/router'
-import { ServerConfig } from '@shared/models/server/server-config.model'
-import { firebaseApp, firebaseClass, getFirebaseToken } from '../core/firebase'
+import { firebaseAuth, firebaseClass, getFirebaseToken } from '../core/firebase'
+import { ServerConfig, RegisteredExternalAuthConfig } from '@shared/models/server/server-config.model'
+import { environment } from 'src/environments/environment'
+import { HooksService } from '@app/core/plugins/hooks.service'
 
 @Component({
   selector: 'my-login',
@@ -17,12 +19,16 @@ import { firebaseApp, firebaseClass, getFirebaseToken } from '../core/firebase'
   styleUrls: [ './login.component.scss' ]
 })
 
-export class LoginComponent extends FormReactive implements OnInit {
-  @ViewChild('emailInput', { static: true }) input: ElementRef
+export class LoginComponent extends FormReactive implements OnInit, AfterViewInit {
+  @ViewChild('usernameInput', { static: false }) usernameInput: ElementRef
   @ViewChild('forgotPasswordModal', { static: true }) forgotPasswordModal: ElementRef
 
   error: string = null
   forgotPasswordEmail = ''
+
+  isAuthenticatedWithExternalAuth = false
+  externalAuthError = false
+  externalLogins: string[] = []
 
   private openedForgotPasswordModal: NgbModalRef
   private serverConfig: ServerConfig
@@ -36,6 +42,7 @@ export class LoginComponent extends FormReactive implements OnInit {
     private userService: UserService,
     private redirectService: RedirectService,
     private notifier: Notifier,
+    private hooks: HooksService,
     private i18n: I18n
   ) {
     super()
@@ -50,14 +57,40 @@ export class LoginComponent extends FormReactive implements OnInit {
   }
 
   ngOnInit () {
-    this.serverConfig = this.route.snapshot.data.serverConfig
+    const snapshot = this.route.snapshot
+
+    this.serverConfig = snapshot.data.serverConfig
+
+    if (snapshot.queryParams.externalAuthToken) {
+      this.loadExternalAuthToken(snapshot.queryParams.username, snapshot.queryParams.externalAuthToken)
+      return
+    }
+
+    if (snapshot.queryParams.externalAuthError) {
+      this.externalAuthError = true
+      return
+    }
 
     this.buildForm({
       username: this.loginValidatorsService.LOGIN_USERNAME,
       password: this.loginValidatorsService.LOGIN_PASSWORD
     })
+  }
 
-    this.input.nativeElement.focus()
+  ngAfterViewInit () {
+    if (this.usernameInput) {
+      this.usernameInput.nativeElement.focus()
+    }
+
+    this.hooks.runAction('action:login.init', 'login')
+  }
+
+  getExternalLogins () {
+    return this.serverConfig.plugin.registeredExternalAuths
+  }
+
+  getAuthHref (auth: RegisteredExternalAuthConfig) {
+    return environment.apiUrl + `/plugins/${auth.name}/${auth.version}/auth/${auth.authName}`
   }
 
   social_login (event: Event, network: string) {
@@ -78,7 +111,7 @@ export class LoginComponent extends FormReactive implements OnInit {
       default:
     }
 
-    firebaseApp.auth().signInWithPopup(authProvider).then(
+    firebaseAuth.signInWithPopup(authProvider).then(
       async (result) => {
         const username = result.user.email
         const password = await getFirebaseToken()
@@ -105,13 +138,15 @@ export class LoginComponent extends FormReactive implements OnInit {
 
     this.authService.login(username, password)
       .subscribe(
-        () => this.redirectService.redirectToPreviousRoute(),
+        () => {
+          if (username.indexOf('@') !== -1) {
+            firebaseAuth.signInWithEmailAndPassword(username, password).catch(error => console.error(error))
+          }
 
-        err => {
-          if (err.message.indexOf('credentials are invalid') !== -1) this.error = this.i18n('Incorrect username or password.')
-          else if (err.message.indexOf('blocked') !== -1) this.error = this.i18n('You account is blocked.')
-          else this.error = err.message
-        }
+          return this.redirectService.redirectToPreviousRoute()
+        },
+
+        err => this.handleError(err)
       )
   }
 
@@ -137,5 +172,25 @@ export class LoginComponent extends FormReactive implements OnInit {
 
   hideForgotPasswordModal () {
     this.openedForgotPasswordModal.close()
+  }
+
+  private loadExternalAuthToken (username: string, token: string) {
+    this.isAuthenticatedWithExternalAuth = true
+
+    this.authService.login(username, null, token)
+    .subscribe(
+      () => this.redirectService.redirectToPreviousRoute(),
+
+      err => {
+        this.handleError(err)
+        this.isAuthenticatedWithExternalAuth = false
+      }
+    )
+  }
+
+  private handleError (err: any) {
+    if (err.message.indexOf('credentials are invalid') !== -1) this.error = this.i18n('Incorrect username or password.')
+    else if (err.message.indexOf('blocked') !== -1) this.error = this.i18n('You account is blocked.')
+    else this.error = err.message
   }
 }

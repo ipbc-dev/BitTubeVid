@@ -24,7 +24,7 @@ export class InstanceConfigWarningModalComponent {
   show (about: About) {
     this.about = about
 
-    const ref = this.modalService.open(this.modal)
+    const ref = this.modalService.open(this.modal, { centered: true })
 
     ref.result.finally(() => {
       if (this.stopDisplayModal === true) this.doNotOpenAgain()
@@ -32,7 +32,7 @@ export class InstanceConfigWarningModalComponent {
   }
 
   isDefaultShortDescription (description: string) {
-    return description === 'PeerTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly ' +
+    return description === 'BitTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly ' +
       'in the web browser with WebTorrent and Angular.'
   }
 

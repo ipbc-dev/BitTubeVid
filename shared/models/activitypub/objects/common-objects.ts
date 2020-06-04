@@ -1,14 +1,15 @@
 export interface ActivityIdentifierObject {
   identifier: string
   name: string
+  url?: string
 }
 
 export interface ActivityIconObject {
   type: 'Image'
   url: string
-  mediaType: 'image/jpeg'
-  width: number
-  height: number
+  mediaType: 'image/jpeg' | 'image/png'
+  width?: number
+  height?: number
 }
 
 export type ActivityVideoUrlObject = {
@@ -25,6 +26,15 @@ export type ActivityPlaylistSegmentHashesObject = {
   name: 'sha256'
   mediaType: 'application/json'
   href: string
+}
+
+export type ActivityVideoFileMetadataObject = {
+  type: 'Link'
+  rel: [ 'metadata', any ]
+  mediaType: 'application/json'
+  height: number
+  href: string
+  fps: number
 }
 
 export type ActivityPlaylistInfohashesObject = {
@@ -71,19 +81,23 @@ export interface ActivityMentionObject {
   name: string
 }
 
-export type ActivityTagObject = ActivityPlaylistSegmentHashesObject |
-  ActivityPlaylistInfohashesObject |
-  ActivityVideoUrlObject |
-  ActivityHashTagObject |
-  ActivityMentionObject |
-  ActivityBitTorrentUrlObject |
-  ActivityMagnetUrlObject
+export type ActivityTagObject =
+  ActivityPlaylistSegmentHashesObject
+  | ActivityPlaylistInfohashesObject
+  | ActivityVideoUrlObject
+  | ActivityHashTagObject
+  | ActivityMentionObject
+  | ActivityBitTorrentUrlObject
+  | ActivityMagnetUrlObject
+  | ActivityVideoFileMetadataObject
 
-export type ActivityUrlObject = ActivityVideoUrlObject |
-  ActivityPlaylistUrlObject |
-  ActivityBitTorrentUrlObject |
-  ActivityMagnetUrlObject |
-  ActivityHtmlUrlObject
+export type ActivityUrlObject =
+  ActivityVideoUrlObject
+  | ActivityPlaylistUrlObject
+  | ActivityBitTorrentUrlObject
+  | ActivityMagnetUrlObject
+  | ActivityHtmlUrlObject
+  | ActivityVideoFileMetadataObject
 
 export interface ActivityPubAttributedTo {
   type: 'Group' | 'Person'

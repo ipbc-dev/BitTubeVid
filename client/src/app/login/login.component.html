@@ -3,63 +3,83 @@
     Login
   </div>
 
-  <div class="alert alert-info" *ngIf="signupAllowed === false" role="alert">
-    <h6 class="alert-heading" i18n>
-      If you are looking for an account…
-    </h6>
-
-    <div i18n>
-      Currently this instance doesn't allow for user registration, but you can find an instance
-      that gives you the possibility to sign up for an account and upload your videos there.
-
-      <br />
-
-      Find yours among multiple instances at <a class="alert-link" href="https://joinpeertube.org/instances" target="_blank" rel="noopener noreferrer">https://joinpeertube.org/instances</a>.
-    </div>
+  <div class="alert alert-danger" i18n *ngIf="externalAuthError">
+    Sorry but there was an issue with the external login process. Please <a routerLink="/about">contact an administrator</a>.
   </div>
 
-  <div *ngIf="error" class="alert alert-danger">{{ error }}
-    <span *ngIf="error === 'User email is not verified.'"> <a i18n routerLink="/verify-account/ask-send-email">Request new verification email.</a></span>
-  </div>
+  <ng-container *ngIf="!externalAuthError && !isAuthenticatedWithExternalAuth">
+    <div class="looking-for-account alert alert-info" *ngIf="signupAllowed === false" role="alert">
+      <h6 class="alert-heading" i18n>
+        If you are looking for an account…
+      </h6>
 
-  <form role="form" (ngSubmit)="login()" [formGroup]="form">
-    <div class="form-group">
-      <div>
-        <label i18n for="username">User</label>
-        <input
-          type="text" id="username" i18n-placeholder placeholder="Username or email address" required tabindex="1"
-          formControlName="username" [ngClass]="{ 'input-error': formErrors['username'] }" #emailInput
-        >
-        <a i18n *ngIf="signupAllowed === true" routerLink="/signup" class="create-an-account">
-          or create an account
-        </a>
-      </div>
+      <div i18n>
+        Currently this instance doesn't allow for user registration, but you can find an instance
+        that gives you the possibility to sign up for an account and upload your videos there.
 
-      <div *ngIf="formErrors.username" class="form-error">
-        {{ formErrors.username }}
+        <br />
+
+        Find yours among multiple instances at <a class="alert-link" href="https://joinpeertube.org/instances" target="_blank" rel="noopener noreferrer">https://joinpeertube.org/instances</a>.
       </div>
     </div>
 
-    <div class="form-group">
-      <label i18n for="password">Password</label>
-      <div>
-        <input
-          type="password" name="password" id="password" i18n-placeholder placeholder="Password" required tabindex="2" autocomplete="current-password"
-          formControlName="password" [ngClass]="{ 'input-error': formErrors['password'] }"
-        >
-        <a i18n class="forgot-password-button" (click)="openForgotPasswordModal()" title="Click here to reset your password">I forgot my password</a>
-      </div>
-      <div *ngIf="formErrors.password" class="form-error">
-        {{ formErrors.password }}
+    <div *ngIf="error" class="alert alert-danger">{{ error }}
+      <span *ngIf="error === 'User email is not verified.'"> <a i18n routerLink="/verify-account/ask-send-email">Request new verification email.</a></span>
+    </div>
+
+    <div class="login-form-and-externals">
+
+      <form role="form" (ngSubmit)="login()" [formGroup]="form">
+        <div class="form-group">
+          <div>
+            <label i18n for="username">User</label>
+            <input
+              type="text" id="username" i18n-placeholder placeholder="Username or email address" required tabindex="1"
+              formControlName="username" class="form-control" [ngClass]="{ 'input-error': formErrors['username'] }" #usernameInput
+            >
+            <a i18n *ngIf="signupAllowed === true" routerLink="/signup" class="create-an-account">
+              or create an account
+            </a>
+          </div>
+
+          <div *ngIf="formErrors.username" class="form-error">
+            {{ formErrors.username }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label i18n for="password">Password</label>
+          <div>
+            <input
+              type="password" name="password" id="password" i18n-placeholder placeholder="Password" required tabindex="2" autocomplete="current-password"
+              formControlName="password" class="form-control" [ngClass]="{ 'input-error': formErrors['password'] }"
+            >
+            <a i18n-title class="forgot-password-button" (click)="openForgotPasswordModal()" title="Click here to reset your password">I forgot my password</a>
+          </div>
+          <div *ngIf="formErrors.password" class="form-error">
+            {{ formErrors.password }}
+          </div>
+        </div>
+
+        <input type="submit" i18n-value value="Login" [disabled]="!form.valid">
+      </form>
+
+      <div class="external-login-blocks" *ngIf="getExternalLogins().length !== 0">
+        <div class="block-title" i18n>Or sign in with</div>
+
+        <div>
+          <a class="external-login-block" *ngFor="let auth of getExternalLogins()" [href]="getAuthHref(auth)" role="button">
+            {{ auth.authDisplayName }}
+          </a>
+        </div>
       </div>
     </div>
 
-    <input type="submit" i18n-value value="Login" [disabled]="!form.valid">
-  </form>
-
-  <a href='#' (click)="social_login($event, 'facebook')">Login with Facebook</a>&nbsp;
-  <a href='#' (click)="social_login($event, 'google')">Login with Google</a>&nbsp;
-  <a href='#' (click)="social_login($event, 'twitter')">Login with Twitter</a>
+    <a href='#' (click)="social_login($event, 'facebook')">Login with Facebook</a>&nbsp;
+    <a href='#' (click)="social_login($event, 'google')">Login with Google</a>&nbsp;
+    <a href='#' (click)="social_login($event, 'twitter')">Login with Twitter</a>
+    
+  </ng-container>
 </div>
 
 <ng-template #forgotPasswordModal>
@@ -72,7 +92,7 @@
   <div class="modal-body">
 
     <div *ngIf="isEmailDisabled()" class="alert alert-danger" i18n>
-      We are sorry, you cannot recover your password because your instance administrator did not configure the PeerTube email system.
+      We are sorry, you cannot recover your password because your instance administrator did not configure the BitTube email system.
     </div>
 
     <div class="form-group" [hidden]="isEmailDisabled()">
@@ -85,7 +105,10 @@
   </div>
 
   <div class="modal-footer inputs">
-    <span i18n class="action-button action-button-cancel" (click)="hideForgotPasswordModal()">Cancel</span>
+    <input
+      type="button" role="button" i18n-value value="Cancel" class="action-button action-button-cancel"
+      (click)="hideForgotPasswordModal()" (key.enter)="hideForgotPasswordModal()"
+    >
 
     <input
       type="submit" i18n-value value="Send me an email to reset my password" class="action-button-submit"

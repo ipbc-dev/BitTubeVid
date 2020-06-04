@@ -4,7 +4,7 @@ import { ActivityPubActorType } from '../../shared/models/activitypub'
 import { FollowState } from '../../shared/models/actors'
 import { VideoAbuseState, VideoImportState, VideoPrivacy, VideoTranscodingFPS } from '../../shared/models/videos'
 // Do not use barrels, remain constants as independent as possible
-import { isTestInstance, sanitizeHost, sanitizeUrl, root, parseDurationToMs } from '../helpers/core-utils'
+import { isTestInstance, sanitizeHost, sanitizeUrl, root } from '../helpers/core-utils'
 import { NSFWPolicyType } from '../../shared/models/videos/nsfw-policy.type'
 import { invert } from 'lodash'
 import { CronRepeatOptions, EveryRepeatOptions } from 'bull'
@@ -14,7 +14,7 @@ import { CONFIG, registerConfigChangedHandler } from './config'
 
 // ---------------------------------------------------------------------------
 
-const LAST_MIGRATION_VERSION = 475
+const LAST_MIGRATION_VERSION = 510
 
 // ---------------------------------------------------------------------------
 
@@ -59,9 +59,9 @@ const SORTABLE_COLUMNS = {
   FOLLOWERS: [ 'createdAt', 'state', 'score' ],
   FOLLOWING: [ 'createdAt', 'redundancyAllowed', 'state' ],
 
-  VIDEOS: [ 'name', 'duration', 'createdAt', 'publishedAt', 'views', 'likes', 'trending' ],
+  VIDEOS: [ 'name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending' ],
 
-  VIDEOS_SEARCH: [ 'name', 'duration', 'createdAt', 'publishedAt', 'views', 'likes', 'match' ],
+  VIDEOS_SEARCH: [ 'name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match' ],
   VIDEO_CHANNELS_SEARCH: [ 'match', 'displayName', 'createdAt' ],
 
   ACCOUNTS_BLOCKLIST: [ 'createdAt' ],
@@ -90,9 +90,6 @@ const ROUTE_CACHE_LIFETIME = {
   SECURITYTXT: '2 hours',
   NODEINFO: '10 minutes',
   DNT_POLICY: '1 week',
-  OVERVIEWS: {
-    VIDEOS: '1 hour'
-  },
   ACTIVITY_PUB: {
     VIDEOS: '1 second' // 1 second, cache concurrent requests after a broadcast for example
   },
@@ -138,7 +135,7 @@ const JOB_CONCURRENCY: { [id in JobType]: number } = {
   'activitypub-http-fetcher': 1,
   'activitypub-follow': 1,
   'video-file-import': 1,
-  'video-transcoding': 1,
+  'video-transcoding': 4,
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
@@ -148,11 +145,11 @@ const JOB_CONCURRENCY: { [id in JobType]: number } = {
 const JOB_TTL: { [id in JobType]: number } = {
   'activitypub-http-broadcast': 60000 * 10, // 10 minutes
   'activitypub-http-unicast': 60000 * 10, // 10 minutes
-  'activitypub-http-fetcher': 60000 * 10, // 10 minutes
+  'activitypub-http-fetcher': 1000 * 3600 * 10, // 10 hours
   'activitypub-follow': 60000 * 10, // 10 minutes
   'video-file-import': 1000 * 3600, // 1 hour
   'video-transcoding': 1000 * 3600 * 48, // 2 days, transcoding could be long
-  'video-import': 1000 * 3600 * 2, //  hours
+  'video-import': 1000 * 3600 * 2, // 2 hours
   'email': 60000 * 10, // 10 minutes
   'videos-views': undefined, // Unlimited
   'activitypub-refresher': 60000 * 10, // 10 minutes
@@ -179,10 +176,6 @@ const SCHEDULER_INTERVALS_MS = {
   autoFollowIndexInstances: 60000 * 60 * 24, // 1 day
   removeOldViews: 60000 * 60 * 24, // 1 day
   removeOldHistory: 60000 * 60 * 24 // 1 day
-}
-
-const INSTANCES_INDEX = {
-  HOSTS_PATH: '/api/v1/instances/hosts'
 }
 
 // ---------------------------------------------------------------------------
@@ -286,7 +279,7 @@ const CONSTRAINTS_FIELDS = {
     COUNT: { min: 0 }
   },
   VIDEO_COMMENTS: {
-    TEXT: { min: 1, max: 3000 }, // Length
+    TEXT: { min: 1, max: 10000 }, // Length
     URL: { min: 3, max: 2000 } // Length
   },
   VIDEO_SHARE: {
@@ -310,6 +303,8 @@ let CONTACT_FORM_LIFETIME = 60000 * 60 // 1 hour
 
 const VIDEO_TRANSCODING_FPS: VideoTranscodingFPS = {
   MIN: 10,
+  STANDARD: [ 24, 25, 30 ],
+  HD_STANDARD: [ 50, 60 ],
   AVERAGE: 30,
   MAX: 60,
   KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720 // We keep the original FPS on high resolutions (720 minimum)
@@ -359,42 +354,43 @@ const VIDEO_LICENCES = {
   7: 'Public Domain Dedication'
 }
 
-let VIDEO_LANGUAGES: { [id: string]: string } = {}
+const VIDEO_LANGUAGES: { [id: string]: string } = {}
 
 const VIDEO_PRIVACIES = {
-  [ VideoPrivacy.PUBLIC ]: 'Public',
-  [ VideoPrivacy.UNLISTED ]: 'Unlisted',
-  [ VideoPrivacy.PRIVATE ]: 'Private',
-  [ VideoPrivacy.INTERNAL ]: 'Internal'
+  [VideoPrivacy.PUBLIC]: 'Public',
+  [VideoPrivacy.UNLISTED]: 'Unlisted',
+  [VideoPrivacy.PRIVATE]: 'Private',
+  [VideoPrivacy.INTERNAL]: 'Internal'
 }
 
 const VIDEO_STATES = {
-  [ VideoState.PUBLISHED ]: 'Published',
-  [ VideoState.TO_TRANSCODE ]: 'To transcode',
-  [ VideoState.TO_IMPORT ]: 'To import'
+  [VideoState.PUBLISHED]: 'Published',
+  [VideoState.TO_TRANSCODE]: 'To transcode',
+  [VideoState.TO_IMPORT]: 'To import'
 }
 
 const VIDEO_IMPORT_STATES = {
-  [ VideoImportState.FAILED ]: 'Failed',
-  [ VideoImportState.PENDING ]: 'Pending',
-  [ VideoImportState.SUCCESS ]: 'Success'
+  [VideoImportState.FAILED]: 'Failed',
+  [VideoImportState.PENDING]: 'Pending',
+  [VideoImportState.SUCCESS]: 'Success',
+  [VideoImportState.REJECTED]: 'Rejected'
 }
 
 const VIDEO_ABUSE_STATES = {
-  [ VideoAbuseState.PENDING ]: 'Pending',
-  [ VideoAbuseState.REJECTED ]: 'Rejected',
-  [ VideoAbuseState.ACCEPTED ]: 'Accepted'
+  [VideoAbuseState.PENDING]: 'Pending',
+  [VideoAbuseState.REJECTED]: 'Rejected',
+  [VideoAbuseState.ACCEPTED]: 'Accepted'
 }
 
 const VIDEO_PLAYLIST_PRIVACIES = {
-  [ VideoPlaylistPrivacy.PUBLIC ]: 'Public',
-  [ VideoPlaylistPrivacy.UNLISTED ]: 'Unlisted',
-  [ VideoPlaylistPrivacy.PRIVATE ]: 'Private'
+  [VideoPlaylistPrivacy.PUBLIC]: 'Public',
+  [VideoPlaylistPrivacy.UNLISTED]: 'Unlisted',
+  [VideoPlaylistPrivacy.PRIVATE]: 'Private'
 }
 
 const VIDEO_PLAYLIST_TYPES = {
-  [ VideoPlaylistType.REGULAR ]: 'Regular',
-  [ VideoPlaylistType.WATCH_LATER ]: 'Watch later'
+  [VideoPlaylistType.REGULAR]: 'Regular',
+  [VideoPlaylistType.WATCH_LATER]: 'Watch later'
 }
 
 const MIMETYPES = {
@@ -420,7 +416,8 @@ const MIMETYPES = {
       'image/png': '.png',
       'image/jpg': '.jpg',
       'image/jpeg': '.jpg'
-    }
+    },
+    EXT_MIMETYPE: null as { [ id: string ]: string }
   },
   VIDEO_CAPTIONS: {
     MIMETYPE_EXT: {
@@ -436,13 +433,14 @@ const MIMETYPES = {
   }
 }
 MIMETYPES.AUDIO.EXT_MIMETYPE = invert(MIMETYPES.AUDIO.MIMETYPE_EXT)
+MIMETYPES.IMAGE.EXT_MIMETYPE = invert(MIMETYPES.IMAGE.MIMETYPE_EXT)
 
 // ---------------------------------------------------------------------------
 
 const OVERVIEWS = {
   VIDEOS: {
     SAMPLE_THRESHOLD: 6,
-    SAMPLES_COUNT: 2
+    SAMPLES_COUNT: 20
   }
 }
 
@@ -463,7 +461,7 @@ const ACTIVITY_PUB = {
   ACCEPT_HEADER: 'application/activity+json, application/ld+json',
   PUBLIC: 'https://www.w3.org/ns/activitystreams#Public',
   COLLECTION_ITEMS_PER_PAGE: 10,
-  FETCH_PAGE_LIMIT: 100,
+  FETCH_PAGE_LIMIT: 2000,
   URL_MIME_TYPES: {
     VIDEO: [] as string[],
     TORRENT: [ 'application/x-bittorrent' ],
@@ -498,6 +496,7 @@ let PRIVATE_RSA_KEY_SIZE = 2048
 const BCRYPT_SALT_SIZE = 10
 
 const USER_PASSWORD_RESET_LIFETIME = 60000 * 60 // 60 minutes
+const USER_PASSWORD_CREATE_LIFETIME = 60000 * 60 * 24 * 7 // 7 days
 
 const USER_EMAIL_VERIFY_LIFETIME = 60000 * 60 // 60 minutes
 
@@ -534,7 +533,7 @@ const LAZY_STATIC_PATHS = {
 }
 
 // Cache control
-let STATIC_MAX_AGE = {
+const STATIC_MAX_AGE = {
   SERVER: '2h',
   CLIENT: '30d'
 }
@@ -542,11 +541,13 @@ let STATIC_MAX_AGE = {
 // Videos thumbnail size
 const THUMBNAILS_SIZE = {
   width: 223,
-  height: 122
+  height: 122,
+  minWidth: 150
 }
 const PREVIEWS_SIZE = {
   width: 850,
-  height: 480
+  height: 480,
+  minWidth: 400
 }
 const AVATARS_SIZE = {
   width: 120,
@@ -641,6 +642,8 @@ const P2P_MEDIA_LOADER_PEER_VERSION = 2
 const PLUGIN_GLOBAL_CSS_FILE_NAME = 'plugins-global.css'
 const PLUGIN_GLOBAL_CSS_PATH = join(CONFIG.STORAGE.TMP_DIR, PLUGIN_GLOBAL_CSS_FILE_NAME)
 
+let PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 1000 * 60 * 5 // 5 minutes
+
 const DEFAULT_THEME_NAME = 'default'
 const DEFAULT_USER_THEME_NAME = 'instance-default'
 
@@ -670,18 +673,20 @@ if (isTestInstance() === true) {
   SCHEDULER_INTERVALS_MS.removeOldViews = 5000
   SCHEDULER_INTERVALS_MS.updateVideos = 5000
   SCHEDULER_INTERVALS_MS.autoFollowIndexInstances = 5000
-  REPEAT_JOBS[ 'videos-views' ] = { every: 5000 }
+  REPEAT_JOBS['videos-views'] = { every: 5000 }
 
   REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1
 
   VIDEO_VIEW_LIFETIME = 1000 // 1 second
   CONTACT_FORM_LIFETIME = 1000 // 1 second
 
-  JOB_ATTEMPTS[ 'email' ] = 1
+  JOB_ATTEMPTS['email'] = 1
 
   FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE = 3000
-  MEMOIZE_TTL.OVERVIEWS_SAMPLE = 1
-  ROUTE_CACHE_LIFETIME.OVERVIEWS.VIDEOS = '0ms'
+  MEMOIZE_TTL.OVERVIEWS_SAMPLE = 3000
+  OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD = 2
+
+  PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 5000
 }
 
 updateWebserverUrls()
@@ -722,7 +727,6 @@ export {
   PREVIEWS_SIZE,
   REMOTE_SCHEME,
   FOLLOW_STATES,
-  INSTANCES_INDEX,
   DEFAULT_USER_THEME_NAME,
   SERVER_ACTOR_NAME,
   PLUGIN_GLOBAL_CSS_FILE_NAME,
@@ -758,6 +762,7 @@ export {
   LRU_CACHE,
   JOB_REQUEST_TIMEOUT,
   USER_PASSWORD_RESET_LIFETIME,
+  USER_PASSWORD_CREATE_LIFETIME,
   MEMOIZE_TTL,
   USER_EMAIL_VERIFY_LIFETIME,
   OVERVIEWS,
@@ -773,6 +778,7 @@ export {
   VIDEO_VIEW_LIFETIME,
   CONTACT_FORM_LIFETIME,
   VIDEO_PLAYLIST_PRIVACIES,
+  PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME,
   ASSETS_PATH,
   loadLanguages,
   buildLanguages
@@ -838,42 +844,42 @@ function loadLanguages () {
 function buildLanguages () {
   const iso639 = require('iso-639-3')
 
-  const languages: { [ id: string ]: string } = {}
+  const languages: { [id: string]: string } = {}
 
   const additionalLanguages = {
-    'sgn': true, // Sign languages (macro language)
-    'ase': true, // American sign language
-    'sdl': true, // Arabian sign language
-    'bfi': true, // British sign language
-    'bzs': true, // Brazilian sign language
-    'csl': true, // Chinese sign language
-    'cse': true, // Czech sign language
-    'dsl': true, // Danish sign language
-    'fsl': true, // French sign language
-    'gsg': true, // German sign language
-    'pks': true, // Pakistan sign language
-    'jsl': true, // Japanese sign language
-    'sfs': true, // South African sign language
-    'swl': true, // Swedish sign language
-    'rsl': true, // Russian sign language: true
+    sgn: true, // Sign languages (macro language)
+    ase: true, // American sign language
+    sdl: true, // Arabian sign language
+    bfi: true, // British sign language
+    bzs: true, // Brazilian sign language
+    csl: true, // Chinese sign language
+    cse: true, // Czech sign language
+    dsl: true, // Danish sign language
+    fsl: true, // French sign language
+    gsg: true, // German sign language
+    pks: true, // Pakistan sign language
+    jsl: true, // Japanese sign language
+    sfs: true, // South African sign language
+    swl: true, // Swedish sign language
+    rsl: true, // Russian sign language: true
 
-    'epo': true, // Esperanto
-    'tlh': true, // Klingon
-    'jbo': true, // Lojban
-    'avk': true // Kotava
+    epo: true, // Esperanto
+    tlh: true, // Klingon
+    jbo: true, // Lojban
+    avk: true // Kotava
   }
 
   // Only add ISO639-1 languages and some sign languages (ISO639-3)
   iso639
     .filter(l => {
-      return (l.iso6391 !== null && l.type === 'living') ||
-        additionalLanguages[ l.iso6393 ] === true
+      return (l.iso6391 !== undefined && l.type === 'living') ||
+        additionalLanguages[l.iso6393] === true
     })
-    .forEach(l => languages[ l.iso6391 || l.iso6393 ] = l.name)
+    .forEach(l => { languages[l.iso6391 || l.iso6393] = l.name })
 
   // Override Occitan label
-  languages[ 'oc' ] = 'Occitan'
-  languages[ 'el' ] = 'Greek'
+  languages['oc'] = 'Occitan'
+  languages['el'] = 'Greek'
 
   return languages
 }

@@ -3,13 +3,15 @@ import { ActivatedRoute } from '@angular/router'
 import { AccountService } from '@app/shared/account/account.service'
 import { Account } from '@app/shared/account/account.model'
 import { RestExtractor, UserService } from '@app/shared'
-import { catchError, distinctUntilChanged, first, map, switchMap, tap } from 'rxjs/operators'
-import { forkJoin, Subscription } from 'rxjs'
+import { catchError, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators'
+import { Subscription } from 'rxjs'
 import { AuthService, Notifier, RedirectService } from '@app/core'
 import { User, UserRight } from '../../../../shared'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoChannelService } from '@app/shared/video-channel/video-channel.service'
 import { VideoChannel } from '@app/shared/video-channel/video-channel.model'
+import { ListOverflowItem } from '@app/shared/misc/list-overflow.component'
+import { ScreenService } from '@app/shared/misc/screen.service'
 
 @Component({
   templateUrl: './accounts.component.html',
@@ -19,6 +21,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
   account: Account
   accountUser: User
   videoChannels: VideoChannel[] = []
+  links: ListOverflowItem[] = []
 
   isAccountManageable = false
   accountFollowerTitle = ''
@@ -34,6 +37,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     private restExtractor: RestExtractor,
     private redirectService: RedirectService,
     private authService: AuthService,
+    private screenService: ScreenService,
     private i18n: I18n
   ) {
   }
@@ -70,6 +74,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
                           err => this.notifier.error(err.message)
                         )
+
+    this.links = [
+      { label: this.i18n('VIDEO CHANNELS'), routerLink: 'video-channels' },
+      { label: this.i18n('VIDEOS'), routerLink: 'videos' },
+      { label: this.i18n('ABOUT'), routerLink: 'about' }
+    ]
   }
 
   ngOnDestroy () {
@@ -81,6 +91,10 @@ export class AccountsComponent implements OnInit, OnDestroy {
       (acc, val) => acc + val.followersCount,
       this.account.followersCount // accumulator starts with the base number of subscribers the account has
     )
+  }
+
+  get isInSmallView () {
+    return this.screenService.isInSmallView()
   }
 
   onUserChanged () {
@@ -96,7 +110,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
   }
 
   subscribersDisplayFor (count: number) {
-    return this.i18n(`{count, plural, =1 {1 subscriber} other {${count} subscribers}}`, { count })
+    return this.i18n('{count, plural, =1 {1 subscriber} other {{{count}} subscribers}}', { count })
   }
 
   private getUserIfNeeded (account: Account) {

@@ -9,13 +9,12 @@ import { I18n } from '@ngx-translate/i18n-polyfill'
 @Component({
   selector: 'my-followers-list',
   templateUrl: './followers-list.component.html',
-  styleUrls: [ './followers-list.component.scss' ]
+  styleUrls: [ '../follows.component.scss', './followers-list.component.scss' ]
 })
 export class FollowersListComponent extends RestTable implements OnInit {
   followers: ActorFollow[] = []
   totalRecords = 0
-  rowsPerPage = 10
-  sort: SortMeta = { field: 'createdAt', order: 1 }
+  sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
   constructor (
@@ -29,6 +28,10 @@ export class FollowersListComponent extends RestTable implements OnInit {
 
   ngOnInit () {
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'FollowersListComponent'
   }
 
   acceptFollower (follow: ActorFollow) {

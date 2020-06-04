@@ -84,12 +84,12 @@
                     placement="bottom auto"
                   >
                     <my-global-icon iconName="support"></my-global-icon>
-                    <span class="icon-text" i18n>Support</span>
+                    <span class="icon-text" i18n>SUPPORT</span>
                   </div>
 
                   <div (click)="showShareModal()" class="action-button" role="button">
                     <my-global-icon iconName="share"></my-global-icon>
-                    <span class="icon-text" i18n>Share</span>
+                    <span class="icon-text" i18n>SHARE</span>
                   </div>
 
                   <div
@@ -100,7 +100,7 @@
                   >
                     <div class="action-button action-button-save" ngbDropdownToggle role="button">
                       <my-global-icon iconName="playlist-add"></my-global-icon>
-                      <span class="icon-text" i18n>Save</span>
+                      <span class="icon-text" i18n>SAVE</span>
                     </div>
 
                     <div ngbDropdownMenu>
@@ -188,6 +188,11 @@
           <span class="video-attribute-value">{{ video.privacy.label }}</span>
         </div>
 
+        <div *ngIf="video.isLocal === false" class="video-attribute">
+          <span i18n class="video-attribute-label">Origin instance</span>
+          <a class="video-attribute-value" target="_blank" rel="noopener noreferrer" [href]="video.originInstanceUrl">{{ video.originInstanceHost }}</a>
+        </div>
+
         <div *ngIf="!!video.originallyPublishedAt" class="video-attribute">
           <span i18n class="video-attribute-label">Originally published</span>
           <span class="video-attribute-value">{{ video.originallyPublishedAt | date: 'dd MMMM yyyy' }}</span>
@@ -252,14 +257,16 @@
 
   <div class="row privacy-concerns" *ngIf="hasAlreadyAcceptedPrivacyConcern === false">
     <div class="privacy-concerns-text">
-      <strong i18n>Friendly Reminder: </strong>
-      <ng-container i18n>
-        the sharing system used for this video implies that some technical information about your system (such as a public IP address) can be sent to other peers.
-      </ng-container>
-      <a i18n i18n-title title="Get more information" target="_blank" rel="noopener noreferrer" href="/about/peertube">More information</a>
+      <span class="mr-2">
+        <strong i18n>Friendly Reminder: </strong>
+        <ng-container i18n>
+          the sharing system used for this video implies that some technical information about your system (such as a public IP address) can be sent to other peers.
+        </ng-container>
+      </span>
+      <a i18n i18n-title title="Get more information" target="_blank" rel="noopener noreferrer" href="/about/peertube#privacy">More information</a>
     </div>
 
-    <div i18n class="privacy-concerns-okay" (click)="acceptedPrivacyConcern()">
+    <div i18n class="privacy-concerns-button privacy-concerns-okay" (click)="acceptedPrivacyConcern()">
       OK
     </div>
   </div>

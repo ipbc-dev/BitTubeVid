@@ -1,33 +1,72 @@
 import * as express from 'express'
-import { body, param, query } from 'express-validator'
+import { body, param, query, ValidationChain } from 'express-validator'
 import { logger } from '../../helpers/logger'
 import { areValidationErrors } from './utils'
 import { isNpmPluginNameValid, isPluginNameValid, isPluginTypeValid, isPluginVersionValid } from '../../helpers/custom-validators/plugins'
 import { PluginManager } from '../../lib/plugins/plugin-manager'
-import { isBooleanValid, isSafePath, toBooleanOrNull } from '../../helpers/custom-validators/misc'
+import { isBooleanValid, isSafePath, toBooleanOrNull, exists } from '../../helpers/custom-validators/misc'
 import { PluginModel } from '../../models/server/plugin'
 import { InstallOrUpdatePlugin } from '../../../shared/models/plugins/install-plugin.model'
 import { PluginType } from '../../../shared/models/plugins/plugin.type'
 import { CONFIG } from '../../initializers/config'
 
-const servePluginStaticDirectoryValidator = (pluginType: PluginType) => [
-  param('pluginName').custom(isPluginNameValid).withMessage('Should have a valid plugin name'),
-  param('pluginVersion').custom(isPluginVersionValid).withMessage('Should have a valid plugin version'),
-  param('staticEndpoint').custom(isSafePath).withMessage('Should have a valid static endpoint'),
+const getPluginValidator = (pluginType: PluginType, withVersion = true) => {
+  const validators: (ValidationChain | express.Handler)[] = [
+    param('pluginName').custom(isPluginNameValid).withMessage('Should have a valid plugin name')
+  ]
+
+  if (withVersion) {
+    validators.push(
+      param('pluginVersion').custom(isPluginVersionValid).withMessage('Should have a valid plugin version')
+    )
+  }
+
+  return validators.concat([
+    (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      logger.debug('Checking getPluginValidator parameters', { parameters: req.params })
+
+      if (areValidationErrors(req, res)) return
+
+      const npmName = PluginModel.buildNpmName(req.params.pluginName, pluginType)
+      const plugin = PluginManager.Instance.getRegisteredPluginOrTheme(npmName)
+
+      if (!plugin) return res.sendStatus(404)
+      if (withVersion && plugin.version !== req.params.pluginVersion) return res.sendStatus(404)
+
+      res.locals.registeredPlugin = plugin
+
+      return next()
+    }
+  ])
+}
+
+const getExternalAuthValidator = [
+  param('authName').custom(exists).withMessage('Should have a valid auth name'),
 
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    logger.debug('Checking servePluginStaticDirectory parameters', { parameters: req.params })
+    logger.debug('Checking getExternalAuthValidator parameters', { parameters: req.params })
 
     if (areValidationErrors(req, res)) return
 
-    const npmName = PluginModel.buildNpmName(req.params.pluginName, pluginType)
-    const plugin = PluginManager.Instance.getRegisteredPluginOrTheme(npmName)
+    const plugin = res.locals.registeredPlugin
+    if (!plugin.registerHelpersStore) return res.sendStatus(404)
 
-    if (!plugin || plugin.version !== req.params.pluginVersion) {
-      return res.sendStatus(404)
-    }
+    const externalAuth = plugin.registerHelpersStore.getExternalAuths().find(a => a.authName === req.params.authName)
+    if (!externalAuth) return res.sendStatus(404)
 
-    res.locals.registeredPlugin = plugin
+    res.locals.externalAuth = externalAuth
+
+    return next()
+  }
+]
+
+const pluginStaticDirectoryValidator = [
+  param('staticEndpoint').custom(isSafePath).withMessage('Should have a valid static endpoint'),
+
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.debug('Checking pluginStaticDirectoryValidator parameters', { parameters: req.params })
+
+    if (areValidationErrors(req, res)) return
 
     return next()
   }
@@ -149,11 +188,13 @@ const listAvailablePluginsValidator = [
 // ---------------------------------------------------------------------------
 
 export {
-  servePluginStaticDirectoryValidator,
+  pluginStaticDirectoryValidator,
+  getPluginValidator,
   updatePluginSettingsValidator,
   uninstallPluginValidator,
   listAvailablePluginsValidator,
   existingPluginValidator,
   installOrUpdatePluginValidator,
-  listPluginsValidator
+  listPluginsValidator,
+  getExternalAuthValidator
 }

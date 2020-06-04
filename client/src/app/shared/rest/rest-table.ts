@@ -1,6 +1,5 @@
 import { peertubeLocalStorage } from '@app/shared/misc/peertube-web-storage'
-import { LazyLoadEvent } from 'primeng/components/common/lazyloadevent'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { LazyLoadEvent, SortMeta } from 'primeng/api'
 import { RestPagination } from './rest-pagination'
 import { Subject } from 'rxjs'
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators'
@@ -8,13 +7,17 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators'
 export abstract class RestTable {
 
   abstract totalRecords: number
-  abstract rowsPerPage: number
   abstract sort: SortMeta
   abstract pagination: RestPagination
 
-  protected search: string
+  search: string
+  rowsPerPageOptions = [ 10, 20, 50, 100 ]
+  rowsPerPage = this.rowsPerPageOptions[0]
+  expandedRows = {}
+
   private searchStream: Subject<string>
-  private sortLocalStorageKey = 'rest-table-sort-' + this.constructor.name
+
+  abstract getIdentifier (): string
 
   initialize () {
     this.loadSort()
@@ -22,13 +25,13 @@ export abstract class RestTable {
   }
 
   loadSort () {
-    const result = peertubeLocalStorage.getItem(this.sortLocalStorageKey)
+    const result = peertubeLocalStorage.getItem(this.getSortLocalStorageKey())
 
     if (result) {
       try {
         this.sort = JSON.parse(result)
       } catch (err) {
-        console.error('Cannot load sort of local storage key ' + this.sortLocalStorageKey, err)
+        console.error('Cannot load sort of local storage key ' + this.getSortLocalStorageKey(), err)
       }
     }
   }
@@ -49,7 +52,7 @@ export abstract class RestTable {
   }
 
   saveSort () {
-    peertubeLocalStorage.setItem(this.sortLocalStorageKey, JSON.stringify(this.sort))
+    peertubeLocalStorage.setItem(this.getSortLocalStorageKey(), JSON.stringify(this.sort))
   }
 
   initSearch () {
@@ -66,9 +69,37 @@ export abstract class RestTable {
       })
   }
 
-  onSearch (search: string) {
-    this.searchStream.next(search)
+  onSearch (event: Event) {
+    const target = event.target as HTMLInputElement
+    this.searchStream.next(target.value)
+  }
+
+  onPage (event: { first: number, rows: number }) {
+    if (this.rowsPerPage !== event.rows) {
+      this.rowsPerPage = event.rows
+      this.pagination = {
+        start: event.first,
+        count: this.rowsPerPage
+      }
+      this.loadData()
+    }
+    this.expandedRows = {}
+  }
+
+  setTableFilter (filter: string) {
+    // FIXME: cannot use ViewChild, so create a component for the filter input
+    const filterInput = document.getElementById('table-filter') as HTMLInputElement
+    if (filterInput) filterInput.value = filter
+  }
+
+  resetSearch () {
+    this.searchStream.next('')
+    this.setTableFilter('')
   }
 
   protected abstract loadData (): void
+
+  private getSortLocalStorageKey () {
+    return 'rest-table-sort-' + this.getIdentifier()
+  }
 }

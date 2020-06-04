@@ -3,6 +3,7 @@ import { basename, extname as extnameUtil, join } from 'path'
 import {
   canDoQuickTranscode,
   getDurationFromVideoFile,
+  getMetadataFromFile,
   getVideoFileFPS,
   transcode,
   TranscodeOptions,
@@ -202,10 +203,11 @@ async function generateHlsPlaylist (video: MVideoWithFile, resolution: VideoReso
 
   newVideoFile.size = stats.size
   newVideoFile.fps = await getVideoFileFPS(videoFilePath)
+  newVideoFile.metadata = await getMetadataFromFile(videoFilePath)
 
   await createTorrentAndSetInfoHash(videoStreamingPlaylist, newVideoFile)
 
-  await newVideoFile.save()
+  await VideoFileModel.customUpsert(newVideoFile, 'streaming-playlist', undefined)
   videoStreamingPlaylist.VideoFiles = await videoStreamingPlaylist.$get('VideoFiles')
 
   video.setHLSPlaylist(videoStreamingPlaylist)
@@ -230,11 +232,13 @@ export {
 async function onVideoFileTranscoding (video: MVideoWithFile, videoFile: MVideoFile, transcodingPath: string, outputPath: string) {
   const stats = await stat(transcodingPath)
   const fps = await getVideoFileFPS(transcodingPath)
+  const metadata = await getMetadataFromFile(transcodingPath)
 
   await move(transcodingPath, outputPath)
 
   videoFile.size = stats.size
   videoFile.fps = fps
+  videoFile.metadata = metadata
 
   await createTorrentAndSetInfoHash(video, videoFile)
 

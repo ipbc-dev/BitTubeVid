@@ -1,6 +1,6 @@
 import * as express from 'express'
 import { buildNSFWFilter, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
-import { getFormattedObjects, getServerActor } from '../../helpers/utils'
+import { getFormattedObjects } from '../../helpers/utils'
 import { VideoModel } from '../../models/video/video'
 import {
   asyncMiddleware,
@@ -15,11 +15,13 @@ import {
   videosSearchValidator
 } from '../../middlewares'
 import { VideoChannelsSearchQuery, VideosSearchQuery } from '../../../shared/models/search'
-import { getOrCreateActorAndServerAndModel, getOrCreateVideoAndAccountAndChannel } from '../../lib/activitypub'
+import { getOrCreateActorAndServerAndModel } from '../../lib/activitypub/actor'
 import { logger } from '../../helpers/logger'
 import { VideoChannelModel } from '../../models/video/video-channel'
 import { loadActorUrlOrGetFromWebfinger } from '../../helpers/webfinger'
 import { MChannelAccountDefault, MVideoAccountLightBlacklistAllFiles } from '../../typings/models'
+import { getServerActor } from '@server/models/application/application'
+import { getOrCreateVideoAndAccountAndChannel } from '@server/lib/activitypub/videos'
 
 const searchRouter = express.Router()
 
@@ -60,7 +62,7 @@ function searchVideoChannels (req: express.Request, res: express.Response) {
 
   // Handle strings like @toto@example.com
   if (parts.length === 3 && parts[0].length === 0) parts.shift()
-  const isWebfingerSearch = parts.length === 2 && parts.every(p => p && p.indexOf(' ') === -1)
+  const isWebfingerSearch = parts.length === 2 && parts.every(p => p && !p.includes(' '))
 
   if (isURISearch || isWebfingerSearch) return searchVideoChannelURI(search, isWebfingerSearch, res)
 

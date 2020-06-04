@@ -13,13 +13,16 @@ import { PluginClientScope } from '@shared/models/plugins/plugin-client-scope.ty
 import { RegisterClientHookOptions } from '@shared/models/plugins/register-client-hook.model'
 import { HttpClient } from '@angular/common/http'
 import { AuthService } from '@app/core/auth'
+import { Notifier } from '@app/core/notification'
 import { RestExtractor } from '@app/shared/rest'
+import { MarkdownService } from '@app/shared/renderer'
 import { PluginType } from '@shared/models/plugins/plugin.type'
 import { PublicServerSetting } from '@shared/models/plugins/public-server.setting'
 import { getDevLocale, isOnDevLocale } from '@app/shared/i18n/i18n-utils'
 import { RegisterClientHelpers } from '../../../types/register-client-option.model'
 import { PluginTranslation } from '@shared/models/plugins/plugin-translation.model'
 import { importModule } from '@app/shared/misc/utils'
+import { CustomModalComponent } from '@app/modal/custom-modal.component'
 
 interface HookStructValue extends RegisterClientHookOptions {
   plugin: ServerConfigPlugin
@@ -44,10 +47,13 @@ export class PluginService implements ClientHook {
     common: new ReplaySubject<boolean>(1),
     search: new ReplaySubject<boolean>(1),
     'video-watch': new ReplaySubject<boolean>(1),
-    signup: new ReplaySubject<boolean>(1)
+    signup: new ReplaySubject<boolean>(1),
+    login: new ReplaySubject<boolean>(1)
   }
 
   translationsObservable: Observable<PluginTranslation>
+
+  customModal: CustomModalComponent
 
   private plugins: ServerConfigPlugin[] = []
   private scopes: { [ scopeName: string ]: PluginInfo[] } = {}
@@ -60,6 +66,8 @@ export class PluginService implements ClientHook {
   constructor (
     private router: Router,
     private authService: AuthService,
+    private notifier: Notifier,
+    private markdownRenderer: MarkdownService,
     private server: ServerService,
     private zone: NgZone,
     private authHttp: HttpClient,
@@ -78,6 +86,10 @@ export class PluginService implements ClientHook {
 
         this.pluginsBuilt.next(true)
       })
+  }
+
+  initializeCustomModal (customModal: CustomModalComponent) {
+    this.customModal = customModal
   }
 
   ensurePluginsAreBuilt () {
@@ -270,6 +282,32 @@ export class PluginService implements ClientHook {
 
       isLoggedIn: () => {
         return this.authService.isLoggedIn()
+      },
+
+      notifier: {
+        info: (text: string, title?: string, timeout?: number) => this.notifier.info(text, title, timeout),
+        error: (text: string, title?: string, timeout?: number) => this.notifier.error(text, title, timeout),
+        success: (text: string, title?: string, timeout?: number) => this.notifier.success(text, title, timeout)
+      },
+
+      showModal: (input: {
+        title: string,
+        content: string,
+        close?: boolean,
+        cancel?: { value: string, action?: () => void },
+        confirm?: { value: string, action?: () => void }
+      }) => {
+        this.customModal.show(input)
+      },
+
+      markdownRenderer: {
+        textMarkdownToHTML: (textMarkdown: string) => {
+          return this.markdownRenderer.textMarkdownToHTML(textMarkdown)
+        },
+
+        enhancedMarkdownToHTML: (enhancedMarkdown: string) => {
+          return this.markdownRenderer.enhancedMarkdownToHTML(enhancedMarkdown)
+        }
       },
 
       translate: (value: string) => {

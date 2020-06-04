@@ -1,4 +1,4 @@
-/* tslint:disable:no-unused-expression */
+/* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await,@typescript-eslint/no-floating-promises */
 
 import * as magnetUtil from 'magnet-uri'
 import 'mocha'
@@ -49,7 +49,7 @@ describe('Test tracker', function () {
     torrent.on('error', done)
     torrent.on('warning', warn => {
       const message = typeof warn === 'string' ? warn : warn.message
-      if (message.indexOf('Unknown infoHash ') !== -1) return done()
+      if (message.includes('Unknown infoHash ')) return done()
     })
 
     torrent.on('done', () => done(new Error('No error on infohash')))
@@ -64,7 +64,7 @@ describe('Test tracker', function () {
     torrent.on('error', done)
     torrent.on('warning', warn => {
       const message = typeof warn === 'string' ? warn : warn.message
-      if (message.indexOf('Unknown infoHash ') !== -1) return done(new Error('Error on infohash'))
+      if (message.includes('Unknown infoHash ')) return done(new Error('Error on infohash'))
     })
 
     torrent.on('done', done)
@@ -72,6 +72,8 @@ describe('Test tracker', function () {
 
   it('Should disable the tracker', function (done) {
     this.timeout(20000)
+
+    const errCb = () => done(new Error('Tracker is enabled'))
 
     killallServers([ server ])
     reRunServer(server, { tracker: { enabled: false } })
@@ -83,10 +85,14 @@ describe('Test tracker', function () {
         torrent.on('error', done)
         torrent.on('warning', warn => {
           const message = typeof warn === 'string' ? warn : warn.message
-          if (message.indexOf('disabled ') !== -1) return done()
+          if (message.includes('disabled ')) {
+            torrent.off('done', errCb)
+
+            return done()
+          }
         })
 
-        torrent.on('done', () => done(new Error('Tracker is enabled')))
+        torrent.on('done', errCb)
       })
   })
 

@@ -1,6 +1,6 @@
 <ng-template #modal let-hide="close">
   <div class="modal-header">
-    <h4 i18n class="modal-title">Welcome to PeerTube, dear administrator!</h4>
+    <h4 i18n class="modal-title">Welcome to BitTube, dear administrator!</h4>
     <my-global-icon iconName="cross" aria-label="Close" role="button" (click)="hide()"></my-global-icon>
   </div>
 
@@ -69,17 +69,21 @@
           terms</strong>
           and specify the categories and languages you speak. This way, you will help users to register on <strong>the
           appropriate</strong>
-          PeerTube instance.
+          BitTube instance.
         </p>
       </div>
     </div>
   </div>
 
   <div class="modal-footer inputs">
-    <span i18n class="action-button action-button-understood" (click)="hide()">Remind me later</span>
+    <input
+      type="button" role="button" i18n-value value="Remind me later" class="action-button action-button-understood"
+      (click)="hide()" (key.enter)="hide()"
+    >
 
-    <a i18n (click)="doNotOpenAgain(); hide()" class="configure-instance-button" href="/admin/config/edit-custom" target="_blank"
-       rel="noopener noreferrer">
+    <a i18n (click)="doNotOpenAgain(); hide()" (key.enter)="doNotOpenAgain(); hide()"
+       class="configure-instance-button" href="/admin/config/edit-custom" target="_blank"
+       rel="noopener noreferrer" ngbAutofocus>
       Configure my instance
     </a>
   </div>

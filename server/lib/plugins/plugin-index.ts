@@ -27,11 +27,11 @@ async function listAvailablePluginsFromIndex (options: PeertubePluginIndexList) 
   const uri = CONFIG.PLUGINS.INDEX.URL + '/api/v1/plugins'
 
   try {
-    const { body } = await doRequest({ uri, qs, json: true })
+    const { body } = await doRequest<any>({ uri, qs, json: true })
 
-    logger.debug('Got result from PeerTube index.', { body })
+    logger.debug('Got result from BitTube index.', { body })
 
-    await addInstanceInformation(body)
+    addInstanceInformation(body)
 
     return body as ResultList<PeerTubePluginIndex>
   } catch (err) {
@@ -40,7 +40,7 @@ async function listAvailablePluginsFromIndex (options: PeertubePluginIndexList) 
   }
 }
 
-async function addInstanceInformation (result: ResultList<PeerTubePluginIndex>) {
+function addInstanceInformation (result: ResultList<PeerTubePluginIndex>) {
   for (const d of result.data) {
     d.installed = PluginManager.Instance.isRegistered(d.npmName)
     d.name = PluginModel.normalizePluginName(d.npmName)
@@ -57,7 +57,7 @@ async function getLatestPluginsVersion (npmNames: string[]): Promise<PeertubePlu
 
   const uri = CONFIG.PLUGINS.INDEX.URL + '/api/v1/plugins/latest-version'
 
-  const { body } = await doRequest({ uri, body: bodyRequest, json: true, method: 'POST' })
+  const { body } = await doRequest<any>({ uri, body: bodyRequest, json: true, method: 'POST' })
 
   return body
 }

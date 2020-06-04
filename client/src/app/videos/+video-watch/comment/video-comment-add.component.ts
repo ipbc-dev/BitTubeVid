@@ -11,7 +11,6 @@ import { VideoCommentService } from './video-comment.service'
 import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
 import { VideoCommentValidatorsService } from '@app/shared/forms/form-validators/video-comment-validators.service'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
-import { AuthService } from '@app/core/auth'
 
 @Component({
   selector: 'my-video-comment-add',
@@ -25,7 +24,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnInit {
   @Input() parentComments: VideoComment[]
   @Input() focusOnInit = false
 
-  @Output() commentCreated = new EventEmitter<VideoCommentCreate>()
+  @Output() commentCreated = new EventEmitter<VideoComment>()
   @Output() cancel = new EventEmitter()
 
   @ViewChild('visitorModal', { static: true }) visitorModal: NgbModal
@@ -38,7 +37,6 @@ export class VideoCommentAddComponent extends FormReactive implements OnInit {
     private videoCommentValidatorsService: VideoCommentValidatorsService,
     private notifier: Notifier,
     private videoCommentService: VideoCommentService,
-    private authService: AuthService,
     private modalService: NgbModal,
     private router: Router
   ) {
@@ -57,7 +55,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnInit {
 
       if (this.parentComment) {
         const mentions = this.parentComments
-          .filter(c => c.account.id !== this.user.account.id) // Don't add mention of ourselves
+          .filter(c => c.account && c.account.id !== this.user.account.id) // Don't add mention of ourselves
           .map(c => '@' + c.by)
 
         const mentionsSet = new Set(mentions)
@@ -96,7 +94,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnInit {
     this.addingComment = true
 
     const commentCreate: VideoCommentCreate = this.form.value
-    let obs: Observable<any>
+    let obs: Observable<VideoComment>
 
     if (this.parentComment) {
       obs = this.addCommentReply(commentCreate)
@@ -139,6 +137,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnInit {
 
   cancelCommentReply () {
     this.cancel.emit(null)
+    this.form.value['text'] = this.textareaElement.nativeElement.value = ''
   }
 
   private addCommentReply (commentCreate: VideoCommentCreate) {

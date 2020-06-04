@@ -27,7 +27,7 @@ module.exports = function () {
       modules: [ helpers.root('src'), helpers.root('node_modules') ],
 
       alias: {
-        'video.js$': path.resolve('node_modules/video.js/dist/alt/video.core.js')
+        'video.js$': path.resolve('node_modules/video.js/core.js')
       }
     },
 
@@ -78,10 +78,12 @@ module.exports = function () {
               {
                 loader: 'sass-loader',
                 options: {
-                  sourceMap: true,
-                  includePaths: [
-                    helpers.root('src/sass/include')
-                  ]
+                  sassOptions: {
+                    sourceMap: true,
+                    includePaths: [
+                      helpers.root('src/sass/include')
+                    ]
+                  }
                 }
               }
             ]
@@ -131,7 +133,7 @@ module.exports = function () {
         template: 'src/standalone/videos/embed.html',
         filename: 'embed.html',
         title: 'PeerTube',
-        chunksSortMode: 'dependency',
+        chunksSortMode: 'auto',
         inject: 'body',
         chunks: ['video-embed']
       }),
@@ -140,7 +142,7 @@ module.exports = function () {
         template: '!!html-loader!src/standalone/videos/test-embed.html',
         filename: 'test-embed.html',
         title: 'PeerTube',
-        chunksSortMode: 'dependency',
+        chunksSortMode: 'auto',
         inject: 'body',
         chunks: ['test-embed']
       }),

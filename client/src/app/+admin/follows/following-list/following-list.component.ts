@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { Notifier } from '@app/core'
 import { SortMeta } from 'primeng/api'
 import { ActorFollow } from '../../../../../../shared/models/actors/follow.model'
@@ -6,17 +6,19 @@ import { ConfirmService } from '../../../core/confirm/confirm.service'
 import { RestPagination, RestTable } from '../../../shared'
 import { FollowService } from '@app/shared/instance/follow.service'
 import { I18n } from '@ngx-translate/i18n-polyfill'
+import { BatchDomainsModalComponent } from '@app/+admin/config/shared/batch-domains-modal.component'
 
 @Component({
   selector: 'my-followers-list',
   templateUrl: './following-list.component.html',
-  styleUrls: [ './following-list.component.scss' ]
+  styleUrls: [ '../follows.component.scss', './following-list.component.scss' ]
 })
 export class FollowingListComponent extends RestTable implements OnInit {
+  @ViewChild('batchDomainsModal') batchDomainsModal: BatchDomainsModalComponent
+
   following: ActorFollow[] = []
   totalRecords = 0
-  rowsPerPage = 10
-  sort: SortMeta = { field: 'createdAt', order: 1 }
+  sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
   constructor (
@@ -30,6 +32,29 @@ export class FollowingListComponent extends RestTable implements OnInit {
 
   ngOnInit () {
     this.initialize()
+  }
+
+  getIdentifier () {
+    return 'FollowingListComponent'
+  }
+
+  addDomainsToFollow () {
+    this.batchDomainsModal.openModal()
+  }
+
+  httpEnabled () {
+    return window.location.protocol === 'https:'
+  }
+
+  async addFollowing (hosts: string[]) {
+    this.followService.follow(hosts).subscribe(
+      () => {
+        this.notifier.success(this.i18n('Follow request(s) sent!'))
+        this.loadData()
+      },
+
+      err => this.notifier.error(err.message)
+    )
   }
 
   async removeFollowing (follow: ActorFollow) {

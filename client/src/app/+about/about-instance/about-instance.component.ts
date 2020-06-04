@@ -1,19 +1,18 @@
-import { Component, OnInit, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild, AfterViewChecked } from '@angular/core'
 import { Notifier, ServerService } from '@app/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ContactAdminModalComponent } from '@app/+about/about-instance/contact-admin-modal.component'
 import { InstanceService } from '@app/shared/instance/instance.service'
-import { MarkdownService } from '@app/shared/renderer'
-import { forkJoin } from 'rxjs'
-import { map, switchMap } from 'rxjs/operators'
 import { ServerConfig } from '@shared/models'
+import { ActivatedRoute } from '@angular/router'
+import { ResolverData } from './about-instance.resolver'
+import { ViewportScroller } from '@angular/common'
 
 @Component({
   selector: 'my-about-instance',
   templateUrl: './about-instance.component.html',
   styleUrls: [ './about-instance.component.scss' ]
 })
-export class AboutInstanceComponent implements OnInit {
+export class AboutInstanceComponent implements OnInit, AfterViewChecked {
   @ViewChild('contactAdminModal', { static: true }) contactAdminModal: ContactAdminModalComponent
 
   shortDescription = ''
@@ -37,11 +36,10 @@ export class AboutInstanceComponent implements OnInit {
   serverConfig: ServerConfig
 
   constructor (
-    private notifier: Notifier,
+    private viewportScroller: ViewportScroller,
+    private route: ActivatedRoute,
     private serverService: ServerService,
-    private instanceService: InstanceService,
-    private markdownService: MarkdownService,
-    private i18n: I18n
+    private instanceService: InstanceService
   ) {}
 
   get instanceName () {
@@ -56,35 +54,27 @@ export class AboutInstanceComponent implements OnInit {
     return this.serverConfig.instance.isNSFW
   }
 
-  ngOnInit () {
+  async ngOnInit () {
     this.serverConfig = this.serverService.getTmpConfig()
     this.serverService.getConfig()
         .subscribe(config => this.serverConfig = config)
 
-    this.instanceService.getAbout()
-        .pipe(
-          switchMap(about => {
-            return forkJoin([
-              this.instanceService.buildTranslatedLanguages(about),
-              this.instanceService.buildTranslatedCategories(about)
-            ]).pipe(map(([ languages, categories ]) => ({ about, languages, categories })))
-          })
-        ).subscribe(
-      async ({ about, languages, categories }) => {
-        this.languages = languages
-        this.categories = categories
+    const { about, languages, categories }: ResolverData = this.route.snapshot.data.instanceData
 
-        this.shortDescription = about.instance.shortDescription
+    this.languages = languages
+    this.categories = categories
 
-        this.creationReason = about.instance.creationReason
-        this.maintenanceLifetime = about.instance.maintenanceLifetime
-        this.businessModel = about.instance.businessModel
+    this.shortDescription = about.instance.shortDescription
 
-        this.html = await this.instanceService.buildHtml(about)
-      },
+    this.creationReason = about.instance.creationReason
+    this.maintenanceLifetime = about.instance.maintenanceLifetime
+    this.businessModel = about.instance.businessModel
 
-      () => this.notifier.error(this.i18n('Cannot get about information from server'))
-    )
+    this.html = await this.instanceService.buildHtml(about)
+  }
+
+  ngAfterViewChecked () {
+    if (window.location.hash) this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
   }
 
   openContactModal () {

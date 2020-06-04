@@ -1,13 +1,12 @@
-import { Component, OnInit, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 import { Event, GuardsCheckStart, NavigationEnd, Router, Scroll } from '@angular/router'
 import { AuthService, RedirectService, ServerService, ThemeService } from '@app/core'
 import { is18nPath } from '../../../shared/models/i18n'
 import { ScreenService } from '@app/shared/misc/screen.service'
-import { debounceTime, filter, map, pairwise } from 'rxjs/operators'
+import { filter, map, pairwise } from 'rxjs/operators'
 import { Hotkey, HotkeysService } from 'angular2-hotkeys'
 import { I18n } from '@ngx-translate/i18n-polyfill'
-import { fromEvent } from 'rxjs'
 import { PlatformLocation, ViewportScroller } from '@angular/common'
 import { PluginService } from '@app/core/plugins/plugin.service'
 import { HooksService } from '@app/core/plugins/hooks.service'
@@ -15,21 +14,21 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
 import { POP_STATE_MODAL_DISMISS } from '@app/shared/misc/constants'
 import { WelcomeModalComponent } from '@app/modal/welcome-modal.component'
 import { InstanceConfigWarningModalComponent } from '@app/modal/instance-config-warning-modal.component'
+import { CustomModalComponent } from '@app/modal/custom-modal.component'
 import { ServerConfig, UserRole } from '@shared/models'
 import { User } from '@app/shared'
 import { InstanceService } from '@app/shared/instance/instance.service'
+import { MenuService } from './core/menu/menu.service'
 
 @Component({
   selector: 'my-app',
   templateUrl: './app.component.html',
   styleUrls: [ './app.component.scss' ]
 })
-export class AppComponent implements OnInit {
-  @ViewChild('welcomeModal', { static: false }) welcomeModal: WelcomeModalComponent
-  @ViewChild('instanceConfigWarningModal', { static: false }) instanceConfigWarningModal: InstanceConfigWarningModalComponent
-
-  isMenuDisplayed = true
-  isMenuChangedByUser = false
+export class AppComponent implements OnInit, AfterViewInit {
+  @ViewChild('welcomeModal') welcomeModal: WelcomeModalComponent
+  @ViewChild('instanceConfigWarningModal') instanceConfigWarningModal: InstanceConfigWarningModalComponent
+  @ViewChild('customModal') customModal: CustomModalComponent
 
   customCSS: SafeHtml
 
@@ -50,7 +49,8 @@ export class AppComponent implements OnInit {
     private themeService: ThemeService,
     private hooks: HooksService,
     private location: PlatformLocation,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public menu: MenuService
   ) { }
 
   get instanceName () {
@@ -78,37 +78,23 @@ export class AppComponent implements OnInit {
       this.authService.refreshUserInformation()
     }
 
-    // Do not display menu on small screens
-    if (this.screenService.isInSmallView()) {
-      this.isMenuDisplayed = false
-    }
-
     this.initRouteEvents()
     this.injectJS()
     this.injectCSS()
 
     this.initHotkeys()
 
-    fromEvent(window, 'resize')
-      .pipe(debounceTime(200))
-      .subscribe(() => this.onResize())
-
     this.location.onPopState(() => this.modalService.dismissAll(POP_STATE_MODAL_DISMISS))
 
     this.openModalsIfNeeded()
   }
 
+  ngAfterViewInit () {
+    this.pluginService.initializeCustomModal(this.customModal)
+  }
+
   isUserLoggedIn () {
     return this.authService.isLoggedIn()
-  }
-
-  toggleMenu () {
-    this.isMenuDisplayed = !this.isMenuDisplayed
-    this.isMenuChangedByUser = true
-  }
-
-  onResize () {
-    this.isMenuDisplayed = window.innerWidth >= 800 && !this.isMenuChangedByUser
   }
 
   private initRouteEvents () {
@@ -176,7 +162,7 @@ export class AppComponent implements OnInit {
     eventsObs.pipe(
       filter((e: Event): e is GuardsCheckStart => e instanceof GuardsCheckStart),
       filter(() => this.screenService.isInSmallView())
-    ).subscribe(() => this.isMenuDisplayed = false) // User clicked on a link in the menu, change the page
+    ).subscribe(() => this.menu.isMenuDisplayed = false) // User clicked on a link in the menu, change the page
   }
 
   private injectJS () {
@@ -249,7 +235,7 @@ export class AppComponent implements OnInit {
       }, undefined, this.i18n('Focus the search bar')),
 
       new Hotkey('b', (event: KeyboardEvent): boolean => {
-        this.toggleMenu()
+        this.menu.toggleMenu()
         return false
       }, undefined, this.i18n('Toggle the left menu')),
 

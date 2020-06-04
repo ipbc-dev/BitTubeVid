@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [[ "$*" == *-i* ]]
+then
+  python3 /usr/bin/ffmpeg_gpu_wrapper.py $@
+else
+  /usr/bin/ffmpeg_nvenc_x264 $@
+fi
+
+#if [[ "$*" == *webm* ]]
+#then
+#  /usr/bin/ffmpeg_nvenc_x264 $@
+#elif [[ "$*" == *mkv* ]]
+#then
+# /usr/bin/ffmpeg_nvenc_x264 $@
+#elif [[ "$*" == *avi* ]]
+#then
+# /usr/bin/ffmpeg_nvenc_x264 $@
+#elif [[ "$*" == *jpeg* ]]
+#then
+# /usr/bin/ffmpeg_nvenc_x264 $@
+#else
+# /usr/bin/ffmpeg_nvenc_x264 -c:v h264_cuvid $@
+#fi

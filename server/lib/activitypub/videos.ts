@@ -6,25 +6,27 @@ import {
   ActivityHashTagObject,
   ActivityMagnetUrlObject,
   ActivityPlaylistSegmentHashesObject,
-  ActivityPlaylistUrlObject, ActivityTagObject,
+  ActivityPlaylistUrlObject, ActivitypubHttpFetcherPayload,
+  ActivityTagObject,
   ActivityUrlObject,
   ActivityVideoUrlObject,
   VideoState
 } from '../../../shared/index'
 import { VideoTorrentObject } from '../../../shared/models/activitypub/objects'
 import { VideoPrivacy } from '../../../shared/models/videos'
-import { sanitizeAndCheckVideoTorrentObject } from '../../helpers/custom-validators/activitypub/videos'
+import { isAPVideoFileMetadataObject, sanitizeAndCheckVideoTorrentObject } from '../../helpers/custom-validators/activitypub/videos'
 import { isVideoFileInfoHashValid } from '../../helpers/custom-validators/videos'
 import { deleteNonExistingModels, resetSequelizeInstance, retryTransactionWrapper } from '../../helpers/database-utils'
 import { logger } from '../../helpers/logger'
-import { doRequest, doRequestAndSaveToFile } from '../../helpers/requests'
+import { doRequest } from '../../helpers/requests'
 import {
   ACTIVITY_PUB,
   MIMETYPES,
   P2P_MEDIA_LOADER_PEER_VERSION,
   PREVIEWS_SIZE,
   REMOTE_SCHEME,
-  STATIC_PATHS
+  STATIC_PATHS,
+  THUMBNAILS_SIZE
 } from '../../initializers/constants'
 import { TagModel } from '../../models/video/tag'
 import { VideoModel } from '../../models/video/video'
@@ -36,11 +38,10 @@ import { sendCreateVideo, sendUpdateVideo } from './send'
 import { isArray } from '../../helpers/custom-validators/misc'
 import { VideoCaptionModel } from '../../models/video/video-caption'
 import { JobQueue } from '../job-queue'
-import { ActivitypubHttpFetcherPayload } from '../job-queue/handlers/activitypub-http-fetcher'
 import { createRates } from './video-rates'
 import { addVideoShares, shareVideoByServerAndChannel } from './share'
 import { fetchVideoByUrl, VideoFetchByUrlType } from '../../helpers/video'
-import { checkUrlsSameHost, getAPId } from '../../helpers/activitypub'
+import { buildRemoteVideoBaseUrl, checkUrlsSameHost, getAPId } from '../../helpers/activitypub'
 import { Notifier } from '../notifier'
 import { VideoStreamingPlaylistModel } from '../../models/video/video-streaming-playlist'
 import { VideoStreamingPlaylistType } from '../../../shared/models/videos/video-streaming-playlist.type'
@@ -68,9 +69,11 @@ import {
   MVideoFile,
   MVideoFullLight,
   MVideoId,
+  MVideoImmutable,
   MVideoThumbnail
 } from '../../typings/models'
 import { MThumbnail } from '../../typings/models/video/thumbnail'
+import { maxBy, minBy } from 'lodash'
 
 async function federateVideoIfNeeded (videoArg: MVideoAPWithoutCaption, isNewVideo: boolean, transaction?: sequelize.Transaction) {
   const video = videoArg as MVideoAP
@@ -109,7 +112,7 @@ async function fetchRemoteVideo (videoUrl: string): Promise<{ response: request.
 
   logger.info('Fetching remote video %s.', videoUrl)
 
-  const { response, body } = await doRequest(options)
+  const { response, body } = await doRequest<any>(options)
 
   if (sanitizeAndCheckVideoTorrentObject(body) === false || checkUrlsSameHost(body.id, videoUrl) !== true) {
     logger.debug('Remote video JSON is not valid.', { body })
@@ -127,21 +130,8 @@ async function fetchRemoteVideoDescription (video: MVideoAccountLight) {
     json: true
   }
 
-  const { body } = await doRequest(options)
+  const { body } = await doRequest<any>(options)
   return body.description ? body.description : ''
-}
-
-function fetchRemoteVideoStaticFile (video: MVideoAccountLight, path: string, destPath: string) {
-  const url = buildRemoteBaseUrl(video, path)
-
-  // We need to provide a callback, if no we could have an uncaught exception
-  return doRequestAndSaveToFile({ uri: url }, destPath)
-}
-
-function buildRemoteBaseUrl (video: MVideoAccountLight, path: string) {
-  const host = video.VideoChannel.Account.Actor.Server.host
-
-  return REMOTE_SCHEME.HTTP + '://' + host + path
 }
 
 function getOrCreateVideoChannelFromVideoObject (videoObject: VideoTorrentObject) {
@@ -173,7 +163,7 @@ async function syncVideoExternalAttributes (video: MVideo, fetchedVideo: VideoTo
     const cleaner = crawlStartDate => AccountVideoRateModel.cleanOldRatesOf(video.id, 'like' as 'like', crawlStartDate)
 
     await crawlCollectionPage<string>(fetchedVideo.likes, handler, cleaner)
-      .catch(err => logger.error('Cannot add likes of video %s.', video.uuid, { err }))
+      .catch(err => logger.error('Cannot add likes of video %s.', video.uuid, { err, rootUrl: fetchedVideo.likes }))
   } else {
     jobPayloads.push({ uri: fetchedVideo.likes, videoId: video.id, type: 'video-likes' as 'video-likes' })
   }
@@ -183,7 +173,7 @@ async function syncVideoExternalAttributes (video: MVideo, fetchedVideo: VideoTo
     const cleaner = crawlStartDate => AccountVideoRateModel.cleanOldRatesOf(video.id, 'dislike' as 'dislike', crawlStartDate)
 
     await crawlCollectionPage<string>(fetchedVideo.dislikes, handler, cleaner)
-      .catch(err => logger.error('Cannot add dislikes of video %s.', video.uuid, { err }))
+      .catch(err => logger.error('Cannot add dislikes of video %s.', video.uuid, { err, rootUrl: fetchedVideo.dislikes }))
   } else {
     jobPayloads.push({ uri: fetchedVideo.dislikes, videoId: video.id, type: 'video-dislikes' as 'video-dislikes' })
   }
@@ -193,7 +183,7 @@ async function syncVideoExternalAttributes (video: MVideo, fetchedVideo: VideoTo
     const cleaner = crawlStartDate => VideoShareModel.cleanOldSharesOf(video.id, crawlStartDate)
 
     await crawlCollectionPage<string>(fetchedVideo.shares, handler, cleaner)
-      .catch(err => logger.error('Cannot add shares of video %s.', video.uuid, { err }))
+      .catch(err => logger.error('Cannot add shares of video %s.', video.uuid, { err, rootUrl: fetchedVideo.shares }))
   } else {
     jobPayloads.push({ uri: fetchedVideo.shares, videoId: video.id, type: 'video-shares' as 'video-shares' })
   }
@@ -203,32 +193,49 @@ async function syncVideoExternalAttributes (video: MVideo, fetchedVideo: VideoTo
     const cleaner = crawlStartDate => VideoCommentModel.cleanOldCommentsOf(video.id, crawlStartDate)
 
     await crawlCollectionPage<string>(fetchedVideo.comments, handler, cleaner)
-      .catch(err => logger.error('Cannot add comments of video %s.', video.uuid, { err }))
+      .catch(err => logger.error('Cannot add comments of video %s.', video.uuid, { err, rootUrl: fetchedVideo.comments }))
   } else {
     jobPayloads.push({ uri: fetchedVideo.comments, videoId: video.id, type: 'video-comments' as 'video-comments' })
   }
 
-  await Bluebird.map(jobPayloads, payload => JobQueue.Instance.createJob({ type: 'activitypub-http-fetcher', payload }))
+  await Bluebird.map(jobPayloads, payload => JobQueue.Instance.createJobWithPromise({ type: 'activitypub-http-fetcher', payload }))
 }
 
-function getOrCreateVideoAndAccountAndChannel (options: {
-  videoObject: { id: string } | string,
-  syncParam?: SyncParam,
-  fetchType?: 'all',
+type GetVideoResult <T> = Promise<{
+  video: T
+  created: boolean
+  autoBlacklisted?: boolean
+}>
+
+type GetVideoParamAll = {
+  videoObject: { id: string } | string
+  syncParam?: SyncParam
+  fetchType?: 'all'
   allowRefresh?: boolean
-}): Promise<{ video: MVideoAccountLightBlacklistAllFiles, created: boolean, autoBlacklisted?: boolean }>
-function getOrCreateVideoAndAccountAndChannel (options: {
-  videoObject: { id: string } | string,
-  syncParam?: SyncParam,
-  fetchType?: VideoFetchByUrlType,
+}
+
+type GetVideoParamImmutable = {
+  videoObject: { id: string } | string
+  syncParam?: SyncParam
+  fetchType: 'only-immutable-attributes'
+  allowRefresh: false
+}
+
+type GetVideoParamOther = {
+  videoObject: { id: string } | string
+  syncParam?: SyncParam
+  fetchType?: 'all' | 'only-video'
   allowRefresh?: boolean
-}): Promise<{ video: MVideoAccountLightBlacklistAllFiles | MVideoThumbnail, created: boolean, autoBlacklisted?: boolean }>
-async function getOrCreateVideoAndAccountAndChannel (options: {
-  videoObject: { id: string } | string,
-  syncParam?: SyncParam,
-  fetchType?: VideoFetchByUrlType,
-  allowRefresh?: boolean // true by default
-}): Promise<{ video: MVideoAccountLightBlacklistAllFiles | MVideoThumbnail, created: boolean, autoBlacklisted?: boolean }> {
+}
+
+function getOrCreateVideoAndAccountAndChannel (options: GetVideoParamAll): GetVideoResult<MVideoAccountLightBlacklistAllFiles>
+function getOrCreateVideoAndAccountAndChannel (options: GetVideoParamImmutable): GetVideoResult<MVideoImmutable>
+function getOrCreateVideoAndAccountAndChannel (
+  options: GetVideoParamOther
+): GetVideoResult<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail>
+async function getOrCreateVideoAndAccountAndChannel (
+  options: GetVideoParamAll | GetVideoParamImmutable | GetVideoParamOther
+): GetVideoResult<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail | MVideoImmutable> {
   // Default params
   const syncParam = options.syncParam || { likes: true, dislikes: true, shares: true, comments: true, thumbnail: true, refreshVideo: false }
   const fetchType = options.fetchType || 'all'
@@ -236,18 +243,25 @@ async function getOrCreateVideoAndAccountAndChannel (options: {
 
   // Get video url
   const videoUrl = getAPId(options.videoObject)
-
   let videoFromDatabase = await fetchVideoByUrl(videoUrl, fetchType)
+
   if (videoFromDatabase) {
-    if (videoFromDatabase.isOutdated() && allowRefresh === true) {
+    // If allowRefresh is true, we could not call this function using 'only-immutable-attributes' fetch type
+    if (allowRefresh === true && (videoFromDatabase as MVideoThumbnail).isOutdated()) {
       const refreshOptions = {
-        video: videoFromDatabase,
+        video: videoFromDatabase as MVideoThumbnail,
         fetchedType: fetchType,
         syncParam
       }
 
-      if (syncParam.refreshVideo === true) videoFromDatabase = await refreshVideoIfNeeded(refreshOptions)
-      else await JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: videoFromDatabase.url } })
+      if (syncParam.refreshVideo === true) {
+        videoFromDatabase = await refreshVideoIfNeeded(refreshOptions)
+      } else {
+        await JobQueue.Instance.createJobWithPromise({
+          type: 'activitypub-refresher',
+          payload: { type: 'video', url: videoFromDatabase.url }
+        })
+      }
     }
 
     return { video: videoFromDatabase, created: false }
@@ -266,10 +280,10 @@ async function getOrCreateVideoAndAccountAndChannel (options: {
 }
 
 async function updateVideoFromAP (options: {
-  video: MVideoAccountLightBlacklistAllFiles,
-  videoObject: VideoTorrentObject,
-  account: MAccountIdActor,
-  channel: MChannelDefault,
+  video: MVideoAccountLightBlacklistAllFiles
+  videoObject: VideoTorrentObject
+  account: MAccountIdActor
+  channel: MChannelDefault
   overrideTo?: string[]
 }) {
   const { video, videoObject, account, channel, overrideTo } = options
@@ -284,7 +298,7 @@ async function updateVideoFromAP (options: {
     let thumbnailModel: MThumbnail
 
     try {
-      thumbnailModel = await createVideoMiniatureFromUrl(videoObject.icon.url, video, ThumbnailType.MINIATURE)
+      thumbnailModel = await createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, ThumbnailType.MINIATURE)
     } catch (err) {
       logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err })
     }
@@ -300,7 +314,7 @@ async function updateVideoFromAP (options: {
         throw new Error('Account ' + account.Actor.url + ' does not own video channel ' + videoChannel.Actor.url)
       }
 
-      const to = overrideTo ? overrideTo : videoObject.to
+      const to = overrideTo || videoObject.to
       const videoData = await videoActivityObjectToDBAttributes(channel, videoObject, to)
       video.name = videoData.name
       video.uuid = videoData.uuid
@@ -327,10 +341,11 @@ async function updateVideoFromAP (options: {
 
       if (thumbnailModel) await videoUpdated.addAndSaveThumbnail(thumbnailModel, t)
 
-      // FIXME: use icon URL instead
-      const previewUrl = buildRemoteBaseUrl(videoUpdated, join(STATIC_PATHS.PREVIEWS, videoUpdated.getPreview().filename))
-      const previewModel = createPlaceholderThumbnail(previewUrl, video, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
-      await videoUpdated.addAndSaveThumbnail(previewModel, t)
+      if (videoUpdated.getPreview()) {
+        const previewUrl = videoUpdated.getPreview().getFileUrl(videoUpdated)
+        const previewModel = createPlaceholderThumbnail(previewUrl, video, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
+        await videoUpdated.addAndSaveThumbnail(previewModel, t)
+      }
 
       {
         const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoUpdated, videoObject.url)
@@ -391,7 +406,7 @@ async function updateVideoFromAP (options: {
         await VideoCaptionModel.deleteAllCaptionsOfRemoteVideo(videoUpdated.id, t)
 
         const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-          return VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, t)
+          return VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, c.url, t)
         })
         await Promise.all(videoCaptionsPromises)
       }
@@ -424,8 +439,8 @@ async function updateVideoFromAP (options: {
 }
 
 async function refreshVideoIfNeeded (options: {
-  video: MVideoThumbnail,
-  fetchedType: VideoFetchByUrlType,
+  video: MVideoThumbnail
+  fetchedType: VideoFetchByUrlType
   syncParam: SyncParam
 }): Promise<MVideoThumbnail> {
   if (!options.video.isOutdated()) return options.video
@@ -483,7 +498,6 @@ export {
   federateVideoIfNeeded,
   fetchRemoteVideo,
   getOrCreateVideoAndAccountAndChannel,
-  fetchRemoteVideoStaticFile,
   fetchRemoteVideoDescription,
   getOrCreateVideoChannelFromVideoObject
 }
@@ -494,7 +508,7 @@ function isAPVideoUrlObject (url: any): url is ActivityVideoUrlObject {
   const mimeTypes = Object.keys(MIMETYPES.VIDEO.MIMETYPE_EXT)
 
   const urlMediaType = url.mediaType
-  return mimeTypes.indexOf(urlMediaType) !== -1 && urlMediaType.startsWith('video/')
+  return mimeTypes.includes(urlMediaType) && urlMediaType.startsWith('video/')
 }
 
 function isAPStreamingPlaylistUrlObject (url: ActivityUrlObject): url is ActivityPlaylistUrlObject {
@@ -519,7 +533,11 @@ async function createVideo (videoObject: VideoTorrentObject, channel: MChannelAc
   const videoData = await videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to)
   const video = VideoModel.build(videoData) as MVideoThumbnail
 
-  const promiseThumbnail = createVideoMiniatureFromUrl(videoObject.icon.url, video, ThumbnailType.MINIATURE)
+  const promiseThumbnail = createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, ThumbnailType.MINIATURE)
+    .catch(err => {
+      logger.error('Cannot create miniature from url.', { err })
+      return undefined
+    })
 
   let thumbnailModel: MThumbnail
   if (waitThumbnail === true) {
@@ -534,9 +552,12 @@ async function createVideo (videoObject: VideoTorrentObject, channel: MChannelAc
 
     if (thumbnailModel) await videoCreated.addAndSaveThumbnail(thumbnailModel, t)
 
-    // FIXME: use icon URL instead
-    const previewUrl = buildRemoteBaseUrl(videoCreated, join(STATIC_PATHS.PREVIEWS, video.generatePreviewName()))
-    const previewModel = createPlaceholderThumbnail(previewUrl, video, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
+    const previewIcon = getPreviewFromIcons(videoObject)
+    const previewUrl = previewIcon
+      ? previewIcon.url
+      : buildRemoteVideoBaseUrl(videoCreated, join(STATIC_PATHS.PREVIEWS, video.generatePreviewName()))
+    const previewModel = createPlaceholderThumbnail(previewUrl, videoCreated, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
+
     if (thumbnailModel) await videoCreated.addAndSaveThumbnail(previewModel, t)
 
     // Process files
@@ -567,7 +588,7 @@ async function createVideo (videoObject: VideoTorrentObject, channel: MChannelAc
 
     // Process captions
     const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-      return VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, t)
+      return VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, c.url, t)
     })
     await Promise.all(videoCaptionsPromises)
 
@@ -588,7 +609,11 @@ async function createVideo (videoObject: VideoTorrentObject, channel: MChannelAc
   })
 
   if (waitThumbnail === false) {
+    // Error is already caught above
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     promiseThumbnail.then(thumbnailModel => {
+      if (!thumbnailModel) return
+
       thumbnailModel = videoCreated.id
 
       return thumbnailModel.save()
@@ -598,24 +623,21 @@ async function createVideo (videoObject: VideoTorrentObject, channel: MChannelAc
   return { autoBlacklisted, videoCreated }
 }
 
-async function videoActivityObjectToDBAttributes (videoChannel: MChannelId, videoObject: VideoTorrentObject, to: string[] = []) {
-  const privacy = to.indexOf(ACTIVITY_PUB.PUBLIC) !== -1 ? VideoPrivacy.PUBLIC : VideoPrivacy.UNLISTED
+function videoActivityObjectToDBAttributes (videoChannel: MChannelId, videoObject: VideoTorrentObject, to: string[] = []) {
+  const privacy = to.includes(ACTIVITY_PUB.PUBLIC)
+    ? VideoPrivacy.PUBLIC
+    : VideoPrivacy.UNLISTED
+
   const duration = videoObject.duration.replace(/[^\d]+/, '')
+  const language = videoObject.language?.identifier
 
-  let language: string | undefined
-  if (videoObject.language) {
-    language = videoObject.language.identifier
-  }
+  const category = videoObject.category
+    ? parseInt(videoObject.category.identifier, 10)
+    : undefined
 
-  let category: number | undefined
-  if (videoObject.category) {
-    category = parseInt(videoObject.category.identifier, 10)
-  }
-
-  let licence: number | undefined
-  if (videoObject.licence) {
-    licence = parseInt(videoObject.licence.identifier, 10)
-  }
+  const licence = videoObject.licence
+    ? parseInt(videoObject.licence.identifier, 10)
+    : undefined
 
   const description = videoObject.content || null
   const support = videoObject.support || null
@@ -638,8 +660,11 @@ async function videoActivityObjectToDBAttributes (videoChannel: MChannelId, vide
     duration: parseInt(duration, 10),
     createdAt: new Date(videoObject.published),
     publishedAt: new Date(videoObject.published),
-    originallyPublishedAt: videoObject.originallyPublishedAt ? new Date(videoObject.originallyPublishedAt) : null,
-    // FIXME: updatedAt does not seems to be considered by Sequelize
+
+    originallyPublishedAt: videoObject.originallyPublishedAt
+      ? new Date(videoObject.originallyPublishedAt)
+      : null,
+
     updatedAt: new Date(videoObject.updated),
     views: videoObject.views,
     likes: 0,
@@ -670,13 +695,22 @@ function videoFileActivityUrlToDBAttributes (
       throw new Error('Cannot parse magnet URI ' + magnet.href)
     }
 
+    // Fetch associated metadata url, if any
+    const metadata = urls.filter(isAPVideoFileMetadataObject)
+                         .find(u => {
+                           return u.height === fileUrl.height &&
+                             u.fps === fileUrl.fps &&
+                             u.rel.includes(fileUrl.mediaType)
+                         })
+
     const mediaType = fileUrl.mediaType
     const attribute = {
-      extname: MIMETYPES.VIDEO.MIMETYPE_EXT[ mediaType ],
+      extname: MIMETYPES.VIDEO.MIMETYPE_EXT[mediaType],
       infoHash: parsed.infoHash,
       resolution: fileUrl.height,
       size: fileUrl.size,
       fps: fileUrl.fps || -1,
+      metadataUrl: metadata?.href,
 
       // This is a video file owned by a video or by a streaming playlist
       videoId: (videoOrPlaylist as MStreamingPlaylist).playlistUrl ? null : videoOrPlaylist.id,
@@ -721,4 +755,20 @@ function streamingPlaylistActivityUrlToDBAttributes (video: MVideoId, videoObjec
   }
 
   return attributes
+}
+
+function getThumbnailFromIcons (videoObject: VideoTorrentObject) {
+  let validIcons = videoObject.icon.filter(i => i.width > THUMBNAILS_SIZE.minWidth)
+  // Fallback if there are not valid icons
+  if (validIcons.length === 0) validIcons = videoObject.icon
+
+  return minBy(validIcons, 'width')
+}
+
+function getPreviewFromIcons (videoObject: VideoTorrentObject) {
+  const validIcons = videoObject.icon.filter(i => i.width > PREVIEWS_SIZE.minWidth)
+
+  // FIXME: don't put a fallback here for compatibility with PeerTube <2.2
+
+  return maxBy(validIcons, 'width')
 }

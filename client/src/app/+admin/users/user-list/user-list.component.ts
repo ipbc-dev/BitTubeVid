@@ -1,12 +1,13 @@
 import { Component, OnInit, ViewChild } from '@angular/core'
 import { AuthService, Notifier } from '@app/core'
-import { SortMeta } from 'primeng/components/common/sortmeta'
+import { SortMeta } from 'primeng/api'
 import { ConfirmService, ServerService } from '../../../core'
 import { RestPagination, RestTable, UserService } from '../../../shared'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ServerConfig, User } from '../../../../../../shared'
 import { UserBanModalComponent } from '@app/shared/moderation'
 import { DropdownAction } from '@app/shared/buttons/action-dropdown.component'
+import { Actor } from '@app/shared/actor/actor.model'
 
 @Component({
   selector: 'my-user-list',
@@ -18,7 +19,6 @@ export class UserListComponent extends RestTable implements OnInit {
 
   users: User[] = []
   totalRecords = 0
-  rowsPerPage = 10
   sort: SortMeta = { field: 'createdAt', order: 1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
 
@@ -86,6 +86,10 @@ export class UserListComponent extends RestTable implements OnInit {
     ]
   }
 
+  getIdentifier () {
+    return 'UserListComponent'
+  }
+
   openBanUserModal (users: User[]) {
     for (const user of users) {
       if (user.username === 'root') {
@@ -99,6 +103,10 @@ export class UserListComponent extends RestTable implements OnInit {
 
   onUserChanged () {
     this.loadData()
+  }
+
+  switchToDefaultAvatar ($event: Event) {
+    ($event.target as HTMLImageElement).src = Actor.GET_DEFAULT_AVATAR_URL()
   }
 
   async unbanUsers (users: User[]) {

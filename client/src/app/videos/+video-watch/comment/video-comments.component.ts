@@ -1,8 +1,7 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, Output, EventEmitter } from '@angular/core'
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { ConfirmService, Notifier } from '@app/core'
 import { Subject, Subscription } from 'rxjs'
-import { VideoCommentThreadTree } from '../../../../../../shared/models/videos/video-comment.model'
 import { AuthService } from '../../../core/auth'
 import { ComponentPagination, hasMoreItems } from '../../../shared/rest/component-pagination.model'
 import { User } from '../../../shared/users'
@@ -13,6 +12,7 @@ import { VideoCommentService } from './video-comment.service'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { Syndication } from '@app/shared/video/syndication.model'
 import { HooksService } from '@app/core/plugins/hooks.service'
+import { VideoCommentThreadTree } from '@app/videos/+video-watch/comment/video-comment-thread-tree.model'
 
 @Component({
   selector: 'my-video-comments',
@@ -20,7 +20,7 @@ import { HooksService } from '@app/core/plugins/hooks.service'
   styleUrls: ['./video-comments.component.scss']
 })
 export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
-  @ViewChild('commentHighlightBlock', { static: false }) commentHighlightBlock: ElementRef
+  @ViewChild('commentHighlightBlock') commentHighlightBlock: ElementRef
   @Input() video: VideoDetails
   @Input() user: User
 
@@ -96,6 +96,7 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
         res => {
           this.threadComments[commentId] = res
           this.threadLoading[commentId] = false
+          this.hooks.runAction('action:video-watch.video-thread-replies.loaded', 'video-watch', { data: res })
 
           if (highlightThread) {
             this.highlightedThread = new VideoComment(res.comment)
@@ -130,6 +131,7 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
         this.componentPagination.totalItems = res.total
 
         this.onDataSubject.next(res.data)
+        this.hooks.runAction('action:video-watch.video-threads.loaded', 'video-watch', { data: this.componentPagination })
       },
 
       err => this.notifier.error(err.message)
@@ -166,8 +168,8 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
   async onWantedToDelete (commentToDelete: VideoComment) {
     let message = 'Do you really want to delete this comment?'
 
-    if (commentToDelete.isLocal) {
-      message += this.i18n(' The deletion will be sent to remote instances, so they remove the comment too.')
+    if (commentToDelete.isLocal || this.video.isLocal) {
+      message += this.i18n(' The deletion will be sent to remote instances so they can reflect the change.')
     } else {
       message += this.i18n(' It is a remote comment, so the deletion will only be effective on your instance.')
     }
@@ -178,10 +180,14 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
     this.videoCommentService.deleteVideoComment(commentToDelete.videoId, commentToDelete.id)
       .subscribe(
         () => {
+          if (this.highlightedThread?.id === commentToDelete.id) {
+            commentToDelete = this.comments.find(c => c.id === commentToDelete.id)
+
+            this.highlightedThread = undefined
+          }
+
           // Mark the comment as deleted
           this.softDeleteComment(commentToDelete)
-
-          if (this.highlightedThread.id === commentToDelete.id) this.highlightedThread = undefined
         },
 
         err => this.notifier.error(err.message)
@@ -193,9 +199,8 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onNearOfBottom () {
-    this.componentPagination.currentPage++
-
     if (hasMoreItems(this.componentPagination)) {
+      this.componentPagination.currentPage++
       this.loadMoreThreads()
     }
   }
@@ -219,7 +224,6 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
       this.componentPagination.totalItems = null
 
       this.syndicationItems = this.videoCommentService.getVideoCommentsFeeds(this.video.uuid)
-
       this.loadMoreThreads()
     }
   }

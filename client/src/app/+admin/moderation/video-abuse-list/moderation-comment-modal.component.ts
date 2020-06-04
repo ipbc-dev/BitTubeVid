@@ -32,13 +32,13 @@ export class ModerationCommentModalComponent extends FormReactive implements OnI
 
   ngOnInit () {
     this.buildForm({
-      moderationComment: this.videoAbuseValidatorsService.VIDEO_ABUSE_REASON
+      moderationComment: this.videoAbuseValidatorsService.VIDEO_ABUSE_MODERATION_COMMENT
     })
   }
 
   openModal (abuseToComment: VideoAbuse) {
     this.abuseToComment = abuseToComment
-    this.openedModal = this.modalService.open(this.modal)
+    this.openedModal = this.modalService.open(this.modal, { centered: true })
 
     this.form.patchValue({
       moderationComment: this.abuseToComment.moderationComment

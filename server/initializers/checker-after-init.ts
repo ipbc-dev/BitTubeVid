@@ -1,28 +1,27 @@
 import * as config from 'config'
 import { isProdInstance, isTestInstance } from '../helpers/core-utils'
 import { UserModel } from '../models/account/user'
-import { ApplicationModel } from '../models/application/application'
+import { getServerActor, ApplicationModel } from '../models/application/application'
 import { OAuthClientModel } from '../models/oauth/oauth-client'
-import { parse } from 'url'
-import { CONFIG } from './config'
+import { URL } from 'url'
+import { CONFIG, isEmailEnabled } from './config'
 import { logger } from '../helpers/logger'
-import { getServerActor } from '../helpers/utils'
 import { RecentlyAddedStrategy } from '../../shared/models/redundancy'
 import { isArray } from '../helpers/custom-validators/misc'
 import { uniq } from 'lodash'
-import { Emailer } from '../lib/emailer'
 import { WEBSERVER } from './constants'
+import { VideoRedundancyConfigFilter } from '@shared/models/redundancy/video-redundancy-config-filter.type'
 
 async function checkActivityPubUrls () {
   const actor = await getServerActor()
 
-  const parsed = parse(actor.url)
+  const parsed = new URL(actor.url)
   if (WEBSERVER.HOST !== parsed.host) {
     const NODE_ENV = config.util.getEnv('NODE_ENV')
     const NODE_CONFIG_DIR = config.util.getEnv('NODE_CONFIG_DIR')
 
     logger.warn(
-      'It seems PeerTube was started (and created some data) with another domain name. ' +
+      'It seems BitTube was started (and created some data) with another domain name. ' +
       'This means you will not be able to federate! ' +
       'Please use %s %s npm run update-host to fix this.',
       NODE_CONFIG_DIR ? `NODE_CONFIG_DIR=${NODE_CONFIG_DIR}` : '',
@@ -41,7 +40,7 @@ function checkConfig () {
   }
 
   // Email verification
-  if (!Emailer.isEnabled()) {
+  if (!isEmailEnabled()) {
     if (CONFIG.SIGNUP.ENABLED && CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION) {
       return 'Emailer is disabled but you require signup email verification.'
     }
@@ -55,7 +54,7 @@ function checkConfig () {
   const defaultNSFWPolicy = CONFIG.INSTANCE.DEFAULT_NSFW_POLICY
   {
     const available = [ 'do_not_list', 'blur', 'display' ]
-    if (available.indexOf(defaultNSFWPolicy) === -1) {
+    if (available.includes(defaultNSFWPolicy) === false) {
       return 'NSFW policy setting should be ' + available.join(' or ') + ' instead of ' + defaultNSFWPolicy
     }
   }
@@ -65,7 +64,7 @@ function checkConfig () {
   if (isArray(redundancyVideos)) {
     const available = [ 'most-views', 'trending', 'recently-added' ]
     for (const r of redundancyVideos) {
-      if (available.indexOf(r.strategy) === -1) {
+      if (available.includes(r.strategy) === false) {
         return 'Videos redundancy should have ' + available.join(' or ') + ' strategy instead of ' + r.strategy
       }
 
@@ -88,13 +87,20 @@ function checkConfig () {
     return 'Videos redundancy should be an array (you must uncomment lines containing - too)'
   }
 
+  // Remote redundancies
+  const acceptFrom = CONFIG.REMOTE_REDUNDANCY.VIDEOS.ACCEPT_FROM
+  const acceptFromValues = new Set<VideoRedundancyConfigFilter>([ 'nobody', 'anybody', 'followings' ])
+  if (acceptFromValues.has(acceptFrom) === false) {
+    return 'remote_redundancy.videos.accept_from has an incorrect value'
+  }
+
   // Check storage directory locations
   if (isProdInstance()) {
     const configStorage = config.get('storage')
     for (const key of Object.keys(configStorage)) {
       if (configStorage[key].startsWith('storage/')) {
         logger.warn(
-          'Directory of %s should not be in the production directory of PeerTube. Please check your production configuration file.',
+          'Directory of %s should not be in the production directory of BitTube. Please check your production configuration file.',
           key
         )
       }

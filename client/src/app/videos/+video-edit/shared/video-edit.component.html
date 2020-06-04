@@ -1,13 +1,15 @@
 <div class="video-edit" [formGroup]="form">
-  <ngb-tabset class="root-tabset bootstrap">
+  <div ngbNav #nav="ngbNav" class="nav-tabs">
 
-    <ngb-tab i18n-title title="Basic info">
-      <ng-template ngbTabContent>
+    <ng-container ngbNavItem>
+      <a ngbNavLink i18n>Basic info</a>
+
+      <ng-template ngbNavContent>
         <div class="row">
-          <div class="col-md-8">
+          <div class="col-video-edit">
             <div class="form-group">
               <label i18n for="name">Title</label>
-              <input type="text" id="name" formControlName="name" />
+              <input type="text" id="name" class="form-control" formControlName="name" />
               <div *ngIf="formErrors.name" class="form-error">
                 {{ formErrors.name }}
               </div>
@@ -29,7 +31,7 @@
               <tag-input
                 [validators]="tagValidators" [errorMessages]="tagValidatorsMessages"
                 i18n-placeholder placeholder="+ Tag" i18n-secondaryPlaceholder secondaryPlaceholder="Enter a new tag"
-                formControlName="tags" maxItems="5" modelAsStrings="true"
+                formControlName="tags" [maxItems]="5" [modelAsStrings]="true"
               ></tag-input>
             </div>
 
@@ -44,7 +46,7 @@
                 </ng-template>
               </my-help>
 
-              <my-markdown-textarea truncate="250" formControlName="description" markdownVideo="true"></my-markdown-textarea>
+              <my-markdown-textarea [truncate]="250" formControlName="description" [markdownVideo]="true"></my-markdown-textarea>
 
               <div *ngIf="formErrors.description" class="form-error">
                 {{ formErrors.description }}
@@ -52,11 +54,11 @@
             </div>
           </div>
 
-          <div class="col-md-4">
+          <div class="col-video-edit">
             <div class="form-group">
               <label i18n>Channel</label>
               <div class="peertube-select-container">
-                <select formControlName="channelId">
+                <select formControlName="channelId" class="form-control">
                   <option *ngFor="let channel of userVideoChannels" [value]="channel.id">{{ channel.label }}</option>
                 </select>
               </div>
@@ -65,7 +67,7 @@
             <div class="form-group">
               <label i18n for="category">Category</label>
               <div class="peertube-select-container">
-                <select id="category" formControlName="category">
+                <select id="category" formControlName="category" class="form-control">
                   <option></option>
                   <option *ngFor="let category of videoCategories" [value]="category.id">{{ category.label }}</option>
                 </select>
@@ -79,7 +81,7 @@
             <div class="form-group">
               <label i18n for="licence">Licence</label>
               <div class="peertube-select-container">
-                <select id="licence" formControlName="licence">
+                <select id="licence" formControlName="licence" class="form-control">
                   <option></option>
                   <option *ngFor="let licence of videoLicences" [value]="licence.id">{{ licence.label }}</option>
                 </select>
@@ -93,7 +95,7 @@
             <div class="form-group">
               <label i18n for="language">Language</label>
               <div class="peertube-select-container">
-                <select id="language" formControlName="language">
+                <select id="language" formControlName="language" class="form-control">
                   <option></option>
                   <option *ngFor="let language of videoLanguages" [value]="language.id">{{ language.label }}</option>
                 </select>
@@ -107,7 +109,7 @@
             <div class="form-group">
               <label i18n for="privacy">Privacy</label>
               <div class="peertube-select-container">
-                <select id="privacy" formControlName="privacy">
+                <select id="privacy" formControlName="privacy" class="form-control">
                   <option></option>
                   <option *ngFor="let privacy of videoPrivacies" [value]="privacy.id">{{ privacy.label }}</option>
                   <option *ngIf="schedulePublicationPossible" [value]="SPECIAL_SCHEDULED_PRIVACY">Scheduled</option>
@@ -155,10 +157,12 @@
           </div>
         </div>
       </ng-template>
-    </ngb-tab>
+    </ng-container>
 
-    <ngb-tab i18n-title title="Captions">
-      <ng-template ngbTabContent>
+    <ng-container ngbNavItem>
+      <a ngbNavLink i18n>Captions</a>
+
+      <ng-template ngbNavContent>
         <div class="captions">
 
           <div class="captions-header">
@@ -206,10 +210,12 @@
 
         </div>
       </ng-template>
-    </ngb-tab>
+    </ng-container>
 
-    <ngb-tab i18n-title title="Advanced settings">
-      <ng-template ngbTabContent>
+    <ng-container ngbNavItem>
+      <a ngbNavLink i18n>Advanced settings</a>
+
+      <ng-template ngbNavContent>
         <div class="row advanced-settings">
           <div class="col-md-12 col-xl-8">
 
@@ -226,7 +232,7 @@
               <label i18n for="support">Support</label>
               <my-help helpType="markdownEnhanced" i18n-preHtml preHtml="Short text to tell people how they can support you (membership platform...)."></my-help>
               <my-markdown-textarea
-                id="support" formControlName="support" textareaWidth="500px" [previewColumn]="true" markdownType="enhanced"
+                id="support" formControlName="support" markdownType="enhanced"
                 [classes]="{ 'input-error': formErrors['support'] }"
               ></my-markdown-textarea>
               <div *ngIf="formErrors.support" class="form-error">
@@ -262,10 +268,11 @@
           </div>
         </div>
       </ng-template>
-    </ngb-tab>
+    </ng-container>
 
-  </ngb-tabset>
+  </div>
 
+  <div [ngbNavOutlet]="nav"></div>
 </div>
 
 <my-video-caption-add-modal

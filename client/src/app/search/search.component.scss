@@ -81,12 +81,78 @@
   }
 }
 
-@media screen and (max-width: $small-view) {
-  .video-channel-names {
+@media screen and (min-width: $small-view) and (max-width: breakpoint(xl)) {
+  .video-channel-info .video-channel-names {
     flex-direction: column !important;
 
     .video-channel-name {
+      @include ellipsis; // Ellipsis and max-width on channel-name to not break screen
+
+      max-width: 250px;
       margin-left: 0 !important;
+    }
+  }
+
+  :host-context(.main-col:not(.expanded)) {
+    // Override the min-width: 500px to not break screen
+    ::ng-deep .video-miniature-information {
+      min-width: 300px !important;
+    }
+  }
+}
+
+@media screen and (min-width: $small-view) and (max-width: breakpoint(lg)) {
+  :host-context(.main-col:not(.expanded)) {
+    .video-channel-info .video-channel-names {
+      .video-channel-name {
+        max-width: 160px;
+      }
+    }
+
+    // Override the min-width: 500px to not break screen
+    ::ng-deep .video-miniature-information {
+      min-width: 223px !important;
+    }
+  }
+
+  :host-context(.expanded) {
+    // Override the min-width: 500px to not break screen
+    ::ng-deep .video-miniature-information {
+      min-width: 300px !important;
+    }
+  }
+}
+
+@media screen and (max-width: $small-view) {
+  .search-result {
+    .entry.video-channel,
+    .entry.video {
+      flex-direction: column;
+      height: auto;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+
+      img {
+        margin: 0;
+      }
+
+      img {
+        margin: 0;
+      }
+
+      .video-channel-info .video-channel-names {
+        align-items: center;
+        flex-direction: column !important;
+
+        .video-channel-name {
+          margin-left: 0 !important;
+        }
+      }
+
+      my-subscribe-button {
+        margin-top: 5px;
+      }
     }
   }
 }
@@ -100,12 +166,6 @@
     }
 
     .entry {
-      flex-direction: column;
-      height: auto;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-
       &.video {
         .video-info-name,
         .video-info-account {
@@ -124,16 +184,6 @@
               height: auto;
             }
           }
-        }
-      }
-
-      &.video-channel {
-        .video-channel-info .video-channel-names {
-          align-items: center;
-        }
-
-        my-subscribe-button {
-          margin-top: 5px;
         }
       }
     }

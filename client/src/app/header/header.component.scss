@@ -1,51 +1,8 @@
 @import '_variables';
 @import '_mixins';
 
-#search-video {
-  @include peertube-input-text($search-input-width);
-  padding-left: 10px;
+my-search-typeahead {
   margin-right: 15px;
-  padding-right: 40px; // For the search icon
-  font-size: 14px;
-
-  transition: box-shadow .3s ease;
-
-  /* light border style */
-  border: 1px solid var(--mainBackgroundColor);
-  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 20px 0px;
-
-  &:focus {
-    box-shadow: rgba(0, 0, 0, 0.2) 0px 1px 20px 0px;
-  }
-
-  &::placeholder {
-    color: var(--inputPlaceholderColor);
-  }
-
-  &:focus::placeholder {
-    opacity: 0 !important;
-  }
-
-  @media screen and (max-width: 800px) {
-    width: calc(100% - 150px);
-  }
-
-  @media screen and (max-width: 600px) {
-    width: calc(100% - 70px);
-  }
-}
-
-.icon.icon-search {
-  @include icon(25px);
-  height: 21px;
-
-  background-color: var(--mainForegroundColor);
-  mask: url('../../assets/images/header/search.svg') no-repeat 50% 50%;
-
-  // yolo
-  position: absolute;
-  margin-left: -50px;
-  margin-top: 5px;
 }
 
 .upload-button {
@@ -53,12 +10,7 @@
   @include orange-button;
   @include button-with-icon(22px, 3px, -1px);
 
-  color: var(--mainBackgroundColor) !important;
   margin-right: 25px;
-
-  @media screen and (max-width: 800px) {
-    margin-right: 0;
-  }
 
   @media screen and (max-width: 600px) {
     margin-right: 10px;

@@ -29,7 +29,7 @@ import {
 } from '../../../helpers/custom-validators/videos'
 import { getDurationFromVideoFile } from '../../../helpers/ffmpeg-utils'
 import { logger } from '../../../helpers/logger'
-import { CONSTRAINTS_FIELDS } from '../../../initializers/constants'
+import { CONSTRAINTS_FIELDS, OVERVIEWS } from '../../../initializers/constants'
 import { authenticatePromiseIfNeeded } from '../../oauth'
 import { areValidationErrors } from '../utils'
 import { cleanUpReqFiles } from '../../../helpers/express-utils'
@@ -38,19 +38,24 @@ import { checkUserCanTerminateOwnershipChange, doesChangeVideoOwnershipExist } f
 import { VideoChangeOwnershipAccept } from '../../../../shared/models/videos/video-change-ownership-accept.model'
 import { AccountModel } from '../../../models/account/account'
 import { isNSFWQueryValid, isNumberArray, isStringArray } from '../../../helpers/custom-validators/search'
-import { getServerActor } from '../../../helpers/utils'
 import { CONFIG } from '../../../initializers/config'
 import { isLocalVideoAccepted } from '../../../lib/moderation'
 import { Hooks } from '../../../lib/plugins/hooks'
-import { checkUserCanManageVideo, doesVideoChannelOfAccountExist, doesVideoExist } from '../../../helpers/middlewares'
+import {
+  checkUserCanManageVideo,
+  doesVideoChannelOfAccountExist,
+  doesVideoExist,
+  doesVideoFileOfVideoExist
+} from '../../../helpers/middlewares'
 import { MVideoFullLight } from '@server/typings/models'
 import { getVideoWithAttributes } from '../../../helpers/video'
+import { getServerActor } from '@server/models/application/application'
 
 const videosAddValidator = getCommonVideoEditAttributes().concat([
   body('videofile')
     .custom((value, { req }) => isVideoFile(req.files)).withMessage(
-      'This file is not supported or too large. Please, make sure it is of the following type: '
-      + CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')
+      'This file is not supported or too large. Please, make sure it is of the following type: ' +
+      CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')
     ),
   body('name').custom(isVideoNameValid).withMessage('Should have a valid name'),
   body('channelId')
@@ -147,7 +152,10 @@ async function checkVideoFollowConstraints (req: express.Request, res: express.R
             })
 }
 
-const videosCustomGetValidator = (fetchType: 'all' | 'only-video' | 'only-video-with-rights', authenticateInQuery = false) => {
+const videosCustomGetValidator = (
+  fetchType: 'all' | 'only-video' | 'only-video-with-rights' | 'only-immutable-attributes',
+  authenticateInQuery = false
+) => {
   return [
     param('id').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
 
@@ -156,6 +164,9 @@ const videosCustomGetValidator = (fetchType: 'all' | 'only-video' | 'only-video-
 
       if (areValidationErrors(req, res)) return
       if (!await doesVideoExist(req.params.id, res, fetchType)) return
+
+      // Controllers does not need to check video rights
+      if (fetchType === 'only-immutable-attributes') return next()
 
       const video = getVideoWithAttributes(res)
       const videoAll = video as MVideoFullLight
@@ -191,6 +202,20 @@ const videosCustomGetValidator = (fetchType: 'all' | 'only-video' | 'only-video-
 
 const videosGetValidator = videosCustomGetValidator('all')
 const videosDownloadValidator = videosCustomGetValidator('all', true)
+
+const videoFileMetadataGetValidator = getCommonVideoEditAttributes().concat([
+  param('id').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
+  param('videoFileId').custom(isIdValid).not().isEmpty().withMessage('Should have a valid videoFileId'),
+
+  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.debug('Checking videoFileMetadataGet parameters', { parameters: req.params })
+
+    if (areValidationErrors(req, res)) return
+    if (!await doesVideoFileOfVideoExist(+req.params.videoFileId, req.params.id, res)) return
+
+    return next()
+  }
+])
 
 const videosRemoveValidator = [
   param('id').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
@@ -245,19 +270,15 @@ const videosTerminateChangeOwnershipValidator = [
     // Check if the user who did the request is able to change the ownership of the video
     if (!checkUserCanTerminateOwnershipChange(res.locals.oauth.token.User, res.locals.videoChangeOwnership, res)) return
 
-    return next()
-  },
-  async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const videoChangeOwnership = res.locals.videoChangeOwnership
 
-    if (videoChangeOwnership.status === VideoChangeOwnershipStatus.WAITING) {
-      return next()
-    } else {
+    if (videoChangeOwnership.status !== VideoChangeOwnershipStatus.WAITING) {
       res.status(403)
-        .json({ error: 'Ownership already accepted or refused' })
-
+         .json({ error: 'Ownership already accepted or refused' })
       return
     }
+
+    return next()
   }
 ]
 
@@ -280,18 +301,31 @@ const videosAcceptChangeOwnershipValidator = [
   }
 ]
 
+const videosOverviewValidator = [
+  query('page')
+    .optional()
+    .isInt({ min: 1, max: OVERVIEWS.VIDEOS.SAMPLES_COUNT })
+    .withMessage('Should have a valid pagination'),
+
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (areValidationErrors(req, res)) return
+
+    return next()
+  }
+]
+
 function getCommonVideoEditAttributes () {
   return [
     body('thumbnailfile')
       .custom((value, { req }) => isVideoImage(req.files, 'thumbnailfile')).withMessage(
-      'This thumbnail file is not supported or too large. Please, make sure it is of the following type: '
-      + CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')
-    ),
+        'This thumbnail file is not supported or too large. Please, make sure it is of the following type: ' +
+        CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')
+      ),
     body('previewfile')
       .custom((value, { req }) => isVideoImage(req.files, 'previewfile')).withMessage(
-      'This preview file is not supported or too large. Please, make sure it is of the following type: '
-      + CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')
-    ),
+        'This preview file is not supported or too large. Please, make sure it is of the following type: ' +
+        CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME.join(', ')
+      ),
 
     body('category')
       .optional()
@@ -409,6 +443,7 @@ export {
   videosAddValidator,
   videosUpdateValidator,
   videosGetValidator,
+  videoFileMetadataGetValidator,
   videosDownloadValidator,
   checkVideoFollowConstraints,
   videosCustomGetValidator,
@@ -420,7 +455,9 @@ export {
 
   getCommonVideoEditAttributes,
 
-  commonVideosFiltersValidator
+  commonVideosFiltersValidator,
+
+  videosOverviewValidator
 }
 
 // ---------------------------------------------------------------------------

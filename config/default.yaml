@@ -13,7 +13,7 @@ rates_limit:
   api:
     # 50 attempts in 10 seconds
     window: 10 seconds
-    max: 50
+    max: 100
   login:
     # 15 attempts in 5 min
     window: 5 minutes
@@ -52,6 +52,10 @@ redis:
   db: 0
 
 smtp:
+  # smtp or sendmail
+  transport: smtp
+  # Path to sendmail command. Required if you use sendmail transport
+  sendmail: null
   hostname: null
   port: 465
   username: null
@@ -125,6 +129,14 @@ redundancy:
 #        min_lifetime: '48 hours'
 #        strategy: 'recently-added' # Cache recently added videos
 #        min_views: 10 # Having at least x views
+
+# Other instances that duplicate your content
+remote_redundancy:
+  videos:
+    # 'nobody': Do not accept remote redundancies
+    # 'anybody': Accept remote redundancies from anybody
+    # 'followings': Accept redundancies from instance followings
+    accept_from: 'anybody'
 
 csp:
   enabled: false
@@ -249,7 +261,7 @@ auto_blacklist:
 
 instance:
   name: 'PeerTube'
-  short_description: 'PeerTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in the web browser with WebTorrent and Angular.'
+  short_description: 'PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.'
   description: 'Welcome to this PeerTube instance!' # Support markdown
   terms: 'No terms for now.' # Support markdown
   code_of_conduct: '' # Supports markdown
@@ -328,7 +340,7 @@ instance:
 services:
   # Cards configuration to format video in Twitter
   twitter:
-    username: '@Chocobozzz' # Indicates the Twitter account for the website or platform on which the content was published
+    username: '@BittubeApp' # Indicates the Twitter account for the website or platform on which the content was published
     # If true, a video player will be embedded in the Twitter feed on PeerTube video share
     # If false, we use an image link card that will redirect on your PeerTube instance
     # Change it to "true", and then test on https://cards-dev.twitter.com/validator to see if you are whitelisted
@@ -355,7 +367,8 @@ followings:
     # /!\ Don't enable this if you don't have a reactive moderation team /!\
     auto_follow_index:
       enabled: false
-      index_url: 'https://instances.joinpeertube.org'
+      # Host your own using https://framagit.org/framasoft/peertube/instances-peertube#peertube-auto-follow
+      index_url: ''
 
 theme:
   default: 'default'

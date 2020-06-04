@@ -9,7 +9,6 @@ import { ActorModel } from '../activitypub/actor'
 import { buildBlockedAccountSQL, buildLocalAccountIdsIn, getCommentSort, throwIfNotValid } from '../utils'
 import { VideoModel } from './video'
 import { VideoChannelModel } from './video-channel'
-import { getServerActor } from '../../helpers/utils'
 import { actorNameAlphabet } from '../../helpers/custom-validators/activitypub/actor'
 import { regexpCapture } from '../../helpers/regexp'
 import { uniq } from 'lodash'
@@ -27,6 +26,8 @@ import {
   MCommentOwnerVideoReply
 } from '../../typings/models/video'
 import { MUserAccountId } from '@server/typings/models'
+import { VideoPrivacy } from '@shared/models'
+import { getServerActor } from '@server/models/application/application'
 
 enum ScopeNames {
   WITH_ACCOUNT = 'WITH_ACCOUNT',
@@ -257,10 +258,10 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
   }
 
   static async listThreadsForApi (parameters: {
-    videoId: number,
-    start: number,
-    count: number,
-    sort: string,
+    videoId: number
+    start: number
+    count: number
+    sort: string
     user?: MUserAccountId
   }) {
     const { videoId, start, count, sort, user } = parameters
@@ -300,8 +301,8 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
   }
 
   static async listThreadCommentsForApi (parameters: {
-    videoId: number,
-    threadId: number,
+    videoId: number
+    threadId: number
     user?: MUserAccountId
   }) {
     const { videoId, threadId, user } = parameters
@@ -314,7 +315,7 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
       order: [ [ 'createdAt', 'ASC' ], [ 'updatedAt', 'ASC' ] ] as Order,
       where: {
         videoId,
-        [ Op.or ]: [
+        [Op.or]: [
           { id: threadId },
           { originCommentId: threadId }
         ],
@@ -346,7 +347,7 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
       order: [ [ 'createdAt', order ] ] as Order,
       where: {
         id: {
-          [ Op.in ]: Sequelize.literal('(' +
+          [Op.in]: Sequelize.literal('(' +
             'WITH RECURSIVE children (id, "inReplyToCommentId") AS ( ' +
               `SELECT id, "inReplyToCommentId" FROM "videoComment" WHERE id = ${comment.id} ` +
               'UNION ' +
@@ -355,7 +356,7 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
             ') ' +
             'SELECT id FROM children' +
           ')'),
-          [ Op.ne ]: comment.id
+          [Op.ne]: comment.id
         }
       },
       transaction: t
@@ -380,17 +381,29 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
     return VideoCommentModel.findAndCountAll<MComment>(query)
   }
 
-  static listForFeed (start: number, count: number, videoId?: number): Bluebird<MCommentOwnerVideoFeed[]> {
+  static async listForFeed (start: number, count: number, videoId?: number): Promise<MCommentOwnerVideoFeed[]> {
+    const serverActor = await getServerActor()
+
     const query = {
       order: [ [ 'createdAt', 'DESC' ] ] as Order,
       offset: start,
       limit: count,
-      where: {},
+      where: {
+        deletedAt: null,
+        accountId: {
+          [Op.notIn]: Sequelize.literal(
+            '(' + buildBlockedAccountSQL(serverActor.Account.id) + ')'
+          )
+        }
+      },
       include: [
         {
           attributes: [ 'name', 'uuid' ],
           model: VideoModel.unscoped(),
-          required: true
+          required: true,
+          where: {
+            privacy: VideoPrivacy.PUBLIC
+          }
         }
       ]
     }
@@ -461,7 +474,7 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
   }
 
   isDeleted () {
-    return null !== this.deletedAt
+    return this.deletedAt !== null
   }
 
   extractMentions () {

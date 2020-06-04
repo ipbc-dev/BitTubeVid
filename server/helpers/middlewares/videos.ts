@@ -2,7 +2,17 @@ import { Response } from 'express'
 import { fetchVideo, VideoFetchType } from '../video'
 import { UserRight } from '../../../shared/models/users'
 import { VideoChannelModel } from '../../models/video/video-channel'
-import { MUser, MUserAccountId, MVideoAccountLight, MVideoFullLight, MVideoThumbnail, MVideoWithRights } from '@server/typings/models'
+import {
+  MUser,
+  MUserAccountId,
+  MVideoAccountLight,
+  MVideoFullLight,
+  MVideoIdThumbnail,
+  MVideoImmutable,
+  MVideoThumbnail,
+  MVideoWithRights
+} from '@server/typings/models'
+import { VideoFileModel } from '@server/models/video/video-file'
 
 async function doesVideoExist (id: number | string, res: Response, fetchType: VideoFetchType = 'all') {
   const userId = res.locals.oauth ? res.locals.oauth.token.User.id : undefined
@@ -22,8 +32,12 @@ async function doesVideoExist (id: number | string, res: Response, fetchType: Vi
       res.locals.videoAll = video as MVideoFullLight
       break
 
+    case 'only-immutable-attributes':
+      res.locals.onlyImmutableVideo = video as MVideoImmutable
+      break
+
     case 'id':
-      res.locals.videoId = video
+      res.locals.videoId = video as MVideoIdThumbnail
       break
 
     case 'only-video':
@@ -33,6 +47,18 @@ async function doesVideoExist (id: number | string, res: Response, fetchType: Vi
     case 'only-video-with-rights':
       res.locals.onlyVideoWithRights = video as MVideoWithRights
       break
+  }
+
+  return true
+}
+
+async function doesVideoFileOfVideoExist (id: number, videoIdOrUUID: number | string, res: Response) {
+  if (!await VideoFileModel.doesVideoExistForVideoFile(id, videoIdOrUUID)) {
+    res.status(404)
+       .json({ error: 'VideoFile matching Video not found' })
+       .end()
+
+    return false
   }
 
   return true
@@ -94,5 +120,6 @@ function checkUserCanManageVideo (user: MUser, video: MVideoAccountLight, right:
 export {
   doesVideoChannelOfAccountExist,
   doesVideoExist,
+  doesVideoFileOfVideoExist,
   checkUserCanManageVideo
 }

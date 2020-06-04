@@ -5,7 +5,7 @@ import * as prompt from 'prompt'
 import { join } from 'path'
 import { CONFIG } from '../server/initializers/config'
 import { VideoModel } from '../server/models/video/video'
-import { initDatabaseModels } from '../server/initializers'
+import { initDatabaseModels } from '../server/initializers/database'
 import { readdir, remove } from 'fs-extra'
 import { VideoRedundancyModel } from '../server/models/redundancy/video-redundancy'
 import * as Bluebird from 'bluebird'
@@ -152,7 +152,7 @@ async function askConfirmation () {
         confirm: {
           type: 'string',
           description: 'These following unused files can be deleted, but please check your backups first (bugs happen).' +
-            ' Notice PeerTube must have been stopped when your ran this script.' +
+            ' Notice BitTube must have been stopped when your ran this script.' +
             ' Can we delete these files?',
           default: 'n',
           required: true
