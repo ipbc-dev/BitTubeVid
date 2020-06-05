@@ -338,7 +338,7 @@ async function askResetUserPassword (req: express.Request, res: express.Response
   const url = WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString
   await Emailer.Instance.addPasswordResetEmailJob(user.email, url)
 
-  return res.status(204).end()
+  return res.status(202).end()
 }
 
 async function resetUserPassword (req: express.Request, res: express.Response) {

@@ -644,7 +644,7 @@ const PLUGIN_GLOBAL_CSS_PATH = join(CONFIG.STORAGE.TMP_DIR, PLUGIN_GLOBAL_CSS_FI
 
 let PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 1000 * 60 * 5 // 5 minutes
 
-const DEFAULT_THEME_NAME = 'default'
+const DEFAULT_THEME_NAME = 'instance-default'
 const DEFAULT_USER_THEME_NAME = 'instance-default'
 
 // ---------------------------------------------------------------------------
