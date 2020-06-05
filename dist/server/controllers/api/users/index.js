@@ -211,7 +211,7 @@ function askResetUserPassword(req, res) {
         const verificationString = yield redis_1.Redis.Instance.setResetPasswordVerificationString(user.id);
         const url = constants_1.WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString;
         yield emailer_1.Emailer.Instance.addPasswordResetEmailJob(user.email, url);
-        return res.status(204).end();
+        return res.status(202).end();
     });
 }
 function resetUserPassword(req, res) {
