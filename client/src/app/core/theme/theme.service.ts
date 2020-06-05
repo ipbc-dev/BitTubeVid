@@ -75,7 +75,7 @@ export class ThemeService {
   }
 
   private getCurrentTheme () {
-    if (this.themeFromLocalStorage) return this.themeFromLocalStorage.name
+    // if (this.themeFromLocalStorage) return this.themeFromLocalStorage.name
 
     const theme = this.auth.isLoggedIn()
       ? this.auth.getUser().theme
