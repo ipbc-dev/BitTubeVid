@@ -1,6 +1,6 @@
 # Changelog
 
-## BitTube v0.2.3
+## v0.2.3 (BitTube)
   * Based on Peertube V2.2.0
   * Fixing minor bugs && styles
 
