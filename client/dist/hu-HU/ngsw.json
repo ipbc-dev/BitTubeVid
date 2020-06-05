@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1591357897637,
+  "timestamp": 1591362227955,
   "index": "/client/hu-HU/index.html",
   "assetGroups": [
     {
@@ -23,7 +23,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/hu-HU/index.html": "87ee9f592e542f717b72246dab7688feab1ba238",
+    "/client/hu-HU/index.html": "8f44a6d712b9fcefd5122a5b5a457f80ff70067f",
     "/client/hu-HU/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
