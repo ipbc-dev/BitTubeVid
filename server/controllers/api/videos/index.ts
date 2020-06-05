@@ -176,8 +176,8 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
   // Processing the video could be long
-  // Set timeout to 10 minutes
-  req.setTimeout(1000 * 60 * 10, () => {
+  // Set timeout to 100 minutes
+  req.setTimeout(1000 * 60 * 100, () => {
     logger.error('Upload video has timed out.')
     return res.sendStatus(408)
   })
