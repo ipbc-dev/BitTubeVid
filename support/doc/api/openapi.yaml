@@ -1,15 +1,8 @@
 openapi: 3.0.0
 info:
   title: PeerTube
-<<<<<<< HEAD
-<<<<<<< HEAD
-  version: 0.2.0
-=======
-  version: 2.1.1
->>>>>>> 16ec5e0833a4f72e75ca2a4f4be00f0453c68c80
-=======
-  version: 0.2.2
->>>>>>> release/0.2.2
+  version: 0.2.3
+
   contact:
     name: PeerTube Community
     url: 'https://joinpeertube.org'
