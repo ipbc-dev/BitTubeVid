@@ -176,8 +176,8 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
   // Processing the video could be long
-  // Set timeout to 100 minutes
-  req.setTimeout(1000 * 60 * 100, () => {
+  // Set timeout to 20 minutes (previous 10 min)
+  req.setTimeout(1000 * 60 * 20, () => {
     logger.error('Upload video has timed out.')
     return res.sendStatus(408)
   })
@@ -204,10 +204,10 @@ async function addVideo (req: express.Request, res: express.Response) {
     channelId: res.locals.videoChannel.id,
     originallyPublishedAt: videoInfo.originallyPublishedAt
   }
-  logger.info('Received video data is: ', videoData)
+  logger.info(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
   const video = new VideoModel(videoData) as MVideoDetails
   video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
-  logger.info('VideoUrl is: ', video.url)
+  logger.info(`ICEICE - Video.URL is: ${video.url}`)
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
@@ -221,10 +221,9 @@ async function addVideo (req: express.Request, res: express.Response) {
     videoFile.fps = await getVideoFileFPS(videoPhysicalFile.path)
     videoFile.resolution = (await getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution
   }
-
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
-  logger.info('Moving the file to destination: ', destination)
+  logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`)
   await move(videoPhysicalFile.path, destination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
@@ -301,7 +300,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   }
   logger.info('action:api.video.uploaded ', videoCreated)
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
-  logger.info('Going to return videoCreated is: ', videoCreated)
+  logger.info(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`)
   return res.json({
     video: {
       id: videoCreated.id,
