@@ -204,7 +204,7 @@ async function addVideo (req: express.Request, res: express.Response) {
     channelId: res.locals.videoChannel.id,
     originallyPublishedAt: videoInfo.originallyPublishedAt
   }
-  logger.info(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
+  // logger.info(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
   const video = new VideoModel(videoData) as MVideoDetails
   video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
   logger.info(`ICEICE - Video.URL is: ${video.url}`)
