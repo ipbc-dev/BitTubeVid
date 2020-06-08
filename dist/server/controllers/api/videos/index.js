@@ -98,7 +98,7 @@ function listVideoPrivacies(req, res) {
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Inside addVideo function');
-        req.setTimeout(1000 * 60 * 100, () => {
+        req.setTimeout(1000 * 60 * 20, () => {
             logger_1.logger.error('Upload video has timed out.');
             return res.sendStatus(408);
         });
@@ -122,10 +122,9 @@ function addVideo(req, res) {
             channelId: res.locals.videoChannel.id,
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
-        logger_1.logger.info('Received video data is: ', videoData);
         const video = new video_1.VideoModel(videoData);
         video.url = url_1.getVideoActivityPubUrl(video);
-        logger_1.logger.info('VideoUrl is: ', video.url);
+        logger_1.logger.info(`ICEICE - Video.URL is: ${video.url}`);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
             size: videoPhysicalFile.size,
@@ -140,7 +139,7 @@ function addVideo(req, res) {
             videoFile.resolution = (yield ffmpeg_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
-        logger_1.logger.info('Moving the file to destination: ', destination);
+        logger_1.logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`);
         yield fs_extra_1.move(videoPhysicalFile.path, destination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
@@ -194,7 +193,7 @@ function addVideo(req, res) {
         }
         logger_1.logger.info('action:api.video.uploaded ', videoCreated);
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
-        logger_1.logger.info('Going to return videoCreated is: ', videoCreated);
+        logger_1.logger.info(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`);
         return res.json({
             video: {
                 id: videoCreated.id,
