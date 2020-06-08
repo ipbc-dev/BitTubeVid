@@ -19,7 +19,7 @@ import { VideoStreamingPlaylistType } from '../../shared/models/videos/video-str
 import { CONFIG } from '../initializers/config'
 import { MStreamingPlaylistFilesVideo, MVideoFile, MVideoWithAllFiles, MVideoWithFile } from '@server/typings/models'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
-import { generateVideoStreamingPlaylistName, getVideoFilename, getVideoFilePath } from './video-paths'
+import { generateVideoStreamingPlaylistName, getVideoFilename, getVideoFilePath, getInputVideoFilePath } from './video-paths'
 
 /**
  * Optimize the original video file and replace it. The resolution is not changed.
@@ -29,7 +29,7 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   const newExtname = '.mp4'
 
   const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile()
-  const videoInputPath = getVideoFilePath(video, inputVideoFile)
+  const videoInputPath = getInputVideoFilePath(video, inputVideoFile)
   const videoTranscodedPath = join(transcodeDirectory, video.id + '-transcoded' + newExtname)
 
   const transcodeType: TranscodeOptionsType = await canDoQuickTranscode(videoInputPath)

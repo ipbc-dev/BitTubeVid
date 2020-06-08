@@ -34,6 +34,11 @@ function getVideoFilePath (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, vi
   return join(baseDir, getVideoFilename(videoOrPlaylist, videoFile))
 }
 
+function getInputVideoFilePath (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile, isRedundancy = false) {
+  const baseDir = CONFIG.STORAGE.TMP_DIR
+  return join(baseDir, getVideoFilename(videoOrPlaylist, videoFile))
+}
+
 // ################## Streaming playlist ##################
 
 function getHLSDirectory (video: MVideoUUID, isRedundancy = false) {
@@ -66,7 +71,7 @@ export {
   generateWebTorrentVideoName,
   getVideoFilename,
   getVideoFilePath,
-
+  getInputVideoFilePath,
   getTorrentFileName,
   getTorrentFilePath,
 
