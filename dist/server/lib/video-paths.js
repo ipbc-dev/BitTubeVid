@@ -30,6 +30,11 @@ function getVideoFilePath(videoOrPlaylist, videoFile, isRedundancy = false) {
     return path_1.join(baseDir, getVideoFilename(videoOrPlaylist, videoFile));
 }
 exports.getVideoFilePath = getVideoFilePath;
+function getInputVideoFilePath(videoOrPlaylist, videoFile, isRedundancy = false) {
+    const baseDir = config_1.CONFIG.STORAGE.TMP_DIR;
+    return path_1.join(baseDir, getVideoFilename(videoOrPlaylist, videoFile));
+}
+exports.getInputVideoFilePath = getInputVideoFilePath;
 function getHLSDirectory(video, isRedundancy = false) {
     const baseDir = isRedundancy ? constants_1.HLS_REDUNDANCY_DIRECTORY : constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY;
     return path_1.join(baseDir, video.uuid);

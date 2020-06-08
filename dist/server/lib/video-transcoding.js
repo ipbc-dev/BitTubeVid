@@ -27,7 +27,7 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
         const transcodeDirectory = config_1.CONFIG.STORAGE.TMP_DIR;
         const newExtname = '.mp4';
         const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile();
-        const videoInputPath = video_paths_1.getVideoFilePath(video, inputVideoFile);
+        const videoInputPath = video_paths_1.getInputVideoFilePath(video, inputVideoFile);
         const videoTranscodedPath = path_1.join(transcodeDirectory, video.id + '-transcoded' + newExtname);
         const transcodeType = (yield ffmpeg_utils_1.canDoQuickTranscode(videoInputPath))
             ? 'quick-transcode'
