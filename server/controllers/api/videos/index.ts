@@ -49,7 +49,7 @@ import { ScheduleVideoUpdateModel } from '../../../models/video/schedule-video-u
 import { videoCaptionsRouter } from './captions'
 import { videoImportsRouter } from './import'
 import { resetSequelizeInstance } from '../../../helpers/database-utils'
-import { move } from 'fs-extra'
+import { move, copy } from 'fs-extra'
 import { watchingRouter } from './watching'
 import { Notifier } from '../../../lib/notifier'
 import { sendView } from '../../../lib/activitypub/send/send-view'
@@ -60,7 +60,7 @@ import { ThumbnailType } from '../../../../shared/models/videos/thumbnail.type'
 import { Hooks } from '../../../lib/plugins/hooks'
 import { MVideoDetails, MVideoFullLight } from '@server/typings/models'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
-import { getVideoFilePath } from '@server/lib/video-paths'
+import { getVideoFilePath, getInputVideoFilePath } from '@server/lib/video-paths'
 import toInt from 'validator/lib/toInt'
 import { addOptimizeOrMergeAudioJob } from '@server/helpers/video'
 import { getServerActor } from '@server/models/application/application'
@@ -223,11 +223,14 @@ async function addVideo (req: express.Request, res: express.Response) {
   }
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
-  logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`)
-  // await move(videoPhysicalFile.path, destination)
+  const tmpDestination = getInputVideoFilePath(video, videoFile)
+  logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`)
+  logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`)
+  await copy(videoPhysicalFile.path, destination)
+  await move(videoPhysicalFile.path, tmpDestination)
   // This is important in case if there is another attempt in the retry process
-  // videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
-  // videoPhysicalFile.path = destination
+  videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
+  videoPhysicalFile.path = destination
   logger.info('videoPhysicalFile is: ', videoPhysicalFile)
 
   // Process thumbnail or create it from the video

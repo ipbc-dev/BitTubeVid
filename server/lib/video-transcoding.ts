@@ -30,6 +30,7 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
 
   const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile()
   const videoInputPath = getInputVideoFilePath(video, inputVideoFile)
+  const videoUselessFile = getVideoFilePath(video, inputVideoFile)
   const videoTranscodedPath = join(transcodeDirectory, video.id + '-transcoded' + newExtname)
 
   const transcodeType: TranscodeOptionsType = await canDoQuickTranscode(videoInputPath)
@@ -47,8 +48,8 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   await transcode(transcodeOptions)
 
   try {
-    await remove(videoInputPath)
-
+    await remove(videoInputPath) /* ICEICE remove temporary file from tmp */
+    await remove(videoUselessFile) /* ICEICE remove useless file after transcoding */
     // Important to do this before getVideoFilename() to take in account the new file extension
     inputVideoFile.extname = newExtname
 
