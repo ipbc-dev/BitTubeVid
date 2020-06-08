@@ -35,6 +35,7 @@ const schedule_video_update_1 = require("../../../models/video/schedule-video-up
 const captions_1 = require("./captions");
 const import_1 = require("./import");
 const database_utils_1 = require("../../../helpers/database-utils");
+const fs_extra_1 = require("fs-extra");
 const watching_1 = require("./watching");
 const notifier_1 = require("../../../lib/notifier");
 const send_view_1 = require("../../../lib/activitypub/send/send-view");
@@ -138,7 +139,13 @@ function addVideo(req, res) {
             videoFile.resolution = (yield ffmpeg_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
-        logger_1.logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`);
+        const tmpDestination = video_paths_1.getInputVideoFilePath(video, videoFile);
+        logger_1.logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
+        logger_1.logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`);
+        yield fs_extra_1.copy(videoPhysicalFile.path, destination);
+        yield fs_extra_1.move(videoPhysicalFile.path, tmpDestination);
+        videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
+        videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField

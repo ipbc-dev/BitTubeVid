@@ -28,6 +28,7 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
         const newExtname = '.mp4';
         const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile();
         const videoInputPath = video_paths_1.getInputVideoFilePath(video, inputVideoFile);
+        const videoUselessFile = video_paths_1.getVideoFilePath(video, inputVideoFile);
         const videoTranscodedPath = path_1.join(transcodeDirectory, video.id + '-transcoded' + newExtname);
         const transcodeType = (yield ffmpeg_utils_1.canDoQuickTranscode(videoInputPath))
             ? 'quick-transcode'
@@ -41,6 +42,7 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
         yield ffmpeg_utils_1.transcode(transcodeOptions);
         try {
             yield fs_extra_1.remove(videoInputPath);
+            yield fs_extra_1.remove(videoUselessFile);
             inputVideoFile.extname = newExtname;
             const videoOutputPath = video_paths_1.getVideoFilePath(video, inputVideoFile);
             yield onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath);
