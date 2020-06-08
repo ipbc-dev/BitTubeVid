@@ -224,10 +224,10 @@ async function addVideo (req: express.Request, res: express.Response) {
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
   logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`)
-  await move(videoPhysicalFile.path, destination)
+  // await move(videoPhysicalFile.path, destination)
   // This is important in case if there is another attempt in the retry process
-  videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
-  videoPhysicalFile.path = destination
+  // videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
+  // videoPhysicalFile.path = destination
   logger.info('videoPhysicalFile is: ', videoPhysicalFile)
 
   // Process thumbnail or create it from the video
