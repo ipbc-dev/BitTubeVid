@@ -189,6 +189,20 @@ const copyFile = async (pathFrom, pathTo, copyFileRetries = 5) => {
   }
 }
 
+const moveFile = async (pathFrom, pathTo, moveFileRetries = 5) => {
+  while (true) {
+    try {
+      await move(pathFrom, pathTo)
+      return
+    } catch (err) {
+      moveFileRetries--
+      if (moveFileRetries <= 0) throw err
+      else logger.info('ICEICE moveFile (will retry in 2 sec) is catching error: ', err)
+    }
+    await aDelay(2000)
+  }
+}
+
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
   // Processing the video could be long
@@ -244,7 +258,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`)
   logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`)
   await copyFile(videoPhysicalFile.path, destination)
-  await move(videoPhysicalFile.path, tmpDestination)
+  await moveFile(videoPhysicalFile.path, tmpDestination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
