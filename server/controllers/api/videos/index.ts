@@ -178,6 +178,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   // Processing the video could be long
   // Set timeout to 20 minutes (previous 10 min)
   req.setTimeout(1000 * 60 * 20, () => {
+    logger.info('ICEICE Upload video has timed out.')
     logger.error('Upload video has timed out.')
     return res.sendStatus(408)
   })
