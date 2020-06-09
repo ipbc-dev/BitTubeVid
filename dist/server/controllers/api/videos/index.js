@@ -112,6 +112,22 @@ const copyFile = (pathFrom, pathTo, copyFileRetries = 5) => __awaiter(void 0, vo
         yield aDelay(2000);
     }
 });
+const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, void 0, void 0, function* () {
+    while (true) {
+        try {
+            yield fs_extra_1.move(pathFrom, pathTo);
+            return;
+        }
+        catch (err) {
+            moveFileRetries--;
+            if (moveFileRetries <= 0)
+                throw err;
+            else
+                logger_1.logger.info('ICEICE moveFile (will retry in 2 sec) is catching error: ', err);
+        }
+        yield aDelay(2000);
+    }
+});
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Inside addVideo function');
@@ -161,7 +177,7 @@ function addVideo(req, res) {
         logger_1.logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
         logger_1.logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`);
         yield copyFile(videoPhysicalFile.path, destination);
-        yield fs_extra_1.move(videoPhysicalFile.path, tmpDestination);
+        yield moveFile(videoPhysicalFile.path, tmpDestination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
