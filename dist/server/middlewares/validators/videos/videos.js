@@ -58,6 +58,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
         }
         catch (err) {
             logger_1.logger.error('Invalid input file in videosAddValidator.', { err });
+            logger_1.logger.info('Invalid input file in videosAddValidator.', { err });
             res.status(400)
                 .json({ error: 'Invalid input file.' });
             return express_utils_1.cleanUpReqFiles(req);

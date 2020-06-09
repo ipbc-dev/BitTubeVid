@@ -95,10 +95,28 @@ function listVideoLanguages(req, res) {
 function listVideoPrivacies(req, res) {
     res.json(constants_1.VIDEO_PRIVACIES);
 }
+const aDelay = (ms) => { return new Promise((resolve) => setTimeout(resolve, ms)); };
+const copyFile = (pathFrom, pathTo, copyFileRetries = 5) => __awaiter(void 0, void 0, void 0, function* () {
+    while (true) {
+        try {
+            yield fs_extra_1.copy(pathFrom, pathTo);
+            return;
+        }
+        catch (err) {
+            copyFileRetries--;
+            if (copyFileRetries <= 0)
+                throw err;
+            else
+                logger_1.logger.info('ICEICE copyFile (will retry in 2 sec) is catching error: ', err);
+        }
+        yield aDelay(2000);
+    }
+});
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Inside addVideo function');
         req.setTimeout(1000 * 60 * 20, () => {
+            logger_1.logger.info('ICEICE Upload video has timed out.');
             logger_1.logger.error('Upload video has timed out.');
             return res.sendStatus(408);
         });
@@ -142,7 +160,7 @@ function addVideo(req, res) {
         const tmpDestination = video_paths_1.getInputVideoFilePath(video, videoFile);
         logger_1.logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
         logger_1.logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`);
-        yield fs_extra_1.copy(videoPhysicalFile.path, destination);
+        yield copyFile(videoPhysicalFile.path, destination);
         yield fs_extra_1.move(videoPhysicalFile.path, tmpDestination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;

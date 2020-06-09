@@ -173,6 +173,22 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
   res.json(VIDEO_PRIVACIES)
 }
 
+const aDelay = (ms) => { return new Promise((resolve) => setTimeout(resolve, ms)) }
+
+const copyFile = async (pathFrom, pathTo, copyFileRetries = 5) => {
+  while (true) {
+    try {
+      await copy(pathFrom, pathTo)
+      return
+    } catch (err) {
+      copyFileRetries--
+      if (copyFileRetries <= 0) throw err
+      else logger.info('ICEICE copyFile (will retry in 2 sec) is catching error: ', err)
+    }
+    await aDelay(2000)
+  }
+}
+
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
   // Processing the video could be long
@@ -227,7 +243,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   const tmpDestination = getInputVideoFilePath(video, videoFile)
   logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`)
   logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`)
-  await copy(videoPhysicalFile.path, destination)
+  await copyFile(videoPhysicalFile.path, destination)
   await move(videoPhysicalFile.path, tmpDestination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)

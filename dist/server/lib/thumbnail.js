@@ -45,7 +45,7 @@ function createVideoMiniatureFromExisting(inputPath, video, type, automaticallyG
 }
 exports.createVideoMiniatureFromExisting = createVideoMiniatureFromExisting;
 function generateVideoMiniature(video, videoFile, type) {
-    const input = video_paths_1.getVideoFilePath(video, videoFile);
+    const input = video_paths_1.getInputVideoFilePath(video, videoFile);
     const { filename, basePath, height, width, existingThumbnail, outputPath } = buildMetadataFromVideo(video, type);
     const thumbnailCreator = videoFile.isAudio()
         ? () => image_utils_1.processImage(constants_1.ASSETS_PATH.DEFAULT_AUDIO_BACKGROUND, outputPath, { width, height }, true)
