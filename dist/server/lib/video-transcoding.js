@@ -27,8 +27,9 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
         const transcodeDirectory = config_1.CONFIG.STORAGE.TMP_DIR;
         const newExtname = '.mp4';
         const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile();
-        const videoInputPath = video_paths_1.getInputVideoFilePath(video, inputVideoFile);
-        const videoUselessFile = video_paths_1.getVideoFilePath(video, inputVideoFile);
+        const storageFilePath = video_paths_1.getVideoFilePath(video, inputVideoFile);
+        const tmpFilePath = video_paths_1.getInputVideoFilePath(video, inputVideoFile);
+        const videoInputPath = (yield fs_extra_1.pathExists(tmpFilePath)) ? tmpFilePath : storageFilePath;
         const videoTranscodedPath = path_1.join(transcodeDirectory, video.id + '-transcoded' + newExtname);
         const transcodeType = (yield ffmpeg_utils_1.canDoQuickTranscode(videoInputPath))
             ? 'quick-transcode'
@@ -41,8 +42,9 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
         };
         yield ffmpeg_utils_1.transcode(transcodeOptions);
         try {
-            yield fs_extra_1.remove(videoInputPath);
-            yield fs_extra_1.remove(videoUselessFile);
+            yield fs_extra_1.remove(storageFilePath);
+            if (yield fs_extra_1.pathExists(tmpFilePath))
+                yield fs_extra_1.remove(tmpFilePath);
             inputVideoFile.extname = newExtname;
             const videoOutputPath = video_paths_1.getVideoFilePath(video, inputVideoFile);
             yield onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath);
