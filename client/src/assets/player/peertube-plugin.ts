@@ -73,7 +73,7 @@ class PeerTubePlugin extends Plugin {
           console.log('ICEICE lastResolutionChange is ', this.lastResolutionChange)
           // Replay a resolution change, now we loaded all quality data
           if (this.lastResolutionChange) {
-            if (localStorageQualityData) {
+            if (localStorageQualityData && localStorageQualityData !== 'auto') {
               this.lastResolutionChange.auto = false
               this.lastResolutionChange.resolutionId = parseInt(localStorageQualityData)
               this.handleResolutionChange(this.lastResolutionChange)
@@ -222,6 +222,8 @@ class PeerTubePlugin extends Plugin {
     console.log('ICEICE function handleResolutionChange with data: ', data)
     if (data.auto === false) { /* If resolution is different from auto, we save it into locaStorage */
       saveQualityInStore(data.resolutionId.toString())
+    } else {
+      saveQualityInStore('auto')
     }
     const qualityLevels = this.player.qualityLevels()
 
