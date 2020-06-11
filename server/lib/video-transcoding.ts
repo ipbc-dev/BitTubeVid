@@ -9,7 +9,7 @@ import {
   TranscodeOptions,
   TranscodeOptionsType
 } from '../helpers/ffmpeg-utils'
-import { copyFile, ensureDir, move, remove, stat } from 'fs-extra'
+import { copyFile, ensureDir, move, remove, stat, pathExists } from 'fs-extra'
 import { logger } from '../helpers/logger'
 import { VideoResolution } from '../../shared/models/videos'
 import { VideoFileModel } from '../models/video/video-file'
@@ -29,8 +29,9 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   const newExtname = '.mp4'
 
   const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile()
-  const videoInputPath = getInputVideoFilePath(video, inputVideoFile)
-  const videoUselessFile = getVideoFilePath(video, inputVideoFile)
+  const storageFilePath = getVideoFilePath(video, inputVideoFile)
+  const tmpFilePath = getInputVideoFilePath(video, inputVideoFile)
+  const videoInputPath = await pathExists(tmpFilePath) ? tmpFilePath : storageFilePath
   const videoTranscodedPath = join(transcodeDirectory, video.id + '-transcoded' + newExtname)
 
   const transcodeType: TranscodeOptionsType = await canDoQuickTranscode(videoInputPath)
@@ -48,8 +49,8 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   await transcode(transcodeOptions)
 
   try {
-    await remove(videoInputPath) /* ICEICE remove temporary file from tmp */
-    await remove(videoUselessFile) /* ICEICE remove useless file after transcoding */
+    await remove(storageFilePath) /* ICEICE remove useless file after transcoding */
+    if (await pathExists(tmpFilePath)) await remove(tmpFilePath) /* ICEICE remove temporary file from tmp */
     // Important to do this before getVideoFilename() to take in account the new file extension
     inputVideoFile.extname = newExtname
 
