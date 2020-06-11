@@ -13,12 +13,15 @@ import {
   getStoredVolume,
   saveLastSubtitle,
   saveMuteInStore,
-  saveVolumeInStore
+  saveVolumeInStore,
+  getStoredQuality,
+  saveQualityInStore
 } from './peertube-player-local-storage'
 
 const Plugin = videojs.getPlugin('plugin')
 
 class PeerTubePlugin extends Plugin {
+  static LOCAL_STORAGE_SELECTED_QUALITY = 'play-video-selected-quality'
   private readonly videoViewUrl: string
   private readonly videoDuration: number
   private readonly CONSTANTS = {
@@ -63,10 +66,14 @@ class PeerTubePlugin extends Plugin {
         this.player.p2pMediaLoader().on('resolutionChange', (_: any, d: any) => this.handleResolutionChange(d))
       }
 
+      const localStorageQualityData = getStoredQuality()
       this.player.tech(true).on('loadedqualitydata', () => {
         setTimeout(() => {
           // Replay a resolution change, now we loaded all quality data
-          if (this.lastResolutionChange) this.handleResolutionChange(this.lastResolutionChange)
+          // if (this.lastResolutionChange) this.handleResolutionChange(this.lastResolutionChange)
+          if (localStorageQualityData) {
+            this.handleResolutionChange(JSON.parse(localStorageQualityData))
+          }
         }, 0)
       })
 
@@ -206,8 +213,10 @@ class PeerTubePlugin extends Plugin {
   }
 
   private handleResolutionChange (data: ResolutionUpdateData) {
-    this.lastResolutionChange = data
-
+    // this.lastResolutionChange = data
+    if (data.id !== -1) { /* If resolution is different from auto, we save it into locaStorage */
+      saveQualityInStore(JSON.stringify(data))
+    }
     const qualityLevels = this.player.qualityLevels()
 
     for (let i = 0; i < qualityLevels.length; i++) {

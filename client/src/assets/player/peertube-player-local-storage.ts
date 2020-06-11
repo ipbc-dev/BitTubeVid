@@ -32,6 +32,17 @@ function getStoredTheater () {
   return false
 }
 
+function getStoredQuality () {
+  const value = getLocalStorage('video-quality')
+  if (value !== null && value !== undefined) return value
+
+  return undefined
+}
+
+function saveQualityInStore (value: string) {
+  return setLocalStorage('video-quality', value)
+}
+
 function saveVolumeInStore (value: number) {
   return setLocalStorage('volume', value.toString())
 }
@@ -75,6 +86,8 @@ export {
   getStoredP2PEnabled,
   getStoredMute,
   getStoredTheater,
+  getStoredQuality,
+  saveQualityInStore,
   saveVolumeInStore,
   saveMuteInStore,
   saveTheaterInStore,
