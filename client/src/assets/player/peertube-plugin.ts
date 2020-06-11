@@ -21,7 +21,6 @@ import {
 const Plugin = videojs.getPlugin('plugin')
 
 class PeerTubePlugin extends Plugin {
-  static LOCAL_STORAGE_SELECTED_QUALITY = 'play-video-selected-quality'
   private readonly videoViewUrl: string
   private readonly videoDuration: number
   private readonly CONSTANTS = {
@@ -219,6 +218,8 @@ class PeerTubePlugin extends Plugin {
     this.lastResolutionChange = data
     if (data.auto === false) { /* If resolution is different from auto, we save it into locaStorage */
       saveQualityInStore(JSON.stringify(data))
+    } else {
+      saveQualityInStore('auto')
     }
     const qualityLevels = this.player.qualityLevels()
 
