@@ -70,11 +70,13 @@ class PeerTubePlugin extends Plugin {
       this.player.tech(true).on('loadedqualitydata', () => {
         setTimeout(() => {
           console.log('ICEICE loadedqualitydata event, localStorageQualityData is: ', localStorageQualityData)
+          console.log('ICEICE lastResolutionChange is ', this.lastResolutionChange)
           // Replay a resolution change, now we loaded all quality data
           if (this.lastResolutionChange) {
             if (localStorageQualityData) {
+              this.lastResolutionChange.auto = false
               this.lastResolutionChange.resolutionId = parseInt(localStorageQualityData)
-              this.handleResolutionChange(JSON.parse(localStorageQualityData))
+              this.handleResolutionChange(this.lastResolutionChange)
             }
           }
         }, 10)
