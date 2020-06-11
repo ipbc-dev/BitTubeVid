@@ -97,7 +97,7 @@ function listVideoPrivacies(req, res) {
 }
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        req.setTimeout(1000 * 60 * 100, () => {
+        req.setTimeout(1000 * 60 * 10, () => {
             logger_1.logger.error('Upload video has timed out.');
             return res.sendStatus(408);
         });
