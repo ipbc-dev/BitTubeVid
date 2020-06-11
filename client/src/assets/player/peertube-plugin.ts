@@ -70,11 +70,14 @@ class PeerTubePlugin extends Plugin {
       this.player.tech(true).on('loadedqualitydata', () => {
         setTimeout(() => {
           // Replay a resolution change, now we loaded all quality data
-          // if (this.lastResolutionChange) this.handleResolutionChange(this.lastResolutionChange)
-          if (localStorageQualityData) {
-            this.handleResolutionChange(JSON.parse(localStorageQualityData))
+          if (this.lastResolutionChange) {
+            if (localStorageQualityData && localStorageQualityData !== 'auto') {
+              this.lastResolutionChange.auto = false
+              this.lastResolutionChange.resolutionId = parseInt(localStorageQualityData)
+              this.handleResolutionChange(this.lastResolutionChange)
+            }
           }
-        }, 0)
+        }, 10)
       })
 
       const volume = getStoredVolume()
@@ -213,8 +216,8 @@ class PeerTubePlugin extends Plugin {
   }
 
   private handleResolutionChange (data: ResolutionUpdateData) {
-    // this.lastResolutionChange = data
-    if (data.id !== -1) { /* If resolution is different from auto, we save it into locaStorage */
+    this.lastResolutionChange = data
+    if (data.auto === false) { /* If resolution is different from auto, we save it into locaStorage */
       saveQualityInStore(JSON.stringify(data))
     }
     const qualityLevels = this.player.qualityLevels()
