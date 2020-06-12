@@ -217,7 +217,7 @@ class PeerTubePlugin extends Plugin {
   private handleResolutionChange (data: ResolutionUpdateData) {
     this.lastResolutionChange = data
     if (data.auto === false) { /* If resolution is different from auto, we save it into locaStorage */
-      saveQualityInStore(JSON.stringify(data))
+      saveQualityInStore(data.resolutionId.toString())
     } else {
       saveQualityInStore('auto')
     }
