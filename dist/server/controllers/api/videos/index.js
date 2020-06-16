@@ -170,7 +170,7 @@ function addVideo(req, res) {
             videoStreamingPlaylistId: null,
             metadata: yield ffmpeg_utils_1.getMetadataFromFile(videoPhysicalFile.path)
         });
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getMetadataFromFile  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getMetadataFromFile  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         if (videoFile.isAudio()) {
             videoFile.resolution = constants_1.DEFAULT_AUDIO_RESOLUTION;
@@ -179,7 +179,7 @@ function addVideo(req, res) {
             videoFile.fps = yield ffmpeg_utils_1.getVideoFileFPS(videoPhysicalFile.path);
             videoFile.resolution = (yield ffmpeg_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getVideoFileResolution  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getVideoFileResolution  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
         const tmpDestination = video_paths_1.getInputVideoFilePath(video, videoFile);
@@ -191,22 +191,22 @@ function addVideo(req, res) {
         videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
         logger_1.logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile);
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false)
             : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.MINIATURE);
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process thumbnail  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process thumbnail  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const previewField = req.files['previewfile'];
         const previewModel = previewField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(previewField[0].path, video, thumbnail_type_1.ThumbnailType.PREVIEW, false)
             : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile);
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
@@ -244,7 +244,7 @@ function addVideo(req, res) {
             logger_1.logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
             return { videoCreated };
         }));
-        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${Date.now() - startingTime / 1000} sec`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${(Date.now() - startingTime) / 1000} sec`);
         notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
         if (video.state === shared_1.VideoState.TO_TRANSCODE) {
             yield video_2.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
