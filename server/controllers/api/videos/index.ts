@@ -175,6 +175,7 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
 
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
+  console.log('ICEICE Inside addVideo function')
   // Processing the video could be long
   // Set timeout to 20 minutes (previous 10 min)
   req.setTimeout(1000 * 60 * 20, () => {
@@ -204,10 +205,10 @@ async function addVideo (req: express.Request, res: express.Response) {
     channelId: res.locals.videoChannel.id,
     originallyPublishedAt: videoInfo.originallyPublishedAt
   }
-  logger.info(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
+  console.log(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
   const video = new VideoModel(videoData) as MVideoDetails
   video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
-  logger.info(`ICEICE - Video.URL is: ${video.url}`)
+  console.log(`ICEICE - Video.URL is: ${video.url}`)
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
@@ -223,12 +224,13 @@ async function addVideo (req: express.Request, res: express.Response) {
   }
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
-  logger.info(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`)
+  console.log(`ICEICE going to move file from '${videoPhysicalFile.path}' to destination '${destination}'`)
   await move(videoPhysicalFile.path, destination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
   logger.info('videoPhysicalFile is: ', videoPhysicalFile)
+  console.log('ICEICE videoPhysicalFile is: ', videoPhysicalFile)
 
   // Process thumbnail or create it from the video
   const thumbnailField = req.files['thumbnailfile']
@@ -278,6 +280,7 @@ async function addVideo (req: express.Request, res: express.Response) {
       }, { transaction: t })
     }
     logger.info('videoInfo is: ', videoInfo)
+    console.log('ICEICE videoInfo is: ', videoInfo)
     await autoBlacklistVideoIfNeeded({
       video,
       user: res.locals.oauth.token.User,
@@ -289,6 +292,7 @@ async function addVideo (req: express.Request, res: express.Response) {
 
     auditLogger.create(getAuditIdFromRes(res), new VideoAuditView(videoCreated.toFormattedDetailsJSON()))
     logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
+    console.log('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
 
     return { videoCreated }
   })
@@ -300,7 +304,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   }
   logger.info('action:api.video.uploaded ', videoCreated)
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
-  logger.info(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`)
+  console.log(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`)
   return res.json({
     video: {
       id: videoCreated.id,
