@@ -131,10 +131,10 @@ const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, vo
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Inside addVideo function');
-        console.log('ICEICE Inside addVideo function');
+        logger_1.logger.debug('ICEICE Inside addVideo function');
         req.setTimeout(1000 * 60 * 20, () => {
             logger_1.logger.info('ICEICE Upload video has timed out.');
-            logger_1.logger.error('Upload video has timed out.');
+            logger_1.logger.debug('Upload video has timed out.');
             return res.sendStatus(408);
         });
         const videoPhysicalFile = req.files['videofile'][0];
@@ -157,10 +157,10 @@ function addVideo(req, res) {
             channelId: res.locals.videoChannel.id,
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
-        console.log(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`);
+        logger_1.logger.debug(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`);
         const video = new video_1.VideoModel(videoData);
         video.url = url_1.getVideoActivityPubUrl(video);
-        console.log(`ICEICE - Video.URL is: ${video.url}`);
+        logger_1.logger.debug(`ICEICE - Video.URL is: ${video.url}`);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
             size: videoPhysicalFile.size,
@@ -183,7 +183,7 @@ function addVideo(req, res) {
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
-        console.log('ICEICE videoPhysicalFile is: ', videoPhysicalFile);
+        logger_1.logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile);
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false)
@@ -215,7 +215,7 @@ function addVideo(req, res) {
                 }, { transaction: t });
             }
             logger_1.logger.info('videoInfo is: ', videoInfo);
-            console.log('ICEICE videoInfo is: ', videoInfo);
+            logger_1.logger.debug('ICEICE videoInfo is: ', videoInfo);
             yield video_blacklist_1.autoBlacklistVideoIfNeeded({
                 video,
                 user: res.locals.oauth.token.User,
@@ -226,7 +226,7 @@ function addVideo(req, res) {
             yield videos_1.federateVideoIfNeeded(video, true, t);
             auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoCreated.toFormattedDetailsJSON()));
             logger_1.logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
-            console.log('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
+            logger_1.logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
             return { videoCreated };
         }));
         notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
@@ -235,7 +235,7 @@ function addVideo(req, res) {
         }
         logger_1.logger.info('action:api.video.uploaded ', videoCreated);
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
-        console.log(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`);
+        logger_1.logger.debug(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`);
         return res.json({
             video: {
                 id: videoCreated.id,
