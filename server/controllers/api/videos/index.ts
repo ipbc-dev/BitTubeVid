@@ -205,12 +205,12 @@ const moveFile = async (pathFrom, pathTo, moveFileRetries = 5) => {
 
 async function addVideo (req: express.Request, res: express.Response) {
   logger.info('Inside addVideo function')
-  console.log('ICEICE Inside addVideo function')
+  logger.debug('ICEICE Inside addVideo function')
   // Processing the video could be long
   // Set timeout to 20 minutes (previous 10 min)
   req.setTimeout(1000 * 60 * 20, () => {
     logger.info('ICEICE Upload video has timed out.')
-    logger.error('Upload video has timed out.')
+    logger.debug('Upload video has timed out.')
     return res.sendStatus(408)
   })
 
@@ -236,10 +236,10 @@ async function addVideo (req: express.Request, res: express.Response) {
     channelId: res.locals.videoChannel.id,
     originallyPublishedAt: videoInfo.originallyPublishedAt
   }
-  console.log(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
+  logger.debug(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`)
   const video = new VideoModel(videoData) as MVideoDetails
   video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
-  console.log(`ICEICE - Video.URL is: ${video.url}`)
+  logger.debug(`ICEICE - Video.URL is: ${video.url}`)
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
@@ -264,7 +264,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
   logger.info('videoPhysicalFile is: ', videoPhysicalFile)
-  console.log('ICEICE videoPhysicalFile is: ', videoPhysicalFile)
+  logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile)
 
   // Process thumbnail or create it from the video
   const thumbnailField = req.files['thumbnailfile']
@@ -314,7 +314,7 @@ async function addVideo (req: express.Request, res: express.Response) {
       }, { transaction: t })
     }
     logger.info('videoInfo is: ', videoInfo)
-    console.log('ICEICE videoInfo is: ', videoInfo)
+    logger.debug('ICEICE videoInfo is: ', videoInfo)
     await autoBlacklistVideoIfNeeded({
       video,
       user: res.locals.oauth.token.User,
@@ -326,7 +326,7 @@ async function addVideo (req: express.Request, res: express.Response) {
 
     auditLogger.create(getAuditIdFromRes(res), new VideoAuditView(videoCreated.toFormattedDetailsJSON()))
     logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
-    console.log('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
+    logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
 
     return { videoCreated }
   })
@@ -338,7 +338,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   }
   logger.info('action:api.video.uploaded ', videoCreated)
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
-  console.log(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`)
+  logger.debug(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`)
   return res.json({
     video: {
       id: videoCreated.id,
