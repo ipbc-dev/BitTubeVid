@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1591892649028,
+  "timestamp": 1592307248260,
   "index": "/client/zh-Hans-CN/index.html",
   "assetGroups": [
     {
@@ -23,7 +23,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/zh-Hans-CN/index.html": "de5435a089af78ae561a6b3d0c036e60fe43627d",
+    "/client/zh-Hans-CN/index.html": "69040c18f63527938256edc5fbc36a0e5a4b41b1",
     "/client/zh-Hans-CN/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

@@ -39,6 +39,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
         .custom(misc_1.isIdValid).withMessage('Should have correct video channel id'),
     (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videosAdd parameters', { parameters: req.body, files: req.files });
+        console.log('ICEICE Checking videosAdd parameters', { parameters: req.body, files: req.files });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
         if (areErrorsInScheduleUpdate(req, res))
@@ -58,7 +59,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
         }
         catch (err) {
             logger_1.logger.error('Invalid input file in videosAddValidator.', { err });
-            logger_1.logger.info('Invalid input file in videosAddValidator.', { err });
+            console.log('ICEICE Invalid input file in videosAddValidator.', { err });
             res.status(400)
                 .json({ error: 'Invalid input file.' });
             return express_utils_1.cleanUpReqFiles(req);
