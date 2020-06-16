@@ -64,6 +64,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
 
   async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking videosAdd parameters', { parameters: req.body, files: req.files })
+    console.log('ICEICE Checking videosAdd parameters', { parameters: req.body, files: req.files })
 
     if (areValidationErrors(req, res)) return cleanUpReqFiles(req)
     if (areErrorsInScheduleUpdate(req, res)) return cleanUpReqFiles(req)
@@ -86,7 +87,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
       duration = await getDurationFromVideoFile(videoFile.path)
     } catch (err) {
       logger.error('Invalid input file in videosAddValidator.', { err })
-      logger.info('Invalid input file in videosAddValidator.', { err })
+      console.log('ICEICE Invalid input file in videosAddValidator.', { err })
       res.status(400)
          .json({ error: 'Invalid input file.' })
 
