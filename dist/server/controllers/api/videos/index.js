@@ -128,10 +128,13 @@ const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, vo
         yield aDelay(2000);
     }
 });
+let addVideoCounter = 0;
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
+        ++addVideoCounter;
         logger_1.logger.info('Inside addVideo function');
         logger_1.logger.debug('ICEICE Inside addVideo function');
+        let startingTime = Date.now();
         req.setTimeout(1000 * 60 * 20, () => {
             logger_1.logger.info('ICEICE Upload video has timed out.');
             logger_1.logger.debug('Upload video has timed out.');
@@ -157,16 +160,18 @@ function addVideo(req, res) {
             channelId: res.locals.videoChannel.id,
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
-        logger_1.logger.debug(`ICEICE - Received file with data: ${JSON.stringify(videoData)}`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  - Received file with data: ${JSON.stringify(videoData)}`);
         const video = new video_1.VideoModel(videoData);
         video.url = url_1.getVideoActivityPubUrl(video);
-        logger_1.logger.debug(`ICEICE - Video.URL is: ${video.url}`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  - Video.URL is: ${video.url}`);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
             size: videoPhysicalFile.size,
             videoStreamingPlaylistId: null,
             metadata: yield ffmpeg_utils_1.getMetadataFromFile(videoPhysicalFile.path)
         });
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getMetadataFromFile  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         if (videoFile.isAudio()) {
             videoFile.resolution = constants_1.DEFAULT_AUDIO_RESOLUTION;
         }
@@ -174,6 +179,8 @@ function addVideo(req, res) {
             videoFile.fps = yield ffmpeg_utils_1.getVideoFileFPS(videoPhysicalFile.path);
             videoFile.resolution = (yield ffmpeg_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after getVideoFileResolution  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
         const tmpDestination = video_paths_1.getInputVideoFilePath(video, videoFile);
         logger_1.logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
@@ -184,15 +191,23 @@ function addVideo(req, res) {
         videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
         logger_1.logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false)
             : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.MINIATURE);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process thumbnail  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         const previewField = req.files['previewfile'];
         const previewModel = previewField
             ? yield thumbnail_1.createVideoMiniatureFromExisting(previewField[0].path, video, thumbnail_type_1.ThumbnailType.PREVIEW, false)
             : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${Date.now() - startingTime / 1000} sec`);
+        startingTime = Date.now();
         const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
             const videoCreated = yield video.save(sequelizeOptions);
@@ -229,13 +244,14 @@ function addVideo(req, res) {
             logger_1.logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
             return { videoCreated };
         }));
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${Date.now() - startingTime / 1000} sec`);
         notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
         if (video.state === shared_1.VideoState.TO_TRANSCODE) {
             yield video_2.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
         }
         logger_1.logger.info('action:api.video.uploaded ', videoCreated);
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
-        logger_1.logger.debug(`ICEICE going to return JSON response from data: ${JSON.stringify(videoCreated)}`);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter}  going to return JSON response from data: ${JSON.stringify(videoCreated)}`);
         return res.json({
             video: {
                 id: videoCreated.id,
