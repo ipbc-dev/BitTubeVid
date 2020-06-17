@@ -1,3 +1,0 @@
-mixin channel(channel)
-  - var handle = `${channel.name}@${channel.host}`
-  | #[a(href=`${WEBSERVER.URL}/video-channels/${handle}` title=handle) #{channel.displayName}]

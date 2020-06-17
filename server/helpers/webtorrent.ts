@@ -78,7 +78,7 @@ async function downloadWebTorrentVideo (target: { magnetUri: string, torrentName
   })
 }
 
-async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile, videoCounter: Number) {
+async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile, videoCounter = 0) {
   let auxTime = Date.now()
   const video = extractVideo(videoOrPlaylist)
   logger.info(`ICEICE ${videoCounter} after extractVideo ${(Date.now() - auxTime) / 1000} sec`)
