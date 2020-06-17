@@ -203,11 +203,11 @@ const moveFile = async (pathFrom, pathTo, moveFileRetries = 5) => {
   }
 }
 
-let addVideoCounter = 0
+let addVideoCounterMain = 0
 async function addVideo (req: express.Request, res: express.Response) {
-  ++addVideoCounter
+  const addVideoCounter = ++addVideoCounterMain
   logger.info('Inside addVideo function')
-  logger.debug('ICEICE Inside addVideo function')
+  logger.debug(`ICEICE ${addVideoCounter} Inside addVideo function`)
   let startingTime = Date.now()
   // Processing the video could be long
   // Set timeout to 20 minutes (previous 10 min)
@@ -249,7 +249,7 @@ async function addVideo (req: express.Request, res: express.Response) {
     videoStreamingPlaylistId: null,
     metadata: await getMetadataFromFile<any>(videoPhysicalFile.path)
   })
-  logger.debug(`ICEICE ${addVideoCounter}  after getMetadataFromFile  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after getMetadataFromFile  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   if (videoFile.isAudio()) {
     videoFile.resolution = DEFAULT_AUDIO_RESOLUTION
@@ -257,21 +257,21 @@ async function addVideo (req: express.Request, res: express.Response) {
     videoFile.fps = await getVideoFileFPS(videoPhysicalFile.path)
     videoFile.resolution = (await getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution
   }
-  logger.debug(`ICEICE ${addVideoCounter}  after getVideoFileResolution  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after getVideoFileResolution  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
   const tmpDestination = getInputVideoFilePath(video, videoFile)
-  logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`)
-  logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`)
+  logger.info(`ICEICE ${addVideoCounter} going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`)
+  logger.info(`ICEICE ${addVideoCounter} leaving file in tmp called '${tmpDestination}'`)
   await copyFile(videoPhysicalFile.path, destination)
   await moveFile(videoPhysicalFile.path, tmpDestination)
   // This is important in case if there is another attempt in the retry process
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
   logger.info('videoPhysicalFile is: ', videoPhysicalFile)
-  logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile)
-  logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter} videoPhysicalFile is: `, videoPhysicalFile)
+  logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
 
   // Process thumbnail or create it from the video
@@ -280,18 +280,18 @@ async function addVideo (req: express.Request, res: express.Response) {
     ? await createVideoMiniatureFromExisting(thumbnailField[0].path, video, ThumbnailType.MINIATURE, false)
     : await generateVideoMiniature(video, videoFile, ThumbnailType.MINIATURE)
 
-  logger.debug(`ICEICE ${addVideoCounter}  after Process thumbnail  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after Process thumbnail  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   // Process preview or create it from the video
   const previewField = req.files['previewfile']
   const previewModel = previewField
     ? await createVideoMiniatureFromExisting(previewField[0].path, video, ThumbnailType.PREVIEW, false)
     : await generateVideoMiniature(video, videoFile, ThumbnailType.PREVIEW)
-  logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   // Create the torrent file
   await createTorrentAndSetInfoHash(video, videoFile)
-  logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   const { videoCreated } = await sequelizeTypescript.transaction(async t => {
     const sequelizeOptions = { transaction: t }
@@ -326,7 +326,7 @@ async function addVideo (req: express.Request, res: express.Response) {
       }, { transaction: t })
     }
     logger.info('videoInfo is: ', videoInfo)
-    logger.debug('ICEICE videoInfo is: ', videoInfo)
+    logger.debug(`ICEICE ${addVideoCounter} videoInfo is: `, videoInfo)
     await autoBlacklistVideoIfNeeded({
       video,
       user: res.locals.oauth.token.User,
@@ -338,11 +338,11 @@ async function addVideo (req: express.Request, res: express.Response) {
 
     auditLogger.create(getAuditIdFromRes(res), new VideoAuditView(videoCreated.toFormattedDetailsJSON()))
     logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
-    logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
+    logger.debug(`ICEICE ${addVideoCounter} Video with name ${videoInfo.name} and uuid ${videoCreated.uuid} created.`)
 
     return { videoCreated }
   })
-  logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${Date.now() - startingTime / 1000} sec`)
+  logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${(Date.now() - startingTime) / 1000} sec`)
   Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated)
 
   if (video.state === VideoState.TO_TRANSCODE) {
