@@ -128,12 +128,12 @@ const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, vo
         yield aDelay(2000);
     }
 });
-let addVideoCounter = 0;
+let addVideoCounterMain = 0;
 function addVideo(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
-        ++addVideoCounter;
+        const addVideoCounter = ++addVideoCounterMain;
         logger_1.logger.info('Inside addVideo function');
-        logger_1.logger.debug('ICEICE Inside addVideo function');
+        logger_1.logger.debug(`ICEICE ${addVideoCounter} Inside addVideo function`);
         let startingTime = Date.now();
         req.setTimeout(1000 * 60 * 20, () => {
             logger_1.logger.info('ICEICE Upload video has timed out.');
@@ -183,14 +183,14 @@ function addVideo(req, res) {
         startingTime = Date.now();
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
         const tmpDestination = video_paths_1.getInputVideoFilePath(video, videoFile);
-        logger_1.logger.info(`ICEICE going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
-        logger_1.logger.info(`ICEICE leaving file in tmp called '${tmpDestination}'`);
+        logger_1.logger.info(`ICEICE ${addVideoCounter} going to copy file from '${videoPhysicalFile.path}' to destination '${destination}'`);
+        logger_1.logger.info(`ICEICE ${addVideoCounter} leaving file in tmp called '${tmpDestination}'`);
         yield copyFile(videoPhysicalFile.path, destination);
         yield moveFile(videoPhysicalFile.path, tmpDestination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
         logger_1.logger.info('videoPhysicalFile is: ', videoPhysicalFile);
-        logger_1.logger.debug('ICEICE videoPhysicalFile is: ', videoPhysicalFile);
+        logger_1.logger.debug(`ICEICE ${addVideoCounter} videoPhysicalFile is: `, videoPhysicalFile);
         logger_1.logger.debug(`ICEICE ${addVideoCounter}  after copy and move the file  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const thumbnailField = req.files['thumbnailfile'];
@@ -230,7 +230,7 @@ function addVideo(req, res) {
                 }, { transaction: t });
             }
             logger_1.logger.info('videoInfo is: ', videoInfo);
-            logger_1.logger.debug('ICEICE videoInfo is: ', videoInfo);
+            logger_1.logger.debug(`ICEICE ${addVideoCounter} videoInfo is: `, videoInfo);
             yield video_blacklist_1.autoBlacklistVideoIfNeeded({
                 video,
                 user: res.locals.oauth.token.User,
@@ -241,7 +241,7 @@ function addVideo(req, res) {
             yield videos_1.federateVideoIfNeeded(video, true, t);
             auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoCreated.toFormattedDetailsJSON()));
             logger_1.logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
-            logger_1.logger.debug('ICEICE Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
+            logger_1.logger.debug(`ICEICE ${addVideoCounter} Video with name ${videoInfo.name} and uuid ${videoCreated.uuid} created.`);
             return { videoCreated };
         }));
         logger_1.logger.debug(`ICEICE ${addVideoCounter}  after sequelizeTypescript  ${(Date.now() - startingTime) / 1000} sec`);
