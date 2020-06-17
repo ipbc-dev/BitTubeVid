@@ -290,7 +290,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   // Create the torrent file
-  await createTorrentAndSetInfoHash(video, videoFile)
+  await createTorrentAndSetInfoHash(video, videoFile, addVideoCounter)
   logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${(Date.now() - startingTime) / 1000} sec`)
   startingTime = Date.now()
   const { videoCreated } = await sequelizeTypescript.transaction(async t => {

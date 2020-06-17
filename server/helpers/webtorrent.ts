@@ -78,8 +78,10 @@ async function downloadWebTorrentVideo (target: { magnetUri: string, torrentName
   })
 }
 
-async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile) {
+async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile, videoCounter: Number) {
+  let auxTime = Date.now()
   const video = extractVideo(videoOrPlaylist)
+  logger.info(`ICEICE ${videoCounter} after extractVideo ${(Date.now() - auxTime) / 1000} sec`)
   const { baseUrlHttp } = video.getBaseUrls()
 
   const options = {
@@ -93,14 +95,19 @@ async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreaming
     urlList: [ videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp) ]
   }
 
+  auxTime = Date.now()
   const torrent = await createTorrentPromise(getVideoFilePath(videoOrPlaylist, videoFile), options)
-
+  logger.info(`ICEICE ${videoCounter} after createTorrentPromise ${(Date.now() - auxTime) / 1000} sec`)
   const filePath = join(CONFIG.STORAGE.TORRENTS_DIR, getTorrentFileName(videoOrPlaylist, videoFile))
-  logger.info('Creating torrent %s.', filePath)
+  logger.info('ICEICE Creating torrent %s.', filePath)
 
+  auxTime = Date.now()
   await writeFile(filePath, torrent)
+  logger.info(`ICEICE ${videoCounter} after writeFile ${(Date.now() - auxTime) / 1000} sec`)
 
+  auxTime = Date.now()
   const parsedTorrent = parseTorrent(torrent)
+  logger.info(`ICEICE ${videoCounter} after parseTorrent ${(Date.now() - auxTime) / 1000} sec`)
   videoFile.infoHash = parsedTorrent.infoHash
 }
 
