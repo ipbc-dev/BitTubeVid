@@ -74,9 +74,11 @@ function downloadWebTorrentVideo(target, timeout) {
     });
 }
 exports.downloadWebTorrentVideo = downloadWebTorrentVideo;
-function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile) {
+function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 0) {
     return __awaiter(this, void 0, void 0, function* () {
+        let auxTime = Date.now();
         const video = video_1.extractVideo(videoOrPlaylist);
+        logger_1.logger.info(`ICEICE ${videoCounter} after extractVideo ${(Date.now() - auxTime) / 1000} sec`);
         const { baseUrlHttp } = video.getBaseUrls();
         const options = {
             name: `${video.name} ${videoFile.resolution}p${videoFile.extname}`,
@@ -87,11 +89,17 @@ function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile) {
             ],
             urlList: [videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp)]
         };
+        auxTime = Date.now();
         const torrent = yield createTorrentPromise(video_paths_1.getVideoFilePath(videoOrPlaylist, videoFile), options);
+        logger_1.logger.info(`ICEICE ${videoCounter} after createTorrentPromise ${(Date.now() - auxTime) / 1000} sec`);
         const filePath = path_1.join(config_1.CONFIG.STORAGE.TORRENTS_DIR, video_paths_1.getTorrentFileName(videoOrPlaylist, videoFile));
-        logger_1.logger.info('Creating torrent %s.', filePath);
+        logger_1.logger.info('ICEICE Creating torrent %s.', filePath);
+        auxTime = Date.now();
         yield fs_extra_1.writeFile(filePath, torrent);
+        logger_1.logger.info(`ICEICE ${videoCounter} after writeFile ${(Date.now() - auxTime) / 1000} sec`);
+        auxTime = Date.now();
         const parsedTorrent = parseTorrent(torrent);
+        logger_1.logger.info(`ICEICE ${videoCounter} after parseTorrent ${(Date.now() - auxTime) / 1000} sec`);
         videoFile.infoHash = parsedTorrent.infoHash;
     });
 }
