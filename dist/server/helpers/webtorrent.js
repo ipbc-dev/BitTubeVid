@@ -74,7 +74,7 @@ function downloadWebTorrentVideo(target, timeout) {
     });
 }
 exports.downloadWebTorrentVideo = downloadWebTorrentVideo;
-function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 0, useTemporalFile = true) {
+function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 0, useTemporalFile = false) {
     return __awaiter(this, void 0, void 0, function* () {
         let auxTime = Date.now();
         const video = video_1.extractVideo(videoOrPlaylist);
