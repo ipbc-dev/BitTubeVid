@@ -205,7 +205,7 @@ function addVideo(req, res) {
             : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
         logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Process preview  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
-        yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile, addVideoCounter);
+        yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile, addVideoCounter, true);
         logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
         const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {

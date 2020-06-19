@@ -74,7 +74,7 @@ function downloadWebTorrentVideo(target, timeout) {
     });
 }
 exports.downloadWebTorrentVideo = downloadWebTorrentVideo;
-function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 0) {
+function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 0, useTemporalFile = true) {
     return __awaiter(this, void 0, void 0, function* () {
         let auxTime = Date.now();
         const video = video_1.extractVideo(videoOrPlaylist);
@@ -90,7 +90,7 @@ function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 
             urlList: [videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp)]
         };
         auxTime = Date.now();
-        const torrent = yield createTorrentPromise(video_paths_1.getInputVideoFilePath(videoOrPlaylist, videoFile), options);
+        const torrent = !useTemporalFile ? yield createTorrentPromise(video_paths_1.getVideoFilePath(videoOrPlaylist, videoFile), options) : yield createTorrentPromise(video_paths_1.getInputVideoFilePath(videoOrPlaylist, videoFile), options);
         logger_1.logger.info(`ICEICE ${videoCounter} after createTorrentPromise ${(Date.now() - auxTime) / 1000} sec`);
         const filePath = path_1.join(config_1.CONFIG.STORAGE.TORRENTS_DIR, video_paths_1.getTorrentFileName(videoOrPlaylist, videoFile));
         logger_1.logger.info('ICEICE Creating torrent %s.', filePath);
