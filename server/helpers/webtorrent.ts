@@ -13,7 +13,7 @@ import { WEBSERVER } from '@server/initializers/constants'
 import * as parseTorrent from 'parse-torrent'
 import * as magnetUtil from 'magnet-uri'
 import { isArray } from '@server/helpers/custom-validators/misc'
-import { getTorrentFileName, getVideoFilePath } from '@server/lib/video-paths'
+import { getTorrentFileName, getInputVideoFilePath } from '@server/lib/video-paths'
 import { extractVideo } from '@server/helpers/video'
 
 const createTorrentPromise = promisify2<string, any, any>(createTorrent)
@@ -96,7 +96,7 @@ async function createTorrentAndSetInfoHash (videoOrPlaylist: MVideo | MStreaming
   }
 
   auxTime = Date.now()
-  const torrent = await createTorrentPromise(getVideoFilePath(videoOrPlaylist, videoFile), options)
+  const torrent = await createTorrentPromise(getInputVideoFilePath(videoOrPlaylist, videoFile), options)
   logger.info(`ICEICE ${videoCounter} after createTorrentPromise ${(Date.now() - auxTime) / 1000} sec`)
   const filePath = join(CONFIG.STORAGE.TORRENTS_DIR, getTorrentFileName(videoOrPlaylist, videoFile))
   logger.info('ICEICE Creating torrent %s.', filePath)
