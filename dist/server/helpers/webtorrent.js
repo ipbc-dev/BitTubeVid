@@ -90,7 +90,7 @@ function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile, videoCounter = 
             urlList: [videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp)]
         };
         auxTime = Date.now();
-        const torrent = yield createTorrentPromise(video_paths_1.getVideoFilePath(videoOrPlaylist, videoFile), options);
+        const torrent = yield createTorrentPromise(video_paths_1.getInputVideoFilePath(videoOrPlaylist, videoFile), options);
         logger_1.logger.info(`ICEICE ${videoCounter} after createTorrentPromise ${(Date.now() - auxTime) / 1000} sec`);
         const filePath = path_1.join(config_1.CONFIG.STORAGE.TORRENTS_DIR, video_paths_1.getTorrentFileName(videoOrPlaylist, videoFile));
         logger_1.logger.info('ICEICE Creating torrent %s.', filePath);
