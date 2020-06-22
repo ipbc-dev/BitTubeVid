@@ -11,6 +11,7 @@ import { SelectItem } from 'primeng/api'
 import { first } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
 import { pick } from 'lodash-es'
+// import { PremiumStorageService } from '@app/shared/premium-storage/premium-storage-database.service'
 
 @Component({
   selector: 'my-account-storage-settings',
@@ -36,7 +37,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     private notifier: Notifier,
     private userService: UserService,
     private serverService: ServerService,
-    private i18n: I18n
+    private i18n: I18n,
+    // private PremiumStorageService: PremiumStorageService
   ) {
     super()
   }
@@ -47,6 +49,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     this.buildForm({
       storagePlan: null
     })
+    // let availablePlans = this.PremiumStorageService.getPremiumStoragePlans()
+    // console.log("ICEICE Premium storage plans are: ", availablePlans)
 
     forkJoin([
       this.serverService.getVideoLanguages(),
@@ -84,11 +88,11 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   updateDetails (onlyKeys?: string[]) {
-    console.log("ICEICE printing userInformationLoaded")
+    console.log('ICEICE printing userInformationLoaded')
     console.log(this.userInformationLoaded)
-    console.log("ICEICE printing userQuotaObject")
+    console.log('ICEICE printing userQuotaObject')
     console.log(this.userQuotaObject)
-    console.log("ICEICE printing config.instance")
+    console.log('ICEICE printing config.instance')
     console.log(this.configCopy)
     // const nsfwPolicy = this.form.value[ 'nsfwPolicy' ]
     // const webTorrentEnabled = this.form.value['webTorrentEnabled']

@@ -23,6 +23,8 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
   userVideoQuotaUsedDaily = 0
   userVideoQuotaDailyPercentage = 15
 
+  userQuotaObject = {}
+
   constructor (
     private viewportScroller: ViewportScroller,
     private userService: UserService,
@@ -61,6 +63,16 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
         this.userVideoQuotaUsed = data.videoQuotaUsed
         this.userVideoQuotaUsedDaily = data.videoQuotaUsedDaily
       })
+
+    this.userQuotaObject = { 
+      userVideoQuota : this.userVideoQuota,
+      userVideoQuotaUsed : this.userVideoQuotaUsed,
+      userVideoQuotaPercentage : this.userVideoQuotaPercentage,
+
+      userVideoQuotaDaily : this.userVideoQuotaDaily,
+      userVideoQuotaUsedDaily : this.userVideoQuotaUsedDaily,
+      userVideoQuotaDailyPercentage : this.userVideoQuotaDailyPercentage
+    }
   }
 
   ngAfterViewChecked () {
