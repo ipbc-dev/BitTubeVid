@@ -8,6 +8,7 @@ import { CanDeactivateGuard } from '../../shared/guards/can-deactivate-guard.ser
 import { VideoUploadComponent } from '@app/videos/+video-edit/video-add-components/video-upload.component'
 import { VideoImportUrlComponent } from '@app/videos/+video-edit/video-add-components/video-import-url.component'
 import { VideoImportTorrentComponent } from '@app/videos/+video-edit/video-add-components/video-import-torrent.component'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 
 @NgModule({
   imports: [
@@ -20,7 +21,8 @@ import { VideoImportTorrentComponent } from '@app/videos/+video-edit/video-add-c
     VideoUploadComponent,
     VideoImportUrlComponent,
     VideoImportTorrentComponent,
-    DragDropDirective
+    DragDropDirective,
+    PremiumStorageModalComponent
   ],
   exports: [
     VideoAddComponent,
