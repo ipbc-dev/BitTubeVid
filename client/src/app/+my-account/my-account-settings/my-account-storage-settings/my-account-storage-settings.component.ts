@@ -11,7 +11,6 @@ import { SelectItem } from 'primeng/api'
 import { first } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
 import { pick } from 'lodash-es'
-// import { PremiumStorageService } from '@app/shared/premium-storage/premium-storage-database.service'
 
 @Component({
   selector: 'my-account-storage-settings',
@@ -37,8 +36,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     private notifier: Notifier,
     private userService: UserService,
     private serverService: ServerService,
-    private i18n: I18n,
-    // private PremiumStorageService: PremiumStorageService
+    private i18n: I18n
   ) {
     super()
   }
@@ -49,8 +47,6 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     this.buildForm({
       storagePlan: null
     })
-    // let availablePlans = this.PremiumStorageService.getPremiumStoragePlans()
-    // console.log("ICEICE Premium storage plans are: ", availablePlans)
 
     forkJoin([
       this.serverService.getVideoLanguages(),

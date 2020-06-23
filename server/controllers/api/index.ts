@@ -2,6 +2,7 @@ import * as express from 'express'
 import { configRouter } from './config'
 import { jobsRouter } from './jobs'
 import { oauthClientsRouter } from './oauth-clients'
+import { premiumStorageRouter } from './premium-storage'
 import { serverRouter } from './server'
 import { usersRouter } from './users'
 import { accountsRouter } from './accounts'
@@ -39,6 +40,7 @@ apiRouter.use('/video-channels', videoChannelRouter)
 apiRouter.use('/video-playlists', videoPlaylistRouter)
 apiRouter.use('/videos', videosRouter)
 apiRouter.use('/jobs', jobsRouter)
+apiRouter.use('/premium-storage', premiumStorageRouter)
 apiRouter.use('/search', searchRouter)
 apiRouter.use('/overviews', overviewsRouter)
 apiRouter.use('/plugins', pluginRouter)
