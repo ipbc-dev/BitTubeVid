@@ -1,6 +1,9 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
 import { Notifier, ServerService } from '@app/core'
-import { UserUpdateMe } from '../../../../../../shared/models/users'
+import { environment } from '../../../../environments/environment'
+import { RestExtractor } from '../../../shared'
+// import { UserUpdateMe } from '../../../../../../shared/models/users'
 import { User, UserService } from '@app/shared/users'
 import { AuthService } from '../../../core'
 import { FormReactive } from '@app/shared/forms/form-reactive'
@@ -8,9 +11,11 @@ import { I18n } from '@ngx-translate/i18n-polyfill'
 import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
 import { forkJoin, Subject, Subscription } from 'rxjs'
 import { SelectItem } from 'primeng/api'
-import { first } from 'rxjs/operators'
+import { first, catchError } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
-import { pick } from 'lodash-es'
+import { forEach } from 'lodash-es'
+import { BytesPipe } from 'ngx-pipes'
+// import { pick } from 'lodash-es'
 
 @Component({
   selector: 'my-account-storage-settings',
@@ -18,6 +23,7 @@ import { pick } from 'lodash-es'
   styleUrls: ['./my-account-storage-settings.component.scss']
 })
 export class MyAccountStorageSettingsComponent extends FormReactive implements OnInit, OnDestroy {
+  static GET_PLANS_URL = environment.apiUrl + '/api/v1/premium-storage/plans'
 
   @Input() user: User = null
   @Input() reactiveUpdate = false
@@ -29,16 +35,22 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   defaultNSFWPolicy: NSFWPolicyType
   formValuesWatcher: Subscription
   configCopy: any
+  havePremium: boolean
+  storagePlans: any
+  private bytesPipe: BytesPipe
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private authService: AuthService,
-    private notifier: Notifier,
-    private userService: UserService,
+    private authHttp: HttpClient,
+    private restExtractor: RestExtractor,
+    // private authService: AuthService,
+    // private notifier: Notifier,
+    // private userService: UserService,
     private serverService: ServerService,
     private i18n: I18n
   ) {
     super()
+    this.bytesPipe = new BytesPipe()
   }
 
   ngOnInit () {
@@ -49,10 +61,21 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     })
 
     forkJoin([
+      this.getPlans(),
       this.serverService.getVideoLanguages(),
       this.serverService.getConfig(),
       this.userInformationLoaded.pipe(first())
-    ]).subscribe(([ languages, config ]) => {
+    ]).subscribe(([ plans, languages, config ]) => {
+      console.log('ICE plans', plans)
+      if (plans['success']) {
+        this.havePremium = true
+        this.storagePlans = plans['plans']
+        // this.storagePlans.forEach((plan: any, index: number) => {
+        //   this.storagePlans[index].dailyQuotaHumanReadable = this.bytesPipe.transform(plan.dailyQuota)
+        // })
+      } else {
+        this.havePremium = false
+      }
       this.languageItems = [ { label: this.i18n('Unknown language'), value: '_unknown' } ]
       this.languageItems = this.languageItems
                                .concat(languages.map(l => ({ label: l.label, value: l.id })))
@@ -81,6 +104,19 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
   ngOnDestroy () {
     this.formValuesWatcher?.unsubscribe()
+  }
+
+  getPlans () {
+    return this.authHttp.get(MyAccountStorageSettingsComponent.GET_PLANS_URL)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  havePremiumStorage () {
+    return this.havePremium
+  }
+
+  getHRBytes (num: any) {
+    return this.bytesPipe.transform(parseInt(num, 10), 0)
   }
 
   updateDetails (onlyKeys?: string[]) {

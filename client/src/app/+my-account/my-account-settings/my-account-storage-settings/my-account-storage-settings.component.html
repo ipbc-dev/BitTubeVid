@@ -9,21 +9,23 @@
         </ng-template>
       </my-help>
   
-      <div class="peertube-select-container">
+      <div *ngIf="havePremiumStorage()" class="peertube-select-container">
         <select id="storagePlan" formControlName="storagePlan" class="form-control">
-          <!-- <option i18n value="undefined" disabled>Policy for sensitive videos</option>
-          <option i18n value="do_not_list">Do not list</option>
-          <option i18n value="blur">Blur thumbnails</option>
-          <option i18n value="display">Display</option> -->
-          <!-- <option value="50">5GB daily, 50GB total</option> THIS IS THE DEFAULT, NOT NEEDED -->
-          <option value="100">10GB daily, 100GB total</option>
+          <option value="instance-default">Instance default</option>
+          <option *ngFor="let plan of storagePlans" value="plan.id">{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's</option>
+
+          <!-- <option value="100">10GB daily, 100GB total</option>
           <option value="250">25GB daily, 250GB total</option>
           <option value="500">50GB daily, 500GB total</option>
           <option value="1024">100GB daily, 1TB total</option>
           <option value="2560">250GB daily, 2.5TB total</option>
-          <option value="5120">500GB daily, 5TB total</option>
+          <option value="5120">500GB daily, 5TB total</option> -->
         </select>
       </div>
+      <div *ngIf="!havePremiumStorage()" class="form-group col-12 col-lg-4 col-xl-3">
+        <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->
+        <div i18n class="account-title">Sorry, this instance have no premium storage plans yet.</div>
+      </div> <!-- storage settings grid END -->
     </div>
   
     <!-- <div class="form-group form-group-select">
