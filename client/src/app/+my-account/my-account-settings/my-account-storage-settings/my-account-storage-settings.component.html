@@ -12,7 +12,7 @@
       <div *ngIf="havePremiumStorage()" class="peertube-select-container">
         <select id="storagePlan" formControlName="storagePlan" class="form-control">
           <option value="instance-default">Instance default</option>
-          <option *ngFor="let plan of storagePlans" value="plan.id">{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's</option>
+          <option *ngFor="let plan of storagePlans" value="plan.id">{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month</option>
 
           <!-- <option value="100">10GB daily, 100GB total</option>
           <option value="250">25GB daily, 250GB total</option>

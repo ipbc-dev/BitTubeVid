@@ -38,6 +38,7 @@ import { VideoPlaylistModel } from '../models/video/video-playlist'
 import { VideoPlaylistElementModel } from '../models/video/video-playlist-element'
 import { ThumbnailModel } from '../models/video/thumbnail'
 import { PremiumStoragePlanModel } from '../models/premium-storage-plan'
+import { userPremiumStoragePaymentModel } from '../models/user-premium-storage-payments'
 import { PluginModel } from '../models/server/plugin'
 import { QueryTypes, Transaction } from 'sequelize'
 
@@ -111,6 +112,7 @@ async function initDatabaseModels (silent: boolean) {
     VideoPlaylistElementModel,
     ThumbnailModel,
     PremiumStoragePlanModel,
+    userPremiumStoragePaymentModel,
     PluginModel
   ])
 
