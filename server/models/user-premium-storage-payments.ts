@@ -36,4 +36,24 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   active!: number;
 
+  static async getUserPayments (userId: number) {
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId } })
+    return paymentsResponse
+  }
+
+  static async getUserActivePayment (userId: number) {
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId, active: true } })
+    return paymentsResponse
+  }
+
+  static async getAllActivePayments () {
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { active: true } })
+    return paymentsResponse
+  }
+
+  static async deactivateUserPayment (id: number) {
+    const paymentsResponse = await userPremiumStoragePaymentModel.update({ active: false }, { where: { id: id } })
+    return paymentsResponse
+  }
+
 }

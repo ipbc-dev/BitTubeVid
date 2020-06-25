@@ -23,8 +23,7 @@ import { BytesPipe } from 'ngx-pipes'
   styleUrls: ['./my-account-storage-settings.component.scss']
 })
 export class MyAccountStorageSettingsComponent extends FormReactive implements OnInit, OnDestroy {
-  static GET_PLANS_URL = environment.apiUrl + '/api/v1/premium-storage/plans'
-  static GET_MY_PLAN_URL = environment.apiUrl + '/api/v1/premium-storage/me'
+  static GET_PREMIUM_STORAGE_API_URL = environment.apiUrl + '/api/v1/premium-storage/'
   @Input() user: User = null
   @Input() reactiveUpdate = false
   @Input() notifyOnUpdate = true
@@ -107,7 +106,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   getPlans () {
-    return this.authHttp.get(MyAccountStorageSettingsComponent.GET_PLANS_URL)
+    return this.authHttp.get(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'plans')
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 

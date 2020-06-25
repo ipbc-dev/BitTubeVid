@@ -3,6 +3,9 @@ import {
   asyncMiddleware,
   authenticate
 } from '../../middlewares'
+import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
+import { UserRight } from '@server/../shared'
+import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
 // import { UserModel } from '../../models/account/user'
@@ -15,7 +18,23 @@ premiumStorageRouter.get('/plans',
   asyncMiddleware(getPlans)
 )
 
-premiumStorageRouter.post('/payment',
+premiumStorageRouter.get('/get-user-active-payment',
+  authenticate,
+  asyncMiddleware(getUserActivePayment)
+)
+
+premiumStorageRouter.get('/get-user-payments',
+  authenticate,
+  asyncMiddleware(getUserPayments)
+)
+
+premiumStorageRouter.get('/get-all-active-payments',
+  authenticate,
+  ensureUserHasRight(UserRight.ALL),
+  asyncMiddleware(getAllActivePayments)
+)
+
+premiumStorageRouter.post('/plan-payment',
   authenticate,
   asyncMiddleware(userPayPlan)
 )
@@ -49,6 +68,56 @@ async function getPlansInfo () {
     return { success: true, planIdsArray: planIds, data: plansResponse }
   } catch (err) {
     return { success: false, error: err.message }
+  }
+}
+
+
+async function getUserPayments (req: express.Request, res: express.Response) {
+  try {
+    const user = res.locals.oauth.token.User
+    const userId = user.Account.id
+    const paymentsResult = await userPremiumStoragePaymentModel.getUserPayments(userId)
+    const paymentsResponse = paymentsResult.map(payment => payment.toJSON())
+    if (paymentsResponse !== undefined && paymentsResponse !== null) {
+      return res.json({ success: true, data: paymentsResponse })
+    } else {
+      throw new Error('Something went wrong getting getUserPayments!')
+    }
+  } catch (err) {
+    return res.json({ success: false, error: err.message })
+  }
+}
+
+async function getUserActivePayment (req: express.Request, res: express.Response) {
+  try {
+    const user = res.locals.oauth.token.User
+    const userId = user.Account.id
+    const paymentResult = await userPremiumStoragePaymentModel.getUserActivePayment(userId)
+    const paymentResponse = paymentResult.map(payment => payment.toJSON())
+    if (paymentResponse !== undefined && paymentResponse !== null) {
+      return res.json({ success: true, data: paymentResponse })
+    } else {
+      throw new Error('Something went wrong getting getUserActivePayment!')
+    }
+  } catch (err) {
+    return res.json({ success: false, error: err.message })
+  }
+}
+
+async function getAllActivePayments (req: express.Request, res: express.Response) {
+  try {
+    const user = res.locals.oauth.token.User
+    console.log(user)
+    /* TO-DO: check if user is root or peertube? */
+    const paymentResult = await userPremiumStoragePaymentModel.getAllActivePayments()
+    const paymentResponse = paymentResult.map(payment => payment.toJSON())
+    if (paymentResponse !== undefined && paymentResponse !== null) {
+      return res.json({ success: true, data: paymentResponse })
+    } else {
+      throw new Error('Something went wrong getting getAllActivePayments!')
+    }
+  } catch (err) {
+    return res.json({ success: false, error: err.message })
   }
 }
 
@@ -99,13 +168,13 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
     userToUpdate.premiumStorageActive = true
 
-    const saveUserResult = await userToUpdate.save()
-    console.log('saveUserResult is: ', saveUserResult)
+    const updateUserResult = await userToUpdate.save()
+    // console.log('saveUserResult is: ', saveUserResult)
     // Destroy user token to refresh rights (maybe needed?)
     // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
     // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
 
-    if (saveUserResult === undefined && saveUserResult === null) {
+    if (updateUserResult === undefined && updateUserResult === null) {
       throw new Error('Something went wrong updating user quota and dailyQuota')
     }
     return res.json({ success: true, data: paymentResponse })
