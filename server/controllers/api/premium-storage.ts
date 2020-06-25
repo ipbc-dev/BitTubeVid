@@ -5,6 +5,9 @@ import {
 } from '../../middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
+// import { UserModel } from '../../models/account/user'
+// import { updateUser } from '@shared/extra-utils/users/users'
+import { deleteUserToken } from 'server/lib/oauth-model'
 
 const premiumStorageRouter = express.Router()
 
@@ -51,8 +54,8 @@ async function getPlansInfo () {
 
 async function userPayPlan (req: express.Request, res: express.Response) {
   try {
-    const user = res.locals.oauth.token.User
-    const userId = user.Account.id
+    const userToUpdate = res.locals.oauth.token.User
+    const userId = userToUpdate.Account.id
     const body = req.body
     const plansInfo = await getPlansInfo()
     if (plansInfo.success === false) {
@@ -67,7 +70,7 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     if (chosenPlan === null) {
       throw new Error('Your chosen plan does not match any plan in our DataBase')
     }
-    /* Checking POST body variables */
+    /* Checking POST body variables against saved plans */
     if (body.planId === undefined || typeof body.planId !== 'number' || !(body.planId in plansInfo.planIdsArray)) {
       throw new Error('Undefined or incorrect planId')
     }
@@ -78,7 +81,6 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     if (body.duration === undefined || typeof body.duration !== 'number' || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
       throw new Error('Undefined or incorrect duration')
     }
-    /* TO-DO: Validate payment information with plan info */
 
     /* Adding payment record to DB */
     const paymentResult = await userPremiumStoragePaymentModel.create(
@@ -91,9 +93,23 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         duration: body.duration
       })
     const paymentResponse = paymentResult.toJSON()
-    /* TO-DO: set user Quota && dailyQuota in user table */
-    console.log(paymentResponse)
+
+    /* Set user Quota && dailyQuota in user table */
+    userToUpdate.videoQuota = chosenPlan.quota
+    userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
+    userToUpdate.premiumStorageActive = true
+
+    const saveUserResult = await userToUpdate.save()
+    console.log('saveUserResult is: ', saveUserResult)
+    // Destroy user token to refresh rights (maybe needed?)
+    // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
+    // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
+
+    if (saveUserResult === undefined && saveUserResult === null) {
+      throw new Error('Something went wrong updating user quota and dailyQuota')
+    }
     return res.json({ success: true, data: paymentResponse })
+
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }

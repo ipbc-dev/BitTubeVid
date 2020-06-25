@@ -56,6 +56,7 @@ export class User implements UserServerModel {
   videoAbusesAcceptedCount?: number
   videoAbusesCreatedCount?: number
   videoCommentsCount?: number
+  premiumStorageActive: boolean
 
   theme: string
 
@@ -93,6 +94,7 @@ export class User implements UserServerModel {
     this.videoAbusesAcceptedCount = hash.videoAbusesAcceptedCount
     this.videoAbusesCreatedCount = hash.videoAbusesCreatedCount
     this.videoCommentsCount = hash.videoCommentsCount
+    this.premiumStorageActive = hash.premiumStorageActive
 
     this.nsfwPolicy = hash.nsfwPolicy
     this.webTorrentEnabled = hash.webTorrentEnabled
