@@ -7,7 +7,7 @@ const run = async () => {
     headers: {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer bdd4489920b0023a1e5122d8366a9d4b80261c0b'
+      'Authorization': 'Bearer c2b052c7ff2734df84113114a3cb244229b0862c'
     },
     body: JSON.stringify({
       planId: 3,
