@@ -31,6 +31,12 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   priceTube!: number;
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
+  quota!: number;
+
+  @Column({ type: DataType.DECIMAL(32), allowNull: false })
+  dailyQuota!: number;
+
+  @Column({ type: DataType.DECIMAL(32), allowNull: false })
   duration!: number;
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })

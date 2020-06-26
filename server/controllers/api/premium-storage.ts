@@ -3,14 +3,14 @@ import {
   asyncMiddleware,
   authenticate
 } from '../../middlewares'
-import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
+// import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
 import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
-import { deleteUserToken } from 'server/lib/oauth-model'
+// import { deleteUserToken } from 'server/lib/oauth-model'
 
 const premiumStorageRouter = express.Router()
 
@@ -159,7 +159,9 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         dateFrom: Date.now(),
         dateTo: Date.now() + body.duration,
         priceTube: body.priceTube,
-        duration: body.duration
+        duration: body.duration,
+        quota: chosenPlan.quota,
+        dailyQuota: chosenPlan.dailyQuota
       })
     const paymentResponse = paymentResult.toJSON()
 

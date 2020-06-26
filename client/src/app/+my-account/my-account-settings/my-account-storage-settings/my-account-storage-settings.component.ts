@@ -35,6 +35,9 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   formValuesWatcher: Subscription
   configCopy: any
   havePremium: boolean
+  userHavePremium: boolean
+  userPremiumPlan: number
+  dropdownSelectedPlan: number
   storagePlans: any
   private bytesPipe: BytesPipe
 
@@ -61,17 +64,27 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
     forkJoin([
       this.getPlans(),
+      this.getMyPlan(),
       this.serverService.getVideoLanguages(),
       this.serverService.getConfig(),
       this.userInformationLoaded.pipe(first())
-    ]).subscribe(([ plans, languages, config ]) => {
-      console.log('ICE plans', plans)
-      if (plans['success']) {
+    ]).subscribe(([ plans, myPlan, languages, config ]) => {
+      console.log('ICEICE plans', plans)
+      console.log('ICEICE myPlan', myPlan)
+      /* Check User storage plan */
+      if (myPlan['success'] && myPlan['data'].length > 0) {
+        this.userHavePremium = true
+        this.userPremiumPlan = myPlan['data'][0].id
+        this.form.value['storagePlan'] = this.userPremiumPlan
+      } else {
+        this.userHavePremium = false
+        this.userPremiumPlan = -1
+      }
+      this.dropdownSelectedPlan = this.userPremiumPlan
+      /* Check instance premium storage plans and disable the ones lower than user actual plan */
+      if (plans['success'] && plans['plans'].length > 0) {
         this.havePremium = true
         this.storagePlans = plans['plans']
-        // this.storagePlans.forEach((plan: any, index: number) => {
-        //   this.storagePlans[index].dailyQuotaHumanReadable = this.bytesPipe.transform(plan.dailyQuota)
-        // })
       } else {
         this.havePremium = false
       }
@@ -87,7 +100,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       this.configCopy = config
 
       this.form.patchValue({
-        storagePlan: '50' /* HardCoded by the moment */
+        storagePlan: '-1' /* HardCoded by the moment */
       })
 
       if (this.reactiveUpdate) {
@@ -95,7 +108,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         this.formValuesWatcher = this.form.valueChanges.subscribe((formValue: any) => {
           const updatedKey = Object.keys(formValue).find(k => formValue[k] !== oldForm[k])
           oldForm = { ...this.form.value }
-          this.updateDetails([updatedKey])
+          // this.updateDetails([updatedKey])
         })
       }
     })
@@ -110,8 +123,25 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
+  getMyPlan () {
+    return this.authHttp.get(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'get-user-active-payment')
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
   havePremiumStorage () {
     return this.havePremium
+  }
+
+  userHavePremiumStorage () {
+    return this.userHavePremium
+  }
+
+  getUserPremiumPlan () {
+    return this.userPremiumPlan
+  }
+
+  isOptionDisabled (optionId: number) {
+    return optionId < this.userPremiumPlan ? 'disabled' : ''
   }
 
   getHRBytes (num: any) {
@@ -119,54 +149,34 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   updateDetails (onlyKeys?: string[]) {
-    console.log('ICEICE printing userInformationLoaded')
-    console.log(this.userInformationLoaded)
-    console.log('ICEICE printing userQuotaObject')
-    console.log(this.userQuotaObject)
-    console.log('ICEICE printing config.instance')
-    console.log(this.configCopy)
-    // const nsfwPolicy = this.form.value[ 'nsfwPolicy' ]
-    // const webTorrentEnabled = this.form.value['webTorrentEnabled']
-    // const autoPlayVideo = this.form.value['autoPlayVideo']
-    // const autoPlayNextVideo = this.form.value['autoPlayNextVideo']
+    // console.log('ICEICE printing userInformationLoaded')
+    // console.log(this.userInformationLoaded)
+    // console.log('ICEICE printing userQuotaObject')
+    // console.log(this.userQuotaObject)
+    // console.log('ICEICE printing config.instance')
+    // console.log(this.configCopy)
+    const paymentConfirmed = true /* Testing purposes */
+    const chosenPlanId = parseInt(this.form.value['storagePlan'], 10)
+    let chosenPlanDuration = null
+    let chosenPlanPrice = null
 
-    // let videoLanguages: string[] = this.form.value['videoLanguages']
-    // if (Array.isArray(videoLanguages)) {
-    //   if (videoLanguages.length === this.languageItems.length) {
-    //     videoLanguages = null // null means "All"
-    //   } else if (videoLanguages.length > 20) {
-    //     this.notifier.error('Too many languages are enabled. Please enable them all or stay below 20 enabled languages.')
-    //     return
-    //   } else if (videoLanguages.length === 0) {
-    //     this.notifier.error('You need to enabled at least 1 video language.')
-    //     return
-    //   }
-    // }
+    console.log('Chosen plan is: ', chosenPlanId)
+    this.storagePlans.forEach((plan: any) => {
+      if (plan.id === chosenPlanId) {
+        chosenPlanDuration = plan.duration
+        chosenPlanPrice = plan.price
+      }
+    })
+    if (paymentConfirmed && chosenPlanId > -1 && chosenPlanDuration !== null && chosenPlanPrice !== null) {
+      const postResponse = this.authHttp.post(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'plan-payment', {
+        planId: chosenPlanId,
+        priceTube: chosenPlanPrice,
+        duration: chosenPlanDuration
+      })
+      .pipe(catchError(res => this.restExtractor.handleError(res)))
 
-    // let details: UserUpdateMe = {
-    //   nsfwPolicy,
-    //   webTorrentEnabled,
-    //   autoPlayVideo,
-    //   autoPlayNextVideo,
-    //   videoLanguages
-    // }
-
-    // if (onlyKeys) details = pick(details, onlyKeys)
-
-    // if (this.authService.isLoggedIn()) {
-    //   this.userService.updateMyProfile(details).subscribe(
-    //     () => {
-    //       this.authService.refreshUserInformation()
-
-    //       if (this.notifyOnUpdate) this.notifier.success(this.i18n('Video settings updated.'))
-    //     },
-
-    //     err => this.notifier.error(err.message)
-    //   )
-    // } else {
-    //   this.userService.updateMyAnonymousProfile(details)
-    //   if (this.notifyOnUpdate) this.notifier.success(this.i18n('Display/Video settings updated.'))
-    // }
+      console.log('ICEICE postResponse is: ', postResponse)
+    }
   }
 
   // getDefaultVideoLanguageLabel () {
