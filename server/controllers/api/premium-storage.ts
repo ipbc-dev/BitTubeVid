@@ -8,6 +8,7 @@ import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
+import { logger } from '@server/helpers/logger'
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
 // import { deleteUserToken } from 'server/lib/oauth-model'
@@ -71,7 +72,6 @@ async function getPlansInfo () {
   }
 }
 
-
 async function getUserPayments (req: express.Request, res: express.Response) {
   try {
     const user = res.locals.oauth.token.User
@@ -132,22 +132,24 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     }
     let chosenPlan = null
     for (var i = 0; i < plansInfo.data.length; i++) {
+      const plan = plansInfo.data[i]
+      logger.info(`ICEICE checking plan ${plan}`)
       if (parseInt(plansInfo.data[i]['id']) === parseInt(body.planId)) {
         chosenPlan = plansInfo.data[i]
       }
     }
     if (chosenPlan === null) {
-      throw new Error('Your chosen plan does not match any plan in our DataBase')
+      throw new Error(`This plan does not exist`)
     }
     /* Checking POST body variables against saved plans */
     if (body.planId === undefined || typeof body.planId !== 'number' || !(body.planId in plansInfo.planIdsArray)) {
       throw new Error('Undefined or incorrect planId')
     }
     // eslint-disable-next-line max-len
-    if (body.priceTube === undefined || typeof body.priceTube !== 'number' || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
-      throw new Error('Undefined or incorrect priceTube')
+    if (body.priceTube === undefined || typeof body.priceTube !== 'string' || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
+      throw new Error(`Undefined or incorrect priceTube body:${parseFloat(body.priceTube)}  chosen:${parseFloat(chosenPlan.priceTube)}`)
     }
-    if (body.duration === undefined || typeof body.duration !== 'number' || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
+    if (body.duration === undefined || typeof body.duration !== 'string' || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
       throw new Error('Undefined or incorrect duration')
     }
 
@@ -157,7 +159,7 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         userId: userId,
         planId: body.planId,
         dateFrom: Date.now(),
-        dateTo: Date.now() + body.duration,
+        dateTo: Date.now() + parseInt(body.duration),
         priceTube: body.priceTube,
         duration: body.duration,
         quota: chosenPlan.quota,
@@ -171,7 +173,6 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     userToUpdate.premiumStorageActive = true
 
     const updateUserResult = await userToUpdate.save()
-    // console.log('saveUserResult is: ', saveUserResult)
     // Destroy user token to refresh rights (maybe needed?)
     // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
     // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)

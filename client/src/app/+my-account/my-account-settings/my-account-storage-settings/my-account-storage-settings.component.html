@@ -3,7 +3,10 @@
     <div *ngIf="userHavePremiumStorage()">
       <label i18n for="myStoragePlan">Your actual storage plan</label>
       <div id="myStoragePlan">
-        {{userPremiumPlan}}
+        <my-global-icon iconName="home"></my-global-icon><label for="userPremiumPlanId">Id: </label><div id="userPremiumPlanId" >{{userPremiumPlan.id}}</div>
+        <my-global-icon iconName="folder"></my-global-icon><label for="userPremiumPlanId">dailyQuota: </label><div id="userPremiumPlanId" >{{userPremiumPlan.dailyQuota}}</div>
+        <my-global-icon iconName="cloud-download"></my-global-icon><label for="userPremiumPlanId">Quota: </label><div id="userPremiumPlanId" >{{userPremiumPlan.quota}}</div>
+        <my-global-icon iconName="sparkle"></my-global-icon><label for="userPremiumPlanId">Finalization date: </label><div id="userPremiumPlanId" >{{userPremiumPlan.dateTo}}</div>
       </div>
       <label i18n for="storagePlan">Upgrade your storage plan</label>
       <my-help>
@@ -27,7 +30,7 @@
       </div>
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
-      <select formControlName="storagePlan" id="storagePlan" class="form-control">
+      <select [value] formControlName="storagePlan" id="storagePlan" class="form-control">
         <option value="-1" >Instance default</option>
         <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month</option>
       </select>

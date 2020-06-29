@@ -36,9 +36,10 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   configCopy: any
   havePremium: boolean
   userHavePremium: boolean
-  userPremiumPlan: number
+  userPremiumPlan: any
   dropdownSelectedPlan: number
   storagePlans: any
+  private notifier: Notifier
   private bytesPipe: BytesPipe
 
   constructor (
@@ -74,7 +75,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       /* Check User storage plan */
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
-        this.userPremiumPlan = myPlan['data'][0].id
+        this.userPremiumPlan = myPlan['data'][0]
         this.form.value['storagePlan'] = this.userPremiumPlan
       } else {
         this.userHavePremium = false
@@ -157,26 +158,38 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     // console.log(this.configCopy)
     const paymentConfirmed = true /* Testing purposes */
     const chosenPlanId = parseInt(this.form.value['storagePlan'], 10)
-    let chosenPlanDuration = null
-    let chosenPlanPrice = null
+    let chosenPlanDuration: any
+    let chosenPlanPrice: any
 
     console.log('Chosen plan is: ', chosenPlanId)
     this.storagePlans.forEach((plan: any) => {
       if (plan.id === chosenPlanId) {
         chosenPlanDuration = plan.duration
-        chosenPlanPrice = plan.price
+        chosenPlanPrice = plan.priceTube
       }
     })
-    if (paymentConfirmed && chosenPlanId > -1 && chosenPlanDuration !== null && chosenPlanPrice !== null) {
-      const postResponse = this.authHttp.post(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'plan-payment', {
+    console.log('ICEICE chosenPlanPruice is: ', chosenPlanPrice)
+    if (paymentConfirmed && chosenPlanId > -1 && chosenPlanDuration !== undefined && chosenPlanPrice !== undefined) {
+      const postBody = {
         planId: chosenPlanId,
-        priceTube: chosenPlanPrice,
-        duration: chosenPlanDuration
-      })
-      .pipe(catchError(res => this.restExtractor.handleError(res)))
+        duration: chosenPlanDuration,
+        priceTube: chosenPlanPrice
+      }
+      console.log('ICEICE going to call plan-payment with body: ', postBody)
+      const postResponse = this.paymentPost(postBody)
+        .subscribe(
+          data => {
+            console.log('ICEICE postResponse is: ', data)
+          },
 
-      console.log('ICEICE postResponse is: ', postResponse)
+          err => this.notifier.error(err.message)
+        )
     }
+  }
+
+  paymentPost (body: any) {
+    return this.authHttp.post(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'plan-payment', body)
+    .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
   // getDefaultVideoLanguageLabel () {
