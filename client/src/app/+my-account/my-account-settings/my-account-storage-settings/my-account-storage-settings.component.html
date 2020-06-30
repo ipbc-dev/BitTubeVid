@@ -1,14 +1,18 @@
 <form role="form" (ngSubmit)="updateDetails()" [formGroup]="form">
+  <div class="form-group" *ngIf="userHavePremiumStorage()">
+    <label i18n for="myStoragePlan">Your actual storage plan</label>
+    <div class="form-group" id="myStoragePlan">
+      <!-- <my-global-icon iconName="home"></my-global-icon><span for="userPremiumPlanId">Id: </span><div id="userPremiumPlanId" >{{ userPremiumPlan.id }}</div> -->
+      <div class="storagePadding" id="userPremiumPlanDailyQuota" ><my-global-icon iconName="folder"></my-global-icon><span class="padding-left-10" for="userPremiumPlanDailyQuota">dailyQuota: </span> {{ getHRBytes(userPremiumPlan.dailyQuota) }}</div>
+      <div class="storagePadding" id="userPremiumPlanQuota" ><my-global-icon iconName="cloud-download"></my-global-icon><span class="padding-left-10" for="userPremiumPlanQuota">Quota: </span>{{ getHRBytes(userPremiumPlan.quota) }}</div>
+      <div class="storagePadding" id="userPremiumPlanExpireDate" ><my-global-icon iconName="sparkle"></my-global-icon><span class="padding-left-10" for="userPremiumPlanExpireDate">Finalization date: </span>{{ userPremiumPlan.dateTo }}</div>
+      <!-- <div class="storagePadding" id="userPremiumPlanExtendButton" > <input type="submit" i18n-value value="Extend"> </div> -->
+    </div>
+  </div>
+  
   <div class="form-group form-group-select">
-    <div *ngIf="userHavePremiumStorage()">
-      <label i18n for="myStoragePlan">Your actual storage plan</label>
-      <div id="myStoragePlan">
-        <my-global-icon iconName="home"></my-global-icon><label for="userPremiumPlanId">Id: </label><div id="userPremiumPlanId" >{{userPremiumPlan.id}}</div>
-        <my-global-icon iconName="folder"></my-global-icon><label for="userPremiumPlanId">dailyQuota: </label><div id="userPremiumPlanId" >{{userPremiumPlan.dailyQuota}}</div>
-        <my-global-icon iconName="cloud-download"></my-global-icon><label for="userPremiumPlanId">Quota: </label><div id="userPremiumPlanId" >{{userPremiumPlan.quota}}</div>
-        <my-global-icon iconName="sparkle"></my-global-icon><label for="userPremiumPlanId">Finalization date: </label><div id="userPremiumPlanId" >{{userPremiumPlan.dateTo}}</div>
-      </div>
-      <label i18n for="storagePlan">Upgrade your storage plan</label>
+    <!-- <div *ngIf="userHavePremiumStorage()"> -->
+      <label i18n for="storagePlan">Upgrade/Extend your storage plan</label>
       <my-help>
         <ng-template ptTemplate="customHtml">
           <ng-container i18n>
@@ -16,9 +20,8 @@
           </ng-container>
         </ng-template>
       </my-help>
-    </div>
-
-    <div *ngIf="!userHavePremiumStorage()">
+    <!-- </div> -->
+    <!-- <div *ngIf="!userHavePremiumStorage()">
       <label i18n for="storagePlan">Choose your storage plan</label>
       <my-help>
         <ng-template ptTemplate="customHtml">
@@ -27,11 +30,11 @@
           </ng-container>
         </ng-template>
       </my-help>
-      </div>
+    </div> -->
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
       <select [value] formControlName="storagePlan" id="storagePlan" class="form-control">
-        <option value="-1" >Instance default</option>
+        <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
         <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month</option>
       </select>
     </div>
@@ -40,5 +43,5 @@
       <div i18n class="account-title">Sorry, this instance have no premium storage plans yet.</div>
     </div> <!-- storage settings grid END -->
   </div>
-  <input *ngIf="!reactiveUpdate" type="submit" i18n-value value="Upgrade" [disabled]="!form.valid">
+  <input *ngIf="!reactiveUpdate" type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()">
 </form>

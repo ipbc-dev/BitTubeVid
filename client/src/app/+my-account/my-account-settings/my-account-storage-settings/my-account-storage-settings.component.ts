@@ -57,12 +57,18 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   ngOnInit () {
-    let oldForm: any
-
     this.buildForm({
       storagePlan: null
     })
+    this.startSubscriptions()
+  }
 
+  ngOnDestroy () {
+    this.formValuesWatcher?.unsubscribe()
+  }
+
+  startSubscriptions () {
+    let oldForm: any
     forkJoin([
       this.getPlans(),
       this.getMyPlan(),
@@ -76,10 +82,11 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
         this.userPremiumPlan = myPlan['data'][0]
-        this.form.value['storagePlan'] = this.userPremiumPlan
+        // this.form.value['storagePlan'] = this.userPremiumPlan
       } else {
         this.userHavePremium = false
-        this.userPremiumPlan = -1
+        this.userPremiumPlan = {}
+        this.userPremiumPlan.planId = -1
       }
       this.dropdownSelectedPlan = this.userPremiumPlan
       /* Check instance premium storage plans and disable the ones lower than user actual plan */
@@ -99,9 +106,9 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
       // this.defaultNSFWPolicy = config.instance.defaultNSFWPolicy
       this.configCopy = config
-
+      /* Update form values after check userData */
       this.form.patchValue({
-        storagePlan: '-1' /* HardCoded by the moment */
+        storagePlan: this.userPremiumPlan.planId
       })
 
       if (this.reactiveUpdate) {
@@ -113,10 +120,6 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         })
       }
     })
-  }
-
-  ngOnDestroy () {
-    this.formValuesWatcher?.unsubscribe()
   }
 
   getPlans () {
@@ -137,12 +140,20 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     return this.userHavePremium
   }
 
-  getUserPremiumPlan () {
-    return this.userPremiumPlan
+  getUserPremiumPlanId () {
+    return this.userPremiumPlan ? this.userPremiumPlan.planId : -1
   }
 
   isOptionDisabled (optionId: number) {
-    return optionId < this.userPremiumPlan ? 'disabled' : ''
+    return optionId < this.getUserPremiumPlanId() ? 'disabled' : ''
+  }
+
+  isUpgradeDisabled () {
+    return this.form.value['storagePlan'] === -1
+  }
+
+  getButtonValue () {
+    return this.form.value['storagePlan'] <= this.getUserPremiumPlanId() ? 'Extend' : 'Upgrade'
   }
 
   getHRBytes (num: any) {
@@ -168,7 +179,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         chosenPlanPrice = plan.priceTube
       }
     })
-    console.log('ICEICE chosenPlanPruice is: ', chosenPlanPrice)
+    console.log('ICEICE chosenPlanPrice is: ', chosenPlanPrice)
     if (paymentConfirmed && chosenPlanId > -1 && chosenPlanDuration !== undefined && chosenPlanPrice !== undefined) {
       const postBody = {
         planId: chosenPlanId,
@@ -178,8 +189,14 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       console.log('ICEICE going to call plan-payment with body: ', postBody)
       const postResponse = this.paymentPost(postBody)
         .subscribe(
-          data => {
-            console.log('ICEICE postResponse is: ', data)
+          resp => {
+            console.log('ICEICE postResponse is: ', resp)
+            // this.startSubscriptions()
+            if (resp['success'] && resp['data'].length > 0) {
+              this.userHavePremium = true
+              this.userPremiumPlan = resp['data']
+              this.form.value['storagePlan'] = this.userPremiumPlan.planId
+            }
           },
 
           err => this.notifier.error(err.message)

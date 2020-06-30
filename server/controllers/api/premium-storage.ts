@@ -134,8 +134,8 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     for (var i = 0; i < plansInfo.data.length; i++) {
       const plan = plansInfo.data[i]
       logger.info(`ICEICE checking plan ${plan}`)
-      if (parseInt(plansInfo.data[i]['id']) === parseInt(body.planId)) {
-        chosenPlan = plansInfo.data[i]
+      if (parseInt(plan['id']) === parseInt(body.planId)) {
+        chosenPlan = plan
       }
     }
     if (chosenPlan === null) {
@@ -153,9 +153,23 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       throw new Error('Undefined or incorrect duration')
     }
 
-    /* Adding payment record to DB */
-    const paymentResult = await userPremiumStoragePaymentModel.create(
-      {
+    /* TO-DO: Check user actual plan, if it match this plan, is a plan extension */
+    const userActualPlanResp = await userPremiumStoragePaymentModel.getUserActivePayment(userId)
+    const userActualPlan = userActualPlanResp.map(plan => plan.toJSON())
+    let createData = {}
+    if (userActualPlan.length > 0) {
+      createData = {
+        userId: userId,
+        planId: body.planId,
+        dateFrom: Date.now(),
+        dateTo: userActualPlan[userActualPlan.length - 1]['dateTo'] + parseInt(body.duration),
+        priceTube: body.priceTube,
+        duration: body.duration,
+        quota: chosenPlan.quota,
+        dailyQuota: chosenPlan.dailyQuota
+      }
+    } else {
+      createData = {
         userId: userId,
         planId: body.planId,
         dateFrom: Date.now(),
@@ -164,7 +178,10 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         duration: body.duration,
         quota: chosenPlan.quota,
         dailyQuota: chosenPlan.dailyQuota
-      })
+      }
+    }
+    /* Adding payment record to DB */
+    const paymentResult = await userPremiumStoragePaymentModel.create(createData)
     const paymentResponse = paymentResult.toJSON()
 
     /* Set user Quota && dailyQuota in user table */
