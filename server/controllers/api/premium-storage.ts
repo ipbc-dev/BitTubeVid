@@ -142,33 +142,36 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       throw new Error(`This plan does not exist`)
     }
     /* Checking POST body variables against saved plans */
-    if (body.planId === undefined || typeof body.planId !== 'number' || !(body.planId in plansInfo.planIdsArray)) {
+    if (body.planId === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || !(body.planId in plansInfo.planIdsArray)) {
       throw new Error('Undefined or incorrect planId')
     }
     // eslint-disable-next-line max-len
-    if (body.priceTube === undefined || typeof body.priceTube !== 'string' || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
+    if (body.priceTube === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
       throw new Error(`Undefined or incorrect priceTube body:${parseFloat(body.priceTube)}  chosen:${parseFloat(chosenPlan.priceTube)}`)
     }
-    if (body.duration === undefined || typeof body.duration !== 'string' || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
+    if (body.duration === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
       throw new Error('Undefined or incorrect duration')
     }
 
-    /* TO-DO: Check user actual plan, if it match this plan, is a plan extension */
+    /* TO-DO: Set active = false after in previous plan */
     const userActualPlanResp = await userPremiumStoragePaymentModel.getUserActivePayment(userId)
     const userActualPlan = userActualPlanResp.map(plan => plan.toJSON())
     let createData = {}
+    let extended = true
     if (userActualPlan.length > 0) {
+      const prevExpDate = userActualPlan[userActualPlan.length - 1]['dateTo']
       createData = {
         userId: userId,
         planId: body.planId,
         dateFrom: Date.now(),
-        dateTo: userActualPlan[userActualPlan.length - 1]['dateTo'] + parseInt(body.duration),
+        dateTo: prevExpDate + parseInt(body.duration),
         priceTube: body.priceTube,
         duration: body.duration,
         quota: chosenPlan.quota,
         dailyQuota: chosenPlan.dailyQuota
       }
     } else {
+      extended = false
       createData = {
         userId: userId,
         planId: body.planId,
@@ -197,7 +200,7 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     if (updateUserResult === undefined && updateUserResult === null) {
       throw new Error('Something went wrong updating user quota and dailyQuota')
     }
-    return res.json({ success: true, data: paymentResponse })
+    return res.json({ success: true, extended: extended, data: paymentResponse })
 
   } catch (err) {
     return res.json({ success: false, error: err.message })

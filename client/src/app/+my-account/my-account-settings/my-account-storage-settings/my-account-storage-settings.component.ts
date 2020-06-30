@@ -81,7 +81,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       /* Check User storage plan */
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
-        this.userPremiumPlan = myPlan['data'][0]
+        this.userPremiumPlan = myPlan['data'][myPlan['data'].length - 1]
         // this.form.value['storagePlan'] = this.userPremiumPlan
       } else {
         this.userHavePremium = false
@@ -191,11 +191,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         .subscribe(
           resp => {
             console.log('ICEICE postResponse is: ', resp)
-            // this.startSubscriptions()
-            if (resp['success'] && resp['data'].length > 0) {
-              this.userHavePremium = true
-              this.userPremiumPlan = resp['data']
-              this.form.value['storagePlan'] = this.userPremiumPlan.planId
+            if (resp['success'] && resp['data'] && resp['data'].active === true) {
+              this.startSubscriptions()
             }
           },
 
