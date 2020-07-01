@@ -15,7 +15,6 @@ import { first, catchError } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
 import { forEach } from 'lodash-es'
 import { BytesPipe } from 'ngx-pipes'
-// import { pick } from 'lodash-es'
 
 @Component({
   selector: 'my-account-storage-settings',
@@ -149,7 +148,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   isUpgradeDisabled () {
-    return this.form.value['storagePlan'] === -1
+    return parseInt(this.form.value['storagePlan'], 10) === -1
   }
 
   getButtonValue () {
@@ -158,6 +157,17 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
   getHRBytes (num: any) {
     return this.bytesPipe.transform(parseInt(num, 10), 0)
+  }
+
+  getFormattedDate (date: any) {
+    const aux = new Date(date)
+    return aux.toLocaleDateString()
+  }
+
+  async formatDate (date: any, formatStyle: any, locale: string) {
+    // return formatWithOptions({date: date,formatStyle: formatStyle,locale: {
+    //   locale: getLocale(locale)
+    // }})
   }
 
   updateDetails (onlyKeys?: string[]) {

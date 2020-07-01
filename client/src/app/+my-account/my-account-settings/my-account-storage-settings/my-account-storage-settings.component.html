@@ -3,9 +3,9 @@
     <label i18n for="myStoragePlan">Your actual storage plan</label>
     <div class="form-group" id="myStoragePlan">
       <!-- <my-global-icon iconName="home"></my-global-icon><span for="userPremiumPlanId">Id: </span><div id="userPremiumPlanId" >{{ userPremiumPlan.id }}</div> -->
-      <div class="storagePadding" id="userPremiumPlanDailyQuota" ><my-global-icon iconName="folder"></my-global-icon><span class="padding-left-10" for="userPremiumPlanDailyQuota">dailyQuota: </span> {{ getHRBytes(userPremiumPlan.dailyQuota) }}</div>
-      <div class="storagePadding" id="userPremiumPlanQuota" ><my-global-icon iconName="cloud-download"></my-global-icon><span class="padding-left-10" for="userPremiumPlanQuota">Quota: </span>{{ getHRBytes(userPremiumPlan.quota) }}</div>
-      <div class="storagePadding" id="userPremiumPlanExpireDate" ><my-global-icon iconName="sparkle"></my-global-icon><span class="padding-left-10" for="userPremiumPlanExpireDate">Finalization date: </span>{{ userPremiumPlan.dateTo }}</div>
+      <div class="storagePadding" id="userPremiumPlanDailyQuota" ><my-global-icon iconName="folder"></my-global-icon><span class="padding-left-10" for="userPremiumPlanDailyQuota">Daily Quota: </span> {{ getHRBytes(userPremiumPlan.dailyQuota) }}</div>
+      <div class="storagePadding" id="userPremiumPlanQuota" ><my-global-icon iconName="cloud-download"></my-global-icon><span class="padding-left-10" for="userPremiumPlanQuota">Total Quota: </span>{{ getHRBytes(userPremiumPlan.quota) }}</div>
+      <div class="storagePadding" id="userPremiumPlanExpireDate" ><my-global-icon iconName="sparkle"></my-global-icon><span class="padding-left-10" for="userPremiumPlanExpireDate">Expiration date: </span>{{ getFormattedDate(userPremiumPlan.dateTo) }}</div>
       <!-- <div class="storagePadding" id="userPremiumPlanExtendButton" > <input type="submit" i18n-value value="Extend"> </div> -->
     </div>
   </div>

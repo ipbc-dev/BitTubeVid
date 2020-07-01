@@ -62,11 +62,7 @@ async function getPlansInfo () {
   try {
     const plansResult = await PremiumStoragePlanModel.findAll()
     const plansResponse = plansResult.map(plan => plan.toJSON())
-    const planIds = []
-    plansResponse.forEach(element => {
-      planIds.push(element['id'])
-    })
-    return { success: true, planIdsArray: planIds, data: plansResponse }
+    return { success: true, data: plansResponse }
   } catch (err) {
     return { success: false, error: err.message }
   }
@@ -131,19 +127,19 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       throw new Error('There are not premium plans that you can pay in this instance')
     }
     let chosenPlan = null
+    /* Looking for the chosen Plan data */
     for (var i = 0; i < plansInfo.data.length; i++) {
       const plan = plansInfo.data[i]
-      logger.info(`ICEICE checking plan ${plan}`)
       if (parseInt(plan['id']) === parseInt(body.planId)) {
         chosenPlan = plan
       }
     }
+    /* Checking POST body variables against saved plans */
     if (chosenPlan === null) {
       throw new Error(`This plan does not exist`)
     }
-    /* Checking POST body variables against saved plans */
-    if (body.planId === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || !(body.planId in plansInfo.planIdsArray)) {
-      throw new Error('Undefined or incorrect planId')
+    if (body.planId === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string')) {
+      throw new Error(`Undefined or incorrect planId`)
     }
     // eslint-disable-next-line max-len
     if (body.priceTube === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
@@ -152,14 +148,14 @@ async function userPayPlan (req: express.Request, res: express.Response) {
     if (body.duration === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
       throw new Error('Undefined or incorrect duration')
     }
-
-    /* TO-DO: Set active = false after in previous plan */
+    /* Checking previous plans and creating post data */
     const userActualPlanResp = await userPremiumStoragePaymentModel.getUserActivePayment(userId)
-    const userActualPlan = userActualPlanResp.map(plan => plan.toJSON())
+    const userActualPlans = userActualPlanResp.map(plan => plan.toJSON())
+    const userActualPlan = userActualPlans.length > 0 ? userActualPlans[userActualPlans.length - 1] : null
     let createData = {}
     let extended = true
-    if (userActualPlan.length > 0) {
-      const prevExpDate = userActualPlan[userActualPlan.length - 1]['dateTo']
+    if (userActualPlan !== null) {
+      const prevExpDate = Date.parse(userActualPlan['dateTo'])
       createData = {
         userId: userId,
         planId: body.planId,
@@ -169,6 +165,9 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         duration: body.duration,
         quota: chosenPlan.quota,
         dailyQuota: chosenPlan.dailyQuota
+      }
+      if (userActualPlan['planId'] > body.planId) {
+        throw new Error("It's not possible to downgrade a plan before It's finished")
       }
     } else {
       extended = false
@@ -199,6 +198,14 @@ async function userPayPlan (req: express.Request, res: express.Response) {
 
     if (updateUserResult === undefined && updateUserResult === null) {
       throw new Error('Something went wrong updating user quota and dailyQuota')
+    } else {
+      /* Deactivate previous plan after insert the new one */
+      if (userActualPlan !== null) {
+        const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
+        if (deactivatePreviousPlan[0] !== 1) {
+          return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
+        }
+      }
     }
     return res.json({ success: true, extended: extended, data: paymentResponse })
 
