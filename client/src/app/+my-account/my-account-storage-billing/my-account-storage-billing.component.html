@@ -2,6 +2,34 @@
   <div i18n class="form-sub-title">Storage Billing Information</div>
 </div>
 
+<p-table [value]="billingInformation" >
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Bill Id</th>
+      <th>Plan Id</th>
+      <th>Beginning day</th>
+      <th>Expiration date</th>
+      <th>Price (Tube's)</th>
+      <th>Daily Quota</th>
+      <th>Total Quota</th>
+      <th>LifeSpan</th>
+      <th>Active</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-bill>
+    <tr>
+      <th>{{bill.id}}</th>
+      <th>{{bill.planId}}</th>
+      <th>{{getFormattedDate(bill.dateFrom)}}</th>
+      <th>{{getFormattedDate(bill.dateTo)}}</th>
+      <th>{{bill.priceTube}}</th>
+      <th>{{getHRBytes(bill.dailyQuota)}}</th>
+      <th>{{getHRBytes(bill.quota)}}</th>
+      <th>{{getHRTime(bill.duration)}}</th>
+      <th>{{bill.active}}</th>
+    </tr>
+  </ng-template>
+</p-table>
 <!-- <p-table
   [value]="blockedAccounts" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage"
   [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)"
@@ -11,7 +39,7 @@
     <tr>
       <th i18n>Account</th>
       <th i18n pSortableColumn="createdAt">Muted at <p-sortIcon field="createdAt"></p-sortIcon></th>
-      <th></th> // column for action buttons 
+      <th></th>
     </tr>
   </ng-template>
 

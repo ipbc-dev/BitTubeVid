@@ -1,59 +1,100 @@
 import { Component, OnInit } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
 import { Notifier } from '@app/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { RestPagination, RestTable } from '@app/shared'
 import { SortMeta } from 'primeng/api'
 import { AccountBlock, BlocklistService } from '@app/shared/blocklist'
+import { environment } from '../../../environments/environment'
+import { RestExtractor } from '../../shared'
+import { forkJoin, Observable, Subject, Subscription } from 'rxjs'
+import { catchError } from 'rxjs/operators'
+import { BytesPipe } from 'ngx-pipes'
 
 @Component({
   selector: 'my-account-storage-billing',
   styleUrls: [ './my-account-storage-billing.component.scss' ],
   templateUrl: './my-account-storage-billing.component.html'
 })
-export class MyAccountStorageBillingComponent extends RestTable implements OnInit {
-  blockedAccounts: AccountBlock[] = []
+export class MyAccountStorageBillingComponent implements OnInit {
+  static GET_PREMIUM_STORAGE_API_URL = environment.apiUrl + '/api/v1/premium-storage/'
+  billingInformation: any = []
   totalRecords = 0
+  rowsPerPage = 20
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
+  private bytesPipe: BytesPipe
 
   constructor (
-    private notifier: Notifier,
-    private blocklistService: BlocklistService,
+    // private notifier: Notifier,
+    // private blocklistService: BlocklistService,
+    private authHttp: HttpClient,
+    private restExtractor: RestExtractor,
     private i18n: I18n
   ) {
-    super()
+    // super()
+    this.bytesPipe = new BytesPipe()
   }
 
   ngOnInit () {
-    this.initialize()
+    // this.initialize()
+    this.startSubscriptions()
   }
 
-  getIdentifier () {
-    return 'MyAccountStorageBillingComponent'
+  startSubscriptions () {
+    forkJoin([
+      this.getUserBilling()
+    ]).subscribe(([ billingInfo ]) => {
+      console.log('ICEICE bills', billingInfo)
+      if (billingInfo['success']) {
+        this.billingInformation = billingInfo['billing']
+      }
+    })
   }
 
-  unblockAccount (accountBlock: AccountBlock) {
-    const blockedAccount = accountBlock.blockedAccount
-
-    this.blocklistService.unblockAccountByUser(blockedAccount)
-        .subscribe(
-          () => {
-            this.notifier.success(this.i18n('Account {{nameWithHost}} unmuted.', { nameWithHost: blockedAccount.nameWithHost }))
-
-            this.loadData()
-          }
-        )
+  getUserBilling () {
+    return this.authHttp.get(MyAccountStorageBillingComponent.GET_PREMIUM_STORAGE_API_URL + '/billing-info')
+    .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
-  protected loadData () {
-    return this.blocklistService.getUserAccountBlocklist(this.pagination, this.sort)
-      .subscribe(
-        resultList => {
-          this.blockedAccounts = resultList.data
-          this.totalRecords = resultList.total
-        },
-
-        err => this.notifier.error(err.message)
-      )
+  getFormattedDate (date: any) {
+    const aux = new Date(date)
+    return aux.toLocaleDateString()
   }
+
+  getHRBytes (num: any) {
+    return this.bytesPipe.transform(parseInt(num, 10), 0)
+  }
+
+  getHRTime (timestamp: any) {
+    return `${timestamp / 2678400000} month/s`
+  }
+  // getIdentifier () {
+  //   return 'MyAccountBlocklistComponent'
+  // }
+
+  // unblockAccount (accountBlock: AccountBlock) {
+  //   const blockedAccount = accountBlock.blockedAccount
+
+  //   this.blocklistService.unblockAccountByUser(blockedAccount)
+  //       .subscribe(
+  //         () => {
+  //           this.notifier.success(this.i18n('Account {{nameWithHost}} unmuted.', { nameWithHost: blockedAccount.nameWithHost }))
+
+  //           this.loadData()
+  //         }
+  //       )
+  // }
+
+  // protected loadData () {
+  //   return this.blocklistService.getUserAccountBlocklist(this.pagination, this.sort)
+  //     .subscribe(
+  //       resultList => {
+  //         this.blockedAccounts = resultList.data
+  //         this.totalRecords = resultList.total
+  //       },
+
+  //       err => this.notifier.error(err.message)
+  //     )
+  // }
 }

@@ -48,7 +48,7 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   }
 
   static async getUserActivePayment (userId: number) {
-    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId, active: true } })
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId, active: true }, order: [ 'id', 'DESC' ] }) /* TO-DO: fix sort */
     return paymentsResponse
   }
 

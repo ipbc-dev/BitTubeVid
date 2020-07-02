@@ -1,14 +1,20 @@
 import * as express from 'express'
 import {
   asyncMiddleware,
-  authenticate
+  authenticate,
+  paginationValidator,
+  setDefaultSort,
+  setDefaultPagination
+
 } from '../../middlewares'
 // import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
 import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
-import { logger } from '@server/helpers/logger'
+import { ValidationChain } from 'express-validator'
+import { ContextBuilder } from 'express-validator/src/context-builder'
+// import { logger } from '@server/helpers/logger'
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
 // import { deleteUserToken } from 'server/lib/oauth-model'
@@ -40,13 +46,33 @@ premiumStorageRouter.post('/plan-payment',
   asyncMiddleware(userPayPlan)
 )
 
+premiumStorageRouter.get('/billing-info',
+  authenticate,
+  // paginationValidator,
+  // accountsBlocklistSortValidator,
+  // setDefaultSort,
+  // setDefaultPagination,
+  asyncMiddleware(getUserBilling)
+)
+
 // ---------------------------------------------------------------------------
 
 export {
   premiumStorageRouter
 }
 
-// ---------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+async function getUserBilling (req: express.Request, res: express.Response) {
+  try {
+    const user = res.locals.oauth.token.User
+    const userId = user.Account.id
+    const billingResult = await userPremiumStoragePaymentModel.getUserPayments(userId)
+    const billingResponse = billingResult.map(bill => bill.toJSON())
+    return res.json({ success: true, billing: billingResponse })
+  } catch (err) {
+    return res.json({ success: false, error: err })
+  }
+}
 
 async function getPlans (req: express.Request, res: express.Response) {
   try {

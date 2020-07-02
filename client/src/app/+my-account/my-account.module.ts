@@ -16,6 +16,7 @@ import { MyAccountVideoImportsComponent } from '@app/+my-account/my-account-vide
 import { MyAccountDangerZoneComponent } from '@app/+my-account/my-account-settings/my-account-danger-zone'
 import { MyAccountSubscriptionsComponent } from '@app/+my-account/my-account-subscriptions/my-account-subscriptions.component'
 import { MyAccountBlocklistComponent } from '@app/+my-account/my-account-blocklist/my-account-blocklist.component'
+import { MyAccountStorageBillingComponent } from '@app/+my-account/my-account-storage-billing/my-account-storage-billing.component'
 import { MyAccountServerBlocklistComponent } from '@app/+my-account/my-account-blocklist/my-account-server-blocklist.component'
 import { MyAccountHistoryComponent } from '@app/+my-account/my-account-history/my-account-history.component'
 import { MyAccountNotificationsComponent } from '@app/+my-account/my-account-notifications/my-account-notifications.component'
@@ -39,7 +40,6 @@ import { MyAccountChangeEmailComponent } from '@app/+my-account/my-account-setti
     MyAccountRoutingModule,
     AutoCompleteModule,
     SharedModule,
-    TableModule,
     InputSwitchModule,
     DragDropModule
   ],
@@ -60,6 +60,7 @@ import { MyAccountChangeEmailComponent } from '@app/+my-account/my-account-setti
     MyAccountDangerZoneComponent,
     MyAccountSubscriptionsComponent,
     MyAccountBlocklistComponent,
+    MyAccountStorageBillingComponent,
     MyAccountServerBlocklistComponent,
     MyAccountHistoryComponent,
     MyAccountNotificationsComponent,
