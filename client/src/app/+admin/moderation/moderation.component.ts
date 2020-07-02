@@ -35,4 +35,9 @@ export class ModerationComponent implements OnInit {
   hasServersBlocklistRight () {
     return this.auth.getUser().hasRight(UserRight.MANAGE_SERVERS_BLOCKLIST)
   }
+
+  hasServerPremiumStorage () {
+    /* TO-DO */
+    return true
+  }
 }

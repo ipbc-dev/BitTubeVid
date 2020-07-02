@@ -13,6 +13,7 @@ import { MyAccountServerBlocklistComponent } from '@app/+my-account/my-account-b
 import { MyAccountHistoryComponent } from '@app/+my-account/my-account-history/my-account-history.component'
 import { MyAccountNotificationsComponent } from '@app/+my-account/my-account-notifications/my-account-notifications.component'
 import { MyAccountVideoPlaylistsComponent } from '@app/+my-account/my-account-video-playlists/my-account-video-playlists.component'
+import { MyAccountStorageBillingComponent } from '@app/+my-account/my-account-storage-billing/my-account-storage-billing.component'
 import {
   MyAccountVideoPlaylistCreateComponent
 } from '@app/+my-account/my-account-video-playlists/my-account-video-playlist-create.component'
@@ -132,6 +133,15 @@ const myAccountRoutes: Routes = [
         data: {
           meta: {
             title: 'Muted accounts'
+          }
+        }
+      },
+      {
+        path: 'premium-storage/billing',
+        component: MyAccountStorageBillingComponent,
+        data: {
+          meta: {
+            title: 'Storage billing'
           }
         }
       },

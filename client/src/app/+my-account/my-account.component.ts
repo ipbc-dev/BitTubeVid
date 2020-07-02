@@ -72,6 +72,11 @@ export class MyAccountComponent implements OnInit {
           iconName: 'user'
         },
         {
+          label: this.i18n('Premium storage billing'),
+          routerLink: '/my-account/premium-storage/billing',
+          iconName: 'history'
+        },
+        {
           label: this.i18n('Muted instances'),
           routerLink: '/my-account/blocklist/servers',
           iconName: 'server'
