@@ -1,4 +1,6 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript'
+import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt, DataType } from 'sequelize-typescript'
+import { PremiumStoragePlanModel } from './premium-storage-plan'
+import { UserModel } from './account/user'
 
 @Table({
   tableName: 'userPremiumStoragePayment',
@@ -15,11 +17,35 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
   id!: number;
 
-  @Column({ type: DataType.INTEGER, allowNull: false })
-  userId!: number;
+  // @Column({ type: DataType.INTEGER, allowNull: false })
+  // userId!: number;
 
-  @Column({ type: DataType.INTEGER, allowNull: false })
-  planId!: number;
+  @ForeignKey(() => UserModel)
+  @Column
+  userId: number
+
+  @BelongsTo(() => UserModel, {
+    foreignKey: {
+      allowNull: false
+    },
+    onDelete: 'cascade'
+  })
+  User: UserModel
+
+  // @Column({ type: DataType.INTEGER, allowNull: false })
+  // planId!: number;
+
+  @ForeignKey(() => PremiumStoragePlanModel)
+  @Column
+  planId: number
+
+  @BelongsTo(() => PremiumStoragePlanModel, {
+    foreignKey: {
+      allowNull: false
+    },
+    onDelete: 'CASCADE'
+  })
+  premiumStoragePlan: PremiumStoragePlanModel
 
   @Column({ type: DataType.DATE, allowNull: false })
   dateFrom!: number;
@@ -43,12 +69,22 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   active!: number;
 
   static async getUserPayments (userId: number) {
-    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId } })
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({
+      include: [ {
+        model: PremiumStoragePlanModel.unscoped(),
+        required: true
+      } ],
+      where: { userId: userId },
+      order: [ [ 'id', "DESC" ] ]
+    })
     return paymentsResponse
   }
 
   static async getUserActivePayment (userId: number) {
-    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({ where: { userId: userId, active: true }, order: [ 'id', 'DESC' ] }) /* TO-DO: fix sort */
+    const paymentsResponse = await userPremiumStoragePaymentModel.findAll({
+      where: { userId: userId, active: true },
+      order: [ [ 'id', 'DESC' ] ]
+    })
     return paymentsResponse
   }
 

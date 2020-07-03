@@ -13,7 +13,7 @@ import { forkJoin, Subject, Subscription } from 'rxjs'
 import { SelectItem } from 'primeng/api'
 import { first, catchError } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
-import { forEach } from 'lodash-es'
+import { forEach, now } from 'lodash-es'
 import { BytesPipe } from 'ngx-pipes'
 
 @Component({
@@ -38,7 +38,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   userPremiumPlan: any
   dropdownSelectedPlan: number
   storagePlans: any
-  private notifier: Notifier
+  // private notifier: Notifier
   private bytesPipe: BytesPipe
 
   constructor (
@@ -46,7 +46,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     private authHttp: HttpClient,
     private restExtractor: RestExtractor,
     // private authService: AuthService,
-    // private notifier: Notifier,
+    private notifier: Notifier,
     // private userService: UserService,
     private serverService: ServerService,
     private i18n: I18n
@@ -164,12 +164,6 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     return aux.toLocaleDateString()
   }
 
-  async formatDate (date: any, formatStyle: any, locale: string) {
-    // return formatWithOptions({date: date,formatStyle: formatStyle,locale: {
-    //   locale: getLocale(locale)
-    // }})
-  }
-
   updateDetails (onlyKeys?: string[]) {
     // console.log('ICEICE printing userInformationLoaded')
     // console.log(this.userInformationLoaded)
@@ -177,30 +171,40 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     // console.log(this.userQuotaObject)
     // console.log('ICEICE printing config.instance')
     // console.log(this.configCopy)
-    const paymentConfirmed = true /* Testing purposes */
     const chosenPlanId = parseInt(this.form.value['storagePlan'], 10)
+    let confirmedData = true
     let chosenPlanDuration: any
     let chosenPlanPrice: any
 
-    console.log('Chosen plan is: ', chosenPlanId)
+    // console.log('Chosen plan is: ', chosenPlanId)
     this.storagePlans.forEach((plan: any) => {
       if (plan.id === chosenPlanId) {
         chosenPlanDuration = plan.duration
         chosenPlanPrice = plan.priceTube
       }
     })
-    console.log('ICEICE chosenPlanPrice is: ', chosenPlanPrice)
-    if (paymentConfirmed && chosenPlanId > -1 && chosenPlanDuration !== undefined && chosenPlanPrice !== undefined) {
+    /* Check if user wants to extend more than a year (not allowed) */
+    // tslint:disable-next-line: max-line-length
+    if (this.userHavePremium && this.userPremiumPlan.planId === chosenPlanId && (Date.parse(this.userPremiumPlan.dateTo) + parseInt(chosenPlanDuration, 10) > Date.now() + 31556955999)) {
+      this.notifier.error('You can not extend your plan more than 1 year')
+      confirmedData = false
+    }
+    if (chosenPlanDuration === undefined || chosenPlanPrice === undefined || chosenPlanId <= -1) {
+      this.notifier.error('Something went wrong')
+      confirmedData = false
+    }
+
+    /* TO-DO: Implement tubePay && security */
+    const paymentConfirmed = true /* Testing purposes */
+    if (paymentConfirmed && confirmedData && chosenPlanId > -1 && chosenPlanDuration !== undefined && chosenPlanPrice !== undefined) {
       const postBody = {
         planId: chosenPlanId,
         duration: chosenPlanDuration,
         priceTube: chosenPlanPrice
       }
-      console.log('ICEICE going to call plan-payment with body: ', postBody)
       const postResponse = this.paymentPost(postBody)
         .subscribe(
           resp => {
-            console.log('ICEICE postResponse is: ', resp)
             if (resp['success'] && resp['data'] && resp['data'].active === true) {
               this.startSubscriptions()
             }
