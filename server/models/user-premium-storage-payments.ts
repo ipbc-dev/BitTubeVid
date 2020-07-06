@@ -82,6 +82,10 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
 
   static async getUserActivePayment (userId: number) {
     const paymentsResponse = await userPremiumStoragePaymentModel.findAll({
+      include: [ {
+        model: PremiumStoragePlanModel.unscoped(),
+        required: true
+      } ],
       where: { userId: userId, active: true },
       order: [ [ 'id', 'DESC' ] ]
     })

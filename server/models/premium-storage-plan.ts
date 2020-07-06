@@ -1,4 +1,5 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript'
+import { IntegerDataType } from 'sequelize/types';
 
 @Table({
   tableName: 'premiumStoragePlan',
@@ -31,4 +32,26 @@ export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
   duration!: number;
+
+  static async getPlans () {
+    return await PremiumStoragePlanModel.findAll({
+      order: [ [ 'quota', "ASC" ], [ 'duration', "ASC" ] ]
+    })
+  }
+
+  static async addPlan (name: string, quota: number, dailyQuota: number, duration: number, priceTube: number) {
+    return await PremiumStoragePlanModel.create(
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube })
+  }
+
+  static async modifyPlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, priceTube: number) {
+    return await PremiumStoragePlanModel.update(
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube },
+      { where: { id: id } })
+  }
+
+  static async removePlan (id: number) {
+    return await PremiumStoragePlanModel.destroy(
+      { where: { id: id } })
+  }
 }

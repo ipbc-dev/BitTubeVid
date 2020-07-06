@@ -76,7 +76,7 @@ async function getUserBilling (req: express.Request, res: express.Response) {
 
 async function getPlans (req: express.Request, res: express.Response) {
   try {
-    const plansResult = await PremiumStoragePlanModel.findAll()
+    const plansResult = await PremiumStoragePlanModel.getPlans()
     const plansResponse = plansResult.map(plan => plan.toJSON())
     return res.json({ success: true, plans: plansResponse })
   } catch (err) {
@@ -86,7 +86,7 @@ async function getPlans (req: express.Request, res: express.Response) {
 
 async function getPlansInfo () {
   try {
-    const plansResult = await PremiumStoragePlanModel.findAll()
+    const plansResult = await PremiumStoragePlanModel.getPlans()
     const plansResponse = plansResult.map(plan => plan.toJSON())
     return { success: true, data: plansResponse }
   } catch (err) {
