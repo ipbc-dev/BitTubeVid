@@ -66,7 +66,7 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   duration!: number;
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
-  active!: number;
+  active!: boolean;
 
   static async getUserPayments (userId: number) {
     const paymentsResponse = await userPremiumStoragePaymentModel.findAll({

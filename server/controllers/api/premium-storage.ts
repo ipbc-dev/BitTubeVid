@@ -14,6 +14,8 @@ import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
 import { ValidationChain } from 'express-validator'
 import { ContextBuilder } from 'express-validator/src/context-builder'
+import { INTEGER } from 'sequelize/types'
+import { logger } from '@server/helpers/logger'
 // import { logger } from '@server/helpers/logger'
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
@@ -35,12 +37,6 @@ premiumStorageRouter.get('/get-user-payments',
   asyncMiddleware(getUserPayments)
 )
 
-premiumStorageRouter.get('/get-all-active-payments',
-  authenticate,
-  ensureUserHasRight(UserRight.ALL),
-  asyncMiddleware(getAllActivePayments)
-)
-
 premiumStorageRouter.post('/plan-payment',
   authenticate,
   asyncMiddleware(userPayPlan)
@@ -48,13 +44,20 @@ premiumStorageRouter.post('/plan-payment',
 
 premiumStorageRouter.get('/billing-info',
   authenticate,
-  // paginationValidator,
-  // accountsBlocklistSortValidator,
-  // setDefaultSort,
-  // setDefaultPagination,
   asyncMiddleware(getUserBilling)
 )
 
+premiumStorageRouter.post('/delete-plan',
+  authenticate,
+  ensureUserHasRight(UserRight.ALL),
+  asyncMiddleware(adminDeletePlan)
+)
+
+premiumStorageRouter.post('/add-plan',
+  authenticate,
+  ensureUserHasRight(UserRight.ALL),
+  asyncMiddleware(adminAddPlan)
+)
 // ---------------------------------------------------------------------------
 
 export {
@@ -62,6 +65,38 @@ export {
 }
 
 // ----------------------------------------------------------------------------
+async function adminAddPlan (req: express.Request, res: express.Response) {
+  try {
+    const body = req.body
+    logger.info('ICEICE body of the request is: ', body)
+    if (body === undefined) {
+      throw Error('Undefined or invalid body')
+    }
+    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.price, body.active)
+    const addResponse = addResult// .map(del => del.toJSON())
+    return res.json({ success: true, added: addResponse })
+  } catch (err) {
+    return res.json({ success: false, error: err })
+  }
+}
+
+async function adminDeletePlan (req: express.Request, res: express.Response) {
+  try {
+    const user = res.locals.oauth.token.User
+    logger.info('ICEICE user info is: ', user)
+    const body = req.body
+    logger.info('ICEICE body of the request is: ', body)
+    if (body.planId === undefined || typeof (body.planId) !== 'number') {
+      throw Error('Undefined or invalid id')
+    }
+    const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
+    const deleteResponse = deleteResult// .map(del => del.toJSON())
+    return res.json({ success: true, deleted: deleteResponse })
+  } catch (err) {
+    return res.json({ success: false, error: err })
+  }
+}
+
 async function getUserBilling (req: express.Request, res: express.Response) {
   try {
     const user = res.locals.oauth.token.User

@@ -4,13 +4,19 @@ import { ServerService } from '@app/core/server/server.service'
 import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
 import { Notifier } from '@app/core'
 import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
+import { newPremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
 import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
+import { catchError } from 'rxjs/operators'
 import { ServerConfig } from '@shared/models'
 import { ViewportScroller } from '@angular/common'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+import { HttpClient } from '@angular/common/http'
+import { RestExtractor } from '../../../shared'
+import { environment } from '../../../../environments/environment'
+import { BytesPipe } from 'ngx-pipes'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -19,18 +25,25 @@ import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
 })
 export class EditCustomConfigComponent extends FormReactive implements OnInit, AfterViewChecked {
   // FIXME: use built-in router
+  static GET_PREMIUM_STORAGE_API_URL = environment.apiUrl + '/api/v1/premium-storage/'
   @ViewChild('nav') nav: NgbNav
 
   initDone = false
   customConfig: CustomConfig
+  newStoragePlan: newPremiumStoragePlan
 
   resolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
 
   languageItems: SelectItem[] = []
   categoryItems: SelectItem[] = []
+  storagePlans: any[] = []
+  planIndex: number = null
+  premiumStorageActive = false
+  addPremiumPlanClicked = false
 
   private serverConfig: ServerConfig
+  private bytesPipe: BytesPipe
 
   constructor (
     private viewportScroller: ViewportScroller,
@@ -38,12 +51,14 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     private customConfigValidatorsService: CustomConfigValidatorsService,
     private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
+    private authHttp: HttpClient,
+    private restExtractor: RestExtractor,
     private configService: ConfigService,
     private serverService: ServerService,
     private i18n: I18n
   ) {
     super()
-
+    this.bytesPipe = new BytesPipe()
     this.resolutions = [
       {
         id: '0p',
@@ -98,14 +113,30 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       .map(t => t.name)
   }
 
-  getResolutionKey (resolution: string) {
-    return 'transcoding.resolutions.' + resolution
-  }
-
   ngOnInit () {
+    forkJoin([
+      this.getPlans(),
+      this.serverService.getConfig()
+    ]).subscribe(([ plans, config ]) => {
+      if (plans['success'] && plans['plans'].length > 0) {
+        this.storagePlans = plans['plans']
+      }
+      if (config) {
+        this.serverConfig = config
+      }
+    })
     this.serverConfig = this.serverService.getTmpConfig()
-    this.serverService.getConfig()
-        .subscribe(config => this.serverConfig = config)
+    // this.serverService.getConfig()
+    //     .subscribe(config => this.serverConfig = config)
+
+    this.newStoragePlan = {
+      name: null,
+      quota: 0,
+      dailyQuota: 0,
+      price: 0,
+      duration: 0,
+      active: false
+    }
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
@@ -237,6 +268,101 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     if (!this.initDone) {
       this.initDone = true
       this.gotoAnchor()
+    }
+  }
+
+  // this.newStoragePlan = {
+  //   name: null,
+  //   quota: 0,
+  //   dailyQuota: 0,
+  //   price: 0,
+  //   duration: 0,
+  //   active: false
+  // }
+
+  addPlanButtonClick () {
+    if (!this.isAddPlanButtonDisabled()) {
+      this.addPlan(this.newStoragePlan).subscribe(resp => {
+        console.log('ICEICE addPlanButtonClick response is: ', resp)
+      })
+    }
+  }
+
+  addPlan (body: newPremiumStoragePlan) {
+    console.log('ICEICE goinf to call addPlan with body: ', body)
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', body)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  isAddPlanButtonDisabled () {
+    const { name, quota, dailyQuota, price, duration, active } = this.newStoragePlan
+    if (typeof name !== 'string' || name === null || name === '' || name.length > 50) return true
+    if (typeof quota !== 'number' || quota < -1 || quota === 0) return true
+    if (typeof dailyQuota !== 'number' || dailyQuota < -1 || dailyQuota === 0) return true
+    if (typeof price !== 'number' || price < 0) return true
+    if (typeof duration !== 'number' || duration < 2628000000 || duration > 31536000000) return true
+    if (typeof active !== 'boolean') return true
+    return false
+  }
+  showAddButtonSubmitError () {
+    if (this.addPremiumPlanClicked === false) return false
+    return this.isAddPlanButtonDisabled()
+  }
+
+  onPremiumStorageCheckboxClick (data: any) {
+    console.log('ICEICE onPremiumStorageCheckboxClick with data: ', data)
+  }
+
+  getPlans () {
+    return this.authHttp.get(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'plans')
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  getHRBytes (num: any) {
+    try {
+      if (num === null || num === undefined) return ''
+      return this.bytesPipe.transform(parseInt(num, 10), 0)
+    } catch (err) {
+      return err
+    }
+  }
+
+  onRowEditInit (rowData: any) {
+    console.log('ICEICE calling onRowEditInit function with data: ', rowData)
+  }
+
+  onRowDelete (rowData: any) {
+    console.log('ICEICE calling onRowDelete function with data: ', rowData)
+    const body = {
+      planId: rowData.id
+    }
+    const deleteResult = this.deletePlan(body)
+    console.log('ICEICE calling deletePlan respponse is: ', deleteResult)
+  }
+
+  deletePlan (body: any) {
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'delete-plan', body)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  onRowEditSave (rowData: any) {
+    console.log('ICEICE calling onRowEditSave function with data: ', rowData)
+  }
+
+  onRowEditCancel (rowData: any, ri: number) {
+    console.log('ICEICE calling onRowEditCancel function with data: ', rowData)
+    console.log('ICEICE ri is: ', ri)
+  }
+
+  getResolutionKey (resolution: string) {
+    return 'transcoding.resolutions.' + resolution
+  }
+
+  showFormSubmitButton () {
+    if (this.nav !== undefined && this.nav.activeId !== undefined) {
+      return this.nav.activeId !== 'premium-storage-config'
+    } else {
+      return false
     }
   }
 
