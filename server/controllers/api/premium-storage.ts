@@ -58,6 +58,12 @@ premiumStorageRouter.post('/add-plan',
   ensureUserHasRight(UserRight.ALL),
   asyncMiddleware(adminAddPlan)
 )
+
+premiumStorageRouter.post('/update-plan',
+  authenticate,
+  ensureUserHasRight(UserRight.ALL),
+  asyncMiddleware(adminUpdatePlan)
+)
 // ---------------------------------------------------------------------------
 
 export {
@@ -65,35 +71,63 @@ export {
 }
 
 // ----------------------------------------------------------------------------
+async function adminUpdatePlan (req: express.Request, res: express.Response) {
+  try {
+    const body = req.body
+    if (body.id === undefined ||
+      typeof (body.id) !== 'number') {
+      throw Error(`Undefined or invalid id ${body.id}`)
+    }
+    if (body === undefined ||
+        body.id === undefined ||
+        body.name === undefined ||
+        body.quota === undefined ||
+        body.dailyQuota === undefined ||
+        body.duration === undefined ||
+        body.priceTube === undefined ||
+        body.active === undefined
+    ) {
+      throw Error(`Undefined or invalid body parameters ${body}`)
+    }
+    const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
+    return res.json({ success: true, added: updateResult })
+  } catch (err) {
+    return res.json({ success: false, error: err.message })
+  }
+}
+
 async function adminAddPlan (req: express.Request, res: express.Response) {
   try {
     const body = req.body
-    logger.info('ICEICE body of the request is: ', body)
-    if (body === undefined) {
-      throw Error('Undefined or invalid body')
+    if (body === undefined ||
+      body.name === undefined ||
+      body.quota === undefined ||
+      body.dailyQuota === undefined ||
+      body.duration === undefined ||
+      body.price === undefined ||
+      body.active === undefined
+    ) {
+      throw Error(`Undefined or invalid body parameters ${body}`)
     }
     const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.price, body.active)
-    const addResponse = addResult// .map(del => del.toJSON())
-    return res.json({ success: true, added: addResponse })
+    return res.json({ success: true, added: addResult })
   } catch (err) {
-    return res.json({ success: false, error: err })
+    return res.json({ success: false, error: err.message })
   }
 }
 
 async function adminDeletePlan (req: express.Request, res: express.Response) {
   try {
-    const user = res.locals.oauth.token.User
-    logger.info('ICEICE user info is: ', user)
     const body = req.body
-    logger.info('ICEICE body of the request is: ', body)
-    if (body.planId === undefined || typeof (body.planId) !== 'number') {
-      throw Error('Undefined or invalid id')
+    if (body.planId === undefined ||
+      typeof (body.planId) !== 'number') {
+      throw Error(`Undefined or invalid id ${body.planId}`)
     }
     const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
     const deleteResponse = deleteResult// .map(del => del.toJSON())
     return res.json({ success: true, deleted: deleteResponse })
   } catch (err) {
-    return res.json({ success: false, error: err })
+    return res.json({ success: false, error: err.message })
   }
 }
 
@@ -105,7 +139,7 @@ async function getUserBilling (req: express.Request, res: express.Response) {
     const billingResponse = billingResult.map(bill => bill.toJSON())
     return res.json({ success: true, billing: billingResponse })
   } catch (err) {
-    return res.json({ success: false, error: err })
+    return res.json({ success: false, error: err.message })
   }
 }
 

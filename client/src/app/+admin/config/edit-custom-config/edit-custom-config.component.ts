@@ -1,22 +1,25 @@
 import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { ServerService } from '@app/core/server/server.service'
-import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
 import { Notifier } from '@app/core'
-import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
-import { newPremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { ConfirmService } from '@app/core/confirm'
+import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
+import { interfacePremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
 import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
+import { RestExtractor } from '../../../shared'
+import { ServerConfig } from '@shared/models'
+import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
+import { I18n } from '@ngx-translate/i18n-polyfill'
 import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
 import { catchError } from 'rxjs/operators'
-import { ServerConfig } from '@shared/models'
 import { ViewportScroller } from '@angular/common'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
 import { HttpClient } from '@angular/common/http'
-import { RestExtractor } from '../../../shared'
 import { environment } from '../../../../environments/environment'
 import { BytesPipe } from 'ngx-pipes'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
+import { identifierModuleUrl } from '@angular/compiler'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -30,7 +33,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   initDone = false
   customConfig: CustomConfig
-  newStoragePlan: newPremiumStoragePlan
+  newStoragePlan: interfacePremiumStoragePlan
 
   resolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
@@ -55,6 +58,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     private restExtractor: RestExtractor,
     private configService: ConfigService,
     private serverService: ServerService,
+    private confirmService: ConfirmService,
     private i18n: I18n
   ) {
     super()
@@ -114,29 +118,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   ngOnInit () {
-    forkJoin([
-      this.getPlans(),
-      this.serverService.getConfig()
-    ]).subscribe(([ plans, config ]) => {
-      if (plans['success'] && plans['plans'].length > 0) {
-        this.storagePlans = plans['plans']
-      }
-      if (config) {
-        this.serverConfig = config
-      }
-    })
+    this.subscribeConfigAndPlans()
     this.serverConfig = this.serverService.getTmpConfig()
     // this.serverService.getConfig()
     //     .subscribe(config => this.serverConfig = config)
-
-    this.newStoragePlan = {
-      name: null,
-      quota: 0,
-      dailyQuota: 0,
-      price: 0,
-      duration: 0,
-      active: false
-    }
+    this.resetNewStoragePlan()
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
@@ -271,35 +257,60 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     }
   }
 
-  // this.newStoragePlan = {
-  //   name: null,
-  //   quota: 0,
-  //   dailyQuota: 0,
-  //   price: 0,
-  //   duration: 0,
-  //   active: false
-  // }
+  resetNewStoragePlan () {
+    this.newStoragePlan = {
+      name: null,
+      quota: 0,
+      dailyQuota: 0,
+      priceTube: 0,
+      duration: 0,
+      active: false
+    }
+  }
+
+  subscribeConfigAndPlans () {
+    forkJoin([
+      this.getPlans(),
+      this.serverService.getConfig()
+    ]).subscribe(([ plans, config ]) => {
+      if (plans['success'] && plans['plans'].length > 0) {
+        this.storagePlans = plans['plans']
+        this.storagePlans.forEach(plan => {
+          plan.updateData = plan
+        })
+      }
+      if (config) {
+        this.serverConfig = config
+      }
+    })
+  }
 
   addPlanButtonClick () {
     if (!this.isAddPlanButtonDisabled()) {
       this.addPlan(this.newStoragePlan).subscribe(resp => {
         console.log('ICEICE addPlanButtonClick response is: ', resp)
+        if (resp['success']) {
+          this.notifier.success('Your new plan has been successfully added')
+          this.resetNewStoragePlan()
+          this.subscribeConfigAndPlans()
+        } else {
+          this.notifier.error(resp['error'])
+        }
       })
     }
   }
 
-  addPlan (body: newPremiumStoragePlan) {
-    console.log('ICEICE goinf to call addPlan with body: ', body)
+  addPlan (body: interfacePremiumStoragePlan) {
     return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', body)
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
   isAddPlanButtonDisabled () {
-    const { name, quota, dailyQuota, price, duration, active } = this.newStoragePlan
+    const { name, quota, dailyQuota, priceTube, duration, active } = this.newStoragePlan
     if (typeof name !== 'string' || name === null || name === '' || name.length > 50) return true
     if (typeof quota !== 'number' || quota < -1 || quota === 0) return true
     if (typeof dailyQuota !== 'number' || dailyQuota < -1 || dailyQuota === 0) return true
-    if (typeof price !== 'number' || price < 0) return true
+    if (typeof priceTube !== 'number' || priceTube < 0) return true
     if (typeof duration !== 'number' || duration < 2628000000 || duration > 31536000000) return true
     if (typeof active !== 'boolean') return true
     return false
@@ -307,10 +318,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   showAddButtonSubmitError () {
     if (this.addPremiumPlanClicked === false) return false
     return this.isAddPlanButtonDisabled()
-  }
-
-  onPremiumStorageCheckboxClick (data: any) {
-    console.log('ICEICE onPremiumStorageCheckboxClick with data: ', data)
   }
 
   getPlans () {
@@ -327,17 +334,29 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     }
   }
 
-  onRowEditInit (rowData: any) {
-    console.log('ICEICE calling onRowEditInit function with data: ', rowData)
+  onRowEditInit (rowData: interfacePremiumStoragePlan) {
+    // this.updateStoragePlan = rowData
   }
 
-  onRowDelete (rowData: any) {
-    console.log('ICEICE calling onRowDelete function with data: ', rowData)
+  async onRowDelete (rowData: any) {
+    const res = await this.confirmService.confirm(
+      this.i18n("Do you really want to delete '{{planName}}' plan? \n ATENTION! If some user already bought this plan you can delete his payment also! Before delete a plan, be sure that anybody is using it or consider to just deactivate it", { planName: rowData.name }),
+      this.i18n('Delete')
+    )
+    if (res === false) return
     const body = {
       planId: rowData.id
     }
-    const deleteResult = this.deletePlan(body)
-    console.log('ICEICE calling deletePlan respponse is: ', deleteResult)
+    console.log('ICEICE calling onRowDelete function with data: ', body)
+    this.deletePlan(body).subscribe(resp => {
+      console.log('ICEICE deletePlan response is: ', resp)
+      if (resp['success']) {
+        this.subscribeConfigAndPlans()
+        this.notifier.success('Plan successfully deleted')
+      } else {
+        this.notifier.error(`Something went wrong deleting the plan, reload and try again`)
+      }
+    })
   }
 
   deletePlan (body: any) {
@@ -345,8 +364,33 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
-  onRowEditSave (rowData: any) {
+  onRowEditSave (rowData: interfacePremiumStoragePlan) {
     console.log('ICEICE calling onRowEditSave function with data: ', rowData)
+    const body = {
+      id: rowData.id,
+      name: rowData.name,
+      quota: rowData.quota,
+      dailyQuota: rowData.dailyQuota,
+      priceTube: rowData.priceTube,
+      duration: rowData.duration,
+      active: rowData.active
+    }
+    console.log('ICEICE calling onRowEditSave function with body: ', body)
+    this.updatePlan(body).subscribe(resp => {
+      console.log('ICEICE onRowEditSave updatePlan response is: ', resp)
+      if (resp['success']) {
+        this.subscribeConfigAndPlans()
+        this.notifier.success('Plan successfully updated')
+      } else {
+        this.notifier.error(`Something went wrong updating the plan, reload and try again`)
+      }
+    })
+  }
+
+  updatePlan (body: interfacePremiumStoragePlan) {
+    console.log('ICEICE going to call addPlan with body: ', body)
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'update-plan', body)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
   onRowEditCancel (rowData: any, ri: number) {

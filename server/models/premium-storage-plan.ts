@@ -46,9 +46,10 @@ export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
       { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube, active: active })
   }
 
-  static async modifyPlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, priceTube: number) {
+  // eslint-disable-next-line max-len
+  static async updatePlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, priceTube: number, active: boolean) {
     return await PremiumStoragePlanModel.update(
-      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube },
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube, active: active },
       { where: { id: id } })
   }
 

@@ -86,10 +86,14 @@ ngb-tabset:not(.previews) ::ng-deep {
 }
 .storage-label{
   margin-left: 15px;
+  margin-bottom: 0;
 }
 
-.form-group-checkbox input + span {
-  border-color: transparent !important;
+:host .pTableSimpleCheckbox{
+  opacity: 1;
+  position: relative;
+  transform: scale(2);
+  margin: 6px;
 }
 /*********************************/
 /* Premium storage table styles */
