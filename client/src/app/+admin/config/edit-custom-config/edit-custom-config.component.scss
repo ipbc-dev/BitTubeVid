@@ -95,6 +95,33 @@ ngb-tabset:not(.previews) ::ng-deep {
   transform: scale(2);
   margin: 6px;
 }
+/************************************/
+/* Add plan modal styles           */
+/**********************************/
+:host ::ng-deep .add-plan-modal{
+  .ui-dialog {
+    .ui-dialog-titlebar{
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--menuBackgroundColor) !important;
+    }
+    .ui-dialog-content{
+      min-width: 415px;
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--mainBackgroundColor) !important;
+      border-bottom: none;
+    }
+    .ui-dialog-footer{
+      background-color: var(--mainBackgroundColor);
+    }
+  }
+  input {
+    width: 300px !important;
+  }
+}
+.add-plan-button{
+  float: right;
+  margin-right: 50px;
+}
 /*********************************/
 /* Premium storage table styles */
 /*******************************/

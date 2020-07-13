@@ -104,12 +104,12 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       body.quota === undefined ||
       body.dailyQuota === undefined ||
       body.duration === undefined ||
-      body.price === undefined ||
+      body.priceTube === undefined ||
       body.active === undefined
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.price, body.active)
+    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
     return res.json({ success: true, added: addResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })

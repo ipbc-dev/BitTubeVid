@@ -44,6 +44,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   planIndex: number = null
   premiumStorageActive = false
   addPremiumPlanClicked = false
+  showAddPlanModal = false
 
   private serverConfig: ServerConfig
   private bytesPipe: BytesPipe
@@ -281,16 +282,19 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       }
       if (config) {
         this.serverConfig = config
+        console.log('ICEICE config is: ', this.serverConfig)
       }
     })
   }
 
   addPlanButtonClick () {
     if (!this.isAddPlanButtonDisabled()) {
+      console.log('ICEICE going to call addPlan with body. ', this.newStoragePlan)
       this.addPlan(this.newStoragePlan).subscribe(resp => {
         console.log('ICEICE addPlanButtonClick response is: ', resp)
         if (resp['success']) {
           this.notifier.success('Your new plan has been successfully added')
+          this.showAddPlanModal = false
           this.resetNewStoragePlan()
           this.subscribeConfigAndPlans()
         } else {
@@ -298,6 +302,14 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         }
       })
     }
+  }
+
+  addPlanCancel () {
+    this.showAddPlanModal = false
+  }
+
+  addPlanShow () {
+    this.showAddPlanModal = true
   }
 
   addPlan (body: interfacePremiumStoragePlan) {
