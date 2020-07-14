@@ -1,13 +1,33 @@
 <form role="form" (ngSubmit)="updateDetails()" [formGroup]="form">
   <div class="form-group" *ngIf="userHavePremiumStorage()">
-    <label i18n for="myStoragePlan">Your actual storage plan</label>
-    <div class="form-group" id="myStoragePlan">
+    <label i18n for="myStoragePlan">Your current storage plan</label>
+    <my-help>
+      <ng-template ptTemplate="customHtml">
+        <ng-container i18n>
+          This is your current plan, you can <strong>EXTEND</strong> it below choosing the same plan
+        </ng-container>
+      </ng-template>
+    </my-help>
+    <!-- <div class="form-group" id="myStoragePlan">
       <div class="storagePadding" id="userPremiumPlanName" ><my-global-icon iconName="home"></my-global-icon><span class="padding-left-10" for="userPremiumPlanName">Name: </span> {{ userPremiumPlan.premiumStoragePlan.name }}</div>
       <div class="storagePadding" id="userPremiumPlanDailyQuota" ><my-global-icon iconName="folder"></my-global-icon><span class="padding-left-10" for="userPremiumPlanDailyQuota">Daily Quota: </span> {{ getHRBytes(userPremiumPlan.dailyQuota) }}</div>
       <div class="storagePadding" id="userPremiumPlanQuota" ><my-global-icon iconName="cloud-download"></my-global-icon><span class="padding-left-10" for="userPremiumPlanQuota">Total Quota: </span>{{ getHRBytes(userPremiumPlan.quota) }}</div>
       <div class="storagePadding" id="userPremiumPlanExpireDate" ><my-global-icon iconName="sparkle"></my-global-icon><span class="padding-left-10" for="userPremiumPlanExpireDate">Expiration date: </span>{{ getFormattedDate(userPremiumPlan.dateTo) }}</div>
-      <!-- <div class="storagePadding" id="userPremiumPlanExtendButton" > <input type="submit" i18n-value value="Extend"> </div> -->
-    </div>
+    </div> -->
+    <table class="planTable">
+      <tr class="planTableHeader">
+        <th class="planField">Name</th>
+        <th class="planField">Daily Quota</th>
+        <th class="planField">Total Quota</th>
+        <th class="planField">Expiration Date</th>
+      </tr>
+      <tr class="planTableBody">
+        <th class="planField">{{ userPremiumPlan.premiumStoragePlan.name }}</th>
+        <th class="planField">{{ getHRBytes(userPremiumPlan.dailyQuota) }}</th>
+        <th class="planField">{{ getHRBytes(userPremiumPlan.quota) }}</th>
+        <th class="planField">{{ getFormattedDate(userPremiumPlan.dateTo) }}</th>
+      </tr>
+    </table>
   </div>
   
   <div class="form-group form-group-select">
@@ -16,7 +36,7 @@
       <my-help>
         <ng-template ptTemplate="customHtml">
           <ng-container i18n>
-            You can <strong>EXTEND</strong> you actual plan or get more storage <strong>UPGRADING</strong> your plan
+            You can <strong>EXTEND</strong> you current plan or get more storage <strong>UPGRADING</strong> your plan
           </ng-container>
         </ng-template>
       </my-help>
@@ -33,15 +53,39 @@
     </div> -->
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
-      <select [value] formControlName="storagePlan" id="storagePlan" class="form-control">
+      <select [value] formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
         <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
-        <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }} - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month</option>
+        <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
       </select>
+      <!-- - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month -->
+    </div>
+    <!-- <div *ngIf="chosenPlan !== null" class="chosenPlanInfo">
+      <label class="storageLabel" for="spanQuota">Quota: </label><span id="spanQuota" class="storageSpan">{{ getHRBytes(chosenPlan.quota) }}</span>
+      <label class="storageLabel" for="spanDailyQuota">Daily Quota: </label><span id="spanDailyQuota" class="storageSpan">{{ getHRBytes(chosenPlan.dailyQuota) }}</span>
+      <label class="storageLabel" for="spanPrice">Price: </label><span id="spanPrice" class="storageSpan">{{ chosenPlan.priceTube }} Tubes</span>
+      <label class="storageLabel" for="spanDuration">Duration: </label><span id="spanDuration" class="storageSpan">{{ (chosenPlan.duration / 2628000000) }} month/s</span>
+    </div> -->
+    <div *ngIf="chosenPlan !== null">
+      <label i18n for="chosenPlanTable">Chosen plan info</label>
+      <table class="planTable" id="chosenPlanTable">
+        <tr class="planTableHeader">
+          <th class="planField">Daily Quota</th>
+          <th class="planField">Total Quota</th>
+          <th class="planField">Duration</th>
+          <th class="planField">Price (Tubes)</th>
+        </tr>
+        <tr class="planTableBody">
+          <th class="planField">{{ getHRBytes(chosenPlan.dailyQuota) }}</th>
+          <th class="planField">{{ getHRBytes(chosenPlan.quota) }}</th>
+          <th class="planField">{{ (chosenPlan.duration / 2628000000) }} month/s</th>
+          <th class="planField">{{ chosenPlan.priceTube }}</th>
+        </tr>
+      </table>
+      <input type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()">
     </div>
     <div *ngIf="!havePremiumStorage()" class="form-group col-12 col-lg-4 col-xl-3">
       <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->
       <div i18n class="account-title">Sorry, this instance have no premium storage plans yet.</div>
     </div> <!-- storage settings grid END -->
   </div>
-  <input *ngIf="!reactiveUpdate" type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()">
 </form>

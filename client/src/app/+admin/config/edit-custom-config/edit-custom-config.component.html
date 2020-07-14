@@ -1065,16 +1065,16 @@
 
           <div class="form-group col-12">
             
-            <p-table [value]="storagePlans" dataKey="id" editMode="row">
+            <p-table [value]="storagePlans" dataKey="id" editMode="row" class="p-table">
               <!-- HEADER -->
               <ng-template pTemplate="header">
                 <tr>
                   <th style="width: 50px;">Id</th>
                   <th>Name</th>
-                  <th style="width: 200px;">Quota</th>
-                  <th style="width: 200px;">Daily Quota</th>
-                  <th style="width: 200px;">Price (TubeCoin)</th>
-                  <th style="width: 200px;">Duration</th>
+                  <th style="width: 220px;">Quota</th>
+                  <th style="width: 220px;">Daily Quota</th>
+                  <th style="width: 220px;">Price (TubeCoin)</th>
+                  <th style="width: 220px;">Duration</th>
                   <th style="width: 100px;">Active</th>
                   <th style="width: 250px;">Actions</th>
                 </tr>
@@ -1101,10 +1101,10 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="-1" step="100" [(ngModel)]="rowPlan.updateData.quota" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="-1" step="10737418240" [(ngModel)]="rowPlan.updateData.quota" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.quota}}
+                            {{rowPlan.quota}} | {{getHRBytes(rowPlan.quota)}}
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1112,10 +1112,10 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="-1" step="100" [(ngModel)]="rowPlan.updateData.dailyQuota" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="-1" step="1073741824" [(ngModel)]="rowPlan.updateData.dailyQuota" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.dailyQuota}}
+                            {{rowPlan.dailyQuota}} | {{getHRBytes(rowPlan.dailyQuota)}}
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1123,7 +1123,7 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="1" step="100" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="1" step="1000" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
                             {{rowPlan.priceTube}}
@@ -1134,10 +1134,10 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="1" step="100" [(ngModel)]="rowPlan.updateData.duration" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="1" step="2628000000" [(ngModel)]="rowPlan.updateData.duration" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.duration}}
+                            {{rowPlan.duration}} | {{rowPlan.duration / 2628000000}} month/s
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1188,7 +1188,7 @@
             <div class="form-group">
               <my-peertube-checkbox inputName="premiumStorageActive">
                 <ng-template ptTemplate="label">
-                  <ng-container i18n>This instance have premium storage</ng-container>
+                  <ng-container i18n>Premium storage is enabled</ng-container>
                 </ng-template>
 
                 <ng-template ptTemplate="help">

@@ -116,24 +116,27 @@ ngb-tabset:not(.previews) ::ng-deep {
   }
   input {
     width: 300px !important;
+    padding-right: 2px;
   }
-}
-.add-plan-button{
-  float: right;
-  margin-right: 50px;
 }
 /*********************************/
 /* Premium storage table styles */
 /*******************************/
-:host ::ng-deep tbody{
-  input{
-    width: auto;
+:host ::ng-deep .ui-table{
+  input[type="number"]{
+    width: 175px;
     padding-left: 10px;
-    padding-right: 10px;
+    padding-right: 2px;
   }
 }
+
 .row-edit-button{
   margin-right: 0.5em;
+}
+
+.add-plan-button{
+  float: right;
+  margin-right: 50px;
 }
 
 :host ::ng-deep .row-save-button{

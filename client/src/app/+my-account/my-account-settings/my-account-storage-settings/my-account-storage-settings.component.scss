@@ -30,3 +30,13 @@ input[type=submit] {
 .padding-left-10{
   padding-left: 10px;
 }
+
+.planTable{
+  .planTableHeader{
+    border-bottom: 1px solid;
+  }
+  .planField{
+    text-align: left;
+    padding: 5px 35px 5px 0;
+  }
+}
