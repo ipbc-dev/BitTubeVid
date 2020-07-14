@@ -38,6 +38,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   userPremiumPlan: any
   dropdownSelectedPlan: number
   storagePlans: any
+  chosenPlan: any = null
   // private notifier: Notifier
   private bytesPipe: BytesPipe
 
@@ -81,6 +82,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
         this.userPremiumPlan = myPlan['data'][myPlan['data'].length - 1]
+        this.chosenPlan = this.userPremiumPlan
         // this.form.value['storagePlan'] = this.userPremiumPlan
       } else {
         this.userHavePremium = false
@@ -137,6 +139,22 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
   userHavePremiumStorage () {
     return this.userHavePremium
+  }
+
+  premiumStoragePlanChange (ev: any) {
+    const chosenPlanId: number = this.form.value['storagePlan']
+    console.log('ICEICE chosenPlanId is: ', chosenPlanId)
+    if (chosenPlanId > -1) {
+      this.storagePlans.forEach((plan: any) => {
+        console.log('ICEICE chacking plan: ', plan)
+        if (plan.id === chosenPlanId) {
+          this.chosenPlan = plan
+        }
+      })
+    } else {
+      this.chosenPlan = null
+    }
+    console.log('After premiumStoragePlanChange chosenPlan is: ', this.chosenPlan)
   }
 
   getUserPremiumPlanId () {
