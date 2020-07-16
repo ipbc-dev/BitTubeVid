@@ -69,6 +69,9 @@ const CONFIG = {
     CACHE_DIR: buildPath(config.get<string>('storage.cache')),
     PLUGINS_DIR: buildPath(config.get<string>('storage.plugins'))
   },
+  PREMIUM_STORAGE: {
+    ENABLED: config.get<boolean>('premium_storage.enabled')
+  },
   WEBSERVER: {
     SCHEME: config.get<boolean>('webserver.https') === true ? 'https' : 'http',
     WS: config.get<boolean>('webserver.https') === true ? 'wss' : 'ws',

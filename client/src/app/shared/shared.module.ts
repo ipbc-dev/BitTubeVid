@@ -105,6 +105,7 @@ import { ClipboardModule } from '@angular/cdk/clipboard'
 import { InputSwitchModule } from 'primeng/inputswitch'
 
 import { MyAccountVideoSettingsComponent } from '@app/+my-account/my-account-settings/my-account-video-settings'
+import { MyAccountStorageSettingsComponent } from '@app/+my-account/my-account-settings/my-account-storage-settings'
 import { MyAccountInterfaceSettingsComponent } from '@app/+my-account/my-account-settings/my-account-interface'
 import { ActorAvatarInfoComponent } from '@app/+my-account/shared/actor-avatar-info.component'
 import { BatchDomainsValidatorsService } from '@app/+admin/config/shared/batch-domains-validators.service'
@@ -191,6 +192,7 @@ import { BatchDomainsValidatorsService } from '@app/+admin/config/shared/batch-d
     PreviewUploadComponent,
 
     MyAccountVideoSettingsComponent,
+    MyAccountStorageSettingsComponent,
     MyAccountInterfaceSettingsComponent,
     ActorAvatarInfoComponent
   ],
@@ -273,6 +275,7 @@ import { BatchDomainsValidatorsService } from '@app/+admin/config/shared/batch-d
     VideoDurationPipe,
 
     MyAccountVideoSettingsComponent,
+    MyAccountStorageSettingsComponent,
     MyAccountInterfaceSettingsComponent,
     ActorAvatarInfoComponent
   ],

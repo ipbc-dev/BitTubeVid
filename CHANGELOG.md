@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.2.4-psm (BitTube-PremiumStorageModule)
+  * Based on Peertube V2.2.0
+  * Implementing paid Premium Storage functionality
+
+## IMPORTANT NOTES
+  * **/!\ VERY IMPORTANT /!\\** We added a new table and some fields in order to save Premium Storage data.
+  In order to user this version, is important to follow next steps:
+    * Go inside your database using `sudo -u postgres psql peertube_prod` and run:
+     `ALTER TABLE "user" ADD COLUMN "premiumStorageActive" Boolean DEFAULT false;`
+     `CREATE TABLE "premiumStoragePlan" ( "id" serial PRIMARY KEY, "name" VARCHAR(50) UNIQUE NOT NULL, "quota" NUMERIC(32) NOT NULL, "dailyQuota" NUMERIC(32) NOT NULL, "priceTube" NUMERIC(32,8), "duration" NUMERIC(32) NOT NULL);`
+     `CREATE TABLE "userPremiumStoragePayment" ( "id" serial PRIMARY KEY, "userId" INTEGER NOT NULL, "planId" INTEGER NOT NULL, "dateFrom" TIMESTAMP NOT NULL DEFAULT now(), "dateTo" TIMESTAMP NOT NULL, "active" Boolean DEFAULT TRUE);`
+     * Maybe, you will need also to run: `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO peertube;`
+     #### At this point, you can add as much storage plans as you want! 
+      * Quota and dailyQuota need to be integer values in B (Bytes), duration need to be an integer value in miliseconds, price need to be a numeric value in Tube Coin (8 decimals)
+      * This is an example with 6 different plans, duration is 1 month for all of them.
+     `INSERT INTO "premiumStoragePlan" ("name", "quota", "dailyQuota", "priceTube", "duration", "createdAt", "updatedAt" ) VALUES ('250 GB', 268435456000, 26843545600, 2500, 2678400000, now(), now());`
+     `INSERT INTO "premiumStoragePlan" ("name", "quota", "dailyQuota", "priceTube", "duration", "createdAt", "updatedAt" ) VALUES ('500 GB', 536870912000, 53687091200, 5000, 2678400000, now(), now());`
+     `INSERT INTO "premiumStoragePlan" ("name", "quota", "dailyQuota", "priceTube", "duration", "createdAt", "updatedAt" ) VALUES ('1 TB', 1099511627776, 109951162777, 9000, 2678400000, now(), now());`
+     `INSERT INTO "premiumStoragePlan" ("name", "quota", "dailyQuota", "priceTube", "duration", "createdAt", "updatedAt" ) VALUES ('2.5 TB', 2748779069440, 274877906944, 17000, 2678400000, now(), now());`
+     `INSERT INTO "premiumStoragePlan" ("name", "quota", "dailyQuota", "priceTube", "duration", "createdAt", "updatedAt" ) VALUES ('5 TB', 5497558138880, 549755813888, 30000, 2678400000, now(), now());`
+
 ## v0.2.3 (BitTube)
   * Based on Peertube V2.2.0
   * Fixing minor bugs && styles

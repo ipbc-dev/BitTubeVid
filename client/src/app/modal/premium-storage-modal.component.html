@@ -1,0 +1,18 @@
+<ng-template #modal let-hide="close">
+    <my-global-icon *ngIf="close" class="close-modal-button" iconName="cross" aria-label="Close" role="button" (click)="onCloseClick()"></my-global-icon>
+      
+    <div class="modal-body"> 
+      <div class="modal-image"></div>
+      <div class="modal-body-text">
+        <div class="modal-body-text-title">Do you need more space?</div>
+        <div class="modal-body-text-blue">
+          <div class="modal-body-text-blue-1">Upgrade to</div>
+          <div class="modal-body-text-blue-2">Premium Storage</div>
+        </div>
+        <a href="/my-account" routerlink="/my-account">
+          <input *ngIf="hasConfirm()" type="button" role="button" value="{{confirm.value}}" class="action-button action-button-confirm">
+        </a>
+      </div>
+    </div>
+  </ng-template>
+  

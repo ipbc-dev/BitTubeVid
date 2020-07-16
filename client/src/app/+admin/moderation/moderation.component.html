@@ -11,6 +11,8 @@
     <a *ngIf="hasAccountsBlocklistRight()" i18n routerLink="blocklist/accounts" routerLinkActive="active">Muted accounts</a>
 
     <a *ngIf="hasServersBlocklistRight()" i18n routerLink="blocklist/servers" routerLinkActive="active">Muted servers</a>
+
+    <a *ngIf="hasServerPremiumStorage()" i18n routerLink="premium-storage/billing" routerLinkActive="active">Storage Billing</a>
   </div>
 </div>
 

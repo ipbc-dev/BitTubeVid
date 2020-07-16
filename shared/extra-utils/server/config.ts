@@ -159,6 +159,9 @@ function updateCustomSubConfig (url: string, token: string, newConfig: DeepParti
           enabled: false
         }
       }
+    },
+    premium_storage: {
+      enabled: false
     }
   }
 

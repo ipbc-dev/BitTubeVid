@@ -23,6 +23,10 @@ storage:
   cache: 'test6/cache/'
   plugins: 'test6/plugins/'
 
+# Premium options
+premium_storage:
+    enabled: true
+
 admin:
   email: 'admin6@example.com'
 

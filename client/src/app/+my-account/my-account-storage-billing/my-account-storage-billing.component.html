@@ -1,0 +1,32 @@
+<div class="admin-sub-header">
+  <div i18n class="form-sub-title">Storage Billing Information</div>
+</div>
+
+<p-table [value]="billingInformation" >
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Bill Id</th>
+      <th>Plan Name</th>
+      <th>Beginning day</th>
+      <th>Expiration date</th>
+      <th>Price (Tube's)</th>
+      <th>Daily Quota</th>
+      <th>Total Quota</th>
+      <th>LifeSpan</th>
+      <th>Active</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-bill>
+    <tr>
+      <th>{{bill.id}}</th>
+      <th>{{bill.premiumStoragePlan.name}}</th>
+      <th>{{getFormattedDate(bill.dateFrom)}}</th>
+      <th>{{getFormattedDate(bill.dateTo)}}</th>
+      <th>{{bill.priceTube}}</th>
+      <th>{{getHRBytes(bill.dailyQuota)}}</th>
+      <th>{{getHRBytes(bill.quota)}}</th>
+      <th>{{getHRTime(bill.duration)}}</th>
+      <th>{{bill.active}}</th>
+    </tr>
+  </ng-template>
+</p-table>

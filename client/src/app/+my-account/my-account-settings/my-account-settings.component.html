@@ -26,6 +26,17 @@
   </div>
 </div>
 
+<div class="form-row mt-5"> <!-- storage settings grid -->
+  <div class="form-group col-12 col-lg-4 col-xl-3">
+    <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->
+    <div i18n class="account-title">STORAGE SETTINGS</div>
+  </div> <!-- storage settings grid END -->
+
+  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+    <my-account-storage-settings [user]="user" [userInformationLoaded]="userInformationLoaded" [userQuotaObject]="userQuotaObject"></my-account-storage-settings>
+  </div>
+</div>
+
 <div class="form-row mt-5"> <!-- video settings grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div class="anchor" id="video-settings"></div> <!-- video settings anchor -->

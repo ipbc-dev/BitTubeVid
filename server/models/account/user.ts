@@ -38,6 +38,7 @@ import {
   isUserVideoLanguages,
   isUserVideoQuotaDailyValid,
   isUserVideoQuotaValid,
+  isUserPremiumStorageActiveValid,
   isUserVideosHistoryEnabledValid,
   isUserWebTorrentEnabledValid
 } from '../../helpers/custom-validators/users'
@@ -323,6 +324,11 @@ export class UserModel extends Model<UserModel> {
   @Is('UserVideoQuotaDaily', value => throwIfNotValid(value, isUserVideoQuotaDailyValid, 'video quota daily'))
   @Column(DataType.BIGINT)
   videoQuotaDaily: number
+
+  @AllowNull(false)
+  @Is('premiumStorageActive', value => throwIfNotValid(value, isUserPremiumStorageActiveValid, 'user premium storafe active'))
+  @Column(DataType.BOOLEAN)
+  premiumStorageActive: boolean
 
   @AllowNull(false)
   @Default(DEFAULT_USER_THEME_NAME)
@@ -799,6 +805,9 @@ export class UserModel extends Model<UserModel> {
       videoQuotaUsedDaily: videoQuotaUsedDaily !== undefined
         ? parseInt(videoQuotaUsedDaily + '', 10)
         : undefined,
+      premiumStorageActive: this.premiumStorageActive !== undefined
+        ? this.premiumStorageActive
+        : false,
       videosCount: videosCount !== undefined
         ? parseInt(videosCount + '', 10)
         : undefined,

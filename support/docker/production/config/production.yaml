@@ -55,6 +55,10 @@ storage:
   cache: '../data/cache/'
   plugins: '../data/plugins/'
 
+# Premium options
+premium_storage:
+    enabled: true
+
 log:
   level: 'info' # debug/info/warning/error
 

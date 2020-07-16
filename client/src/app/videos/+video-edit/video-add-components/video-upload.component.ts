@@ -1,5 +1,5 @@
 import { HttpEventType, HttpResponse } from '@angular/common/http'
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, AfterViewInit } from '@angular/core'
 import { Router } from '@angular/router'
 import { LoadingBarService } from '@ngx-loading-bar/core'
 import { BytesPipe } from 'ngx-pipes'
@@ -14,6 +14,7 @@ import { CanComponentDeactivate } from '@app/shared/guards/can-deactivate-guard.
 import { FormValidatorService, UserService } from '@app/shared'
 import { VideoCaptionService } from '@app/shared/video-caption'
 import { scrollToTop } from '@app/shared/misc/utils'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 
 @Component({
   selector: 'my-video-upload',
@@ -24,10 +25,11 @@ import { scrollToTop } from '@app/shared/misc/utils'
     './video-send.scss'
   ]
 })
-export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy, CanComponentDeactivate {
+export class VideoUploadComponent extends VideoSend implements OnInit, AfterViewInit, OnDestroy, CanComponentDeactivate {
   @Output() firstStepDone = new EventEmitter<string>()
   @Output() firstStepError = new EventEmitter<void>()
   @ViewChild('videofileInput') videofileInput: ElementRef<HTMLInputElement>
+  @ViewChild('premiumStorageModal') premiumStorageModal: PremiumStorageModalComponent
 
   // So that it can be accessed in the template
   readonly SPECIAL_SCHEDULED_PRIVACY = VideoEdit.SPECIAL_SCHEDULED_PRIVACY
@@ -83,8 +85,16 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
         })
   }
 
+  ngAfterViewInit () {
+    // Do nothing?
+  }
+
   ngOnDestroy () {
     if (this.videoUploadObservable) this.videoUploadObservable.unsubscribe()
+  }
+
+  showPremiumStorageModal () {
+    this.premiumStorageModal.show()
   }
 
   canDeactivate () {
@@ -272,6 +282,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
         }
       )
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }
@@ -294,6 +305,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
         }
       )
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }

@@ -2890,6 +2890,11 @@ components:
                   type: string
                 css:
                   type: string
+        premium_storage:
+          type: object
+          properties:
+            enabled:
+            type: boolean
         search:
           type: object
           properties:

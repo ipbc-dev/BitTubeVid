@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core'
 import { ConfigComponent, EditCustomConfigComponent } from '@app/+admin/config'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { TableModule } from 'primeng/table'
+import { DialogModule } from 'primeng/dialog'
 import { SharedModule } from '../shared'
 import { AdminRoutingModule } from './admin-routing.module'
 import { AdminComponent } from './admin.component'
@@ -38,6 +39,7 @@ import { VideoAbuseDetailsComponent } from './moderation/video-abuse-list/video-
     SharedModule,
 
     TableModule,
+    DialogModule,
     SelectButtonModule,
     ChartModule
   ],
