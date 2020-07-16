@@ -47,6 +47,8 @@ const video_streaming_playlist_1 = require("../models/video/video-streaming-play
 const video_playlist_1 = require("../models/video/video-playlist");
 const video_playlist_element_1 = require("../models/video/video-playlist-element");
 const thumbnail_1 = require("../models/video/thumbnail");
+const premium_storage_plan_1 = require("../models/premium-storage-plan");
+const user_premium_storage_payments_1 = require("../models/user-premium-storage-payments");
 const plugin_1 = require("../models/server/plugin");
 const sequelize_1 = require("sequelize");
 require('pg').defaults.parseInt8 = true;
@@ -116,6 +118,8 @@ function initDatabaseModels(silent) {
             video_playlist_1.VideoPlaylistModel,
             video_playlist_element_1.VideoPlaylistElementModel,
             thumbnail_1.ThumbnailModel,
+            premium_storage_plan_1.PremiumStoragePlanModel,
+            user_premium_storage_payments_1.userPremiumStoragePaymentModel,
             plugin_1.PluginModel
         ]);
         yield checkPostgresExtensions();

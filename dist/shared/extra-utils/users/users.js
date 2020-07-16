@@ -213,6 +213,8 @@ function updateUser(options) {
         toSend['videoQuota'] = options.videoQuota;
     if (options.videoQuotaDaily !== undefined && options.videoQuotaDaily !== null)
         toSend['videoQuotaDaily'] = options.videoQuotaDaily;
+    if (options.premiumStorageActive !== undefined && options.premiumStorageActive !== null)
+        toSend['premiumStorageActive'] = options.premiumStorageActive;
     if (options.role !== undefined && options.role !== null)
         toSend['role'] = options.role;
     if (options.adminFlags !== undefined && options.adminFlags !== null)

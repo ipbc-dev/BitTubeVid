@@ -394,6 +394,9 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             videoQuotaUsedDaily: videoQuotaUsedDaily !== undefined
                 ? parseInt(videoQuotaUsedDaily + '', 10)
                 : undefined,
+            premiumStorageActive: this.premiumStorageActive !== undefined
+                ? this.premiumStorageActive
+                : false,
             videosCount: videosCount !== undefined
                 ? parseInt(videosCount + '', 10)
                 : undefined,
@@ -612,6 +615,12 @@ __decorate([
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT),
     __metadata("design:type", Number)
 ], UserModel.prototype, "videoQuotaDaily", void 0);
+__decorate([
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Is('premiumStorageActive', value => utils_1.throwIfNotValid(value, users_1.isUserPremiumStorageActiveValid, 'user premium storafe active')),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BOOLEAN),
+    __metadata("design:type", Boolean)
+], UserModel.prototype, "premiumStorageActive", void 0);
 __decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(constants_1.DEFAULT_USER_THEME_NAME),

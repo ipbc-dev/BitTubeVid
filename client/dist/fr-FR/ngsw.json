@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1592586752793,
+  "timestamp": 1594894064856,
   "index": "/client/fr-FR/index.html",
   "assetGroups": [
     {
@@ -23,7 +23,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/fr-FR/index.html": "f41d9f1643c6299bbdf40a3e883d0cb3a1066c16",
+    "/client/fr-FR/index.html": "03b30ddd9a1cbe4ae1e705675a84f1fb5edd92fa",
     "/client/fr-FR/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

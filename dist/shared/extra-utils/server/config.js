@@ -151,6 +151,9 @@ function updateCustomSubConfig(url, token, newConfig) {
                     enabled: false
                 }
             }
+        },
+        premium_storage: {
+            enabled: false
         }
     };
     lodash_1.merge(updateParams, newConfig);

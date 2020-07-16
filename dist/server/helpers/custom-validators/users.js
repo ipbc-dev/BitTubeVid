@@ -25,6 +25,10 @@ function isUserVideoQuotaDailyValid(value) {
     return misc_1.exists(value) && validator_1.default.isInt(value + '', USERS_CONSTRAINTS_FIELDS.VIDEO_QUOTA_DAILY);
 }
 exports.isUserVideoQuotaDailyValid = isUserVideoQuotaDailyValid;
+function isUserPremiumStorageActiveValid(value) {
+    return misc_1.isBooleanValid(value);
+}
+exports.isUserPremiumStorageActiveValid = isUserPremiumStorageActiveValid;
 function isUserUsernameValid(value) {
     const max = USERS_CONSTRAINTS_FIELDS.USERNAME.max;
     const min = USERS_CONSTRAINTS_FIELDS.USERNAME.min;

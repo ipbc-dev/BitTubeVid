@@ -26,6 +26,7 @@ const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const theme_utils_1 = require("../../lib/plugins/theme-utils");
 const middlewares_1 = require("../../middlewares");
 const config_2 = require("../../middlewares/validators/config");
+const logger_1 = require("@server/helpers/logger");
 const configRouter = express.Router();
 exports.configRouter = configRouter;
 const auditLogger = audit_logger_1.auditLoggerFactory('config');
@@ -155,6 +156,9 @@ function getConfig(req, res) {
                         indexUrl: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
                     }
                 }
+            },
+            premium_storage: {
+                enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
             }
         };
         return res.json(json);
@@ -198,6 +202,8 @@ function updateCustomConfig(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const oldCustomConfigAuditKeys = new audit_logger_1.CustomConfigAuditView(customConfig());
         const toUpdateJSON = convertCustomConfigBody(req.body);
+        logger_1.logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', config_1.CONFIG.CUSTOM_FILE);
+        logger_1.logger.debug('ICEICE toUpdateJSON is: ', toUpdateJSON);
         yield fs_extra_1.writeJSON(config_1.CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 });
         config_1.reloadConfig();
         client_html_1.ClientHtml.invalidCache();
@@ -373,6 +379,9 @@ function customConfig() {
                     indexUrl: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
                 }
             }
+        },
+        premium_storage: {
+            enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
         }
     };
 }

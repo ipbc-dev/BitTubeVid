@@ -277,6 +277,9 @@ describe('Test config', function () {
                             indexUrl: 'https://updated.example.com'
                         }
                     }
+                },
+                premium_storage: {
+                    enabled: false
                 }
             };
             yield extra_utils_1.updateCustomConfig(server.url, server.accessToken, newCustomConfig);
