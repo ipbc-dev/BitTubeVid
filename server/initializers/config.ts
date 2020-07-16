@@ -70,7 +70,7 @@ const CONFIG = {
     PLUGINS_DIR: buildPath(config.get<string>('storage.plugins'))
   },
   PREMIUM_STORAGE: {
-    ENABLED: config.get<boolean>('premium_storage.enabled')
+    get ENABLED () { return config.get<boolean>('premium_storage.enabled') }
   },
   WEBSERVER: {
     SCHEME: config.get<boolean>('webserver.https') === true ? 'https' : 'http',

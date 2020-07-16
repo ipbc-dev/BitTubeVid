@@ -54,6 +54,7 @@ const customConfigUpdateValidator = [
   body('followers.instance.manualApproval').isBoolean().withMessage('Should have a valid manual approval boolean'),
 
   body('theme.default').custom(v => isThemeNameValid(v) && isThemeRegistered(v)).withMessage('Should have a valid theme'),
+  body('premium_storage.enabled').isBoolean().withMessage('Should have a valid premium_storage enabled boolean'),
 
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body })
