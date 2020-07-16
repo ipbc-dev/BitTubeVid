@@ -135,7 +135,7 @@ const JOB_CONCURRENCY: { [id in JobType]: number } = {
   'activitypub-http-fetcher': 1,
   'activitypub-follow': 1,
   'video-file-import': 1,
-  'video-transcoding': 8,
+  'video-transcoding': 10,
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
