@@ -133,6 +133,9 @@ describe('Test config API validators', function () {
           indexUrl: 'https://index.example.com'
         }
       }
+    },
+    premium_storage: {
+      enabled: false
     }
   }
 

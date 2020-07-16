@@ -139,6 +139,9 @@ export class ServerService {
           indexUrl: 'https://instances.joinpeertube.org'
         }
       }
+    },
+    premium_storage: {
+      enabled: false
     }
   }
 

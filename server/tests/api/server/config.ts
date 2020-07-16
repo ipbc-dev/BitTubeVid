@@ -324,6 +324,9 @@ describe('Test config', function () {
             indexUrl: 'https://updated.example.com'
           }
         }
+      },
+      premium_storage: {
+        enabled: false
       }
     }
     await updateCustomConfig(server.url, server.accessToken, newCustomConfig)

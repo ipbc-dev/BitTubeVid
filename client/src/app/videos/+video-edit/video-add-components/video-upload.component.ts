@@ -86,9 +86,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, AfterView
   }
 
   ngAfterViewInit () {
-    setTimeout(() => {
-      this.showPremiumStorageModal()
-    }, 1000)
+    // Do nothing?
   }
 
   ngOnDestroy () {
@@ -284,6 +282,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, AfterView
         }
       )
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }
@@ -306,6 +305,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, AfterView
         }
       )
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }

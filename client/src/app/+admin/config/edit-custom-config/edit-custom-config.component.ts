@@ -233,6 +233,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
             indexUrl: this.customConfigValidatorsService.INDEX_URL
           }
         }
+      },
+      premium_storage: {
+        enabled: null
       }
     }
 
@@ -435,6 +438,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   async formValidated () {
+    console.log('ICEICE going to update config with form : ', this.form.getRawValue())
     this.configService.updateCustomConfig(this.form.getRawValue())
       .subscribe(
         res => {

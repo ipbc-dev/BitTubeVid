@@ -131,4 +131,8 @@ export interface CustomConfig {
       }
     }
   }
+
+  premium_storage: {
+    enabled: boolean
+  }
 }

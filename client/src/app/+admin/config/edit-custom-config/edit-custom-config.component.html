@@ -1184,9 +1184,9 @@
             <div i18n class="inner-form-title">ACTIVE / DEACTIVATE</div>
           </div>
 
-          <div class="form-group form-group-right col-12">
+          <ng-container class="form-group form-group-right col-12" formGroupName="premium_storage">
             <div class="form-group">
-              <my-peertube-checkbox inputName="premiumStorageActive">
+              <my-peertube-checkbox inputName="premiumStorageActive" formControlName="enabled">
                 <ng-template ptTemplate="label">
                   <ng-container i18n>Premium storage is enabled</ng-container>
                 </ng-template>
@@ -1199,7 +1199,7 @@
                 </ng-template>
               </my-peertube-checkbox>
             </div>
-          </div>
+          </ng-container>
         </div>
 
 
@@ -1213,9 +1213,9 @@
 
   <div [ngbNavOutlet]="nav"></div>
 
-  <div *ngIf="showFormSubmitButton()" class="form-row mt-4"> <!-- submit placement block -->
+  <div class="form-row mt-4"> <!-- submit placement block -->
     <div class="col-md-7 col-xl-5"></div>
-    <div class="col-md-5 col-xl-5">
+    <div class="col-md-5 col-xl-7">
       <input (click)="formValidated()" type="submit" i18n-value value="Update configuration" [disabled]="!form.valid">
       <span class="form-error" i18n *ngIf="!form.valid">It seems like the configuration is invalid. Please search for potential errors in the different tabs.</span>
     </div>
