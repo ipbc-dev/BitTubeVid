@@ -48,6 +48,8 @@ li {
   height: 15px;
   right: 6px;
   top: 3px;
+  z-index: 99;
+  cursor: pointer;
 }
 
 .action-button-cancel {

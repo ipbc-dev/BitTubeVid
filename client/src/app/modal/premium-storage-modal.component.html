@@ -1,7 +1,4 @@
 <ng-template #modal let-hide="close">
-    <!-- <div class="modal-header">
-      <h4 class="modal-title"></h4>
-    </div> -->
     <my-global-icon *ngIf="close" class="close-modal-button" iconName="cross" aria-label="Close" role="button" (click)="onCloseClick()"></my-global-icon>
       
     <div class="modal-body"> 
@@ -12,19 +9,10 @@
           <div class="modal-body-text-blue-1">Upgrade to</div>
           <div class="modal-body-text-blue-2">Premium Storage</div>
         </div>
-        <input
-          *ngIf="hasConfirm()" type="button" role="button" value="{{confirm.value}}" class="action-button action-button-confirm"
-          (click)="onConfirmClick()" (key.enter)="onConfirmClick()"
-        >
+        <a href="/my-account" routerlink="/my-account">
+          <input *ngIf="hasConfirm()" type="button" role="button" value="{{confirm.value}}" class="action-button action-button-confirm">
+        </a>
       </div>
     </div>
-  
-    <!-- <div *ngIf="hasCancel() || hasConfirm()" class="modal-footer inputs">
-       <input
-        *ngIf="hasCancel()" type="button" role="button" value="{{cancel.value}}" class="action-button action-button-cancel"
-        (click)="onCancelClick()" (key.enter)="onCancelClick()"
-      >
-  
-    </div> -->
   </ng-template>
   
