@@ -43,6 +43,7 @@ const customConfigUpdateValidator = [
     express_validator_1.body('followers.instance.enabled').isBoolean().withMessage('Should have a valid followers of instance boolean'),
     express_validator_1.body('followers.instance.manualApproval').isBoolean().withMessage('Should have a valid manual approval boolean'),
     express_validator_1.body('theme.default').custom(v => plugins_1.isThemeNameValid(v) && theme_utils_1.isThemeRegistered(v)).withMessage('Should have a valid theme'),
+    express_validator_1.body('premium_storage.enabled').isBoolean().withMessage('Should have a valid premium_storage enabled boolean'),
     (req, res, next) => {
         logger_1.logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
