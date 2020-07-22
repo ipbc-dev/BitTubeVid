@@ -268,6 +268,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       dailyQuota: 0,
       priceTube: 0,
       duration: 0,
+      expiration: 0,
       active: false
     }
   }
@@ -280,6 +281,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       if (plans['success'] && plans['plans'].length > 0) {
         this.storagePlans = plans['plans']
         this.storagePlans.forEach(plan => {
+          plan.quota = Math.round(plan.quota / 1073741824)
+          plan.dailyQuota = Math.round(plan.dailyQuota / 1073741824)
           plan.updateData = plan
         })
       }
@@ -293,6 +296,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   addPlanButtonClick () {
     if (!this.isAddPlanButtonDisabled()) {
       console.log('ICEICE going to call addPlan with body. ', this.newStoragePlan)
+      this.newStoragePlan.quota = this.newStoragePlan.quota * 1073741824 /* to bytes */
+      this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota * 1073741824 /* to bytes */
       this.addPlan(this.newStoragePlan).subscribe(resp => {
         console.log('ICEICE addPlanButtonClick response is: ', resp)
         if (resp['success']) {
@@ -321,12 +326,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   isAddPlanButtonDisabled () {
-    const { name, quota, dailyQuota, priceTube, duration, active } = this.newStoragePlan
+    const { name, quota, dailyQuota, priceTube, duration, active, expiration } = this.newStoragePlan
     if (typeof name !== 'string' || name === null || name === '' || name.length > 50) return true
     if (typeof quota !== 'number' || quota < -1 || quota === 0) return true
     if (typeof dailyQuota !== 'number' || dailyQuota < -1 || dailyQuota === 0) return true
     if (typeof priceTube !== 'number' || priceTube < 0) return true
     if (typeof duration !== 'number' || duration < 2628000000 || duration > 31536000000) return true
+    if (typeof expiration !== 'number' || expiration < 0) return true
     if (typeof active !== 'boolean') return true
     return false
   }
@@ -347,6 +353,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     } catch (err) {
       return err
     }
+  }
+
+  numberRound (num: number) {
+    return Math.round(num)
   }
 
   onRowEditInit (rowData: interfacePremiumStoragePlan) {
@@ -384,10 +394,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     const body = {
       id: rowData.id,
       name: rowData.name,
-      quota: rowData.quota,
-      dailyQuota: rowData.dailyQuota,
+      quota: rowData.quota * 1073741824, /* to bytes */
+      dailyQuota: rowData.dailyQuota * 1073741824, /* to bytes */
       priceTube: rowData.priceTube,
       duration: rowData.duration,
+      expiration: rowData.expiration,
       active: rowData.active
     }
     console.log('ICEICE calling onRowEditSave function with body: ', body)

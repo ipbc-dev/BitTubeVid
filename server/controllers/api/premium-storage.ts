@@ -1,10 +1,10 @@
 import * as express from 'express'
 import {
   asyncMiddleware,
-  authenticate,
-  paginationValidator,
-  setDefaultSort,
-  setDefaultPagination
+  authenticate
+  // paginationValidator,
+  // setDefaultSort,
+  // setDefaultPagination
 
 } from '../../middlewares'
 // import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
@@ -20,7 +20,7 @@ import { userPremiumStoragePaymentModel } from '../../models/user-premium-storag
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
 // import { deleteUserToken } from 'server/lib/oauth-model'
-
+// const fetch = require('node-fetch')
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
@@ -84,12 +84,13 @@ async function adminUpdatePlan (req: express.Request, res: express.Response) {
         body.quota === undefined ||
         body.dailyQuota === undefined ||
         body.duration === undefined ||
+        body.expiration === undefined ||
         body.priceTube === undefined ||
         body.active === undefined
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
+    const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
     return res.json({ success: true, added: updateResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })
@@ -98,18 +99,22 @@ async function adminUpdatePlan (req: express.Request, res: express.Response) {
 
 async function adminAddPlan (req: express.Request, res: express.Response) {
   try {
+    console.log('ICEICE request is: ', req)
     const body = req.body
+    console.log('ICEICE body is: ', body)
     if (body === undefined ||
       body.name === undefined ||
       body.quota === undefined ||
       body.dailyQuota === undefined ||
       body.duration === undefined ||
+      body.expiration === undefined ||
       body.priceTube === undefined ||
       body.active === undefined
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
+
+    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
     return res.json({ success: true, added: addResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })

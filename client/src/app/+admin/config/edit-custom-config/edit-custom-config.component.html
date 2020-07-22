@@ -833,11 +833,11 @@
                 </my-help>
               </div>
               <input
-                type="number" min="-1" step="10737418240" id="newPlanQuota" class="form-control"
+                type="number" min="-1" step="1" id="newPlanQuota" class="form-control"
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.quota" [ngModelOptions]="{standalone: true}"
               >
-              <label *ngIf="newStoragePlan.quota > 0" class="storage-label" for="newPlanQuota">{{getHRBytes(newStoragePlan.quota)}}</label>
+              <!-- <label *ngIf="newStoragePlan.quota > 0" class="storage-label" for="newPlanQuota">{{getHRBytes(newStoragePlan.quota)}}</label> -->
             </div>
 
             <div class="form-group">
@@ -853,11 +853,11 @@
                 </my-help>
               </div>
               <input
-                type="number" min="-1" step="1073741824" id="newPlanDailyQuota" class="form-control"
+                type="number" min="-1" step="1" id="newPlanDailyQuota" class="form-control"
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.dailyQuota" [ngModelOptions]="{standalone: true}"
               >
-              <label *ngIf="newStoragePlan.dailyQuota > 0" class="storage-label" for="newPlanDailyQuota">{{getHRBytes(newStoragePlan.dailyQuota)}}</label>
+              <!-- <label *ngIf="newStoragePlan.dailyQuota > 0" class="storage-label" for="newPlanDailyQuota">{{getHRBytes(newStoragePlan.dailyQuota)}}</label> -->
             </div>
 
             <div class="form-group">
@@ -885,8 +885,8 @@
                 <my-help>
                   <ng-template ptTemplate="customHtml">
                     <ng-container i18n>
-                      This value is the Duration (lifespan) of this plan. It is an integer in miliseconds.<br /><br />
-                      Minimum value is 1 month and maximun 1 year.
+                      This value is the Duration (lifespan) of this plan when people buy it. It is an integer in miliseconds.<br /><br />
+                      Minimum value is 1 month and maximum 1 year.
                     </ng-container>
                   </ng-template>
                 </my-help>
@@ -897,6 +897,27 @@
                 [(ngModel)]="newStoragePlan.duration" [ngModelOptions]="{standalone: true}"
               >
               <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month/s</label>
+            </div>
+
+            <div class="form-group">
+              <div class="label-with-help">
+                <label i18n for="newPlanExpiration">Expiration</label>
+                <my-help>
+                  <ng-template ptTemplate="customHtml">
+                    <ng-container i18n>
+                      After this expiration time is finished, this plan will not be available for purchase it. It is an integer in miliseconds.<br /><br />
+                      Minimum value is 0 (never expires) and maximum 10 years.
+                    </ng-container>
+                  </ng-template>
+                </my-help>
+              </div>
+              <input
+                type="number" min="0" max="315360000000" step="2628000000" id="newPlanExpiration" class="form-control"
+                class="storage-input storage-numeric-input"
+                [(ngModel)]="newStoragePlan.expiration" [ngModelOptions]="{standalone: true}"
+              >
+              <label *ngIf="newStoragePlan.expiration > 0" class="storage-label" for="newPlanExpiration">{{newStoragePlan.expiration / 2628000000}} month/s</label>
+              <label *ngIf="newStoragePlan.expiration == 0" class="storage-label" for="newPlanExpiration" i18n >never</label>
             </div>
 
             <div class="form-group">
@@ -1069,12 +1090,13 @@
               <!-- HEADER -->
               <ng-template pTemplate="header">
                 <tr>
-                  <th style="width: 50px;">Id</th>
+                  <!-- <th style="width: 50px;">Id</th> -->
                   <th>Name</th>
-                  <th style="width: 220px;">Quota</th>
-                  <th style="width: 220px;">Daily Quota</th>
-                  <th style="width: 220px;">Price (TubeCoin)</th>
+                  <th style="width: 200px;">Quota</th>
+                  <th style="width: 200px;">Daily Quota</th>
+                  <th style="width: 200px;">Price (TubeCoin)</th>
                   <th style="width: 220px;">Duration</th>
+                  <th style="width: 220px;">Expiration</th>
                   <th style="width: 100px;">Active</th>
                   <th style="width: 250px;">Actions</th>
                 </tr>
@@ -1083,9 +1105,9 @@
               <ng-template pTemplate="body" let-rowPlan let-editing="editing" let-ri="planIndex">
 
                 <tr [pEditableRow]="rowPlan">
-                  <td>
+                  <!-- <td>
                     {{rowPlan.id}}
-                  </td>
+                  </td> -->
 
                   <td>
                     <p-cellEditor>
@@ -1101,10 +1123,11 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="-1" step="10737418240" [(ngModel)]="rowPlan.updateData.quota" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="-1" step="1" [(ngModel)]="rowPlan.updateData.quota" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.quota}} | {{getHRBytes(rowPlan.quota)}}
+                            {{rowPlan.quota}} GB
+                            <!-- | {{getHRBytes(rowPlan.quota)}} -->
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1112,10 +1135,11 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="-1" step="1073741824" [(ngModel)]="rowPlan.updateData.dailyQuota" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="-1" step="1" [(ngModel)]="rowPlan.updateData.dailyQuota" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.dailyQuota}} | {{getHRBytes(rowPlan.dailyQuota)}}
+                            {{rowPlan.dailyQuota}} GB
+                            <!-- | {{getHRBytes(rowPlan.dailyQuota)}} -->
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1137,7 +1161,23 @@
                             <input pInputText type="number" min="1" step="2628000000" [(ngModel)]="rowPlan.updateData.duration" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.duration}} | {{rowPlan.duration / 2628000000}} month/s
+                            {{rowPlan.duration}} | {{numberRound(rowPlan.duration / 2628000000)}} month/s
+                        </ng-template>
+                    </p-cellEditor>
+                  </td>
+
+                  <td>
+                    <p-cellEditor>
+                        <ng-template pTemplate="input">
+                            <input pInputText type="number" min="0" step="2628000000" [(ngModel)]="rowPlan.updateData.expiration" [ngModelOptions]="{standalone: true}">
+                        </ng-template>
+                        <ng-template pTemplate="output">
+                          <div *ngIf="rowPlan.expiration > 0" >
+                            {{rowPlan.expiration}} | {{numberRound(rowPlan.expiration / 2628000000)}} month/s
+                          </div>
+                          <div *ngIf="rowPlan.expiration == 0">
+                            0 | Never
+                          </div>
                         </ng-template>
                     </p-cellEditor>
                   </td>
