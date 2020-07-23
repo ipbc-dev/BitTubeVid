@@ -827,7 +827,7 @@
                   <ng-template ptTemplate="customHtml">
                     <ng-container i18n>
                       This value is the TOTAL amount of data that a user can upload with this plan.<br /><br />
-                      It's an integer in BYTES. For unlimited storage use -1
+                      It's an integer in GIGABYTES. For unlimited storage use -1
                     </ng-container>
                   </ng-template>
                 </my-help>
@@ -837,6 +837,7 @@
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.quota" [ngModelOptions]="{standalone: true}"
               >
+              <label for="newPlanQuota" class="storage-label" > GB </label>
               <!-- <label *ngIf="newStoragePlan.quota > 0" class="storage-label" for="newPlanQuota">{{getHRBytes(newStoragePlan.quota)}}</label> -->
             </div>
 
@@ -847,7 +848,7 @@
                   <ng-template ptTemplate="customHtml">
                     <ng-container i18n>
                       This value is the DAILY amount of data that a user can upload with this plan.<br /><br />
-                      It's an integer in BYTES. For unlimited uploading use -1
+                      It's an integer in GIGABYTES. For unlimited uploading use -1
                     </ng-container>
                   </ng-template>
                 </my-help>
@@ -857,6 +858,7 @@
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.dailyQuota" [ngModelOptions]="{standalone: true}"
               >
+              <label for="newPlanDailyQuota" class="storage-label" > GB </label>
               <!-- <label *ngIf="newStoragePlan.dailyQuota > 0" class="storage-label" for="newPlanDailyQuota">{{getHRBytes(newStoragePlan.dailyQuota)}}</label> -->
             </div>
 
@@ -877,6 +879,7 @@
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.priceTube" [ngModelOptions]="{standalone: true}"
               >
+              <label for="newPlanPrice" class="storage-label" > Tubes </label>
             </div>
 
             <div class="form-group">

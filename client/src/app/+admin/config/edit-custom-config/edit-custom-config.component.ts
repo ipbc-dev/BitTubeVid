@@ -321,7 +321,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   addPlan (body: interfacePremiumStoragePlan) {
-    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', body)
+    const bodyWithToken: any = body
+    bodyWithToken.accessToken = localStorage.getItem('access_token')
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', bodyWithToken)
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 

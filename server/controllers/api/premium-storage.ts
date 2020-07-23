@@ -8,6 +8,7 @@ import {
 
 } from '../../middlewares'
 // import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
+import { WEBSERVER } from '../../initializers/constants'
 import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
@@ -20,7 +21,9 @@ import { userPremiumStoragePaymentModel } from '../../models/user-premium-storag
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
 // import { deleteUserToken } from 'server/lib/oauth-model'
-// const fetch = require('node-fetch')
+const fetch = require('node-fetch')
+const Headers = fetch.Headers
+const firebaseApiUrl = 'http://localhost:5001/bittube-airtime-extension/us-central1/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
@@ -101,6 +104,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
   try {
     console.log('ICEICE request is: ', req)
     const body = req.body
+    const headers = req.headers
     console.log('ICEICE body is: ', body)
     if (body === undefined ||
       body.name === undefined ||
@@ -113,9 +117,21 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
+    /* Adding some more info to body */
+    console.log('ICEICE headers are: ', headers)
+    body.host = WEBSERVER.URL
+    body.token = req.headers.authorization
 
+    const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeAddProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(body)
+    })
+    console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
     const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
-    return res.json({ success: true, added: addResult })
+    return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -152,7 +168,23 @@ async function getPlans (req: express.Request, res: express.Response) {
   try {
     const plansResult = await PremiumStoragePlanModel.getPlans()
     const plansResponse = plansResult.map(plan => plan.toJSON())
-    return res.json({ success: true, plans: plansResponse })
+    // console.log('ICEICE WEBSERVER are: ', WEBSERVER)
+    // console.log('ICEICE req is: ', req)
+    /* body */
+    const body = {
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization
+    }
+
+    const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeGetAllProducts', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(body)
+    })
+    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
+    return res.json({ success: true, plans: plansResponse, firebase: firebaseApiResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
