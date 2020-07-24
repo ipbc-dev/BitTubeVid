@@ -53,7 +53,7 @@
     </div> -->
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
-      <select [value] formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
+      <select formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
         <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
         <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
       </select>

@@ -93,8 +93,29 @@ async function adminUpdatePlan (req: express.Request, res: express.Response) {
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
-    return res.json({ success: true, added: updateResult })
+    /* Building body */
+    const apiReqBody = {
+      id: body.tubePayId,
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization,
+      title: body.name,
+      validFor: parseInt(body.expiration),
+      price: body.priceTube
+    }
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeModifyProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(apiReqBody)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
+    if (firebaseApiResult.success) {
+      const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
+      return res.json({ success: true, added: updateResult })
+    } else {
+      return res.json({ success: false, error: firebaseApiResult })
+    }
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -102,10 +123,7 @@ async function adminUpdatePlan (req: express.Request, res: express.Response) {
 
 async function adminAddPlan (req: express.Request, res: express.Response) {
   try {
-    console.log('ICEICE request is: ', req)
     const body = req.body
-    const headers = req.headers
-    console.log('ICEICE body is: ', body)
     if (body === undefined ||
       body.name === undefined ||
       body.quota === undefined ||
@@ -118,20 +136,32 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
     /* Adding some more info to body */
-    console.log('ICEICE headers are: ', headers)
     body.host = WEBSERVER.URL
-    body.token = req.headers.authorization
+    body.auth = req.headers.authorization
 
-    const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeAddProduct', {
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeAddProduct', {
       method: 'post',
       headers: new Headers({
         'Content-Type': 'application/json'
       }),
       body: JSON.stringify(body)
     })
-    console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
-    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
-    return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
+    const firebaseApiResult = await firebaseApiRes.json()
+    if (firebaseApiResult.success) {
+      const addResult = await PremiumStoragePlanModel.addPlan(
+        body.name,
+        body.quota,
+        body.dailyQuota,
+        body.duration,
+        body.expiration,
+        body.priceTube,
+        body.active,
+        firebaseApiResult.product.id,
+        firebaseApiResult.product.secret,
+        firebaseApiResult.product.ownerContentName
+      )
+      return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
+    }
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -141,12 +171,33 @@ async function adminDeletePlan (req: express.Request, res: express.Response) {
   try {
     const body = req.body
     if (body.planId === undefined ||
-      typeof (body.planId) !== 'number') {
-      throw Error(`Undefined or invalid id ${body.planId}`)
+      typeof (body.planId) !== 'number' ||
+      body.tubePayId === undefined ||
+      typeof (body.tubePayId) !== 'string'
+    ) {
+      throw Error(`Undefined or invalid id ${body.planId} - ${body.tubePayId}`)
     }
-    const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
-    const deleteResponse = deleteResult// .map(del => del.toJSON())
-    return res.json({ success: true, deleted: deleteResponse })
+    /* Building body */
+    const apiReqBody = {
+      id: body.tubePayId,
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization
+    }
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeDeleteProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(apiReqBody)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
+    if (firebaseApiResult.success) {
+      const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
+      const deleteResponse = deleteResult// .map(del => del.toJSON())
+      return res.json({ success: true, deleted: deleteResponse })
+    } else {
+      return res.json({ success: false, error: firebaseApiResult })
+    }
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -171,20 +222,20 @@ async function getPlans (req: express.Request, res: express.Response) {
     // console.log('ICEICE WEBSERVER are: ', WEBSERVER)
     // console.log('ICEICE req is: ', req)
     /* body */
-    const body = {
-      host: WEBSERVER.URL,
-      auth: req.headers.authorization
-    }
+    // const body = {
+    //   host: WEBSERVER.URL,
+    //   auth: req.headers.authorization
+    // }
 
-    const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeGetAllProducts', {
-      method: 'post',
-      headers: new Headers({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(body)
-    })
+    // const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeGetAllProducts', {
+    //   method: 'post',
+    //   headers: new Headers({
+    //     'Content-Type': 'application/json'
+    //   }),
+    //   body: JSON.stringify(body)
+    // })
     // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
-    return res.json({ success: true, plans: plansResponse, firebase: firebaseApiResult })
+    return res.json({ success: true, plans: plansResponse })
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -314,32 +365,54 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         dailyQuota: chosenPlan.dailyQuota
       }
     }
-    /* Adding payment record to DB */
-    const paymentResult = await userPremiumStoragePaymentModel.create(createData)
-    const paymentResponse = paymentResult.toJSON()
+    /* Building body */
+    const apiReqBody = {
+      id: body.tubePayId,
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization,
+      title: body.name,
+      validFor: parseInt(body.expiration),
+      price: body.priceTube
+    }
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeModifyProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(apiReqBody)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
+    console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
+    if (firebaseApiResult.success) {
+      /* Adding payment record to DB */
+      const paymentResult = await userPremiumStoragePaymentModel.create(createData)
+      const paymentResponse = paymentResult.toJSON()
 
-    /* Set user Quota && dailyQuota in user table */
-    userToUpdate.videoQuota = chosenPlan.quota
-    userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
-    userToUpdate.premiumStorageActive = true
+      /* Set user Quota && dailyQuota in user table */
+      userToUpdate.videoQuota = chosenPlan.quota
+      userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
+      userToUpdate.premiumStorageActive = true
 
-    const updateUserResult = await userToUpdate.save()
-    // Destroy user token to refresh rights (maybe needed?)
-    // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
-    // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
+      const updateUserResult = await userToUpdate.save()
+      // Destroy user token to refresh rights (maybe needed?)
+      // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
+      // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
 
-    if (updateUserResult === undefined && updateUserResult === null) {
-      throw new Error('Something went wrong updating user quota and dailyQuota')
-    } else {
-      /* Deactivate previous plan after insert the new one */
-      if (userActualPlan !== null) {
-        const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
-        if (deactivatePreviousPlan[0] !== 1) {
-          return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
+      if (updateUserResult === undefined && updateUserResult === null) {
+        throw new Error('Something went wrong updating user quota and dailyQuota')
+      } else {
+        /* Deactivate previous plan after insert the new one */
+        if (userActualPlan !== null) {
+          const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
+          if (deactivatePreviousPlan[0] !== 1) {
+            return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
+          }
         }
       }
+      return res.json({ success: true, extended: extended, data: paymentResponse })
+    } else {
+      return res.json({ success: false, error: firebaseApiResult })
     }
-    return res.json({ success: true, extended: extended, data: paymentResponse })
 
   } catch (err) {
     return res.json({ success: false, error: err.message })

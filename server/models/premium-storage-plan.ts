@@ -38,15 +38,24 @@ export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   active!: boolean;
 
+  @Column({ type: DataType.STRING(15), allowNull: false, unique: true })
+  tubePayId!: string;
+
+  @Column({ type: DataType.STRING, allowNull: false, unique: true })
+  tubePaySecret!: string;
+
+  @Column({ type: DataType.STRING, allowNull: false })
+  tubePayOwnerContentName!: string;
+
   static async getPlans () {
     return await PremiumStoragePlanModel.findAll({
       order: [ [ 'quota', "ASC" ], [ 'duration', "ASC" ], [ 'expiration', "ASC" ] ]
     })
   }
 
-  static async addPlan (name: string, quota: number, dailyQuota: number, duration: number, expiration: number, priceTube: number, active: boolean) {
+  static async addPlan (name: string, quota: number, dailyQuota: number, duration: number, expiration: number, priceTube: number, active: boolean, tubePayId: string, tubePaySecret: string, tubePayOwnerContentName: string) {
     return await PremiumStoragePlanModel.create(
-      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, expiration: expiration, priceTube: priceTube, active: active })
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, expiration: expiration, priceTube: priceTube, active: active, tubePayId: tubePayId, tubePaySecret: tubePaySecret, tubePayOwnerContentName: tubePayOwnerContentName })
   }
 
   static async updatePlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, expiration: number, priceTube: number, active: boolean) {

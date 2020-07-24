@@ -7,4 +7,5 @@ export interface interfacePremiumStoragePlan {
   duration: number
   expiration: number
   active: boolean
+  tubePayId: string
 }

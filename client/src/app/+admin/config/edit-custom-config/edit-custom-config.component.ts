@@ -269,7 +269,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       priceTube: 0,
       duration: 0,
       expiration: 0,
-      active: false
+      active: false,
+      tubePayId: null
     }
   }
 
@@ -372,14 +373,15 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     )
     if (res === false) return
     const body = {
-      planId: rowData.id
+      planId: rowData.id,
+      tubePayId: rowData.tubePayId
     }
     console.log('ICEICE calling onRowDelete function with data: ', body)
     this.deletePlan(body).subscribe(resp => {
       console.log('ICEICE deletePlan response is: ', resp)
       if (resp['success']) {
         this.subscribeConfigAndPlans()
-        this.notifier.success('Plan successfully deleted')
+        setTimeout(() => { this.notifier.success('Plan successfully deleted') } , 1000) /* Wait 1 sec for subscription */
       } else {
         this.notifier.error(`Something went wrong deleting the plan, reload and try again`)
       }
@@ -395,6 +397,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     console.log('ICEICE calling onRowEditSave function with data: ', rowData)
     const body = {
       id: rowData.id,
+      tubePayId: rowData.tubePayId,
       name: rowData.name,
       quota: rowData.quota * 1073741824, /* to bytes */
       dailyQuota: rowData.dailyQuota * 1073741824, /* to bytes */

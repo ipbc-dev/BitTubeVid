@@ -147,7 +147,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     if (chosenPlanId > -1) {
       this.storagePlans.forEach((plan: any) => {
         console.log('ICEICE chacking plan: ', plan)
-        if (plan.id === chosenPlanId) {
+        if (plan.id == chosenPlanId) {
           this.chosenPlan = plan
         }
       })
