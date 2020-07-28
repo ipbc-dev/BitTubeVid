@@ -279,13 +279,15 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       this.getPlans(),
       this.serverService.getConfig()
     ]).subscribe(([ plans, config ]) => {
-      if (plans['success'] && plans['plans'].length > 0) {
+      if (plans['success']) {
         this.storagePlans = plans['plans']
         this.storagePlans.forEach(plan => {
           plan.quota = Math.round(plan.quota / 1073741824)
           plan.dailyQuota = Math.round(plan.dailyQuota / 1073741824)
           plan.updateData = plan
         })
+      } else {
+        this.storagePlans = []
       }
       if (config) {
         this.serverConfig = config

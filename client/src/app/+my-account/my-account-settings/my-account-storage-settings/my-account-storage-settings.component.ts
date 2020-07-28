@@ -193,12 +193,14 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     let confirmedData = true
     let chosenPlanDuration: any
     let chosenPlanPrice: any
+    let chosenPlanTubePayId: any
 
     // console.log('Chosen plan is: ', chosenPlanId)
     this.storagePlans.forEach((plan: any) => {
       if (plan.id === chosenPlanId) {
         chosenPlanDuration = plan.duration
         chosenPlanPrice = plan.priceTube
+        chosenPlanTubePayId = plan.tubePayId
       }
     })
     /* Check if user wants to extend more than a year (not allowed) */
@@ -218,7 +220,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       const postBody = {
         planId: chosenPlanId,
         duration: chosenPlanDuration,
-        priceTube: chosenPlanPrice
+        priceTube: chosenPlanPrice,
+        tubePayId: chosenPlanTubePayId
       }
       const postResponse = this.paymentPost(postBody)
         .subscribe(
@@ -230,6 +233,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
           err => this.notifier.error(err.message)
         )
+      console.log('ICEICE postResponse is: ', postResponse)
     }
   }
 

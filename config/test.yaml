@@ -4,7 +4,7 @@ listen:
 
 webserver:
   https: false
-  hostname: 'chatty-bullfrog-38.tunnel.bittube.app'
+  hostname: 'ice2.tunnel.bittube.app'
   port: 80
 rates_limit:
   signup:

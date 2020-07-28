@@ -161,6 +161,8 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
         firebaseApiResult.product.ownerContentName
       )
       return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
+    } else {
+      return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' })
     }
   } catch (err) {
     return res.json({ success: false, error: err.message })
@@ -366,15 +368,13 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       }
     }
     /* Building body */
+    console.log('ICEICE body is: ', body)
     const apiReqBody = {
       id: body.tubePayId,
       host: WEBSERVER.URL,
-      auth: req.headers.authorization,
-      title: body.name,
-      validFor: parseInt(body.expiration),
-      price: body.priceTube
+      auth: req.headers.authorization
     }
-    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeModifyProduct', {
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubePurchaseProduct', {
       method: 'post',
       headers: new Headers({
         'Content-Type': 'application/json'
