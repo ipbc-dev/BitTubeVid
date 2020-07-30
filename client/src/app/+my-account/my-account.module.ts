@@ -19,6 +19,7 @@ import { MyAccountOwnershipComponent } from './my-account-ownership/my-account-o
 import { MyAccountAcceptOwnershipComponent } from './my-account-ownership/my-account-accept-ownership/my-account-accept-ownership.component'
 import { MyAccountProfileComponent } from '@app/+my-account/my-account-settings/my-account-profile/my-account-profile.component'
 import { MyAccountVideoImportsComponent } from '@app/+my-account/my-account-video-imports/my-account-video-imports.component'
+import { MyAccountStorageSettingsComponent } from '@app/+my-account/my-account-settings/my-account-storage-settings/my-account-storage-settings.component'
 import { MyAccountDangerZoneComponent } from '@app/+my-account/my-account-settings/my-account-danger-zone'
 import { MyAccountSubscriptionsComponent } from '@app/+my-account/my-account-subscriptions/my-account-subscriptions.component'
 import { MyAccountBlocklistComponent } from '@app/+my-account/my-account-blocklist/my-account-blocklist.component'
@@ -73,6 +74,7 @@ import { MyAccountComponent } from './my-account.component'
     MyAccountOwnershipComponent,
     MyAccountAcceptOwnershipComponent,
     MyAccountVideoImportsComponent,
+    MyAccountStorageSettingsComponent,
     MyAccountDangerZoneComponent,
     MyAccountSubscriptionsComponent,
     MyAccountBlocklistComponent,
