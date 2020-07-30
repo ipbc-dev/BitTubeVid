@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../../shared/extra-utils");
@@ -34,7 +26,7 @@ describe('Test create transcoding jobs', function () {
         }
     };
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -48,7 +40,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should have two video files on each server', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             for (const server of servers) {
                 const res = yield extra_utils_1.getVideosList(server.url);
@@ -64,7 +56,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should run a transcoding job on video 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`${env} npm run create-transcoding-job -- -v ${videosUUID[1]}`);
@@ -101,7 +93,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should run a transcoding job on video 1 with resolution', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`${env} npm run create-transcoding-job -- -v ${videosUUID[0]} -r 480`);
@@ -120,7 +112,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should generate an HLS resolution', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`${env} npm run create-transcoding-job -- -v ${videosUUID[2]} --generate-hls -r 480`);
@@ -137,7 +129,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should not duplicate an HLS resolution', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`${env} npm run create-transcoding-job -- -v ${videosUUID[2]} --generate-hls -r 480`);
@@ -152,7 +144,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should generate all HLS resolutions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`${env} npm run create-transcoding-job -- -v ${videosUUID[3]} --generate-hls`);
@@ -168,7 +160,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     it('Should optimize the video file and generate HLS videos if enabled in config', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             config.transcoding.hls.enabled = true;
             yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, config);
@@ -185,7 +177,7 @@ describe('Test create transcoding jobs', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

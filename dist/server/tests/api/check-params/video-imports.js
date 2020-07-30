@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 require("mocha");
 const path_1 = require("path");
@@ -20,10 +12,9 @@ describe('Test video imports API validator', function () {
     const path = '/api/v1/videos/imports';
     let server;
     let userAccessToken = '';
-    let accountName;
     let channelId;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -34,29 +25,28 @@ describe('Test video imports API validator', function () {
             {
                 const res = yield extra_utils_1.getMyUserInformation(server.url, server.accessToken);
                 channelId = res.body.videoChannels[0].id;
-                accountName = res.body.account.name + '@' + res.body.account.host;
             }
         });
     });
     describe('When listing my video imports', function () {
         const myPath = '/api/v1/users/me/videos/imports';
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, myPath, server.accessToken);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, myPath, server.accessToken);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, myPath, server.accessToken);
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: myPath, statusCodeExpected: 200, token: server.accessToken });
             });
         });
@@ -82,73 +72,73 @@ describe('Test video imports API validator', function () {
             };
         });
         it('Should fail with nothing', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail without a target url', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 400 });
             });
         });
         it('Should fail with a bad target url', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { targetUrl: 'htt://hello' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a long name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { name: 'super'.repeat(65) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad category', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { category: 125 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad licence', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { licence: 125 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { language: 'a'.repeat(15) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a long description', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { description: 'super'.repeat(2500) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a long support text', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { support: 'super'.repeat(201) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail without a channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'channelId');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channelId: 545454 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with another user channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = {
                     username: 'fake',
                     password: 'fake_password'
@@ -162,25 +152,25 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with too many tags', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { tags: ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6'] });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a tag length too low', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { tags: ['tag1', 't'] });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a tag length too big', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { tags: ['tag1', 'my_super_tag_too_long_long_long_long_long_long'] });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an incorrect thumbnail file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
                     thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
@@ -189,7 +179,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with a big thumbnail file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
                     thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
@@ -198,7 +188,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with an incorrect preview file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
                     previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
@@ -207,7 +197,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with a big preview file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
                     previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
@@ -216,7 +206,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with an invalid torrent file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
                 const attaches = {
                     torrentfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
@@ -225,14 +215,14 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should fail with an invalid magnet URI', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 let fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
                 fields = extra_utils_1.immutableAssign(fields, { magnetUri: 'blabla' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 {
                     yield extra_utils_1.makePostBodyRequest({
@@ -246,7 +236,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should forbid to import http videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                     import: {
                         videos: {
@@ -269,7 +259,7 @@ describe('Test video imports API validator', function () {
             });
         });
         it('Should forbid to import torrent videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                     import: {
                         videos: {
@@ -294,7 +284,7 @@ describe('Test video imports API validator', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

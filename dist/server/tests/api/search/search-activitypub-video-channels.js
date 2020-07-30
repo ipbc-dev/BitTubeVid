@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -21,7 +13,7 @@ describe('Test ActivityPub video channels search', function () {
     let videoServer2UUID;
     let channelIdServer2;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -50,7 +42,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should not find a remote video channel', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             {
                 const search = 'http://localhost:' + servers[1].port + '/video-channels/channel1_server3';
@@ -69,7 +61,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should search a local video channel', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const searches = [
                 'http://localhost:' + servers[0].port + '/video-channels/channel1_server1',
                 'channel1_server1@localhost:' + servers[0].port
@@ -85,7 +77,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should search a remote video channel with URL or handle', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const searches = [
                 'http://localhost:' + servers[1].port + '/video-channels/channel1_server2',
                 'channel1_server2@localhost:' + servers[1].port
@@ -101,7 +93,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should not list this remote video channel', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoChannelsList(servers[0].url, 0, 5);
             expect(res.body.total).to.equal(3);
             expect(res.body.data).to.have.lengthOf(3);
@@ -111,7 +103,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should list video channel videos of server 2 without token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield jobs_1.waitJobs(servers);
             const res = yield extra_utils_1.getVideoChannelVideos(servers[0].url, null, 'channel1_server2@localhost:' + servers[1].port, 0, 5);
@@ -120,14 +112,14 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should list video channel videos of server 2 with token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoChannelVideos(servers[0].url, servers[0].accessToken, 'channel1_server2@localhost:' + servers[1].port, 0, 5);
             expect(res.body.total).to.equal(1);
             expect(res.body.data[0].name).to.equal('video 1 server 2');
         });
     });
     it('Should update video channel of server 2, and refresh it on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.updateVideoChannel(servers[1].url, userServer2Token, 'channel1_server2', { displayName: 'channel updated' });
             yield extra_utils_1.updateMyUser({ url: servers[1].url, accessToken: userServer2Token, displayName: 'user updated' });
@@ -142,7 +134,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should update and add a video on server 2, and update it on server 1 after a search', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.updateVideo(servers[1].url, userServer2Token, videoServer2UUID, { name: 'video 1 updated' });
             yield extra_utils_1.uploadVideo(servers[1].url, userServer2Token, { name: 'video 2 server 2', channelId: channelIdServer2 });
@@ -159,7 +151,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     it('Should delete video channel of server 2, and delete it on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.deleteVideoChannel(servers[1].url, userServer2Token, 'channel1_server2');
             yield jobs_1.waitJobs(servers);
@@ -171,7 +163,7 @@ describe('Test ActivityPub video channels search', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

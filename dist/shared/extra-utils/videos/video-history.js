@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeMyVideosHistory = exports.listMyVideosHistory = exports.userWatchVideo = void 0;
 const requests_1 = require("../requests/requests");
 function userWatchVideo(url, token, videoId, currentTime, statusCodeExpected = 204) {
     const path = '/api/v1/videos/' + videoId + '/watching';

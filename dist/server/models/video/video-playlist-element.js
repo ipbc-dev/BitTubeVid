@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var VideoPlaylistElementModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoPlaylistElementModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const video_1 = require("./video");
 const video_playlist_1 = require("./video-playlist");
@@ -216,71 +209,71 @@ let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylis
         return base;
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoPlaylistElementModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoPlaylistElementModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoPlaylistUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.URL.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoPlaylistElementModel.prototype, "url", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(1),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(1),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistElementModel.prototype, "position", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(0),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistElementModel.prototype, "startTimestamp", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(0),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistElementModel.prototype, "stopTimestamp", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_playlist_1.VideoPlaylistModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistElementModel.prototype, "videoPlaylistId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_playlist_1.VideoPlaylistModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", video_playlist_1.VideoPlaylistModel)
+    tslib_1.__metadata("design:type", video_playlist_1.VideoPlaylistModel)
 ], VideoPlaylistElementModel.prototype, "VideoPlaylist", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistElementModel.prototype, "videoId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_1.VideoModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", video_1.VideoModel)
+    tslib_1.__metadata("design:type", video_1.VideoModel)
 ], VideoPlaylistElementModel.prototype, "Video", void 0);
-VideoPlaylistElementModel = VideoPlaylistElementModel_1 = __decorate([
+VideoPlaylistElementModel = VideoPlaylistElementModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'videoPlaylistElement',
         indexes: [

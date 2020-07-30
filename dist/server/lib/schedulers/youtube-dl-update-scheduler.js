@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.YoutubeDlUpdateScheduler = void 0;
 const abstract_scheduler_1 = require("./abstract-scheduler");
 const constants_1 = require("../../initializers/constants");
 const youtube_dl_1 = require("../../helpers/youtube-dl");

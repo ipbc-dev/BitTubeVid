@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 const lodash_1 = require("lodash");
 require("mocha");
@@ -24,7 +16,7 @@ describe('Test video blacklist', function () {
     let servers = [];
     let videoId;
     function blacklistVideosOnServer(server) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield index_1.getVideosList(server.url);
             const videos = res.body.data;
             for (const video of videos) {
@@ -33,7 +25,7 @@ describe('Test video blacklist', function () {
         });
     }
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             servers = yield index_1.flushAndRunMultipleServers(2);
             yield index_1.setAccessTokensToServers(servers);
@@ -46,7 +38,7 @@ describe('Test video blacklist', function () {
     });
     describe('When listing/searching videos', function () {
         it('Should not have the video blacklisted in videos list/search on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield index_1.getVideosList(servers[0].url);
                     expect(res.body.total).to.equal(0);
@@ -62,7 +54,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should have the blacklisted video in videos list/search on server 2', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield index_1.getVideosList(servers[1].url);
                     expect(res.body.total).to.equal(2);
@@ -80,7 +72,7 @@ describe('Test video blacklist', function () {
     });
     describe('When listing manually blacklisted videos', function () {
         it('Should display all the blacklisted videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken });
                 expect(res.body.total).to.equal(2);
                 const blacklistedVideos = res.body.data;
@@ -93,7 +85,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should display all the blacklisted videos when applying manual type filter', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({
                     url: servers[0].url,
                     token: servers[0].accessToken,
@@ -106,7 +98,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should display nothing when applying automatic type filter', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({
                     url: servers[0].url,
                     token: servers[0].accessToken,
@@ -119,7 +111,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should get the correct sort when sorting by descending id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: '-id' });
                 expect(res.body.total).to.equal(2);
                 const blacklistedVideos = res.body.data;
@@ -130,7 +122,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should get the correct sort when sorting by descending video name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: '-name' });
                 expect(res.body.total).to.equal(2);
                 const blacklistedVideos = res.body.data;
@@ -141,7 +133,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should get the correct sort when sorting by ascending creation date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: 'createdAt' });
                 expect(res.body.total).to.equal(2);
                 const blacklistedVideos = res.body.data;
@@ -154,7 +146,7 @@ describe('Test video blacklist', function () {
     });
     describe('When updating blacklisted videos', function () {
         it('Should change the reason', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield index_1.updateVideoBlacklist(servers[0].url, servers[0].accessToken, videoId, 'my super reason updated');
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: '-name' });
                 const video = res.body.data.find(b => b.video.id === videoId);
@@ -164,7 +156,7 @@ describe('Test video blacklist', function () {
     });
     describe('When listing my videos', function () {
         it('Should display blacklisted videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield blacklistVideosOnServer(servers[1]);
                 const res = yield index_1.getMyVideos(servers[1].url, servers[1].accessToken, 0, 5);
                 expect(res.body.total).to.equal(2);
@@ -180,7 +172,7 @@ describe('Test video blacklist', function () {
         let videoToRemove;
         let blacklist = [];
         it('Should not have any video in videos list on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getVideosList(servers[0].url);
                 expect(res.body.total).to.equal(0);
                 expect(res.body.data).to.be.an('array');
@@ -188,7 +180,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should remove a video from the blacklist on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: '-name' });
                 videoToRemove = res.body.data[0];
                 blacklist = res.body.data.slice(1);
@@ -196,7 +188,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should have the ex-blacklisted video in videos list on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getVideosList(servers[0].url);
                 expect(res.body.total).to.equal(1);
                 const videos = res.body.data;
@@ -207,7 +199,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should not have the ex-blacklisted video in videos blacklist list on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: '-name' });
                 expect(res.body.total).to.equal(1);
                 const videos = res.body.data;
@@ -221,7 +213,7 @@ describe('Test video blacklist', function () {
         let video3UUID;
         let video4UUID;
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 {
                     const res = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'Video 3' });
@@ -235,7 +227,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should blacklist video 3 and keep it federated', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield index_1.addVideoToBlacklist(servers[0].url, servers[0].accessToken, video3UUID, 'super reason', false);
                 yield jobs_1.waitJobs(servers);
@@ -250,7 +242,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should unfederate the video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield index_1.addVideoToBlacklist(servers[0].url, servers[0].accessToken, video4UUID, 'super reason', true);
                 yield jobs_1.waitJobs(servers);
@@ -261,7 +253,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should have the video unfederated even after an Update AP message', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield index_1.updateVideo(servers[0].url, servers[0].accessToken, video4UUID, { description: 'super description' });
                 yield jobs_1.waitJobs(servers);
@@ -272,7 +264,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should have the correct video blacklist unfederate attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, sort: 'createdAt' });
                 const blacklistedVideos = res.body.data;
                 const video3Blacklisted = blacklistedVideos.find(b => b.video.uuid === video3UUID);
@@ -282,7 +274,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should remove the video from blacklist and refederate the video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield index_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, video4UUID);
                 yield jobs_1.waitJobs(servers);
@@ -298,7 +290,7 @@ describe('Test video blacklist', function () {
         let userWithFlag;
         let channelOfUserWithoutFlag;
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 index_1.killallServers([servers[0]]);
                 const config = {
@@ -332,7 +324,7 @@ describe('Test video blacklist', function () {
                         url: servers[0].url,
                         accessToken: servers[0].accessToken,
                         username: user.username,
-                        adminFlags: user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST,
+                        adminFlags: user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST,
                         password: user.password,
                         role: users_1.UserRole.USER
                     });
@@ -342,7 +334,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should auto blacklist a video on upload', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield index_1.uploadVideo(servers[0].url, userWithoutFlag, { name: 'blacklisted' });
                 const res = yield index_1.getBlacklistedVideosList({
                     url: servers[0].url,
@@ -354,7 +346,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should auto blacklist a video on URL import', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(15000);
                 const attributes = {
                     targetUrl: video_imports_1.getYoutubeVideoUrl(),
@@ -373,7 +365,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should auto blacklist a video on torrent import', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const attributes = {
                     magnetUri: video_imports_1.getMagnetURI(),
                     name: 'Torrent import',
@@ -391,7 +383,7 @@ describe('Test video blacklist', function () {
             });
         });
         it('Should not auto blacklist a video on upload if the user has the bypass blacklist flag', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield index_1.uploadVideo(servers[0].url, userWithFlag, { name: 'not blacklisted' });
                 const res = yield index_1.getBlacklistedVideosList({
                     url: servers[0].url,
@@ -403,7 +395,7 @@ describe('Test video blacklist', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);
         });
     });

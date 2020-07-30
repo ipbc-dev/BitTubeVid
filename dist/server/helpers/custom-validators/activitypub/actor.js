@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isValidActorHandle = exports.sanitizeAndCheckActorObject = exports.isActorDeleteActivityValid = exports.isActorFollowersCountValid = exports.isActorFollowingCountValid = exports.isActorObjectValid = exports.isActorPrivateKeyValid = exports.isActorPreferredUsernameValid = exports.isActorPublicKeyValid = exports.isActorTypeValid = exports.isActorPublicKeyObjectValid = exports.isActorEndpointsObjectValid = exports.areValidActorHandles = exports.actorNameAlphabet = exports.normalizeActor = void 0;
 const validator_1 = require("validator");
 const constants_1 = require("../../../initializers/constants");
 const misc_1 = require("../misc");

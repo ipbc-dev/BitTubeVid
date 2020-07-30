@@ -1,21 +1,13 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai_1 = require("chai");
 const models_1 = require("@shared/models");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 function loginExternal(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield extra_utils_1.getExternalAuth({
             url: options.server.url,
             npmName: options.npmName,
@@ -40,7 +32,7 @@ describe('Test external auth plugins', function () {
     let kefkaRefreshToken;
     let externalAuthToken;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield servers_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -54,7 +46,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should display the correct configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
@@ -66,7 +58,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should redirect for a Cyan login', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getExternalAuth({
                 url: server.url,
                 npmName: 'test-external-auth-one',
@@ -86,19 +78,19 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should reject auto external login with a missing or invalid token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.loginUsingExternalToken(server, 'cyan', '', 400);
             yield extra_utils_1.loginUsingExternalToken(server, 'cyan', 'blabla', 400);
         });
     });
     it('Should reject auto external login with a missing or invalid username', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, 400);
             yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, 400);
         });
     });
     it('Should reject auto external login with an expired token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.wait(5000);
             yield extra_utils_1.loginUsingExternalToken(server, 'cyan', externalAuthToken, 400);
@@ -106,7 +98,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should auto login Cyan, create the user and use the token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield loginExternal({
                     server,
@@ -131,7 +123,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should auto login Kefka, create the user and use the token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield loginExternal({
                     server,
@@ -153,7 +145,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should refresh Cyan token, but not Kefka token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const resRefresh = yield extra_utils_1.refreshToken(server, cyanRefreshToken);
                 cyanAccessToken = resRefresh.body.access_token;
@@ -168,7 +160,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should update Cyan profile', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateMyUser({
                 url: server.url,
                 accessToken: cyanAccessToken,
@@ -182,18 +174,18 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should logout Cyan', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.logout(server.url, cyanAccessToken);
         });
     });
     it('Should have logged out Cyan', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.waitUntilLog(server, 'On logout cyan');
             yield extra_utils_1.getMyUserInformation(server.url, cyanAccessToken, 401);
         });
     });
     it('Should login Cyan and keep the old existing profile', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield loginExternal({
                     server,
@@ -215,7 +207,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should not update an external auth email', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateMyUser({
                 url: server.url,
                 accessToken: cyanAccessToken,
@@ -226,14 +218,14 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should reject token of Kefka by the plugin hook', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.wait(5000);
             yield extra_utils_1.getMyUserInformation(server.url, kefkaAccessToken, 401);
         });
     });
     it('Should unregister external-auth-2 and do not login existing Kefka', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updatePluginSettings({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -254,7 +246,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should have disabled this auth', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
@@ -264,7 +256,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should uninstall the plugin one and do not login Cyan', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uninstallPlugin({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -286,7 +278,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should not login kefka with another plugin', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield loginExternal({
                 server,
                 npmName: 'test-external-auth-two',
@@ -304,7 +296,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should not login an existing user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.createUser({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -321,7 +313,7 @@ describe('Test external auth plugins', function () {
         });
     });
     it('Should display the correct configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
@@ -331,7 +323,7 @@ describe('Test external auth plugins', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.cleanupTests([server]);
         });
     });

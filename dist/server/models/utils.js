@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchAttribute = exports.createSafeIn = exports.buildDirectionAndField = exports.getFollowsSort = exports.parseAggregateResult = exports.isOutdated = exports.buildWhereIdOrUUID = exports.buildTrigramSearchIndex = exports.buildServerIdsFollowedBy = exports.throwIfNotValid = exports.createSimilarityAttribute = exports.getBlacklistSort = exports.getVideoSort = exports.getCommentSort = exports.getSort = exports.buildLocalAccountIdsIn = exports.buildLocalActorIdsIn = exports.buildBlockedAccountSQL = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const validator_1 = require("validator");
 const sequelize_1 = require("sequelize");
@@ -97,10 +98,7 @@ function createSimilarityAttribute(col, value) {
     return sequelize_typescript_1.Sequelize.fn('similarity', searchTrigramNormalizeCol(col), searchTrigramNormalizeValue(value));
 }
 exports.createSimilarityAttribute = createSimilarityAttribute;
-function buildBlockedAccountSQL(serverAccountId, userAccountId) {
-    const blockerIds = [serverAccountId];
-    if (userAccountId)
-        blockerIds.push(userAccountId);
+function buildBlockedAccountSQL(blockerIds) {
     const blockerIdsString = blockerIds.join(', ');
     return 'SELECT "targetAccountId" AS "id" FROM "accountBlocklist" WHERE "accountId" IN (' + blockerIdsString + ')' +
         ' UNION ALL ' +

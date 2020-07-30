@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
@@ -57,7 +49,7 @@ if (!process.argv.slice(2).length) {
 }
 program.parse(process.argv);
 function listRedundanciesCLI(target) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, username, password } = yield cli_1.getServerCredentials(program);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
         const redundancies = yield listVideoRedundanciesData(url, accessToken, target);
@@ -91,7 +83,7 @@ function listRedundanciesCLI(target) {
     });
 }
 function addRedundancyCLI(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, username, password } = yield cli_1.getServerCredentials(program);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
         if (!options['video'] || validator_1.default.isInt('' + options['video']) === false) {
@@ -123,7 +115,7 @@ function addRedundancyCLI(options) {
     });
 }
 function removeRedundancyCLI(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, username, password } = yield cli_1.getServerCredentials(program);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
         if (!options['video'] || validator_1.default.isInt('' + options['video']) === false) {
@@ -163,7 +155,7 @@ function removeRedundancyCLI(options) {
     });
 }
 function listVideoRedundanciesData(url, accessToken, target) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield redundancy_1.listVideoRedundancies({
             url,
             accessToken,

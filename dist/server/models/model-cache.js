@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ModelCache = void 0;
 const Bluebird = require("bluebird");
 const logger_1 = require("@server/helpers/logger");
 class ModelCache {

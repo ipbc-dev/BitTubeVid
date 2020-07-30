@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -18,7 +10,7 @@ describe('Test video views cleaner', function () {
     let videoIdServer1;
     let videoIdServer2;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -34,7 +26,7 @@ describe('Test video views cleaner', function () {
         });
     });
     it('Should not clean old video views', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             extra_utils_1.killallServers([servers[0]]);
             yield extra_utils_1.reRunServer(servers[0], { views: { videos: { remote: { max_age: '10 days' } } } });
@@ -54,7 +46,7 @@ describe('Test video views cleaner', function () {
         });
     });
     it('Should clean old video views', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             extra_utils_1.killallServers([servers[0]]);
             yield extra_utils_1.reRunServer(servers[0], { views: { videos: { remote: { max_age: '5 seconds' } } } });
@@ -74,7 +66,7 @@ describe('Test video views cleaner', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.closeAllSequelize(servers);
             yield extra_utils_1.cleanupTests(servers);
         });

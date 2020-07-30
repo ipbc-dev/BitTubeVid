@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.down = exports.up = void 0;
 const path_1 = require("path");
 const config_1 = require("../../initializers/config");
 const ffmpeg_utils_1 = require("../../helpers/ffmpeg-utils");

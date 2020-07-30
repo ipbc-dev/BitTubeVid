@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videoCaptionsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
@@ -30,13 +23,13 @@ videoCaptionsRouter.get('/:videoId/captions', middlewares_1.asyncMiddleware(vali
 videoCaptionsRouter.put('/:videoId/captions/:captionLanguage', middlewares_1.authenticate, reqVideoCaptionAdd, middlewares_1.asyncMiddleware(validators_1.addVideoCaptionValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideoCaption));
 videoCaptionsRouter.delete('/:videoId/captions/:captionLanguage', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.deleteVideoCaptionValidator), middlewares_1.asyncRetryTransactionMiddleware(deleteVideoCaption));
 function listVideoCaptions(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const data = yield video_caption_1.VideoCaptionModel.listVideoCaptions(res.locals.videoId.id);
         return res.json(utils_1.getFormattedObjects(data, data.length));
     });
 }
 function addVideoCaption(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoCaptionPhysicalFile = req.files['captionfile'][0];
         const video = res.locals.videoAll;
         const videoCaption = new video_caption_1.VideoCaptionModel({
@@ -45,7 +38,7 @@ function addVideoCaption(req, res) {
         });
         videoCaption.Video = video;
         yield captions_utils_1.moveAndProcessCaptionFile(videoCaptionPhysicalFile, videoCaption);
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, req.params.captionLanguage, null, t);
             yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
@@ -53,10 +46,10 @@ function addVideoCaption(req, res) {
     });
 }
 function deleteVideoCaption(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.videoAll;
         const videoCaption = res.locals.videoCaption;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield videoCaption.destroy({ transaction: t });
             yield videos_1.federateVideoIfNeeded(video, false, t);
         }));

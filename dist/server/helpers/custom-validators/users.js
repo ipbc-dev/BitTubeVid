@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isAvatarFile = exports.isNoWelcomeModal = exports.isNoInstanceConfigWarningModal = exports.isUserDescriptionValid = exports.isUserDisplayNameValid = exports.isUserAutoPlayNextVideoPlaylistValid = exports.isUserAutoPlayNextVideoValid = exports.isUserAutoPlayVideoValid = exports.isUserWebTorrentEnabledValid = exports.isUserNSFWPolicyValid = exports.isUserEmailVerifiedValid = exports.isUserAdminFlagsValid = exports.isUserUsernameValid = exports.isUserVideoQuotaDailyValid = exports.isUserVideoQuotaValid = exports.isUserRoleValid = exports.isUserBlockedReasonValid = exports.isUserVideoLanguages = exports.isUserPasswordValidOrEmpty = exports.isUserPasswordValid = exports.isUserBlockedValid = exports.isUserVideosHistoryEnabledValid = void 0;
 const validator_1 = require("validator");
 const shared_1 = require("../../../shared");
 const constants_1 = require("../../initializers/constants");

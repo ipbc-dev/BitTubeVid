@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.accountsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const utils_1 = require("../../helpers/utils");
 const middlewares_1 = require("../../middlewares");
@@ -38,13 +31,13 @@ function getAccount(req, res) {
     return res.json(account.toFormattedJSON());
 }
 function listAccounts(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const resultList = yield account_1.AccountModel.listForApi(req.query.start, req.query.count, req.query.sort);
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
 function listAccountChannels(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
             accountId: res.locals.account.id,
             start: req.query.start,
@@ -57,7 +50,7 @@ function listAccountChannels(req, res) {
     });
 }
 function listAccountPlaylists(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         let listMyPlaylists = false;
         if (res.locals.oauth && res.locals.oauth.token.User.Account.id === res.locals.account.id) {
@@ -77,7 +70,7 @@ function listAccountPlaylists(req, res) {
     });
 }
 function listAccountVideos(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const account = res.locals.account;
         const followerActorId = express_utils_1.isUserAbleToSearchRemoteURI(res) ? null : undefined;
         const countVideos = express_utils_1.getCountVideos(req);
@@ -103,7 +96,7 @@ function listAccountVideos(req, res) {
     });
 }
 function listAccountRatings(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const account = res.locals.account;
         const resultList = yield account_video_rate_1.AccountVideoRateModel.listByAccountForApi({
             accountId: account.id,

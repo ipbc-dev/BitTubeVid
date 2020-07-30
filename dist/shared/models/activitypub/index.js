@@ -1,2 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./activity"), exports);
+tslib_1.__exportStar(require("./activitypub-actor"), exports);
+tslib_1.__exportStar(require("./activitypub-collection"), exports);
+tslib_1.__exportStar(require("./activitypub-ordered-collection"), exports);
+tslib_1.__exportStar(require("./activitypub-root"), exports);
+tslib_1.__exportStar(require("./activitypub-signature"), exports);
+tslib_1.__exportStar(require("./objects"), exports);
+tslib_1.__exportStar(require("./webfinger"), exports);

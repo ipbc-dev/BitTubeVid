@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAuditLogsValidator = exports.getLogsValidator = void 0;
 const logger_1 = require("../../helpers/logger");
 const utils_1 = require("./utils");
 const misc_1 = require("../../helpers/custom-validators/misc");

@@ -1,20 +1,18 @@
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./account"));
-__export(require("./blocklist"));
-__export(require("./oembed"));
-__export(require("./activitypub"));
-__export(require("./pagination"));
-__export(require("./follows"));
-__export(require("./feeds"));
-__export(require("./sort"));
-__export(require("./users"));
-__export(require("./user-subscriptions"));
-__export(require("./videos"));
-__export(require("./webfinger"));
-__export(require("./search"));
-__export(require("./server"));
-__export(require("./user-history"));
+const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./account"), exports);
+tslib_1.__exportStar(require("./blocklist"), exports);
+tslib_1.__exportStar(require("./oembed"), exports);
+tslib_1.__exportStar(require("./activitypub"), exports);
+tslib_1.__exportStar(require("./pagination"), exports);
+tslib_1.__exportStar(require("./follows"), exports);
+tslib_1.__exportStar(require("./feeds"), exports);
+tslib_1.__exportStar(require("./sort"), exports);
+tslib_1.__exportStar(require("./users"), exports);
+tslib_1.__exportStar(require("./user-subscriptions"), exports);
+tslib_1.__exportStar(require("./videos"), exports);
+tslib_1.__exportStar(require("./webfinger"), exports);
+tslib_1.__exportStar(require("./search"), exports);
+tslib_1.__exportStar(require("./server"), exports);
+tslib_1.__exportStar(require("./user-history"), exports);

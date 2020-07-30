@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkActivityPubUrls = exports.applicationExist = exports.usersExist = exports.clientsExist = exports.checkConfig = void 0;
+const tslib_1 = require("tslib");
 const config = require("config");
 const core_utils_1 = require("../helpers/core-utils");
 const user_1 = require("../models/account/user");
@@ -21,7 +14,7 @@ const misc_1 = require("../helpers/custom-validators/misc");
 const lodash_1 = require("lodash");
 const constants_1 = require("./constants");
 function checkActivityPubUrls() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actor = yield application_1.getServerActor();
         const parsed = new url_1.URL(actor.url);
         if (constants_1.WEBSERVER.HOST !== parsed.host) {
@@ -89,33 +82,45 @@ function checkConfig() {
             }
         }
     }
+    if (config_1.CONFIG.STORAGE.VIDEOS_DIR === config_1.CONFIG.STORAGE.REDUNDANCY_DIR) {
+        logger_1.logger.warn('Redundancy directory should be different than the videos folder.');
+    }
     if (config_1.CONFIG.TRANSCODING.ENABLED) {
         if (config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED === false && config_1.CONFIG.TRANSCODING.HLS.ENABLED === false) {
             return 'You need to enable at least WebTorrent transcoding or HLS transcoding.';
         }
     }
-    if (config_1.CONFIG.STORAGE.VIDEOS_DIR === config_1.CONFIG.STORAGE.REDUNDANCY_DIR) {
-        logger_1.logger.warn('Redundancy directory should be different than the videos folder.');
+    if (config_1.CONFIG.BROADCAST_MESSAGE.ENABLED) {
+        const currentLevel = config_1.CONFIG.BROADCAST_MESSAGE.LEVEL;
+        const available = ['info', 'warning', 'error'];
+        if (available.includes(currentLevel) === false) {
+            return 'Broadcast message level should be ' + available.join(' or ') + ' instead of ' + currentLevel;
+        }
+    }
+    if (config_1.CONFIG.SEARCH.SEARCH_INDEX.ENABLED === true) {
+        if (config_1.CONFIG.SEARCH.REMOTE_URI.USERS === false) {
+            return 'You cannot enable search index without enabling remote URI search for users.';
+        }
     }
     return null;
 }
 exports.checkConfig = checkConfig;
 function clientsExist() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const totalClients = yield oauth_client_1.OAuthClientModel.countTotal();
         return totalClients !== 0;
     });
 }
 exports.clientsExist = clientsExist;
 function usersExist() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const totalUsers = yield user_1.UserModel.countTotal();
         return totalUsers !== 0;
     });
 }
 exports.usersExist = usersExist;
 function applicationExist() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const totalApplication = yield application_1.ApplicationModel.countTotal();
         return totalApplication !== 0;
     });

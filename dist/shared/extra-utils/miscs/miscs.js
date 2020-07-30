@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateVideoWithFramerate = exports.generateHighBitrateVideo = exports.root = exports.buildAbsoluteFixturePath = exports.testImage = exports.immutableAssign = exports.webtorrentAdd = exports.buildServerDirectory = exports.wait = exports.dateIsValid = void 0;
+const tslib_1 = require("tslib");
 const chai = require("chai");
 const path_1 = require("path");
 const request = require("supertest");
@@ -51,16 +44,16 @@ function buildServerDirectory(internalServerNumber, directory) {
 }
 exports.buildServerDirectory = buildServerDirectory;
 function testImage(url, imageName, imagePath, extension = '.jpg') {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield request(url)
             .get(imagePath)
             .expect(200);
         const body = res.body;
         const data = yield fs_extra_1.readFile(path_1.join(root(), 'server', 'tests', 'fixtures', imageName + extension));
-        const minLength = body.length - ((20 * body.length) / 100);
-        const maxLength = body.length + ((20 * body.length) / 100);
-        expect(data.length).to.be.above(minLength);
-        expect(data.length).to.be.below(maxLength);
+        const minLength = body.length - ((30 * body.length) / 100);
+        const maxLength = body.length + ((30 * body.length) / 100);
+        expect(data.length).to.be.above(minLength, "the generated image is way smaller than the recorded fixture");
+        expect(data.length).to.be.below(maxLength, "the generated image is way larger than the recorded fixture");
     });
 }
 exports.testImage = testImage;
@@ -78,7 +71,7 @@ function buildAbsoluteFixturePath(path, customCIPath = false) {
 }
 exports.buildAbsoluteFixturePath = buildAbsoluteFixturePath;
 function generateHighBitrateVideo() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const tempFixturePath = buildAbsoluteFixturePath('video_high_bitrate_1080p.mp4', true);
         yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
         const exists = yield fs_extra_1.pathExists(tempFixturePath);
@@ -99,7 +92,7 @@ function generateHighBitrateVideo() {
 }
 exports.generateHighBitrateVideo = generateHighBitrateVideo;
 function generateVideoWithFramerate(fps = 60) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const tempFixturePath = buildAbsoluteFixturePath(`video_${fps}fps.mp4`, true);
         yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
         const exists = yield fs_extra_1.pathExists(tempFixturePath);

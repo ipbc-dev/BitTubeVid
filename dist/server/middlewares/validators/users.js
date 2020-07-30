@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ensureCanManageUser = exports.ensureAuthUserOwnsAccountValidator = exports.userAutocompleteValidator = exports.usersVerifyEmailValidator = exports.usersAskSendVerifyEmailValidator = exports.usersResetPasswordValidator = exports.usersAskResetPasswordValidator = exports.usersGetValidator = exports.ensureUserRegistrationAllowedForIP = exports.ensureUserRegistrationAllowed = exports.usersVideoRatingValidator = exports.usersUpdateMeValidator = exports.usersUpdateValidator = exports.usersRemoveValidator = exports.usersBlockingValidator = exports.usersRegisterValidator = exports.deleteMeValidator = exports.usersAddValidator = exports.usersListValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const lodash_1 = require("lodash");
 const misc_1 = require("../../helpers/custom-validators/misc");
@@ -26,6 +19,18 @@ const theme_utils_1 = require("../../lib/plugins/theme-utils");
 const middlewares_1 = require("../../helpers/middlewares");
 const users_2 = require("../../../shared/models/users");
 const hooks_1 = require("@server/lib/plugins/hooks");
+const usersListValidator = [
+    express_validator_1.query('blocked')
+        .optional()
+        .isBoolean().withMessage('Should be a valid boolean banned state'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking usersList parameters', { parameters: req.query });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.usersListValidator = usersListValidator;
 const usersAddValidator = [
     express_validator_1.body('username').custom(users_1.isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
     express_validator_1.body('password').custom(users_1.isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
@@ -36,7 +41,7 @@ const usersAddValidator = [
         .customSanitizer(misc_1.toIntOrNull)
         .custom(users_1.isUserRoleValid).withMessage('Should have a valid role'),
     express_validator_1.body('adminFlags').optional().custom(users_1.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersAdd parameters', { parameters: lodash_1.omit(req.body, 'password') });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -64,7 +69,7 @@ const usersRegisterValidator = [
     express_validator_1.body('channel.displayName')
         .optional()
         .custom(video_channels_1.isVideoChannelNameValid).withMessage('Should have a valid display name'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersRegister parameters', { parameters: lodash_1.omit(req.body, 'password') });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -92,7 +97,7 @@ const usersRegisterValidator = [
 exports.usersRegisterValidator = usersRegisterValidator;
 const usersRemoveValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersRemove parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -110,7 +115,7 @@ exports.usersRemoveValidator = usersRemoveValidator;
 const usersBlockingValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('reason').optional().custom(users_1.isUserBlockedReasonValid).withMessage('Should have a valid blocking reason'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersBlocking parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -149,7 +154,7 @@ const usersUpdateValidator = [
         .customSanitizer(misc_1.toIntOrNull)
         .custom(users_1.isUserRoleValid).withMessage('Should have a valid role'),
     express_validator_1.body('adminFlags').optional().custom(users_1.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersUpdate parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -204,7 +209,7 @@ const usersUpdateMeValidator = [
     express_validator_1.body('autoPlayNextVideo')
         .optional()
         .custom(v => users_1.isUserAutoPlayNextVideoValid(v)).withMessage('Should have a valid autoPlayNextVideo boolean'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersUpdateMe parameters', { parameters: lodash_1.omit(req.body, 'password') });
         const user = res.locals.oauth.token.User;
         if (req.body.password || req.body.email) {
@@ -230,7 +235,7 @@ exports.usersUpdateMeValidator = usersUpdateMeValidator;
 const usersGetValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.query('withStats').optional().isBoolean().withMessage('Should have a valid stats flag'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersGet parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -242,7 +247,7 @@ const usersGetValidator = [
 exports.usersGetValidator = usersGetValidator;
 const usersVideoRatingValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid video id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersVideoRating parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -253,7 +258,7 @@ const usersVideoRatingValidator = [
 ];
 exports.usersVideoRatingValidator = usersVideoRatingValidator;
 const ensureUserRegistrationAllowed = [
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         const allowedParams = {
             body: req.body,
             ip: req.ip
@@ -280,7 +285,7 @@ const ensureUserRegistrationAllowedForIP = [
 exports.ensureUserRegistrationAllowedForIP = ensureUserRegistrationAllowedForIP;
 const usersAskResetPasswordValidator = [
     express_validator_1.body('email').isEmail().not().isEmpty().withMessage('Should have a valid email'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersAskResetPassword parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -297,7 +302,7 @@ const usersResetPasswordValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('verificationString').not().isEmpty().withMessage('Should have a valid verification string'),
     express_validator_1.body('password').custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersResetPassword parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -316,7 +321,7 @@ const usersResetPasswordValidator = [
 exports.usersResetPasswordValidator = usersResetPasswordValidator;
 const usersAskSendVerifyEmailValidator = [
     express_validator_1.body('email').isEmail().not().isEmpty().withMessage('Should have a valid email'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking askUsersSendVerifyEmail parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -337,7 +342,7 @@ const usersVerifyEmailValidator = [
     express_validator_1.body('isPendingEmail')
         .optional()
         .customSanitizer(misc_1.toBooleanOrNull),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersVerifyEmail parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -390,7 +395,7 @@ function checkUserEmailExist(email, res, abortResponse = true) {
     return checkUserExist(() => user_1.UserModel.loadByEmail(email), res, abortResponse);
 }
 function checkUserNameOrEmailDoesNotAlreadyExist(username, email, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = yield user_1.UserModel.loadByUsernameOrEmail(username, email);
         if (user) {
             res.status(409)
@@ -407,7 +412,7 @@ function checkUserNameOrEmailDoesNotAlreadyExist(username, email, res) {
     });
 }
 function checkUserExist(finder, res, abortResponse = true) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = yield finder();
         if (!user) {
             if (abortResponse === true) {

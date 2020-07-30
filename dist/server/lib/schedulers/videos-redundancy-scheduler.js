@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideosRedundancyScheduler = void 0;
+const tslib_1 = require("tslib");
 const abstract_scheduler_1 = require("./abstract-scheduler");
 const constants_1 = require("../../initializers/constants");
 const logger_1 = require("../../helpers/logger");
@@ -34,7 +27,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         this.schedulerIntervalMs = config_1.CONFIG.REDUNDANCY.VIDEOS.CHECK_INTERVAL;
     }
     createManualRedundancy(videoId) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoToDuplicate = yield video_1.VideoModel.loadWithFiles(videoId);
             if (!videoToDuplicate) {
                 logger_1.logger.warn('Video to manually duplicate %d does not exist anymore.', videoId);
@@ -49,7 +42,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     internalExecute() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const redundancyConfig of config_1.CONFIG.REDUNDANCY.VIDEOS.STRATEGIES) {
                 logger_1.logger.info('Running redundancy scheduler for strategy %s.', redundancyConfig.strategy);
                 try {
@@ -82,7 +75,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         return this.instance || (this.instance = new this());
     }
     extendsLocalExpiration() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const expired = yield video_redundancy_1.VideoRedundancyModel.listLocalExpired();
             for (const redundancyModel of expired) {
                 try {
@@ -108,7 +101,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     extendsRedundancy(redundancyModel) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const redundancy = config_1.CONFIG.REDUNDANCY.VIDEOS.STRATEGIES.find(s => s.strategy === redundancyModel.strategy);
             if (!redundancy) {
                 yield redundancy_1.removeVideoRedundancy(redundancyModel);
@@ -118,7 +111,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     purgeRemoteExpired() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const expired = yield video_redundancy_1.VideoRedundancyModel.listRemoteExpired();
             for (const redundancyModel of expired) {
                 try {
@@ -143,7 +136,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         }
     }
     createVideoRedundancies(data) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const video = yield this.loadAndRefreshVideo(data.video.url);
             if (!video) {
                 logger_1.logger.info('Video %s we want to duplicate does not existing anymore, skipping.', data.video.url);
@@ -168,7 +161,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     createVideoFileRedundancy(redundancy, video, fileArg) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let strategy = 'manual';
             let expiresOn = null;
             if (redundancy) {
@@ -198,7 +191,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     createStreamingPlaylistRedundancy(redundancy, video, playlistArg) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let strategy = 'manual';
             let expiresOn = null;
             if (redundancy) {
@@ -225,7 +218,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     extendsExpirationOf(redundancy, expiresAfterMs) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             logger_1.logger.info('Extending expiration of %s.', redundancy.url);
             const serverActor = yield application_1.getServerActor();
             redundancy.expiresOn = this.buildNewExpiration(expiresAfterMs);
@@ -234,7 +227,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     purgeCacheIfNeeded(candidateToDuplicate) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             while (yield this.isTooHeavy(candidateToDuplicate)) {
                 const redundancy = candidateToDuplicate.redundancy;
                 const toDelete = yield video_redundancy_1.VideoRedundancyModel.loadOldestLocalExpired(redundancy.strategy, redundancy.minLifetime);
@@ -245,7 +238,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         });
     }
     isTooHeavy(candidateToDuplicate) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const maxSize = candidateToDuplicate.redundancy.size;
             const totalDuplicated = yield video_redundancy_1.VideoRedundancyModel.getTotalDuplicated(candidateToDuplicate.redundancy.strategy);
             const totalWillDuplicate = totalDuplicated + this.getTotalFileSizes(candidateToDuplicate.files, candidateToDuplicate.streamingPlaylists);
@@ -269,7 +262,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
         return allFiles.reduce(fileReducer, 0);
     }
     loadAndRefreshVideo(videoUrl) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const getVideoOptions = {
                 videoObject: videoUrl,
                 syncParam: { likes: false, dislikes: false, shares: false, comments: false, thumbnail: false, refreshVideo: true },

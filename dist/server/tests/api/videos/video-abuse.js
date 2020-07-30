@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const videos_1 = require("../../../../shared/models/videos");
@@ -21,7 +13,7 @@ describe('Test video abuses', function () {
     let servers = [];
     let abuseServer2;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             servers = yield index_1.flushAndRunMultipleServers(2);
             yield index_1.setAccessTokensToServers(servers);
@@ -45,7 +37,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should not have video abuses', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.be.an('array');
@@ -53,7 +45,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should report abuse on a local video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             const reason = 'my super bad reason';
             yield index_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, servers[0].video.id, reason);
@@ -61,7 +53,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should have 1 video abuses on server 1 and 0 on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res1 = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res1.body.total).to.equal(1);
             expect(res1.body.data).to.be.an('array');
@@ -83,7 +75,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should report abuse on a remote video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const reason = 'my super bad reason 2';
             yield index_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, servers[1].video.id, reason);
@@ -91,7 +83,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should have 2 video abuses on server 1 and 1 on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res1 = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
             expect(res1.body.total).to.equal(2);
             expect(res1.body.data).to.be.an('array');
@@ -128,7 +120,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should update the state of a video abuse', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const body = { state: videos_1.VideoAbuseState.REJECTED };
             yield index_1.updateVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id, body);
             const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
@@ -136,7 +128,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should add a moderation comment', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const body = { state: videos_1.VideoAbuseState.ACCEPTED, moderationComment: 'It is valid' };
             yield index_1.updateVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id, body);
             const res = yield index_1.getVideoAbusesList({ url: servers[1].url, token: servers[1].accessToken });
@@ -145,7 +137,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should hide video abuses from blocked accounts', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             {
                 yield index_1.reportVideoAbuse(servers[1].url, servers[1].accessToken, servers[0].video.uuid, 'will mute this');
@@ -169,7 +161,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should hide video abuses from blocked servers', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverToBlock = servers[1].host;
             {
                 yield blocklist_1.addServerToServerBlocklist(servers[0].url, servers[0].accessToken, servers[1].host);
@@ -186,7 +178,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should keep the video abuse when deleting the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield index_1.removeVideo(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid);
             yield jobs_1.waitJobs(servers);
@@ -201,7 +193,7 @@ describe('Test video abuses', function () {
         });
     });
     it('Should include counts of reports from reporter and reportee', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const user = { username: 'user2', password: 'password' };
             yield index_1.createUser(Object.assign({ url: servers[0].url, accessToken: servers[0].accessToken }, user));
@@ -234,8 +226,24 @@ describe('Test video abuses', function () {
             }
         });
     });
+    it('Should list predefined reasons as well as timestamps for the reported video', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
+            const reason5 = 'my super bad reason 5';
+            const predefinedReasons5 = ['violentOrRepulsive', 'captions'];
+            const createdAbuse = (yield index_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, servers[0].video.id, reason5, predefinedReasons5, 1, 5)).body.videoAbuse;
+            const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
+            {
+                const abuse = res.body.data.find(a => a.id === createdAbuse.id);
+                expect(abuse.reason).to.equals(reason5);
+                expect(abuse.predefinedReasons).to.deep.equals(predefinedReasons5, "predefined reasons do not match the one reported");
+                expect(abuse.startAt).to.equal(1, "starting timestamp doesn't match the one reported");
+                expect(abuse.endAt).to.equal(5, "ending timestamp doesn't match the one reported");
+            }
+        });
+    });
     it('Should delete the video abuse', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield index_1.deleteVideoAbuse(servers[1].url, servers[1].accessToken, abuseServer2.video.uuid, abuseServer2.id);
             yield jobs_1.waitJobs(servers);
@@ -247,14 +255,14 @@ describe('Test video abuses', function () {
             }
             {
                 const res = yield index_1.getVideoAbusesList({ url: servers[0].url, token: servers[0].accessToken });
-                expect(res.body.total).to.equal(5);
+                expect(res.body.total).to.equal(6);
             }
         });
     });
     it('Should list and filter video abuses', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             function list(query) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const options = {
                         url: servers[0].url,
                         token: servers[0].accessToken
@@ -266,23 +274,25 @@ describe('Test video abuses', function () {
             }
             expect(yield list({ id: 56 })).to.have.lengthOf(0);
             expect(yield list({ id: 1 })).to.have.lengthOf(1);
-            expect(yield list({ search: 'my super name for server 1' })).to.have.lengthOf(3);
+            expect(yield list({ search: 'my super name for server 1' })).to.have.lengthOf(4);
             expect(yield list({ search: 'aaaaaaaaaaaaaaaaaaaaaaaaaa' })).to.have.lengthOf(0);
             expect(yield list({ searchVideo: 'my second super name for server 1' })).to.have.lengthOf(1);
-            expect(yield list({ searchVideoChannel: 'root' })).to.have.lengthOf(3);
+            expect(yield list({ searchVideoChannel: 'root' })).to.have.lengthOf(4);
             expect(yield list({ searchVideoChannel: 'aaaa' })).to.have.lengthOf(0);
             expect(yield list({ searchReporter: 'user2' })).to.have.lengthOf(1);
-            expect(yield list({ searchReporter: 'root' })).to.have.lengthOf(4);
-            expect(yield list({ searchReportee: 'root' })).to.have.lengthOf(3);
+            expect(yield list({ searchReporter: 'root' })).to.have.lengthOf(5);
+            expect(yield list({ searchReportee: 'root' })).to.have.lengthOf(4);
             expect(yield list({ searchReportee: 'aaaa' })).to.have.lengthOf(0);
             expect(yield list({ videoIs: 'deleted' })).to.have.lengthOf(1);
             expect(yield list({ videoIs: 'blacklisted' })).to.have.lengthOf(0);
             expect(yield list({ state: videos_1.VideoAbuseState.ACCEPTED })).to.have.lengthOf(0);
-            expect(yield list({ state: videos_1.VideoAbuseState.PENDING })).to.have.lengthOf(5);
+            expect(yield list({ state: videos_1.VideoAbuseState.PENDING })).to.have.lengthOf(6);
+            expect(yield list({ predefinedReason: 'violentOrRepulsive' })).to.have.lengthOf(1);
+            expect(yield list({ predefinedReason: 'serverRules' })).to.have.lengthOf(0);
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);
         });
     });

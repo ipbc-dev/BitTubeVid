@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videosOverviewValidator = exports.commonVideosFiltersValidator = exports.getCommonVideoEditAttributes = exports.videosAcceptChangeOwnershipValidator = exports.videosTerminateChangeOwnershipValidator = exports.videosChangeOwnershipValidator = exports.videosRemoveValidator = exports.videosCustomGetValidator = exports.checkVideoFollowConstraints = exports.videosDownloadValidator = exports.videoFileMetadataGetValidator = exports.videosGetValidator = exports.videosUpdateValidator = exports.videosAddValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const shared_1 = require("../../../../shared");
 const misc_1 = require("../../../helpers/custom-validators/misc");
@@ -37,7 +30,7 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.body('channelId')
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.isIdValid).withMessage('Should have correct video channel id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videosAdd parameters', { parameters: req.body, files: req.files });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
@@ -78,7 +71,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
         .optional()
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.isIdValid).withMessage('Should have correct video channel id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videosUpdate parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
@@ -96,7 +89,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
 ]);
 exports.videosUpdateValidator = videosUpdateValidator;
 function checkVideoFollowConstraints(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = video_2.getVideoWithAttributes(res);
         if (video.isOwned() === true)
             return next();
@@ -119,7 +112,7 @@ exports.checkVideoFollowConstraints = checkVideoFollowConstraints;
 const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
     return [
         express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
-        (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
             logger_1.logger.debug('Checking videosGet parameters', { parameters: req.params });
             if (utils_1.areValidationErrors(req, res))
                 return;
@@ -156,7 +149,7 @@ exports.videosDownloadValidator = videosDownloadValidator;
 const videoFileMetadataGetValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.param('videoFileId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid videoFileId'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoFileMetadataGet parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -168,7 +161,7 @@ const videoFileMetadataGetValidator = getCommonVideoEditAttributes().concat([
 exports.videoFileMetadataGetValidator = videoFileMetadataGetValidator;
 const videosRemoveValidator = [
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videosRemove parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -182,7 +175,7 @@ const videosRemoveValidator = [
 exports.videosRemoveValidator = videosRemoveValidator;
 const videosChangeOwnershipValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking changeOwnership parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -203,7 +196,7 @@ const videosChangeOwnershipValidator = [
 exports.videosChangeOwnershipValidator = videosChangeOwnershipValidator;
 const videosTerminateChangeOwnershipValidator = [
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking changeOwnership parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -222,7 +215,7 @@ const videosTerminateChangeOwnershipValidator = [
 ];
 exports.videosTerminateChangeOwnershipValidator = videosTerminateChangeOwnershipValidator;
 const videosAcceptChangeOwnershipValidator = [
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         const body = req.body;
         if (!(yield middlewares_1.doesVideoChannelOfAccountExist(body.channelId, res.locals.oauth.token.User, res)))
             return;
@@ -376,7 +369,7 @@ function areErrorsInScheduleUpdate(req, res) {
     return false;
 }
 function isVideoAccepted(req, res, videoFile) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const acceptParameters = {
             videoBody: req.body,
             videoFile,

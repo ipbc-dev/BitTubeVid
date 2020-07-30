@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var OAuthTokenModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.OAuthTokenModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const logger_1 = require("../../helpers/logger");
 const user_1 = require("../account/user");
@@ -96,74 +89,74 @@ let OAuthTokenModel = OAuthTokenModel_1 = class OAuthTokenModel extends sequeliz
         return OAuthTokenModel_1.destroy(query);
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], OAuthTokenModel.prototype, "accessToken", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], OAuthTokenModel.prototype, "accessTokenExpiresAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], OAuthTokenModel.prototype, "refreshToken", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], OAuthTokenModel.prototype, "refreshTokenExpiresAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], OAuthTokenModel.prototype, "authName", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], OAuthTokenModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], OAuthTokenModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => user_1.UserModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], OAuthTokenModel.prototype, "userId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => user_1.UserModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", user_1.UserModel)
+    tslib_1.__metadata("design:type", user_1.UserModel)
 ], OAuthTokenModel.prototype, "User", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => oauth_client_1.OAuthClientModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], OAuthTokenModel.prototype, "oAuthClientId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => oauth_client_1.OAuthClientModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], OAuthTokenModel.prototype, "OAuthClients", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AfterUpdate,
     sequelize_typescript_1.AfterDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [OAuthTokenModel]),
-    __metadata("design:returntype", void 0)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [OAuthTokenModel]),
+    tslib_1.__metadata("design:returntype", void 0)
 ], OAuthTokenModel, "removeTokenCache", null);
-OAuthTokenModel = OAuthTokenModel_1 = __decorate([
+OAuthTokenModel = OAuthTokenModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_USER]: {
             include: [

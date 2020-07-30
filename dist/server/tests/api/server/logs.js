@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/extra-utils/index");
@@ -19,7 +11,7 @@ const expect = chai.expect;
 describe('Test logs', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield index_1.flushAndRunServer(1);
             yield index_1.setAccessTokensToServers([server]);
@@ -27,7 +19,7 @@ describe('Test logs', function () {
     });
     describe('With the standard log file', function () {
         it('Should get logs with a start date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 1' });
                 yield jobs_1.waitJobs([server]);
@@ -41,7 +33,7 @@ describe('Test logs', function () {
             });
         });
         it('Should get logs with an end date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 3' });
                 yield jobs_1.waitJobs([server]);
@@ -59,7 +51,7 @@ describe('Test logs', function () {
             });
         });
         it('Should get filter by level', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const now = new Date();
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 6' });
@@ -79,7 +71,7 @@ describe('Test logs', function () {
     });
     describe('With the audit log', function () {
         it('Should get logs with a start date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 7' });
                 yield jobs_1.waitJobs([server]);
@@ -98,7 +90,7 @@ describe('Test logs', function () {
             });
         });
         it('Should get logs with an end date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 9' });
                 yield jobs_1.waitJobs([server]);
@@ -117,7 +109,7 @@ describe('Test logs', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests([server]);
         });
     });

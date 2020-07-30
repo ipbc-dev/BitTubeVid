@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -63,6 +55,10 @@ function checkInitialConfig(server, data) {
     expect(data.followings.instance.autoFollowBack.enabled).to.be.false;
     expect(data.followings.instance.autoFollowIndex.enabled).to.be.false;
     expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('');
+    expect(data.broadcastMessage.enabled).to.be.false;
+    expect(data.broadcastMessage.level).to.equal('info');
+    expect(data.broadcastMessage.message).to.equal('');
+    expect(data.broadcastMessage.dismissable).to.be.false;
 }
 function checkUpdatedConfig(data) {
     expect(data.instance.name).to.equal('PeerTube updated');
@@ -116,25 +112,29 @@ function checkUpdatedConfig(data) {
     expect(data.followings.instance.autoFollowBack.enabled).to.be.true;
     expect(data.followings.instance.autoFollowIndex.enabled).to.be.true;
     expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('https://updated.example.com');
+    expect(data.broadcastMessage.enabled).to.be.true;
+    expect(data.broadcastMessage.level).to.equal('error');
+    expect(data.broadcastMessage.message).to.equal('super bad message');
+    expect(data.broadcastMessage.dismissable).to.be.true;
 }
 describe('Test config', function () {
     let server = null;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
         });
     });
     it('Should have a correct config on a server with registration enabled', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const data = res.body;
             expect(data.signup.allowed).to.be.true;
         });
     });
     it('Should have a correct config on a server with registration enabled and a users limit', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             yield Promise.all([
                 extra_utils_1.registerUser(server.url, 'user1', 'super password'),
@@ -147,7 +147,7 @@ describe('Test config', function () {
         });
     });
     it('Should have the correct video allowed extensions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const data = res.body;
             expect(data.video.file.extensions).to.have.lengthOf(3);
@@ -160,14 +160,14 @@ describe('Test config', function () {
         });
     });
     it('Should get the customized configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
             const data = res.body;
             checkInitialConfig(server, data);
         });
     });
     it('Should update the customized configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const newCustomConfig = {
                 instance: {
                     name: 'PeerTube updated',
@@ -277,6 +277,24 @@ describe('Test config', function () {
                             indexUrl: 'https://updated.example.com'
                         }
                     }
+                },
+                broadcastMessage: {
+                    enabled: true,
+                    level: 'error',
+                    message: 'super bad message',
+                    dismissable: true
+                },
+                search: {
+                    remoteUri: {
+                        anonymous: true,
+                        users: true
+                    },
+                    searchIndex: {
+                        enabled: true,
+                        url: 'https://search.joinpeertube.org',
+                        disableLocalSearch: true,
+                        isDefaultSearch: true
+                    }
                 }
             };
             yield extra_utils_1.updateCustomConfig(server.url, server.accessToken, newCustomConfig);
@@ -286,7 +304,7 @@ describe('Test config', function () {
         });
     });
     it('Should have the correct updated video allowed extensions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const data = res.body;
             expect(data.video.file.extensions).to.have.length.above(3);
@@ -303,7 +321,7 @@ describe('Test config', function () {
         });
     });
     it('Should have the configuration updated after a restart', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             extra_utils_1.killallServers([server]);
             yield extra_utils_1.reRunServer(server);
@@ -313,7 +331,7 @@ describe('Test config', function () {
         });
     });
     it('Should fetch the about information', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getAbout(server.url);
             const data = res.body;
             expect(data.instance.name).to.equal('PeerTube updated');
@@ -332,7 +350,7 @@ describe('Test config', function () {
         });
     });
     it('Should remove the custom configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.deleteCustomConfig(server.url, server.accessToken);
             const res = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
@@ -341,7 +359,7 @@ describe('Test config', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

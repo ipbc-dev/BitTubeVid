@@ -1,28 +1,18 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videoCommentRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
-const lodash_1 = require("lodash");
-const logger_1 = require("../../../helpers/logger");
+const audit_logger_1 = require("../../../helpers/audit-logger");
 const utils_1 = require("../../../helpers/utils");
 const database_1 = require("../../../initializers/database");
+const notifier_1 = require("../../../lib/notifier");
+const hooks_1 = require("../../../lib/plugins/hooks");
 const video_comment_1 = require("../../../lib/video-comment");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
-const video_comment_2 = require("../../../models/video/video-comment");
-const audit_logger_1 = require("../../../helpers/audit-logger");
 const account_1 = require("../../../models/account/account");
-const notifier_1 = require("../../../lib/notifier");
-const hooks_1 = require("../../../lib/plugins/hooks");
-const send_1 = require("../../../lib/activitypub/send");
+const video_comment_2 = require("../../../models/video/video-comment");
 const auditLogger = audit_logger_1.auditLoggerFactory('comments');
 const videoCommentRouter = express.Router();
 exports.videoCommentRouter = videoCommentRouter;
@@ -32,13 +22,14 @@ videoCommentRouter.post('/:videoId/comment-threads', middlewares_1.authenticate,
 videoCommentRouter.post('/:videoId/comments/:commentId', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.addVideoCommentReplyValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideoCommentReply));
 videoCommentRouter.delete('/:videoId/comments/:commentId', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.removeVideoCommentValidator), middlewares_1.asyncRetryTransactionMiddleware(removeVideoComment));
 function listVideoThreads(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyVideo;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
         let resultList;
         if (video.commentsEnabled === true) {
             const apiOptions = yield hooks_1.Hooks.wrapObject({
                 videoId: video.id,
+                isVideoOwned: video.isOwned(),
                 start: req.query.start,
                 count: req.query.count,
                 sort: req.query.sort,
@@ -56,13 +47,14 @@ function listVideoThreads(req, res) {
     });
 }
 function listVideoThreadComments(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyVideo;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
         let resultList;
         if (video.commentsEnabled === true) {
             const apiOptions = yield hooks_1.Hooks.wrapObject({
                 videoId: video.id,
+                isVideoOwned: video.isOwned(),
                 threadId: res.locals.videoCommentThread.id,
                 user
             }, 'filter:api.video-thread-comments.list.params');
@@ -78,9 +70,9 @@ function listVideoThreadComments(req, res) {
     });
 }
 function addVideoCommentThread(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoCommentInfo = req.body;
-        const comment = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const comment = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const account = yield account_1.AccountModel.load(res.locals.oauth.token.User.Account.id, t);
             return video_comment_1.createVideoComment({
                 text: videoCommentInfo.text,
@@ -92,15 +84,13 @@ function addVideoCommentThread(req, res) {
         notifier_1.Notifier.Instance.notifyOnNewComment(comment);
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CommentAuditView(comment.toFormattedJSON()));
         hooks_1.Hooks.runAction('action:api.video-thread.created', { comment });
-        return res.json({
-            comment: comment.toFormattedJSON()
-        }).end();
+        return res.json({ comment: comment.toFormattedJSON() });
     });
 }
 function addVideoCommentReply(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoCommentInfo = req.body;
-        const comment = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const comment = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const account = yield account_1.AccountModel.load(res.locals.oauth.token.User.Account.id, t);
             return video_comment_1.createVideoComment({
                 text: videoCommentInfo.text,
@@ -112,23 +102,14 @@ function addVideoCommentReply(req, res) {
         notifier_1.Notifier.Instance.notifyOnNewComment(comment);
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CommentAuditView(comment.toFormattedJSON()));
         hooks_1.Hooks.runAction('action:api.video-comment-reply.created', { comment });
-        return res.json({ comment: comment.toFormattedJSON() }).end();
+        return res.json({ comment: comment.toFormattedJSON() });
     });
 }
 function removeVideoComment(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoCommentInstance = res.locals.videoCommentFull;
-        const videoCommentInstanceBefore = lodash_1.cloneDeep(videoCommentInstance);
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
-            if (videoCommentInstance.isOwned() || videoCommentInstance.Video.isOwned()) {
-                yield send_1.sendDeleteVideoComment(videoCommentInstance, t);
-            }
-            video_comment_1.markCommentAsDeleted(videoCommentInstance);
-            yield videoCommentInstance.save();
-        }));
+        yield video_comment_1.removeComment(videoCommentInstance);
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CommentAuditView(videoCommentInstance.toFormattedJSON()));
-        logger_1.logger.info('Video comment %d deleted.', videoCommentInstance.id);
-        hooks_1.Hooks.runAction('action:api.video-comment.deleted', { comment: videoCommentInstanceBefore });
         return res.type('json').status(204).end();
     });
 }

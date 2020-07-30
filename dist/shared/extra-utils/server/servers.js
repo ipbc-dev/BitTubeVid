@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.waitUntilLog = exports.reRunServer = exports.killallServers = exports.flushAndRunServer = exports.flushTests = exports.flushAndRunMultipleServers = exports.cleanupTests = exports.parallelTests = exports.checkTmpIsEmpty = exports.checkDirectoryIsEmpty = void 0;
+const tslib_1 = require("tslib");
 const child_process_1 = require("child_process");
 const path_1 = require("path");
 const miscs_1 = require("../miscs/miscs");
@@ -53,7 +46,7 @@ function randomServer() {
     return miscs_2.randomInt(low, high);
 }
 function flushAndRunServer(serverNumber, configOverride, args = []) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const parallel = parallelTests();
         const internalServerNumber = parallel ? randomServer() : serverNumber;
         const port = 9000 + internalServerNumber;
@@ -80,7 +73,7 @@ function flushAndRunServer(serverNumber, configOverride, args = []) {
 }
 exports.flushAndRunServer = flushAndRunServer;
 function runServer(server, configOverrideArg, args = []) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverRunString = {
             'Server listening': false
         };
@@ -180,7 +173,7 @@ function runServer(server, configOverrideArg, args = []) {
     });
 }
 function reRunServer(server, configOverride) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const newServer = yield runServer(server, configOverride);
         server.app = newServer.app;
         return server;
@@ -192,7 +185,7 @@ function checkTmpIsEmpty(server) {
 }
 exports.checkTmpIsEmpty = checkTmpIsEmpty;
 function checkDirectoryIsEmpty(server, directory, exceptions = []) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const testDirectory = 'test' + server.internalServerNumber;
         const directoryPath = path_1.join(miscs_1.root(), testDirectory, directory);
         const directoryExists = yield fs_extra_1.pathExists(directoryPath);
@@ -227,7 +220,7 @@ function cleanupTests(servers) {
 }
 exports.cleanupTests = cleanupTests;
 function waitUntilLog(server, str, count = 1, strictCount = true) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const logfile = path_1.join(miscs_1.root(), 'test' + server.internalServerNumber, 'logs/peertube.log');
         while (true) {
             const buf = yield fs_extra_1.readFile(logfile);

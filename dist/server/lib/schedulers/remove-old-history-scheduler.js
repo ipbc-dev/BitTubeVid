@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RemoveOldHistoryScheduler = void 0;
 const logger_1 = require("../../helpers/logger");
 const abstract_scheduler_1 = require("./abstract-scheduler");
 const constants_1 = require("../../initializers/constants");

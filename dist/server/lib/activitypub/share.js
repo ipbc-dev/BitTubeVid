@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.shareVideoByServerAndChannel = exports.addVideoShares = exports.changeVideoChannelShare = void 0;
+const tslib_1 = require("tslib");
 const video_share_1 = require("../../models/video/video-share");
 const send_1 = require("./send");
 const url_1 = require("./url");
@@ -20,7 +13,7 @@ const constants_1 = require("../../initializers/constants");
 const activitypub_1 = require("../../helpers/activitypub");
 const application_1 = require("@server/models/application/application");
 function shareVideoByServerAndChannel(video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!video.hasPrivacyForFederation())
             return undefined;
         return Promise.all([
@@ -31,7 +24,7 @@ function shareVideoByServerAndChannel(video, t) {
 }
 exports.shareVideoByServerAndChannel = shareVideoByServerAndChannel;
 function changeVideoChannelShare(video, oldVideoChannel, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Updating video channel of video %s: %s -> %s.', video.uuid, oldVideoChannel.name, video.VideoChannel.name);
         yield undoShareByVideoChannel(video, oldVideoChannel, t);
         yield shareByVideoChannel(video, t);
@@ -39,8 +32,8 @@ function changeVideoChannelShare(video, oldVideoChannel, t) {
 }
 exports.changeVideoChannelShare = changeVideoChannelShare;
 function addVideoShares(shareUrls, video) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield Bluebird.map(shareUrls, (shareUrl) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        yield Bluebird.map(shareUrls, (shareUrl) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const { body } = yield requests_1.doRequest({
                     uri: shareUrl,
@@ -69,7 +62,7 @@ function addVideoShares(shareUrls, video) {
 }
 exports.addVideoShares = addVideoShares;
 function shareByServer(video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         const serverShareUrl = url_1.getVideoAnnounceActivityPubUrl(serverActor, video);
         const [serverShare] = yield video_share_1.VideoShareModel.findOrCreate({
@@ -87,7 +80,7 @@ function shareByServer(video, t) {
     });
 }
 function shareByVideoChannel(video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoChannelShareUrl = url_1.getVideoAnnounceActivityPubUrl(video.VideoChannel.Actor, video);
         const [videoChannelShare] = yield video_share_1.VideoShareModel.findOrCreate({
             defaults: {
@@ -104,7 +97,7 @@ function shareByVideoChannel(video, t) {
     });
 }
 function undoShareByVideoChannel(video, oldVideoChannel, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const oldShare = yield video_share_1.VideoShareModel.load(oldVideoChannel.actorId, video.id, t);
         if (!oldShare)
             return new Error('Cannot find old video channel share ' + oldVideoChannel.actorId + ' for video ' + video.id);

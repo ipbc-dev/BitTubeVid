@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
@@ -19,13 +11,13 @@ const uuid_1 = require("uuid");
 const path_1 = require("path");
 const expect = chai.expect;
 function countFiles(internalServerNumber, directory) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory(internalServerNumber, directory));
         return files.length;
     });
 }
 function assertNotExists(internalServerNumber, directory, substring) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory(internalServerNumber, directory));
         for (const f of files) {
             expect(f).to.not.contain(substring);
@@ -33,7 +25,7 @@ function assertNotExists(internalServerNumber, directory, substring) {
     });
 }
 function assertCountAreOkay(servers) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const server of servers) {
             const videosCount = yield countFiles(server.internalServerNumber, 'videos');
             expect(videosCount).to.equal(8);
@@ -52,7 +44,7 @@ describe('Test prune storage scripts', function () {
     let servers;
     const badNames = {};
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2, { transcoding: { enabled: true } });
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -96,12 +88,12 @@ describe('Test prune storage scripts', function () {
         });
     });
     it('Should have the files on the disk', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield assertCountAreOkay(servers);
         });
     });
     it('Should create some dirty files', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (let i = 0; i < 2; i++) {
                 {
                     const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'videos');
@@ -147,14 +139,14 @@ describe('Test prune storage scripts', function () {
         });
     });
     it('Should run prune storage', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             const env = extra_utils_1.getEnvCli(servers[0]);
             yield extra_utils_1.execCLI(`echo y | ${env} npm run prune-storage`);
         });
     });
     it('Should have removed files', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield assertCountAreOkay(servers);
             for (const directory of Object.keys(badNames)) {
                 for (const name of badNames[directory]) {
@@ -164,7 +156,7 @@ describe('Test prune storage scripts', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

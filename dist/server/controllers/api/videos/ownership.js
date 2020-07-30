@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ownershipVideoRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const logger_1 = require("../../../helpers/logger");
 const database_1 = require("../../../initializers/database");
@@ -27,7 +20,7 @@ ownershipVideoRouter.get('/ownership', middlewares_1.authenticate, middlewares_1
 ownershipVideoRouter.post('/ownership/:id/accept', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.videosTerminateChangeOwnershipValidator), middlewares_1.asyncMiddleware(middlewares_1.videosAcceptChangeOwnershipValidator), middlewares_1.asyncRetryTransactionMiddleware(acceptOwnership));
 ownershipVideoRouter.post('/ownership/:id/refuse', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.videosTerminateChangeOwnershipValidator), middlewares_1.asyncRetryTransactionMiddleware(refuseOwnership));
 function giveVideoOwnership(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
         const initiatorAccountId = res.locals.oauth.token.User.Account.id;
         const nextOwner = res.locals.nextOwner;
@@ -53,15 +46,15 @@ function giveVideoOwnership(req, res) {
     });
 }
 function listVideoOwnership(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const currentAccountId = res.locals.oauth.token.User.Account.id;
         const resultList = yield video_change_ownership_1.VideoChangeOwnershipModel.listForApi(currentAccountId, req.query.start || 0, req.query.count || 10, req.query.sort || 'createdAt');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
 function acceptOwnership(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoChangeOwnership = res.locals.videoChangeOwnership;
             const channel = res.locals.videoChannel;
             const targetVideo = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoChangeOwnership.Video.id);
@@ -80,8 +73,8 @@ function acceptOwnership(req, res) {
     });
 }
 function refuseOwnership(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoChangeOwnership = res.locals.videoChangeOwnership;
             videoChangeOwnership.status = videos_1.VideoChangeOwnershipStatus.REFUSED;
             yield videoChangeOwnership.save({ transaction: t });

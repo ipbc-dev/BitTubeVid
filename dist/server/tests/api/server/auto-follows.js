@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/extra-utils/index");
@@ -16,7 +8,7 @@ const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const expect = chai.expect;
 function checkFollow(follower, following, exists) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         {
             const res = yield follows_1.getFollowersListPaginationAndSort({ url: following.url, start: 0, count: 5, sort: '-createdAt' });
             const follows = res.body.data;
@@ -46,13 +38,13 @@ function checkFollow(follower, following, exists) {
     });
 }
 function server1Follows2(servers) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield follows_1.follow(servers[0].url, [servers[1].host], servers[0].accessToken);
         yield jobs_1.waitJobs(servers);
     });
 }
 function resetFollows(servers) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             yield index_1.unfollow(servers[0].url, servers[0].accessToken, servers[1]);
             yield index_1.unfollow(servers[1].url, servers[1].accessToken, servers[0]);
@@ -67,7 +59,7 @@ function resetFollows(servers) {
 describe('Test auto follows', function () {
     let servers = [];
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield index_1.flushAndRunMultipleServers(3);
             yield index_1.setAccessTokensToServers(servers);
@@ -75,7 +67,7 @@ describe('Test auto follows', function () {
     });
     describe('Auto follow back', function () {
         it('Should not auto follow back if the option is not enabled', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(15000);
                 yield server1Follows2(servers);
                 yield checkFollow(servers[0], servers[1], true);
@@ -84,7 +76,7 @@ describe('Test auto follows', function () {
             });
         });
         it('Should auto follow back on auto accept if the option is enabled', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(15000);
                 const config = {
                     followings: {
@@ -101,7 +93,7 @@ describe('Test auto follows', function () {
             });
         });
         it('Should wait the acceptation before auto follow back', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 const config = {
                     followings: {
@@ -132,11 +124,11 @@ describe('Test auto follows', function () {
     });
     describe('Auto follow index', function () {
         const instanceIndexServer = new index_1.MockInstancesIndex();
-        before(() => __awaiter(this, void 0, void 0, function* () {
+        before(() => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield instanceIndexServer.initialize();
         }));
         it('Should not auto follow index if the option is not enabled', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 yield index_1.wait(5000);
                 yield jobs_1.waitJobs(servers);
@@ -145,7 +137,7 @@ describe('Test auto follows', function () {
             });
         });
         it('Should auto follow the index', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 instanceIndexServer.addInstance(servers[1].host);
                 const config = {
@@ -166,7 +158,7 @@ describe('Test auto follows', function () {
             });
         });
         it('Should follow new added instances in the index but not old ones', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 instanceIndexServer.addInstance(servers[2].host);
                 yield index_1.wait(5000);
@@ -177,7 +169,7 @@ describe('Test auto follows', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);
         });
     });

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserRight = void 0;
 var UserRight;
 (function (UserRight) {
     UserRight[UserRight["ALL"] = 0] = "ALL";

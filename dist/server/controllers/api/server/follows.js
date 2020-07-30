@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.serverFollowsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const users_1 = require("../../../../shared/models/users");
 const logger_1 = require("../../../helpers/logger");
@@ -33,7 +26,7 @@ serverFollowsRouter.delete('/followers/:nameWithHost', middlewares_1.authenticat
 serverFollowsRouter.post('/followers/:nameWithHost/reject', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(removeOrRejectFollower));
 serverFollowsRouter.post('/followers/:nameWithHost/accept', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(acceptFollower));
 function listFollowing(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         const resultList = yield actor_follow_1.ActorFollowModel.listFollowingForApi({
             id: serverActor.id,
@@ -48,7 +41,7 @@ function listFollowing(req, res) {
     });
 }
 function listFollowers(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         const resultList = yield actor_follow_1.ActorFollowModel.listFollowersForApi({
             actorId: serverActor.id,
@@ -63,7 +56,7 @@ function listFollowers(req, res) {
     });
 }
 function followInstance(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const hosts = req.body.hosts;
         const follower = yield application_1.getServerActor();
         for (const host of hosts) {
@@ -78,9 +71,9 @@ function followInstance(req, res) {
     });
 }
 function removeFollowing(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const follow = res.locals.follow;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (follow.state === 'accepted')
                 yield send_1.sendUndoFollow(follow, t);
             const server = follow.ActorFollowing.Server;
@@ -94,7 +87,7 @@ function removeFollowing(req, res) {
     });
 }
 function removeOrRejectFollower(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const follow = res.locals.follow;
         yield send_1.sendReject(follow.ActorFollower, follow.ActorFollowing);
         yield follow.destroy();
@@ -102,7 +95,7 @@ function removeOrRejectFollower(req, res) {
     });
 }
 function acceptFollower(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const follow = res.locals.follow;
         yield send_1.sendAccept(follow);
         follow.state = 'accepted';

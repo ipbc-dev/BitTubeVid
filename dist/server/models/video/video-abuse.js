@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var VideoAbuseModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoAbuseModel = exports.ScopeNames = void 0;
+const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const shared_1 = require("../../../shared");
@@ -21,6 +14,7 @@ const thumbnail_1 = require("./thumbnail");
 const video_1 = require("./video");
 const video_blacklist_1 = require("./video-blacklist");
 const video_channel_1 = require("./video-channel");
+const lodash_1 = require("lodash");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FOR_API"] = "FOR_API";
@@ -38,8 +32,9 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
         return VideoAbuseModel_1.findOne(query);
     }
     static listForApi(parameters) {
-        const { start, count, sort, search, user, serverAccountId, state, videoIs, searchReportee, searchVideo, searchVideoChannel, searchReporter, id } = parameters;
+        const { start, count, sort, search, user, serverAccountId, state, videoIs, predefinedReason, searchReportee, searchVideo, searchVideoChannel, searchReporter, id } = parameters;
         const userAccountId = user ? user.Account.id : undefined;
+        const predefinedReasonId = predefinedReason ? shared_1.videoAbusePredefinedReasonsMap[predefinedReason] : undefined;
         const query = {
             offset: start,
             limit: count,
@@ -49,6 +44,7 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
         };
         const filters = {
             id,
+            predefinedReasonId,
             search,
             state,
             videoIs,
@@ -60,14 +56,17 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
             userAccountId
         };
         return VideoAbuseModel_1
-            .scope({ method: [ScopeNames.FOR_API, filters] })
+            .scope([
+            { method: [ScopeNames.FOR_API, filters] }
+        ])
             .findAndCountAll(query)
             .then(({ rows, count }) => {
             return { total: count, data: rows };
         });
     }
     toFormattedJSON() {
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
+        const predefinedReasons = VideoAbuseModel_1.getPredefinedReasonsStrings(this.predefinedReasons);
         const countReportsForVideo = this.get('countReportsForVideo');
         const nthReportForVideo = this.get('nthReportForVideo');
         const countReportsForReporterVideo = this.get('countReportsForReporter__video');
@@ -80,6 +79,7 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
         return {
             id: this.id,
             reason: this.reason,
+            predefinedReasons,
             reporterAccount: this.Account.toFormattedJSON(),
             state: {
                 id: this.state,
@@ -92,12 +92,14 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
                 name: video.name,
                 nsfw: video.nsfw,
                 deleted: !this.Video,
-                blacklisted: this.Video && this.Video.isBlacklisted(),
-                thumbnailPath: (_a = this.Video) === null || _a === void 0 ? void 0 : _a.getMiniatureStaticPath(),
-                channel: ((_b = this.Video) === null || _b === void 0 ? void 0 : _b.VideoChannel.toFormattedJSON()) || ((_c = this.deletedVideo) === null || _c === void 0 ? void 0 : _c.channel)
+                blacklisted: ((_a = this.Video) === null || _a === void 0 ? void 0 : _a.isBlacklisted()) || false,
+                thumbnailPath: (_b = this.Video) === null || _b === void 0 ? void 0 : _b.getMiniatureStaticPath(),
+                channel: ((_c = this.Video) === null || _c === void 0 ? void 0 : _c.VideoChannel.toFormattedJSON()) || ((_d = this.deletedVideo) === null || _d === void 0 ? void 0 : _d.channel)
             },
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
+            startAt: this.startAt,
+            endAt: this.endAt,
             count: countReportsForVideo || 0,
             nth: nthReportForVideo || 0,
             countReportsForReporter: (countReportsForReporterVideo || 0) + (countReportsForReporterDeletedVideo || 0),
@@ -105,85 +107,117 @@ let VideoAbuseModel = VideoAbuseModel_1 = class VideoAbuseModel extends sequeliz
         };
     }
     toActivityPubObject() {
+        const predefinedReasons = VideoAbuseModel_1.getPredefinedReasonsStrings(this.predefinedReasons);
+        const startAt = this.startAt;
+        const endAt = this.endAt;
         return {
             type: 'Flag',
             content: this.reason,
-            object: this.Video.url
+            object: this.Video.url,
+            tag: predefinedReasons.map(r => ({
+                type: 'Hashtag',
+                name: r
+            })),
+            startAt,
+            endAt
         };
     }
     static getStateLabel(id) {
         return constants_1.VIDEO_ABUSE_STATES[id] || 'Unknown';
     }
+    static getPredefinedReasonsStrings(predefinedReasons) {
+        return (predefinedReasons || [])
+            .filter(r => r in shared_1.VideoAbusePredefinedReasons)
+            .map(r => lodash_1.invert(shared_1.videoAbusePredefinedReasonsMap)[r]);
+    }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoAbuseReason', value => utils_1.throwIfNotValid(value, video_abuses_1.isVideoAbuseReasonValid, 'reason')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_ABUSES.REASON.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoAbuseModel.prototype, "reason", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoAbuseState', value => utils_1.throwIfNotValid(value, video_abuses_1.isVideoAbuseStateValid, 'state')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoAbuseModel.prototype, "state", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoAbuseModerationComment', value => utils_1.throwIfNotValid(value, video_abuses_1.isVideoAbuseModerationCommentValid, 'moderationComment', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_ABUSES.MODERATION_COMMENT.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoAbuseModel.prototype, "moderationComment", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.JSONB),
-    __metadata("design:type", Object)
+    tslib_1.__metadata("design:type", Object)
 ], VideoAbuseModel.prototype, "deletedVideo", void 0);
-__decorate([
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ARRAY(sequelize_typescript_1.DataType.INTEGER)),
+    tslib_1.__metadata("design:type", Array)
+], VideoAbuseModel.prototype, "predefinedReasons", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Column,
+    tslib_1.__metadata("design:type", Number)
+], VideoAbuseModel.prototype, "startAt", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Column,
+    tslib_1.__metadata("design:type", Number)
+], VideoAbuseModel.prototype, "endAt", void 0);
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoAbuseModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoAbuseModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoAbuseModel.prototype, "reporterAccountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], VideoAbuseModel.prototype, "Account", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoAbuseModel.prototype, "videoId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_1.VideoModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", video_1.VideoModel)
+    tslib_1.__metadata("design:type", video_1.VideoModel)
 ], VideoAbuseModel.prototype, "Video", void 0);
-VideoAbuseModel = VideoAbuseModel_1 = __decorate([
+VideoAbuseModel = VideoAbuseModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.FOR_API]: (options) => {
             const where = {
                 reporterAccountId: {
-                    [sequelize_1.Op.notIn]: sequelize_1.literal('(' + utils_1.buildBlockedAccountSQL(options.serverAccountId, options.userAccountId) + ')')
+                    [sequelize_1.Op.notIn]: sequelize_1.literal('(' + utils_1.buildBlockedAccountSQL([options.serverAccountId, options.userAccountId]) + ')')
                 }
             };
             if (options.search) {
@@ -225,6 +259,13 @@ VideoAbuseModel = VideoAbuseModel_1 = __decorate([
                 Object.assign(where, {
                     deletedVideo: {
                         [sequelize_1.Op.not]: null
+                    }
+                });
+            }
+            if (options.predefinedReasonId) {
+                Object.assign(where, {
+                    predefinedReasons: {
+                        [sequelize_1.Op.contains]: [options.predefinedReasonId]
                     }
                 });
             }

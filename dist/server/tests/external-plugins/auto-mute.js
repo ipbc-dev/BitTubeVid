@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai_1 = require("chai");
 const blocklist_1 = require("@shared/extra-utils/users/blocklist");
@@ -19,7 +11,7 @@ describe('Official plugin auto-mute', function () {
     let servers;
     let blocklistServer;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield servers_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -38,7 +30,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should update plugin settings', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updatePluginSettings({
                 url: servers[0].url,
                 accessToken: servers[0].accessToken,
@@ -51,7 +43,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should add a server blocklist', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             blocklistServer.replace({
                 data: [
@@ -66,7 +58,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should remove a server blocklist', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             blocklistServer.replace({
                 data: [
@@ -82,7 +74,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should add an account blocklist', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             blocklistServer.replace({
                 data: [
@@ -97,7 +89,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should remove an account blocklist', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             blocklistServer.replace({
                 data: [
@@ -113,7 +105,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should auto mute an account, manually unmute it and do not remute it automatically', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(20000);
             const account = 'root@localhost:' + servers[1].port;
             blocklistServer.replace({
@@ -144,7 +136,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should not expose the auto mute list', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.makeGetRequest({
                 url: servers[0].url,
                 path: '/plugins/auto-mute/router/api/v1/mute-list',
@@ -153,7 +145,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should enable auto mute list', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updatePluginSettings({
                 url: servers[0].url,
                 accessToken: servers[0].accessToken,
@@ -172,7 +164,7 @@ describe('Official plugin auto-mute', function () {
         });
     });
     it('Should mute an account on server 1, and server 2 auto mutes it', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(20000);
             yield extra_utils_1.updatePluginSettings({
                 url: servers[1].url,
@@ -203,7 +195,8 @@ describe('Official plugin auto-mute', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            yield blocklistServer.terminate();
             yield servers_1.cleanupTests(servers);
         });
     });

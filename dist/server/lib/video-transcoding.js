@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.mergeAudioVideofile = exports.transcodeNewResolution = exports.optimizeOriginalVideofile = exports.generateHlsPlaylist = void 0;
+const tslib_1 = require("tslib");
 const constants_1 = require("../initializers/constants");
 const path_1 = require("path");
 const ffmpeg_utils_1 = require("../helpers/ffmpeg-utils");
@@ -23,7 +16,7 @@ const config_1 = require("../initializers/config");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("./video-paths");
 function optimizeOriginalVideofile(video, inputVideoFileArg) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const transcodeDirectory = config_1.CONFIG.STORAGE.TMP_DIR;
         const newExtname = '.mp4';
         const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile();
@@ -53,7 +46,7 @@ function optimizeOriginalVideofile(video, inputVideoFileArg) {
 }
 exports.optimizeOriginalVideofile = optimizeOriginalVideofile;
 function transcodeNewResolution(video, resolution, isPortrait) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const transcodeDirectory = config_1.CONFIG.STORAGE.TMP_DIR;
         const extname = '.mp4';
         const videoInputPath = video_paths_1.getVideoFilePath(video, video.getMaxQualityFile());
@@ -85,7 +78,7 @@ function transcodeNewResolution(video, resolution, isPortrait) {
 }
 exports.transcodeNewResolution = transcodeNewResolution;
 function mergeAudioVideofile(video, resolution) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const transcodeDirectory = config_1.CONFIG.STORAGE.TMP_DIR;
         const newExtname = '.mp4';
         const inputVideoFile = video.getMinQualityFile();
@@ -119,7 +112,7 @@ function mergeAudioVideofile(video, resolution) {
 }
 exports.mergeAudioVideofile = mergeAudioVideofile;
 function generateHlsPlaylist(video, resolution, copyCodecs, isPortraitMode) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const baseHlsDirectory = path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid);
         yield fs_extra_1.ensureDir(path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid));
         const videoFileInput = copyCodecs
@@ -175,7 +168,7 @@ function generateHlsPlaylist(video, resolution, copyCodecs, isPortraitMode) {
 }
 exports.generateHlsPlaylist = generateHlsPlaylist;
 function onVideoFileTranscoding(video, videoFile, transcodingPath, outputPath) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const stats = yield fs_extra_1.stat(transcodingPath);
         const fps = yield ffmpeg_utils_1.getVideoFileFPS(transcodingPath);
         const metadata = yield ffmpeg_utils_1.getMetadataFromFile(transcodingPath);

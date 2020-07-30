@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoPlaylistPrivacy = void 0;
 var VideoPlaylistPrivacy;
 (function (VideoPlaylistPrivacy) {
     VideoPlaylistPrivacy[VideoPlaylistPrivacy["PUBLIC"] = 1] = "PUBLIC";

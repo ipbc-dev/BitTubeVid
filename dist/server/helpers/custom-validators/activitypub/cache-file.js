@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isCacheFileObjectValid = void 0;
 const misc_1 = require("./misc");
 const videos_1 = require("./videos");
 const misc_2 = require("../misc");

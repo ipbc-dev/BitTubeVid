@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isVideoChannelSupportValid = exports.isVideoChannelNameValid = exports.isVideoChannelDescriptionValid = void 0;
 const validator_1 = require("validator");
 const constants_1 = require("../../initializers/constants");
 const misc_1 = require("./misc");

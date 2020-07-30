@@ -1,30 +1,33 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-require("multer");
-const sharp = require("sharp");
+exports.processImage = void 0;
+const tslib_1 = require("tslib");
 const fs_extra_1 = require("fs-extra");
+const ffmpeg_utils_1 = require("./ffmpeg-utils");
 const logger_1 = require("./logger");
+const Jimp = require('jimp');
 function processImage(path, destination, newSize, keepOriginal = false) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (path === destination) {
-            throw new Error('Sharp needs an input path different that the output path.');
+            throw new Error('Jimp needs an input path different that the output path.');
         }
         logger_1.logger.debug('Processing image %s to %s.', path, destination);
-        const buf = yield fs_extra_1.readFile(path);
-        const sharpInstance = sharp(buf);
+        let jimpInstance;
+        try {
+            jimpInstance = yield Jimp.read(path);
+        }
+        catch (err) {
+            logger_1.logger.debug('Cannot read %s with jimp. Try to convert the image using ffmpeg first.', { err });
+            const newName = path + '.jpg';
+            yield ffmpeg_utils_1.convertWebPToJPG(path, newName);
+            yield fs_extra_1.rename(newName, path);
+            jimpInstance = yield Jimp.read(path);
+        }
         yield fs_extra_1.remove(destination);
-        yield sharpInstance
+        yield jimpInstance
             .resize(newSize.width, newSize.height)
-            .toFile(destination);
+            .quality(80)
+            .writeAsync(destination);
         if (keepOriginal !== true)
             yield fs_extra_1.remove(path);
     });

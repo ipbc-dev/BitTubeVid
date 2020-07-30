@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeServerFromServerBlocklist = exports.addServerToServerBlocklist = exports.getServerBlocklistByServer = exports.removeAccountFromServerBlocklist = exports.addAccountToServerBlocklist = exports.getAccountBlocklistByServer = exports.removeServerFromAccountBlocklist = exports.addServerToAccountBlocklist = exports.getServerBlocklistByAccount = exports.removeAccountFromAccountBlocklist = exports.addAccountToAccountBlocklist = exports.getAccountBlocklistByAccount = void 0;
 const requests_1 = require("../requests/requests");
 function getAccountBlocklistByAccount(url, token, start, count, sort = '-createdAt', statusCodeExpected = 200) {
     const path = '/api/v1/users/me/blocklist/accounts';

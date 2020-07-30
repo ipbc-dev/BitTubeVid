@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/extra-utils/index");
@@ -17,7 +9,7 @@ const expect = chai.expect;
 describe('Test services', function () {
     let server = null;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield servers_1.flushAndRunServer(1);
             yield index_1.setAccessTokensToServers([server]);
@@ -30,7 +22,7 @@ describe('Test services', function () {
         });
     });
     it('Should have a valid oEmbed response', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + server.video.uuid;
             const res = yield index_1.getOEmbed(server.url, oembedUrl);
             const expectedHtml = '<iframe width="560" height="315" sandbox="allow-same-origin allow-scripts" ' +
@@ -48,7 +40,7 @@ describe('Test services', function () {
         });
     });
     it('Should have a valid oEmbed response with small max height query', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + server.video.uuid;
             const format = 'json';
             const maxHeight = 50;
@@ -68,7 +60,7 @@ describe('Test services', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.cleanupTests([server]);
         });
     });

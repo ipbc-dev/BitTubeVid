@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.tokensRouter = void 0;
 const auth_1 = require("@server/lib/auth");
 const RateLimit = require("express-rate-limit");
 const config_1 = require("@server/initializers/config");

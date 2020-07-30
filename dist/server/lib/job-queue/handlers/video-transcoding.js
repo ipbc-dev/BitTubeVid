@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.publishNewResolutionIfNeeded = exports.processVideoTranscoding = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
 const job_queue_1 = require("../job-queue");
@@ -20,7 +13,7 @@ const video_transcoding_1 = require("../../video-transcoding");
 const notifier_1 = require("../../notifier");
 const config_1 = require("../../../initializers/config");
 function processVideoTranscoding(job) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
         logger_1.logger.info('Processing video file in job %d.', job.id);
         const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(payload.videoUUID);
@@ -49,7 +42,7 @@ function processVideoTranscoding(job) {
 }
 exports.processVideoTranscoding = processVideoTranscoding;
 function onHlsPlaylistGenerationSuccess(video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (video === undefined)
             return undefined;
         if (config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED === false) {
@@ -63,18 +56,18 @@ function onHlsPlaylistGenerationSuccess(video) {
     });
 }
 function publishNewResolutionIfNeeded(video, payload) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield publishAndFederateIfNeeded(video);
         yield createHlsJobIfEnabled(payload);
     });
 }
 exports.publishNewResolutionIfNeeded = publishNewResolutionIfNeeded;
 function onVideoFileOptimizerSuccess(videoArg, payload) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (videoArg === undefined)
             return undefined;
         const { videoFileResolution } = yield videoArg.getMaxQualityResolution();
-        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
             if (!videoDatabase)
                 return undefined;
@@ -132,8 +125,8 @@ function createHlsJobIfEnabled(payload) {
     }
 }
 function publishAndFederateIfNeeded(video) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
             if (!videoDatabase)
                 return undefined;

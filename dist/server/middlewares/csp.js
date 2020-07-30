@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.embedCSP = exports.baseCSP = void 0;
 const helmet = require("helmet");
 const config_1 = require("../initializers/config");
 const baseDirectives = Object.assign({}, {

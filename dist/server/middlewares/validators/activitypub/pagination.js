@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.apPaginationValidator = void 0;
 const express_validator_1 = require("express-validator");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../utils");

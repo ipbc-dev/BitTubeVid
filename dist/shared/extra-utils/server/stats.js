@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getStats = void 0;
 const requests_1 = require("../requests/requests");
 function getStats(url, useCache = false) {
     const path = '/api/v1/server/stats';

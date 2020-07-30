@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendVideoRateChange = exports.createRates = exports.getRateUrl = void 0;
+const tslib_1 = require("tslib");
 const send_1 = require("./send");
 const Bluebird = require("bluebird");
 const actor_1 = require("./actor");
@@ -20,9 +13,9 @@ const activitypub_1 = require("../../helpers/activitypub");
 const url_1 = require("./url");
 const send_dislike_1 = require("./send/send-dislike");
 function createRates(ratesUrl, video, rate) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let rateCounts = 0;
-        yield Bluebird.map(ratesUrl, (rateUrl) => __awaiter(this, void 0, void 0, function* () {
+        yield Bluebird.map(ratesUrl, (rateUrl) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const { body } = yield requests_1.doRequest({
                     uri: rateUrl,
@@ -62,7 +55,7 @@ function createRates(ratesUrl, video, rate) {
 }
 exports.createRates = createRates;
 function sendVideoRateChange(account, video, likes, dislikes, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actor = account.Actor;
         if (likes < 0)
             yield send_1.sendUndoLike(actor, video, t);

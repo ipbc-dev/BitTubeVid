@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai_1 = require("chai");
 const extra_utils_1 = require("../../../shared/extra-utils");
@@ -18,7 +10,7 @@ describe('Test CLI wrapper', function () {
     let userAccessToken;
     const cmd = 'node ./dist/server/tools/peertube.js';
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -32,7 +24,7 @@ describe('Test CLI wrapper', function () {
     });
     describe('Authentication and instance selection', function () {
         it('Should display no selected instance', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} --help`);
@@ -40,14 +32,14 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should add a user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 yield extra_utils_1.execCLI(`${env} ${cmd} auth add -u ${server.url} -U user_1 -p super_password`);
             });
         });
         it('Should default to this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} --help`);
@@ -55,7 +47,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should remember the user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} auth list`);
@@ -65,7 +57,7 @@ describe('Test CLI wrapper', function () {
     });
     describe('Video upload/import', function () {
         it('Should upload a video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const fixture = extra_utils_1.buildAbsoluteFixturePath('60fps_720p_small.mp4');
@@ -74,7 +66,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should have the video uploaded', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getVideosList(server.url);
                 chai_1.expect(res.body.total).to.equal(1);
                 const videos = res.body.data;
@@ -85,7 +77,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should import a video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `--target-url ${video_imports_1.getYoutubeVideoUrl()} --channel-name user_channel`;
@@ -93,7 +85,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should have imported the video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 yield extra_utils_1.waitJobs([server]);
                 const res = yield extra_utils_1.getVideosList(server.url);
@@ -109,7 +101,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should import and override some imported attributes', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `--target-url ${video_imports_1.getYoutubeVideoUrl()} --channel-name user_channel --video-name toto --nsfw --support support`;
@@ -132,7 +124,7 @@ describe('Test CLI wrapper', function () {
     });
     describe('Admin auth', function () {
         it('Should remove the auth user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const env = extra_utils_1.getEnvCli(server);
                 yield extra_utils_1.execCLI(`${env} ${cmd} auth del ${server.url}`);
                 const stdout = yield extra_utils_1.execCLI(`${env} ${cmd} --help`);
@@ -140,7 +132,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should add the admin user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const env = extra_utils_1.getEnvCli(server);
                 yield extra_utils_1.execCLI(`${env} ${cmd} auth add -u ${server.url} -U root -p test${server.internalServerNumber}`);
             });
@@ -148,21 +140,21 @@ describe('Test CLI wrapper', function () {
     });
     describe('Manage plugins', function () {
         it('Should install a plugin', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 yield extra_utils_1.execCLI(`${env} ${cmd} plugins install --npm-name peertube-plugin-hello-world`);
             });
         });
         it('Should list installed plugins', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const env = extra_utils_1.getEnvCli(server);
                 const res = yield extra_utils_1.execCLI(`${env} ${cmd} plugins list`);
                 chai_1.expect(res).to.contain('peertube-plugin-hello-world');
             });
         });
         it('Should uninstall the plugin', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const env = extra_utils_1.getEnvCli(server);
                 const res = yield extra_utils_1.execCLI(`${env} ${cmd} plugins uninstall --npm-name peertube-plugin-hello-world`);
                 chai_1.expect(res).to.not.contain('peertube-plugin-hello-world');
@@ -174,7 +166,7 @@ describe('Test CLI wrapper', function () {
         let video1Server2;
         let servers;
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(120000);
                 anotherServer = yield extra_utils_1.flushAndRunServer(2);
                 yield extra_utils_1.setAccessTokensToServers([anotherServer]);
@@ -187,7 +179,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should add a redundancy', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `add --video ${video1Server2}`;
@@ -196,7 +188,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should list redundancies', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 {
                     const env = extra_utils_1.getEnvCli(server);
@@ -208,7 +200,7 @@ describe('Test CLI wrapper', function () {
             });
         });
         it('Should remove a redundancy', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `remove --video ${video1Server2}`;
@@ -223,14 +215,14 @@ describe('Test CLI wrapper', function () {
             });
         });
         after(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.cleanupTests([anotherServer]);
             });
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.cleanupTests([server]);
         });

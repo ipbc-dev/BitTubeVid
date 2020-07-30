@@ -1,19 +1,14 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var AccountBlocklistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AccountBlocklistModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const account_1 = require("./account");
 const utils_1 = require("../utils");
 const sequelize_1 = require("sequelize");
+const actor_1 = require("../activitypub/actor");
+const server_1 = require("../server/server");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ACCOUNTS"] = "WITH_ACCOUNTS";
@@ -75,6 +70,40 @@ let AccountBlocklistModel = AccountBlocklistModel_1 = class AccountBlocklistMode
             return { total: count, data: rows };
         });
     }
+    static listHandlesBlockedBy(accountIds) {
+        const query = {
+            attributes: [],
+            where: {
+                accountId: {
+                    [sequelize_1.Op.in]: accountIds
+                }
+            },
+            include: [
+                {
+                    attributes: ['id'],
+                    model: account_1.AccountModel.unscoped(),
+                    required: true,
+                    as: 'BlockedAccount',
+                    include: [
+                        {
+                            attributes: ['preferredUsername'],
+                            model: actor_1.ActorModel.unscoped(),
+                            required: true,
+                            include: [
+                                {
+                                    attributes: ['host'],
+                                    model: server_1.ServerModel.unscoped(),
+                                    required: true
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+        return AccountBlocklistModel_1.findAll(query)
+            .then(entries => entries.map(e => `${e.BlockedAccount.Actor.preferredUsername}@${e.BlockedAccount.Actor.Server.host}`));
+    }
     toFormattedJSON() {
         return {
             byAccount: this.ByAccount.toFormattedJSON(),
@@ -83,20 +112,20 @@ let AccountBlocklistModel = AccountBlocklistModel_1 = class AccountBlocklistMode
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], AccountBlocklistModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], AccountBlocklistModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], AccountBlocklistModel.prototype, "accountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             name: 'accountId',
@@ -105,14 +134,14 @@ __decorate([
         as: 'ByAccount',
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], AccountBlocklistModel.prototype, "ByAccount", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], AccountBlocklistModel.prototype, "targetAccountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             name: 'targetAccountId',
@@ -121,9 +150,9 @@ __decorate([
         as: 'BlockedAccount',
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], AccountBlocklistModel.prototype, "BlockedAccount", void 0);
-AccountBlocklistModel = AccountBlocklistModel_1 = __decorate([
+AccountBlocklistModel = AccountBlocklistModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_ACCOUNTS]: {
             include: [

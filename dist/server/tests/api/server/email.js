@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -31,7 +23,7 @@ describe('Test emails', function () {
     };
     let emailPort;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             emailPort = yield email_1.MockSmtpServer.Instance.collectEmails(emails);
             const overrideConfig = {
@@ -65,7 +57,7 @@ describe('Test emails', function () {
     });
     describe('When resetting user password', function () {
         it('Should ask to reset the password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.askResetPassword(server.url, 'user_1@example.com');
                 yield jobs_1.waitJobs(server);
@@ -86,17 +78,17 @@ describe('Test emails', function () {
             });
         });
         it('Should not reset the password with an invalid verification string', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.resetPassword(server.url, userId, verificationString + 'b', 'super_password2', 403);
             });
         });
         it('Should reset the password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.resetPassword(server.url, userId, verificationString, 'super_password2');
             });
         });
         it('Should login with this new password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 user.password = 'super_password2';
                 yield extra_utils_1.userLogin(server, user);
             });
@@ -104,7 +96,7 @@ describe('Test emails', function () {
     });
     describe('When creating a user without password', function () {
         it('Should send a create password email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.createUser({
                     url: server.url,
@@ -130,17 +122,17 @@ describe('Test emails', function () {
             });
         });
         it('Should not reset the password with an invalid verification string', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.resetPassword(server.url, userId2, verificationString2 + 'c', 'newly_created_password', 403);
             });
         });
         it('Should reset the password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.resetPassword(server.url, userId2, verificationString2, 'newly_created_password');
             });
         });
         it('Should login with this new password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.userLogin(server, {
                     username: 'create_password',
                     password: 'newly_created_password'
@@ -150,7 +142,7 @@ describe('Test emails', function () {
     });
     describe('When creating a video abuse', function () {
         it('Should send the notification email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const reason = 'my super bad reason';
                 yield extra_utils_1.reportVideoAbuse(server.url, server.accessToken, videoUUID, reason);
@@ -167,7 +159,7 @@ describe('Test emails', function () {
     });
     describe('When blocking/unblocking user', function () {
         it('Should send the notification email when blocking a user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const reason = 'my super bad reason';
                 yield extra_utils_1.blockUser(server.url, userId, server.accessToken, 204, reason);
@@ -183,7 +175,7 @@ describe('Test emails', function () {
             });
         });
         it('Should send the notification email when unblocking a user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.unblockUser(server.url, userId, server.accessToken, 204);
                 yield jobs_1.waitJobs(server);
@@ -199,7 +191,7 @@ describe('Test emails', function () {
     });
     describe('When blacklisting a video', function () {
         it('Should send the notification email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const reason = 'my super reason';
                 yield extra_utils_1.addVideoToBlacklist(server.url, server.accessToken, videoUserUUID, reason);
@@ -215,7 +207,7 @@ describe('Test emails', function () {
             });
         });
         it('Should send the notification email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.removeVideoFromBlacklist(server.url, server.accessToken, videoUserUUID);
                 yield jobs_1.waitJobs(server);
@@ -231,7 +223,7 @@ describe('Test emails', function () {
     });
     describe('When verifying a user email', function () {
         it('Should ask to send the verification email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.askSendVerifyEmail(server.url, 'user_1@example.com');
                 yield jobs_1.waitJobs(server);
@@ -252,18 +244,18 @@ describe('Test emails', function () {
             });
         });
         it('Should not verify the email with an invalid verification string', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.verifyEmail(server.url, userId, verificationString + 'b', false, 403);
             });
         });
         it('Should verify the email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.verifyEmail(server.url, userId, verificationString);
             });
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             email_1.MockSmtpServer.Instance.kill();
             yield extra_utils_1.cleanupTests([server]);
         });

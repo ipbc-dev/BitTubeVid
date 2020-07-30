@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.doVideosInPlaylistExistValidator = exports.commonVideoPlaylistFiltersValidator = exports.videoPlaylistElementAPGetValidator = exports.videoPlaylistsReorderVideosValidator = exports.videoPlaylistsUpdateOrRemoveVideoValidator = exports.videoPlaylistsAddVideoValidator = exports.videoPlaylistsSearchValidator = exports.videoPlaylistsGetValidator = exports.videoPlaylistsDeleteValidator = exports.videoPlaylistsUpdateValidator = exports.videoPlaylistsAddValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const shared_1 = require("../../../../shared");
 const logger_1 = require("../../../helpers/logger");
@@ -26,7 +19,7 @@ const middlewares_1 = require("../../../helpers/middlewares");
 const videoPlaylistsAddValidator = getCommonPlaylistEditAttributes().concat([
     express_validator_1.body('displayName')
         .custom(video_playlists_1.isVideoPlaylistNameValid).withMessage('Should have a valid display name'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsAddValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
@@ -48,7 +41,7 @@ const videoPlaylistsUpdateValidator = getCommonPlaylistEditAttributes().concat([
     express_validator_1.body('displayName')
         .optional()
         .custom(video_playlists_1.isVideoPlaylistNameValid).withMessage('Should have a valid display name'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsUpdateValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
@@ -81,7 +74,7 @@ exports.videoPlaylistsUpdateValidator = videoPlaylistsUpdateValidator;
 const videoPlaylistsDeleteValidator = [
     express_validator_1.param('playlistId')
         .custom(misc_1.isIdOrUUIDValid).withMessage('Should have a valid playlist id/uuid'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsDeleteValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -103,7 +96,7 @@ const videoPlaylistsGetValidator = (fetchType) => {
     return [
         express_validator_1.param('playlistId')
             .custom(misc_1.isIdOrUUIDValid).withMessage('Should have a valid playlist id/uuid'),
-        (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
             logger_1.logger.debug('Checking videoPlaylistsGetValidator parameters', { parameters: req.params });
             if (utils_1.areValidationErrors(req, res))
                 return;
@@ -151,7 +144,7 @@ const videoPlaylistsAddVideoValidator = [
     express_validator_1.body('stopTimestamp')
         .optional()
         .custom(video_playlists_1.isVideoPlaylistTimestampValid).withMessage('Should have a valid stop timestamp'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsAddVideoValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -186,7 +179,7 @@ const videoPlaylistsUpdateOrRemoveVideoValidator = [
     express_validator_1.body('stopTimestamp')
         .optional()
         .custom(video_playlists_1.isVideoPlaylistTimestampValid).withMessage('Should have a valid stop timestamp'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsRemoveVideoValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -212,7 +205,7 @@ const videoPlaylistElementAPGetValidator = [
         .custom(misc_1.isIdOrUUIDValid).withMessage('Should have a valid playlist id/uuid'),
     express_validator_1.param('videoId')
         .custom(misc_1.isIdOrUUIDValid).withMessage('Should have an video id/uuid'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistElementAPGetValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -241,7 +234,7 @@ const videoPlaylistsReorderVideosValidator = [
     express_validator_1.body('reorderLength')
         .optional()
         .isInt({ min: 1 }).withMessage('Should have a valid range length'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistsReorderVideosValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;

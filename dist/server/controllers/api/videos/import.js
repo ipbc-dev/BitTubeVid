@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videoImportsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const magnetUtil = require("magnet-uri");
 const audit_logger_1 = require("../../../helpers/audit-logger");
@@ -45,14 +38,15 @@ const reqVideoFileImport = express_utils_1.createReqFiles(['thumbnailfile', 'pre
 });
 videoImportsRouter.post('/imports', middlewares_1.authenticate, reqVideoFileImport, middlewares_1.asyncMiddleware(middlewares_1.videoImportAddValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideoImport));
 function addVideoImport(req, res) {
+    var _a, _b;
     if (req.body.targetUrl)
         return addYoutubeDLImport(req, res);
-    const file = req.files && req.files['torrentfile'] ? req.files['torrentfile'][0] : undefined;
+    const file = (_b = (_a = req.files) === null || _a === void 0 ? void 0 : _a['torrentfile']) === null || _b === void 0 ? void 0 : _b[0];
     if (req.body.magnetUri || file)
         return addTorrentImport(req, res, file);
 }
 function addTorrentImport(req, res, torrentfile) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const user = res.locals.oauth.token.User;
         let videoName;
@@ -102,7 +96,7 @@ function addTorrentImport(req, res, torrentfile) {
     });
 }
 function addYoutubeDLImport(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const targetUrl = body.targetUrl;
         const user = res.locals.oauth.token.User;
@@ -152,7 +146,7 @@ function addYoutubeDLImport(req, res) {
                 });
                 videoCaption.Video = video;
                 yield captions_utils_1.moveAndProcessCaptionFile(subtitle, videoCaption);
-                yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+                yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                     yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, subtitle.language, null, t);
                 }));
             }
@@ -198,7 +192,7 @@ function buildVideo(channelId, body, importData) {
     return video;
 }
 function processThumbnail(req, video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const thumbnailField = req.files ? req.files['thumbnailfile'] : undefined;
         if (thumbnailField) {
             const thumbnailPhysicalFile = thumbnailField[0];
@@ -208,7 +202,7 @@ function processThumbnail(req, video) {
     });
 }
 function processPreview(req, video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const previewField = req.files ? req.files['previewfile'] : undefined;
         if (previewField) {
             const previewPhysicalFile = previewField[0];
@@ -218,7 +212,7 @@ function processPreview(req, video) {
     });
 }
 function processThumbnailFromUrl(url, video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
         }
@@ -229,7 +223,7 @@ function processThumbnailFromUrl(url, video) {
     });
 }
 function processPreviewFromUrl(url, video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.PREVIEW);
         }
@@ -241,7 +235,7 @@ function processPreviewFromUrl(url, video) {
 }
 function insertIntoDB(parameters) {
     const { video, thumbnailModel, previewModel, videoChannel, tags, videoImportAttributes, user } = parameters;
-    return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const sequelizeOptions = { transaction: t };
         const videoCreated = yield video.save(sequelizeOptions);
         videoCreated.VideoChannel = videoChannel;

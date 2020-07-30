@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getOrCreateVideoChannelFromVideoObject = exports.fetchRemoteVideoDescription = exports.getOrCreateVideoAndAccountAndChannel = exports.fetchRemoteVideo = exports.federateVideoIfNeeded = exports.refreshVideoIfNeeded = exports.updateVideoFromAP = void 0;
+const tslib_1 = require("tslib");
 const Bluebird = require("bluebird");
 const magnetUtil = require("magnet-uri");
 const index_1 = require("../../../shared/index");
@@ -47,7 +40,7 @@ const video_blacklist_1 = require("../video-blacklist");
 const files_cache_1 = require("../files-cache");
 const lodash_1 = require("lodash");
 function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
         if ((video.isBlacklisted() === false || (isNewVideo === false && video.VideoBlacklist.unfederated === false)) &&
             video.hasPrivacyForFederation() && video.state === index_1.VideoState.PUBLISHED) {
@@ -69,7 +62,7 @@ function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
 }
 exports.federateVideoIfNeeded = federateVideoIfNeeded;
 function fetchRemoteVideo(videoUrl) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
             uri: videoUrl,
             method: 'GET',
@@ -87,7 +80,7 @@ function fetchRemoteVideo(videoUrl) {
 }
 exports.fetchRemoteVideo = fetchRemoteVideo;
 function fetchRemoteVideoDescription(video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const host = video.VideoChannel.Account.Actor.Server.host;
         const path = video.getDescriptionAPIPath();
         const options = {
@@ -110,7 +103,7 @@ function getOrCreateVideoChannelFromVideoObject(videoObject) {
 }
 exports.getOrCreateVideoChannelFromVideoObject = getOrCreateVideoChannelFromVideoObject;
 function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Adding likes/dislikes/shares/comments of video %s.', video.uuid);
         const jobPayloads = [];
         if (syncParam.likes === true) {
@@ -153,7 +146,7 @@ function syncVideoExternalAttributes(video, fetchedVideo, syncParam) {
     });
 }
 function getOrCreateVideoAndAccountAndChannel(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const syncParam = options.syncParam || { likes: true, dislikes: true, shares: true, comments: true, thumbnail: true, refreshVideo: false };
         const fetchType = options.fetchType || 'all';
         const allowRefresh = options.allowRefresh !== false;
@@ -183,14 +176,24 @@ function getOrCreateVideoAndAccountAndChannel(options) {
             throw new Error('Cannot fetch remote video with url: ' + videoUrl);
         const actor = yield getOrCreateVideoChannelFromVideoObject(fetchedVideo);
         const videoChannel = actor.VideoChannel;
-        const { autoBlacklisted, videoCreated } = yield database_utils_1.retryTransactionWrapper(createVideo, fetchedVideo, videoChannel, syncParam.thumbnail);
-        yield syncVideoExternalAttributes(videoCreated, fetchedVideo, syncParam);
-        return { video: videoCreated, created: true, autoBlacklisted };
+        try {
+            const { autoBlacklisted, videoCreated } = yield database_utils_1.retryTransactionWrapper(createVideo, fetchedVideo, videoChannel, syncParam.thumbnail);
+            yield syncVideoExternalAttributes(videoCreated, fetchedVideo, syncParam);
+            return { video: videoCreated, created: true, autoBlacklisted };
+        }
+        catch (err) {
+            if (err.name === 'SequelizeUniqueConstraintError') {
+                const fallbackVideo = yield video_2.fetchVideoByUrl(videoUrl, fetchType);
+                if (fallbackVideo)
+                    return { video: fallbackVideo, created: false };
+            }
+            throw err;
+        }
     });
 }
 exports.getOrCreateVideoAndAccountAndChannel = getOrCreateVideoAndAccountAndChannel;
 function updateVideoFromAP(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { video, videoObject, account, channel, overrideTo } = options;
         logger_1.logger.debug('Updating remote video "%s".', options.videoObject.uuid, { account, channel });
         let videoFieldsSave;
@@ -204,7 +207,7 @@ function updateVideoFromAP(options) {
             catch (err) {
                 logger_1.logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err });
             }
-            const videoUpdated = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const videoUpdated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const sequelizeOptions = { transaction: t };
                 videoFieldsSave = video.toJSON();
                 const videoChannel = video.VideoChannel;
@@ -310,7 +313,7 @@ function updateVideoFromAP(options) {
 }
 exports.updateVideoFromAP = updateVideoFromAP;
 function refreshVideoIfNeeded(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!options.video.isOutdated())
             return options.video;
         const video = options.fetchedType === 'all'
@@ -367,7 +370,7 @@ function isAPHashTagObject(url) {
     return url && url.type === 'Hashtag';
 }
 function createVideo(videoObject, channel, waitThumbnail = false) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Adding remote video %s.', videoObject.id);
         const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to);
         const video = video_1.VideoModel.build(videoData);
@@ -380,7 +383,7 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
         if (waitThumbnail === true) {
             thumbnailModel = yield promiseThumbnail;
         }
-        const { autoBlacklisted, videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const { autoBlacklisted, videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
             const videoCreated = yield video.save(sequelizeOptions);
             videoCreated.VideoChannel = channel;

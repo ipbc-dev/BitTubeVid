@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.webfingerRouter = void 0;
 const cors = require("cors");
 const express = require("express");
 const middlewares_1 = require("../middlewares");

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.serverHookObject = exports.serverActionHookObject = exports.serverFilterHookObject = void 0;
 exports.serverFilterHookObject = {
     'filter:api.videos.list.params': true,
     'filter:api.videos.list.result': true,

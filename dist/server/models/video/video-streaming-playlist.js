@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var VideoStreamingPlaylistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoStreamingPlaylistModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const videos_1 = require("../../helpers/custom-validators/videos");
 const utils_1 = require("../utils");
@@ -122,66 +115,66 @@ VideoStreamingPlaylistModel.doesInfohashExistCached = memoizee(VideoStreamingPla
     max: constants_1.MEMOIZE_LENGTH.INFO_HASH_EXISTS,
     maxAge: constants_1.MEMOIZE_TTL.INFO_HASH_EXISTS
 });
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoStreamingPlaylistModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoStreamingPlaylistModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoStreamingPlaylistModel.prototype, "type", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('PlaylistUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'playlist url')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS.URL.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoStreamingPlaylistModel.prototype, "playlistUrl", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoStreamingPlaylistInfoHashes', value => utils_1.throwIfNotValid(value, v => misc_2.isArrayOf(v, videos_1.isVideoFileInfoHashValid), 'info hashes')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ARRAY(sequelize_typescript_1.DataType.STRING)),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoStreamingPlaylistModel.prototype, "p2pMediaLoaderInfohashes", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoStreamingPlaylistModel.prototype, "p2pMediaLoaderPeerVersion", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoStreamingSegmentsSha256Url', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'segments sha256 url')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoStreamingPlaylistModel.prototype, "segmentsSha256Url", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoStreamingPlaylistModel.prototype, "videoId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_1.VideoModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", video_1.VideoModel)
+    tslib_1.__metadata("design:type", video_1.VideoModel)
 ], VideoStreamingPlaylistModel.prototype, "Video", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_file_1.VideoFileModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoStreamingPlaylistModel.prototype, "VideoFiles", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_redundancy_1.VideoRedundancyModel, {
         foreignKey: {
             allowNull: false
@@ -189,9 +182,9 @@ __decorate([
         onDelete: 'CASCADE',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoStreamingPlaylistModel.prototype, "RedundancyVideos", void 0);
-VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = __decorate([
+VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'videoStreamingPlaylist',
         indexes: [

@@ -1,25 +1,19 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const users_1 = require("../../shared/models/users");
-const logger_1 = require("../helpers/logger");
-const emailer_1 = require("./emailer");
-const user_notification_1 = require("../models/account/user-notification");
-const user_1 = require("../models/account/user");
-const peertube_socket_1 = require("./peertube-socket");
-const config_1 = require("../initializers/config");
-const videos_1 = require("../../shared/models/videos");
-const account_blocklist_1 = require("../models/account/account-blocklist");
-const server_blocklist_1 = require("@server/models/server/server-blocklist");
+exports.Notifier = void 0;
+const tslib_1 = require("tslib");
 const application_1 = require("@server/models/application/application");
+const server_blocklist_1 = require("@server/models/server/server-blocklist");
+const users_1 = require("../../shared/models/users");
+const videos_1 = require("../../shared/models/videos");
+const logger_1 = require("../helpers/logger");
+const config_1 = require("../initializers/config");
+const account_blocklist_1 = require("../models/account/account-blocklist");
+const user_1 = require("../models/account/user");
+const user_notification_1 = require("../models/account/user-notification");
+const blocklist_1 = require("./blocklist");
+const emailer_1 = require("./emailer");
+const peertube_socket_1 = require("./peertube-socket");
 class Notifier {
     constructor() {
     }
@@ -98,14 +92,14 @@ class Notifier {
         });
     }
     notifySubscribersOfNewVideo(video) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const users = yield user_1.UserModel.listUserSubscribersOf(video.VideoChannel.actorId);
             logger_1.logger.info('Notifying %d users of new video %s.', users.length, video.url);
             function settingGetter(user) {
                 return user.NotificationSetting.newVideoFromSubscription;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_VIDEO_FROM_SUBSCRIPTION,
                         userId: user.id,
@@ -122,20 +116,20 @@ class Notifier {
         });
     }
     notifyVideoOwnerOfNewComment(comment) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (comment.Video.isOwned() === false)
                 return;
             const user = yield user_1.UserModel.loadByVideoId(comment.videoId);
             if (!user || comment.Account.userId === user.id)
                 return;
-            if (yield this.isBlockedByServerOrAccount(user, comment.Account))
+            if (yield this.isBlockedByServerOrUser(comment.Account, user))
                 return;
             logger_1.logger.info('Notifying user %s of new comment %s.', user.username, comment.url);
             function settingGetter(user) {
                 return user.NotificationSetting.newCommentOnMyVideo;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_COMMENT_ON_MY_VIDEO,
                         userId: user.id,
@@ -152,7 +146,7 @@ class Notifier {
         });
     }
     notifyOfCommentMention(comment) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const extractedUsernames = comment.extractMentions();
             logger_1.logger.debug('Extracted %d username from comment %s.', extractedUsernames.length, comment.url, { usernames: extractedUsernames, text: comment.text });
             let users = yield user_1.UserModel.listByUsernames(extractedUsernames);
@@ -177,7 +171,7 @@ class Notifier {
                 return user.NotificationSetting.commentMention;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.COMMENT_MENTION,
                         userId: user.id,
@@ -194,7 +188,7 @@ class Notifier {
         });
     }
     notifyUserOfNewActorFollow(actorFollow) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (actorFollow.ActorFollowing.isOwned() === false)
                 return;
             let followType = 'channel';
@@ -207,14 +201,14 @@ class Notifier {
                 return;
             const followerAccount = actorFollow.ActorFollower.Account;
             const followerAccountWithActor = Object.assign(followerAccount, { Actor: actorFollow.ActorFollower });
-            if (yield this.isBlockedByServerOrAccount(user, followerAccountWithActor))
+            if (yield this.isBlockedByServerOrUser(followerAccountWithActor, user))
                 return;
             logger_1.logger.info('Notifying user %s of new follower: %s.', user.username, followerAccount.getDisplayName());
             function settingGetter(user) {
                 return user.NotificationSetting.newFollow;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_FOLLOW,
                         userId: user.id,
@@ -231,14 +225,17 @@ class Notifier {
         });
     }
     notifyAdminsOfNewInstanceFollow(actorFollow) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const admins = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_SERVER_FOLLOW);
+            const follower = Object.assign(actorFollow.ActorFollower.Account, { Actor: actorFollow.ActorFollower });
+            if (yield this.isBlockedByServerOrUser(follower))
+                return;
             logger_1.logger.info('Notifying %d administrators of new instance follower: %s.', admins.length, actorFollow.ActorFollower.url);
             function settingGetter(user) {
                 return user.NotificationSetting.newInstanceFollower;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_INSTANCE_FOLLOWER,
                         userId: user.id,
@@ -255,14 +252,14 @@ class Notifier {
         });
     }
     notifyAdminsOfAutoInstanceFollowing(actorFollow) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const admins = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_SERVER_FOLLOW);
             logger_1.logger.info('Notifying %d administrators of auto instance following: %s.', admins.length, actorFollow.ActorFollowing.url);
             function settingGetter(user) {
                 return user.NotificationSetting.autoInstanceFollowing;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.AUTO_INSTANCE_FOLLOWING,
                         userId: user.id,
@@ -279,7 +276,7 @@ class Notifier {
         });
     }
     notifyModeratorsOfNewVideoAbuse(parameters) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_VIDEO_ABUSES);
             if (moderators.length === 0)
                 return;
@@ -288,7 +285,7 @@ class Notifier {
                 return user.NotificationSetting.videoAbuseAsModerator;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS,
                         userId: user.id,
@@ -305,7 +302,7 @@ class Notifier {
         });
     }
     notifyModeratorsOfVideoAutoBlacklist(videoBlacklist) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_VIDEO_BLACKLIST);
             if (moderators.length === 0)
                 return;
@@ -314,7 +311,7 @@ class Notifier {
                 return user.NotificationSetting.videoAutoBlacklistAsModerator;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.VIDEO_AUTO_BLACKLIST_FOR_MODERATORS,
                         userId: user.id,
@@ -331,7 +328,7 @@ class Notifier {
         });
     }
     notifyVideoOwnerOfBlacklist(videoBlacklist) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield user_1.UserModel.loadByVideoId(videoBlacklist.videoId);
             if (!user)
                 return;
@@ -340,7 +337,7 @@ class Notifier {
                 return user.NotificationSetting.blacklistOnMyVideo;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.BLACKLIST_ON_MY_VIDEO,
                         userId: user.id,
@@ -357,7 +354,7 @@ class Notifier {
         });
     }
     notifyVideoOwnerOfUnblacklist(video) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield user_1.UserModel.loadByVideoId(video.id);
             if (!user)
                 return;
@@ -366,7 +363,7 @@ class Notifier {
                 return user.NotificationSetting.blacklistOnMyVideo;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.UNBLACKLIST_ON_MY_VIDEO,
                         userId: user.id,
@@ -383,7 +380,7 @@ class Notifier {
         });
     }
     notifyOwnedVideoHasBeenPublished(video) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield user_1.UserModel.loadByVideoId(video.id);
             if (!user)
                 return;
@@ -392,7 +389,7 @@ class Notifier {
                 return user.NotificationSetting.myVideoPublished;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.MY_VIDEO_PUBLISHED,
                         userId: user.id,
@@ -409,7 +406,7 @@ class Notifier {
         });
     }
     notifyOwnerVideoImportIsFinished(videoImport, success) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const user = yield user_1.UserModel.loadByVideoImportId(videoImport.id);
             if (!user)
                 return;
@@ -418,7 +415,7 @@ class Notifier {
                 return user.NotificationSetting.myVideoImportFinished;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: success ? users_1.UserNotificationType.MY_VIDEO_IMPORT_SUCCESS : users_1.UserNotificationType.MY_VIDEO_IMPORT_ERROR,
                         userId: user.id,
@@ -437,7 +434,7 @@ class Notifier {
         });
     }
     notifyModeratorsOfNewUserRegistration(registeredUser) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_USERS);
             if (moderators.length === 0)
                 return;
@@ -446,7 +443,7 @@ class Notifier {
                 return user.NotificationSetting.newUserRegistration;
             }
             function notificationCreator(user) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
                         type: users_1.UserNotificationType.NEW_USER_REGISTRATION,
                         userId: user.id,
@@ -463,7 +460,7 @@ class Notifier {
         });
     }
     notify(options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const emails = [];
             for (const user of options.users) {
                 if (this.isWebNotificationEnabled(options.settingGetter(user))) {
@@ -487,18 +484,8 @@ class Notifier {
     isWebNotificationEnabled(value) {
         return value & users_1.UserNotificationSettingValue.WEB;
     }
-    isBlockedByServerOrAccount(user, targetAccount) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const serverAccountId = (yield application_1.getServerActor()).Account.id;
-            const sourceAccounts = [serverAccountId, user.Account.id];
-            const accountMutedHash = yield account_blocklist_1.AccountBlocklistModel.isAccountMutedByMulti(sourceAccounts, targetAccount.id);
-            if (accountMutedHash[serverAccountId] || accountMutedHash[user.Account.id])
-                return true;
-            const instanceMutedHash = yield server_blocklist_1.ServerBlocklistModel.isServerMutedByMulti(sourceAccounts, targetAccount.Actor.serverId);
-            if (instanceMutedHash[serverAccountId] || instanceMutedHash[user.Account.id])
-                return true;
-            return false;
-        });
+    isBlockedByServerOrUser(targetAccount, user) {
+        return blocklist_1.isBlockedByServerOrAccount(targetAccount, user === null || user === void 0 ? void 0 : user.Account);
     }
     static get Instance() {
         return this.instance || (this.instance = new this());

@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const io = require("socket.io-client");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -17,7 +9,7 @@ const users_1 = require("../../../../shared/models/users");
 describe('Test user notifications API validators', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -26,22 +18,22 @@ describe('Test user notifications API validators', function () {
     describe('When listing my notifications', function () {
         const path = '/api/v1/users/me/notifications';
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, path, server.accessToken);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, path, server.accessToken);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, server.accessToken);
             });
         });
         it('Should fail with an incorrect unread parameter', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -54,7 +46,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -63,7 +55,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -76,7 +68,7 @@ describe('Test user notifications API validators', function () {
     describe('When marking as read my notifications', function () {
         const path = '/api/v1/users/me/notifications/read';
         it('Should fail with wrong ids parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -107,7 +99,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -119,7 +111,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -135,7 +127,7 @@ describe('Test user notifications API validators', function () {
     describe('When marking as read my notifications', function () {
         const path = '/api/v1/users/me/notifications/read-all';
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -144,7 +136,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -171,7 +163,7 @@ describe('Test user notifications API validators', function () {
             autoInstanceFollowing: users_1.UserNotificationSettingValue.WEB
         };
         it('Should fail with missing fields', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -182,7 +174,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should fail with incorrect field values', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const fields = extra_utils_1.immutableAssign(correctFields, { newCommentOnMyVideo: 15 });
                     yield extra_utils_1.makePutBodyRequest({
@@ -206,7 +198,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -216,7 +208,7 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -263,7 +255,7 @@ describe('Test user notifications API validators', function () {
             const errorListener = socket.on('error', err => {
                 next(new Error('Error in connection: ' + err));
             });
-            socket.on('connect', () => __awaiter(this, void 0, void 0, function* () {
+            socket.on('connect', () => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 socket.removeListener('error', errorListener);
                 socket.disconnect();
                 yield extra_utils_1.wait(500);
@@ -272,7 +264,7 @@ describe('Test user notifications API validators', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

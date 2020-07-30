@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.pluginsRouter = void 0;
 const express = require("express");
 const constants_1 = require("../initializers/constants");
 const path_1 = require("path");

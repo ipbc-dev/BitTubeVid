@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ClientHtml = void 0;
+const tslib_1 = require("tslib");
 const i18n_1 = require("../../shared/models/i18n/i18n");
 const constants_1 = require("../initializers/constants");
 const path_1 = require("path");
@@ -28,7 +21,7 @@ class ClientHtml {
         ClientHtml.htmlCache = {};
     }
     static getDefaultHTMLPage(req, res, paramLang) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const html = paramLang
                 ? yield ClientHtml.getIndexHTML(req, res, paramLang)
                 : yield ClientHtml.getIndexHTML(req, res);
@@ -38,7 +31,7 @@ class ClientHtml {
         });
     }
     static getWatchHTMLPage(videoId, req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!validator_1.default.isInt(videoId) && !validator_1.default.isUUID(videoId, 4)) {
                 res.status(404);
                 return ClientHtml.getIndexHTML(req, res);
@@ -58,17 +51,17 @@ class ClientHtml {
         });
     }
     static getAccountHTMLPage(nameWithHost, req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return this.getAccountOrChannelHTMLPage(() => account_1.AccountModel.loadByNameWithHost(nameWithHost), req, res);
         });
     }
     static getVideoChannelHTMLPage(nameWithHost, req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return this.getAccountOrChannelHTMLPage(() => video_channel_1.VideoChannelModel.loadByNameWithHostAndPopulateAccount(nameWithHost), req, res);
         });
     }
     static getAccountOrChannelHTMLPage(loader, req, res) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const [html, entity] = yield Promise.all([
                 ClientHtml.getIndexHTML(req, res),
                 loader()
@@ -84,7 +77,7 @@ class ClientHtml {
         });
     }
     static getIndexHTML(req, res, paramLang) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const path = ClientHtml.getIndexPath(req, res, paramLang);
             if (ClientHtml.htmlCache[path])
                 return ClientHtml.htmlCache[path];
@@ -92,6 +85,9 @@ class ClientHtml {
             let html = buffer.toString();
             if (paramLang)
                 html = ClientHtml.addHtmlLang(html, paramLang);
+            html = ClientHtml.addManifestContentHash(html);
+            html = ClientHtml.addFaviconContentHash(html);
+            html = ClientHtml.addLogoContentHash(html);
             html = ClientHtml.addCustomCSS(html);
             html = yield ClientHtml.addAsyncPluginCSS(html);
             ClientHtml.htmlCache[path] = html;
@@ -119,6 +115,15 @@ class ClientHtml {
     static addHtmlLang(htmlStringPage, paramLang) {
         return htmlStringPage.replace('<html>', `<html lang="${paramLang}">`);
     }
+    static addManifestContentHash(htmlStringPage) {
+        return htmlStringPage.replace('[manifestContentHash]', constants_1.FILES_CONTENT_HASH.MANIFEST);
+    }
+    static addFaviconContentHash(htmlStringPage) {
+        return htmlStringPage.replace('[faviconContentHash]', constants_1.FILES_CONTENT_HASH.FAVICON);
+    }
+    static addLogoContentHash(htmlStringPage) {
+        return htmlStringPage.replace('[logoContentHash]', constants_1.FILES_CONTENT_HASH.LOGO);
+    }
     static addTitleTag(htmlStringPage, title) {
         let text = title || config_1.CONFIG.INSTANCE.NAME;
         if (title)
@@ -136,7 +141,7 @@ class ClientHtml {
         return htmlStringPage.replace(constants_1.CUSTOM_HTML_TAG_COMMENTS.CUSTOM_CSS, styleTag);
     }
     static addAsyncPluginCSS(htmlStringPage) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const globalCSSContent = yield fs_extra_1.readFile(constants_1.PLUGIN_GLOBAL_CSS_PATH);
             if (globalCSSContent.byteLength === 0)
                 return htmlStringPage;

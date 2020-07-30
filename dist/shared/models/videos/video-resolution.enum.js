@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMaxBitrate = exports.getTargetBitrate = exports.VideoResolution = void 0;
 var VideoResolution;
 (function (VideoResolution) {
     VideoResolution[VideoResolution["H_NOVIDEO"] = 0] = "H_NOVIDEO";
@@ -11,23 +12,25 @@ var VideoResolution;
     VideoResolution[VideoResolution["H_4K"] = 2160] = "H_4K";
 })(VideoResolution = exports.VideoResolution || (exports.VideoResolution = {}));
 function getBaseBitrate(resolution) {
-    switch (resolution) {
-        case VideoResolution.H_NOVIDEO:
-            return 64 * 1000;
-        case VideoResolution.H_240P:
-            return 320 * 1000;
-        case VideoResolution.H_360P:
-            return 780 * 1000;
-        case VideoResolution.H_480P:
-            return 1500 * 1000;
-        case VideoResolution.H_720P:
-            return 2800 * 1000;
-        case VideoResolution.H_1080P:
-            return 5200 * 1000;
-        case VideoResolution.H_4K:
-        default:
-            return 22000 * 1000;
+    if (resolution === VideoResolution.H_NOVIDEO) {
+        return 64 * 1000;
     }
+    if (resolution <= VideoResolution.H_240P) {
+        return 320 * 1000;
+    }
+    if (resolution <= VideoResolution.H_360P) {
+        return 780 * 1000;
+    }
+    if (resolution <= VideoResolution.H_480P) {
+        return 1500 * 1000;
+    }
+    if (resolution <= VideoResolution.H_720P) {
+        return 2800 * 1000;
+    }
+    if (resolution <= VideoResolution.H_1080P) {
+        return 5200 * 1000;
+    }
+    return 22000 * 1000;
 }
 function getTargetBitrate(resolution, fps, fpsTranscodingConstants) {
     const baseBitrate = getBaseBitrate(resolution);

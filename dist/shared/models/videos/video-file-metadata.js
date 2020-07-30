@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoFileMetadata = void 0;
 class VideoFileMetadata {
     constructor(hash) {
         this.chapters = hash.chapters;

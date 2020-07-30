@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processActivityPubFollow = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../../../helpers/logger");
 const constants_1 = require("../../../initializers/constants");
 const send_1 = require("../../activitypub/send");
@@ -21,7 +14,7 @@ const actor_2 = require("../../../models/activitypub/actor");
 const notifier_1 = require("../../notifier");
 const database_1 = require("../../../initializers/database");
 function processActivityPubFollow(job) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
         const host = payload.host;
         logger_1.logger.info('Processing ActivityPub follow in job %d.', job.id);
@@ -44,12 +37,12 @@ function processActivityPubFollow(job) {
 }
 exports.processActivityPubFollow = processActivityPubFollow;
 function follow(fromActor, targetActor, isAutoFollow = false) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (fromActor.id === targetActor.id) {
             throw new Error('Follower is the same as target actor.');
         }
         const state = !fromActor.serverId && !targetActor.serverId ? 'accepted' : 'pending';
-        const actorFollow = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const actorFollow = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const [actorFollow] = yield actor_follow_1.ActorFollowModel.findOrCreate({
                 where: {
                     actorId: fromActor.id,

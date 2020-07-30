@@ -1,20 +1,13 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkUserCanManageVideo = exports.doesVideoFileOfVideoExist = exports.doesVideoExist = exports.doesVideoChannelOfAccountExist = void 0;
+const tslib_1 = require("tslib");
 const video_1 = require("../video");
 const users_1 = require("../../../shared/models/users");
 const video_channel_1 = require("../../models/video/video-channel");
 const video_file_1 = require("@server/models/video/video-file");
 function doesVideoExist(id, res, fetchType = 'all') {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : undefined;
         const video = yield video_1.fetchVideo(id, fetchType, userId);
         if (video === null) {
@@ -45,7 +38,7 @@ function doesVideoExist(id, res, fetchType = 'all') {
 }
 exports.doesVideoExist = doesVideoExist;
 function doesVideoFileOfVideoExist(id, videoIdOrUUID, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!(yield video_file_1.VideoFileModel.doesVideoExistForVideoFile(id, videoIdOrUUID))) {
             res.status(404)
                 .json({ error: 'VideoFile matching Video not found' })
@@ -57,7 +50,7 @@ function doesVideoFileOfVideoExist(id, videoIdOrUUID, res) {
 }
 exports.doesVideoFileOfVideoExist = doesVideoFileOfVideoExist;
 function doesVideoChannelOfAccountExist(channelId, user, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (user.hasRight(users_1.UserRight.UPDATE_ANY_VIDEO) === true) {
             const videoChannel = yield video_channel_1.VideoChannelModel.loadAndPopulateAccount(channelId);
             if (videoChannel === null) {

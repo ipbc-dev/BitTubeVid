@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="theme-color" content="#fff" />
+    <meta property="og:platform" content="PeerTube" />
+    <!-- Web Manifest file -->
+    <link rel="manifest" href="/manifest.webmanifest?[manifestContentHash]">
+
+    <link rel="icon" type="image/png" href="/client/assets/images/favicon.png?[faviconContentHash]" />
+
+    <!-- logo background-image -->
+    <style type="text/css">
+      .icon-logo {
+        background-image: url(/client/assets/images/logo.svg?[logoContentHash]);
+      }
+    </style>
+
+    <!-- base url -->
+    <base href="/client/vi-VN/">
+    <!-- /!\ The following comment is used by the server to prerender some tags /!\ -->
+
+    <!-- title tag -->
+    <!-- description tag -->
+    <!-- custom css tag -->
+    <!-- meta tags -->
+
+    <!-- /!\ Do not remove it /!\ -->
+  <link rel="stylesheet" href="styles.ef9a7809bf9d73c61a2e.css"></head>
+
+  <!-- 3. Display the application -->
+  <body id="custom-css">
+
+    <noscript>
+      <p>It seems you are either <strong>blocking or disabling Javascript</strong> on your browser, and we totally get that. However this endpoint uses Angular, so the front end is in full JavaScript and won't work without it.</p>
+
+      <p>There might be numerous reasons you refuse to use JavaScript. If it just has to do with security (or lack thereof) of JavaScript-based web applications, then depending on your threat menace you might want to go through the code running on the node you are trying to access, and look for security audits.</p>
+
+      <p>There are other non JS-based unofficial clients to access PeerTube. You can find a list maintained by the PeerTube project in <a href="https://framagit.org/framasoft/peertube/documentation/-/raw/master/use-third-party-application.md">the thid-party applications section</a>. You can also develop your own as our code is open source and libre software under the <a href="https://github.com/Chocobozzz/PeerTube/blob/develop/LICENSE" target="_blank" rel="noopener">GNU AGPLv3.0</a> and documented on <a href="https://docs.joinpeertube.org/api-rest-reference.html">docs.joinpeertube.org</a>.</p>
+    </noscript>
+
+    <div id="incompatible-browser" class="alert alert-danger" style="display: none">
+      <p>We are sorry but it seems that BitTube is not compatible with your web browser.</p>
+      <p>Please try with the latest version of <a href="https://www.mozilla.org" target="_blank">Mozilla Firefox</a>.</p>
+      <!-- <p>If you think this is a mistake, do not hesitate <a href="https://github.com/Chocobozzz/PeerTube/issues/new" target="_blank">to report it</a>.</p> -->
+    </div>
+
+    <script type="text/javascript">
+      window.onerror = function () {
+        var elem = document.getElementById('incompatible-browser')
+        if (elem.className.indexOf('browser-ok') === -1) {
+          elem.style.display = 'block'
+        }
+      }
+    </script>
+
+    <my-app>
+    </my-app>
+
+  <script src="runtime-es2015.9355fab4e647eeb703c4.js" type="module"></script><script src="runtime-es5.9355fab4e647eeb703c4.js" nomodule defer></script><script src="polyfills-es5.11375956f157989a382f.js" nomodule defer></script><script src="polyfills-es2015.d92f7b94c9cae8ef97f1.js" type="module"></script><script src="main-es2015.4a802b105b7936d29809.js" type="module"></script><script src="main-es5.4a802b105b7936d29809.js" nomodule defer></script></body>
+</html>

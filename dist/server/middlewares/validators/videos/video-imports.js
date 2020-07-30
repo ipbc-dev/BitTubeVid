@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videoImportAddValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const moderation_1 = require("@server/lib/moderation");
 const hooks_1 = require("@server/lib/plugins/hooks");
@@ -39,10 +32,11 @@ const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
     express_validator_1.body('name')
         .optional()
         .custom(videos_1.isVideoNameValid).withMessage('Should have a valid name'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+        var _a;
         logger_1.logger.debug('Checking videoImportAddValidator parameters', { parameters: req.body });
         const user = res.locals.oauth.token.User;
-        const torrentFile = req.files && req.files['torrentfile'] ? req.files['torrentfile'][0] : undefined;
+        const torrentFile = ((_a = req.files) === null || _a === void 0 ? void 0 : _a['torrentfile']) ? req.files['torrentfile'][0] : undefined;
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
         if (req.body.targetUrl && config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED !== true) {
@@ -72,7 +66,7 @@ const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
 ]);
 exports.videoImportAddValidator = videoImportAddValidator;
 function isImportAccepted(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const hookName = body.targetUrl
             ? 'filter:api.video.pre-import-url.accept.result'

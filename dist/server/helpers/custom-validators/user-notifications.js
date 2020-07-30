@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isUserNotificationTypeValid = exports.isUserNotificationSettingValid = void 0;
 const misc_1 = require("./misc");
 const validator_1 = require("validator");
 const users_1 = require("../../../shared/models/users");

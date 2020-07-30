@@ -1,15 +1,13 @@
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./validators"));
-__export(require("./activitypub"));
-__export(require("./async"));
-__export(require("./oauth"));
-__export(require("./pagination"));
-__export(require("./servers"));
-__export(require("./sort"));
-__export(require("./user-right"));
-__export(require("./dnt"));
-__export(require("./csp"));
+const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./validators"), exports);
+tslib_1.__exportStar(require("./activitypub"), exports);
+tslib_1.__exportStar(require("./async"), exports);
+tslib_1.__exportStar(require("./oauth"), exports);
+tslib_1.__exportStar(require("./pagination"), exports);
+tslib_1.__exportStar(require("./servers"), exports);
+tslib_1.__exportStar(require("./sort"), exports);
+tslib_1.__exportStar(require("./user-right"), exports);
+tslib_1.__exportStar(require("./dnt"), exports);
+tslib_1.__exportStar(require("./csp"), exports);

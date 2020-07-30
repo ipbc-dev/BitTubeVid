@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.hasUserRight = exports.USER_ROLE_LABELS = exports.UserRole = void 0;
 const user_right_enum_1 = require("./user-right.enum");
 var UserRole;
 (function (UserRole) {

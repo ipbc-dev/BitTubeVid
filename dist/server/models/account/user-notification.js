@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var UserNotificationModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserNotificationModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const shared_1 = require("../../../shared");
 const utils_1 = require("../utils");
@@ -191,141 +184,141 @@ let UserNotificationModel = UserNotificationModel_1 = class UserNotificationMode
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('UserNotificationType', value => utils_1.throwIfNotValid(value, user_notifications_1.isUserNotificationTypeValid, 'type')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "type", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
     sequelize_typescript_1.Is('UserNotificationRead', value => utils_1.throwIfNotValid(value, misc_1.isBooleanValid, 'read')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], UserNotificationModel.prototype, "read", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], UserNotificationModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], UserNotificationModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => user_1.UserModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "userId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => user_1.UserModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", user_1.UserModel)
+    tslib_1.__metadata("design:type", user_1.UserModel)
 ], UserNotificationModel.prototype, "User", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "videoId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_1.VideoModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_1.VideoModel)
+    tslib_1.__metadata("design:type", video_1.VideoModel)
 ], UserNotificationModel.prototype, "Video", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_comment_1.VideoCommentModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "commentId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_comment_1.VideoCommentModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_comment_1.VideoCommentModel)
+    tslib_1.__metadata("design:type", video_comment_1.VideoCommentModel)
 ], UserNotificationModel.prototype, "Comment", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_abuse_1.VideoAbuseModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "videoAbuseId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_abuse_1.VideoAbuseModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_abuse_1.VideoAbuseModel)
+    tslib_1.__metadata("design:type", video_abuse_1.VideoAbuseModel)
 ], UserNotificationModel.prototype, "VideoAbuse", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_blacklist_1.VideoBlacklistModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "videoBlacklistId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_blacklist_1.VideoBlacklistModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_blacklist_1.VideoBlacklistModel)
+    tslib_1.__metadata("design:type", video_blacklist_1.VideoBlacklistModel)
 ], UserNotificationModel.prototype, "VideoBlacklist", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_import_1.VideoImportModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "videoImportId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_import_1.VideoImportModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_import_1.VideoImportModel)
+    tslib_1.__metadata("design:type", video_import_1.VideoImportModel)
 ], UserNotificationModel.prototype, "VideoImport", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "accountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], UserNotificationModel.prototype, "Account", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_follow_1.ActorFollowModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], UserNotificationModel.prototype, "actorFollowId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_follow_1.ActorFollowModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", actor_follow_1.ActorFollowModel)
+    tslib_1.__metadata("design:type", actor_follow_1.ActorFollowModel)
 ], UserNotificationModel.prototype, "ActorFollow", void 0);
-UserNotificationModel = UserNotificationModel_1 = __decorate([
+UserNotificationModel = UserNotificationModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_ALL]: {
             include: [

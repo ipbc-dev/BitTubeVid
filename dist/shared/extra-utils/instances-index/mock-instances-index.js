@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MockInstancesIndex = void 0;
 const express = require("express");
 class MockInstancesIndex {
     constructor() {

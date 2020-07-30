@@ -1,23 +1,26 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+function updateSearchIndex(server, enabled, disableLocalSearch = false) {
+    return extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
+        search: {
+            searchIndex: {
+                enabled,
+                disableLocalSearch
+            }
+        }
+    });
+}
 describe('Test videos API validator', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
+            yield extra_utils_1.setAccessTokensToServers([server]);
         });
     });
     describe('When searching videos', function () {
@@ -26,27 +29,27 @@ describe('Test videos API validator', function () {
             search: 'coucou'
         };
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, path, null, query);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, path, null, query);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, null, query);
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query, statusCodeExpected: 200 });
             });
         });
         it('Should fail with an invalid category', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { categoryOneOf: ['aa', 'b'] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 400 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { categoryOneOf: 'a' });
@@ -54,7 +57,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should succeed with a valid category', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { categoryOneOf: [1, 7] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 200 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { categoryOneOf: 1 });
@@ -62,7 +65,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should fail with an invalid licence', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { licenceOneOf: ['aa', 'b'] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 400 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { licenceOneOf: 'a' });
@@ -70,7 +73,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should succeed with a valid licence', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { licenceOneOf: [1, 2] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 200 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { licenceOneOf: 1 });
@@ -78,7 +81,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should succeed with a valid language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { languageOneOf: ['fr', 'en'] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 200 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { languageOneOf: 'fr' });
@@ -86,7 +89,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should succeed with valid tags', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { tagsOneOf: ['tag1', 'tag2'] });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 200 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { tagsOneOf: 'tag1' });
@@ -98,7 +101,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should fail with invalid durations', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { durationMin: 'hello' });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 400 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { durationMax: 'hello' });
@@ -106,7 +109,7 @@ describe('Test videos API validator', function () {
             });
         });
         it('Should fail with invalid dates', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const customQuery1 = extra_utils_1.immutableAssign(query, { startDate: 'hello' });
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery1, statusCodeExpected: 400 });
                 const customQuery2 = extra_utils_1.immutableAssign(query, { endDate: 'hello' });
@@ -124,28 +127,73 @@ describe('Test videos API validator', function () {
             search: 'coucou'
         };
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, path, null, query);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, path, null, query);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, null, query);
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, query, statusCodeExpected: 200 });
             });
         });
     });
+    describe('Search target', function () {
+        it('Should fail/succeed depending on the search target', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const query = { search: 'coucou' };
+                const paths = [
+                    '/api/v1/search/video-channels/',
+                    '/api/v1/search/videos/'
+                ];
+                for (const path of paths) {
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'hello' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 400 });
+                    }
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: undefined });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 200 });
+                    }
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'local' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 200 });
+                    }
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'search-index' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 400 });
+                    }
+                    yield updateSearchIndex(server, true, true);
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'local' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 400 });
+                    }
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'search-index' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 200 });
+                    }
+                    yield updateSearchIndex(server, true, false);
+                    {
+                        const customQuery = extra_utils_1.immutableAssign(query, { searchTarget: 'local' });
+                        yield extra_utils_1.makeGetRequest({ url: server.url, path, query: customQuery, statusCodeExpected: 200 });
+                    }
+                    yield updateSearchIndex(server, false, false);
+                }
+            });
+        });
+    });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

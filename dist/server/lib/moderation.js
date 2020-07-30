@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isPostImportVideoAccepted = exports.isPreImportVideoAccepted = exports.isLocalVideoCommentReplyAccepted = exports.isRemoteVideoCommentAccepted = exports.isRemoteVideoAccepted = exports.isLocalVideoThreadAccepted = exports.isLocalVideoAccepted = void 0;
 function isLocalVideoAccepted(object) {
     return { accepted: true };
 }

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.verifyEmail = exports.generateUserAccessToken = exports.askSendVerifyEmail = exports.updateMyAvatar = exports.resetPassword = exports.askResetPassword = exports.unblockUser = exports.blockUser = exports.getUserInformation = exports.updateMyUser = exports.updateUser = exports.removeUser = exports.getUsersListPaginationAndSort = exports.getUsersList = exports.getMyUserVideoQuotaUsed = exports.registerUserWithChannel = exports.deleteMe = exports.getMyUserVideoRating = exports.getMyUserInformation = exports.registerUser = exports.createUser = void 0;
+const tslib_1 = require("tslib");
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
 const user_role_1 = require("../../models/users/user-role");
@@ -35,7 +28,7 @@ function createUser(parameters) {
 }
 exports.createUser = createUser;
 function generateUserAccessToken(server, username) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const password = 'my super password';
         yield createUser({ url: server.url, accessToken: server.accessToken, username: username, password: password });
         return login_1.userLogin(server, { username, password });
@@ -135,13 +128,14 @@ function getUsersList(url, accessToken) {
         .expect('Content-Type', /json/);
 }
 exports.getUsersList = getUsersList;
-function getUsersListPaginationAndSort(url, accessToken, start, count, sort, search) {
+function getUsersListPaginationAndSort(url, accessToken, start, count, sort, search, blocked) {
     const path = '/api/v1/users';
     const query = {
         start,
         count,
         sort,
-        search
+        search,
+        blocked
     };
     return request(url)
         .get(path)

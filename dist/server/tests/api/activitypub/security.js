@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const constants_1 = require("../../../initializers/constants");
@@ -50,7 +42,7 @@ describe('Test ActivityPub security', function () {
         headers: constants_1.HTTP_SIGNATURE.HEADERS_TO_SIGN
     });
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             url = servers[0].url + '/inbox';
@@ -62,7 +54,7 @@ describe('Test ActivityPub security', function () {
     });
     describe('When checking HTTP signature', function () {
         it('Should fail with an invalid digest', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
                 const headers = {
                     Digest: peertube_crypto_1.buildDigest({ hello: 'coucou' })
@@ -72,7 +64,7 @@ describe('Test ActivityPub security', function () {
             });
         });
         it('Should fail with an invalid date', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(body);
                 headers['date'] = 'Wed, 21 Oct 2015 07:28:00 GMT';
@@ -81,7 +73,7 @@ describe('Test ActivityPub security', function () {
             });
         });
         it('Should fail with bad keys', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield setKeysOfServer(servers[0], servers[1], invalidKeys.publicKey, invalidKeys.privateKey);
                 yield setKeysOfServer(servers[1], servers[1], invalidKeys.publicKey, invalidKeys.privateKey);
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
@@ -91,7 +83,7 @@ describe('Test ActivityPub security', function () {
             });
         });
         it('Should succeed with a valid HTTP signature', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield setKeysOfServer(servers[0], servers[1], keys.publicKey, keys.privateKey);
                 yield setKeysOfServer(servers[1], servers[1], keys.publicKey, keys.privateKey);
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
@@ -102,14 +94,14 @@ describe('Test ActivityPub security', function () {
         });
     });
     describe('When checking Linked Data Signature', function () {
-        before(() => __awaiter(this, void 0, void 0, function* () {
+        before(() => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield setKeysOfServer(servers[2], servers[2], keys.publicKey, keys.privateKey);
             const to = { url: 'http://localhost:' + servers[0].port + '/accounts/peertube' };
             const by = { url: 'http://localhost:' + servers[2].port + '/accounts/peertube', privateKey: keys.privateKey };
             yield activitypub_2.makeFollowRequest(to, by);
         }));
         it('Should fail with bad keys', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield setKeysOfServer(servers[0], servers[2], invalidKeys.publicKey, invalidKeys.privateKey);
                 yield setKeysOfServer(servers[2], servers[2], invalidKeys.publicKey, invalidKeys.privateKey);
@@ -123,7 +115,7 @@ describe('Test ActivityPub security', function () {
             });
         });
         it('Should fail with an altered body', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield setKeysOfServer(servers[0], servers[2], keys.publicKey, keys.privateKey);
                 yield setKeysOfServer(servers[0], servers[2], keys.publicKey, keys.privateKey);
@@ -138,7 +130,7 @@ describe('Test ActivityPub security', function () {
             });
         });
         it('Should succeed with a valid signature', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const body = getAnnounceWithoutContext(servers[1]);
                 body.actor = 'http://localhost:' + servers[2].port + '/accounts/peertube';
@@ -151,7 +143,7 @@ describe('Test ActivityPub security', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.cleanupTests(servers);
             yield extra_utils_1.closeAllSequelize(servers);

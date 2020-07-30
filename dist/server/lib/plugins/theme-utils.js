@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isThemeRegistered = exports.getThemeOrDefault = void 0;
 const constants_1 = require("../../initializers/constants");
 const plugin_manager_1 = require("./plugin-manager");
 const config_1 = require("../../initializers/config");

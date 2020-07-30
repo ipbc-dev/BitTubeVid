@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.reloadConfig = exports.isEmailEnabled = exports.registerConfigChangedHandler = exports.CONFIG = void 0;
 const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
 const bytes = require("bytes");
@@ -12,7 +13,7 @@ const CONFIG = {
         HOSTNAME: config.get('listen.hostname')
     },
     DATABASE: {
-        DBNAME: 'peertube' + config.get('database.suffix'),
+        DBNAME: config.has('database.name') ? config.get('database.name') : 'peertube' + config.get('database.suffix'),
         HOSTNAME: config.get('database.hostname'),
         PORT: config.get('database.port'),
         USERNAME: config.get('database.username'),
@@ -60,7 +61,8 @@ const CONFIG = {
         CAPTIONS_DIR: core_utils_1.buildPath(config.get('storage.captions')),
         TORRENTS_DIR: core_utils_1.buildPath(config.get('storage.torrents')),
         CACHE_DIR: core_utils_1.buildPath(config.get('storage.cache')),
-        PLUGINS_DIR: core_utils_1.buildPath(config.get('storage.plugins'))
+        PLUGINS_DIR: core_utils_1.buildPath(config.get('storage.plugins')),
+        CLIENT_OVERRIDES_DIR: core_utils_1.buildPath(config.get('storage.client_overrides'))
     },
     WEBSERVER: {
         SCHEME: config.get('webserver.https') === true ? 'https' : 'http',
@@ -95,12 +97,6 @@ const CONFIG = {
             MAX_FILES: config.get('log.rotation.maxFiles')
         },
         ANONYMIZE_IP: config.get('log.anonymizeIP')
-    },
-    SEARCH: {
-        REMOTE_URI: {
-            USERS: config.get('search.remote_uri.users'),
-            ANONYMOUS: config.get('search.remote_uri.anonymous')
-        }
     },
     TRENDING: {
         VIDEOS: {
@@ -145,6 +141,11 @@ const CONFIG = {
             ENABLED: config.get('plugins.index.enabled'),
             CHECK_LATEST_VERSIONS_INTERVAL: core_utils_1.parseDurationToMs(config.get('plugins.index.check_latest_versions_interval')),
             URL: config.get('plugins.index.url')
+        }
+    },
+    FEDERATION: {
+        VIDEOS: {
+            FEDERATE_UNLISTED: config.get('federation.videos.federate_unlisted')
         }
     },
     ADMIN: {
@@ -274,6 +275,24 @@ const CONFIG = {
     },
     THEME: {
         get DEFAULT() { return config.get('theme.default'); }
+    },
+    BROADCAST_MESSAGE: {
+        get ENABLED() { return config.get('broadcast_message.enabled'); },
+        get MESSAGE() { return config.get('broadcast_message.message'); },
+        get LEVEL() { return config.get('broadcast_message.level'); },
+        get DISMISSABLE() { return config.get('broadcast_message.dismissable'); }
+    },
+    SEARCH: {
+        REMOTE_URI: {
+            USERS: config.get('search.remote_uri.users'),
+            ANONYMOUS: config.get('search.remote_uri.anonymous')
+        },
+        SEARCH_INDEX: {
+            get ENABLED() { return config.get('search.search_index.enabled'); },
+            get URL() { return config.get('search.search_index.url'); },
+            get DISABLE_LOCAL_SEARCH() { return config.get('search.search_index.disable_local_search'); },
+            get IS_DEFAULT_SEARCH() { return config.get('search.search_index.is_default_search'); }
+        }
     }
 };
 exports.CONFIG = CONFIG;

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeVideoCommentValidator = exports.videoCommentGetValidator = exports.addVideoCommentReplyValidator = exports.addVideoCommentThreadValidator = exports.listVideoThreadCommentsValidator = exports.listVideoCommentThreadsValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const shared_1 = require("../../../../shared");
 const misc_1 = require("../../../helpers/custom-validators/misc");
@@ -21,7 +14,7 @@ const video_comment_1 = require("../../../models/video/video-comment");
 const utils_1 = require("../utils");
 const listVideoCommentThreadsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking listVideoCommentThreads parameters.', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -34,7 +27,7 @@ exports.listVideoCommentThreadsValidator = listVideoCommentThreadsValidator;
 const listVideoThreadCommentsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.param('threadId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid threadId'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking listVideoThreadComments parameters.', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -49,7 +42,7 @@ exports.listVideoThreadCommentsValidator = listVideoThreadCommentsValidator;
 const addVideoCommentThreadValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.body('text').custom(video_comments_1.isValidVideoCommentText).not().isEmpty().withMessage('Should have a valid comment text'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking addVideoCommentThread parameters.', { parameters: req.params, body: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -67,7 +60,7 @@ const addVideoCommentReplyValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.param('commentId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid commentId'),
     express_validator_1.body('text').custom(video_comments_1.isValidVideoCommentText).not().isEmpty().withMessage('Should have a valid comment text'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking addVideoCommentReply parameters.', { parameters: req.params, body: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -86,7 +79,7 @@ exports.addVideoCommentReplyValidator = addVideoCommentReplyValidator;
 const videoCommentGetValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.param('commentId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid commentId'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoCommentGetValidator parameters.', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -101,7 +94,7 @@ exports.videoCommentGetValidator = videoCommentGetValidator;
 const removeVideoCommentValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     express_validator_1.param('commentId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid commentId'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking removeVideoCommentValidator parameters.', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -116,7 +109,7 @@ const removeVideoCommentValidator = [
 ];
 exports.removeVideoCommentValidator = removeVideoCommentValidator;
 function doesVideoCommentThreadExist(idArg, video, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const id = parseInt(idArg + '', 10);
         const videoComment = yield video_comment_1.VideoCommentModel.loadById(id);
         if (!videoComment) {
@@ -142,7 +135,7 @@ function doesVideoCommentThreadExist(idArg, video, res) {
     });
 }
 function doesVideoCommentExist(idArg, video, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const id = parseInt(idArg + '', 10);
         const videoComment = yield video_comment_1.VideoCommentModel.loadByIdAndPopulateVideoAndAccountAndReply(id);
         if (!videoComment) {
@@ -188,7 +181,7 @@ function checkUserCanDeleteVideoComment(user, videoComment, res) {
     return true;
 }
 function isVideoCommentAccepted(req, res, video, isReply) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const acceptParameters = {
             video,
             commentBody: req.body,

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processUndoActivity = void 0;
+const tslib_1 = require("tslib");
 const database_utils_1 = require("../../../helpers/database-utils");
 const logger_1 = require("../../../helpers/logger");
 const database_1 = require("../../../initializers/database");
@@ -20,7 +13,7 @@ const videos_1 = require("../videos");
 const video_share_1 = require("../../../models/video/video-share");
 const video_redundancy_1 = require("../../../models/redundancy/video-redundancy");
 function processUndoActivity(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
         const activityToUndo = activity.object;
         if (activityToUndo.type === 'Like') {
@@ -49,10 +42,10 @@ function processUndoActivity(options) {
 }
 exports.processUndoActivity = processUndoActivity;
 function processUndoLike(byActor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const likeActivity = activity.object;
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: likeActivity.object });
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!byActor.Account)
                 throw new Error('Unknown account ' + byActor.url);
             const rate = yield account_video_rate_1.AccountVideoRateModel.loadByAccountAndVideoOrUrl(byActor.Account.id, video.id, likeActivity.id, t);
@@ -68,12 +61,12 @@ function processUndoLike(byActor, activity) {
     });
 }
 function processUndoDislike(byActor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const dislike = activity.object.type === 'Dislike'
             ? activity.object
             : activity.object.object;
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: dislike.object });
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!byActor.Account)
                 throw new Error('Unknown account ' + byActor.url);
             const rate = yield account_video_rate_1.AccountVideoRateModel.loadByAccountAndVideoOrUrl(byActor.Account.id, video.id, dislike.id, t);
@@ -89,10 +82,10 @@ function processUndoDislike(byActor, activity) {
     });
 }
 function processUndoCacheFile(byActor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const cacheFileObject = activity.object.object;
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: cacheFileObject.object });
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const cacheFile = yield video_redundancy_1.VideoRedundancyModel.loadByUrl(cacheFileObject.id);
             if (!cacheFile) {
                 logger_1.logger.debug('Cannot undo unknown video cache %s.', cacheFileObject.id);
@@ -109,7 +102,7 @@ function processUndoCacheFile(byActor, activity) {
     });
 }
 function processUndoFollow(follower, followActivity) {
-    return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const following = yield actor_1.ActorModel.loadByUrlAndPopulateAccountAndChannel(followActivity.object, t);
         const actorFollow = yield actor_follow_1.ActorFollowModel.loadByActorAndTarget(follower.id, following.id, t);
         if (!actorFollow)
@@ -119,7 +112,7 @@ function processUndoFollow(follower, followActivity) {
     }));
 }
 function processUndoAnnounce(byActor, announceActivity) {
-    return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const share = yield video_share_1.VideoShareModel.loadByUrl(announceActivity.id, t);
         if (!share)
             throw new Error(`Unknown video share ${announceActivity.id}.`);

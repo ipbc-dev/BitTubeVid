@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const request = require("supertest");
@@ -22,7 +14,7 @@ function checkIndexTags(html, title, description, css) {
 describe('Test a client controllers', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             server = yield extra_utils_1.flushAndRunServer(1);
             server.accessToken = yield extra_utils_1.serverLogin(server);
@@ -38,7 +30,7 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid Open Graph tags on the watch page with video id', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield request(server.url)
                 .get('/videos/watch/' + server.video.id)
                 .set('Accept', 'text/html')
@@ -48,7 +40,7 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid Open Graph tags on the watch page with video uuid', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield request(server.url)
                 .get('/videos/watch/' + server.video.uuid)
                 .set('Accept', 'text/html')
@@ -58,7 +50,7 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid oEmbed discovery tags', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const path = '/videos/watch/' + server.video.uuid;
             const res = yield request(server.url)
                 .get(path)
@@ -71,7 +63,7 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid twitter card', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield request(server.url)
                 .get('/videos/watch/' + server.video.uuid)
                 .set('Accept', 'text/html')
@@ -81,7 +73,7 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid twitter card if Twitter is whitelisted', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res1 = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
             const config = res1.body;
             config.services.twitter = {
@@ -98,14 +90,14 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid index html tags (title, description...)', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.makeHTMLRequest(server.url, '/videos/trending');
             const description = 'PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.';
             checkIndexTags(res.text, 'PeerTube', description, '');
         });
     });
     it('Should update the customized configuration and have the correct index html tags', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                 instance: {
                     name: 'PeerTube updated',
@@ -125,13 +117,13 @@ describe('Test a client controllers', function () {
         });
     });
     it('Should have valid index html updated tags (title, description...)', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.makeHTMLRequest(server.url, '/videos/trending');
             checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }');
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

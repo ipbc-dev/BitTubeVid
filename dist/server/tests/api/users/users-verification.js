@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -32,7 +24,7 @@ describe('Test users account verification', function () {
     };
     const emails = [];
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             const port = yield email_1.MockSmtpServer.Instance.collectEmails(emails);
             const overrideConfig = {
@@ -46,7 +38,7 @@ describe('Test users account verification', function () {
         });
     });
     it('Should register user and send verification email if verification required', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                 signup: {
@@ -72,13 +64,13 @@ describe('Test users account verification', function () {
         });
     });
     it('Should not allow login for user with unverified email', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resLogin = yield extra_utils_1.login(server.url, server.client, user1, 400);
             expect(resLogin.body.error).to.contain('User email is not verified.');
         });
     });
     it('Should verify the user via email and allow login', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.verifyEmail(server.url, userId, verificationString);
             const res = yield extra_utils_1.login(server.url, server.client, user1);
             userAccessToken = res.body.access_token;
@@ -87,7 +79,7 @@ describe('Test users account verification', function () {
         });
     });
     it('Should be able to change the user email', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let updateVerificationString;
             {
                 yield extra_utils_1.updateMyUser({
@@ -119,7 +111,7 @@ describe('Test users account verification', function () {
         });
     });
     it('Should register user not requiring email verification if setting not enabled', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                 signup: {
@@ -137,7 +129,7 @@ describe('Test users account verification', function () {
         });
     });
     it('Should allow login for user with unverified email when setting later enabled', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                 signup: {
                     enabled: true,
@@ -149,7 +141,7 @@ describe('Test users account verification', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             email_1.MockSmtpServer.Instance.kill();
             yield extra_utils_1.cleanupTests([server]);
         });

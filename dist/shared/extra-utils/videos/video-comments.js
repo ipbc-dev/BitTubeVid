@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteVideoComment = exports.findCommentId = exports.addVideoCommentReply = exports.addVideoCommentThread = exports.getVideoThreadComments = exports.getVideoCommentThreads = void 0;
+const tslib_1 = require("tslib");
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
 function getVideoCommentThreads(url, videoId, start, count, sort, token) {
@@ -48,6 +50,13 @@ function addVideoCommentReply(url, token, videoId, inReplyToCommentId, text, exp
         .expect(expectedStatus);
 }
 exports.addVideoCommentReply = addVideoCommentReply;
+function findCommentId(url, videoId, text) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const res = yield getVideoCommentThreads(url, videoId, 0, 25, '-createdAt');
+        return res.body.data.find(c => c.text === text).id;
+    });
+}
+exports.findCommentId = findCommentId;
 function deleteVideoComment(url, token, videoId, commentId, statusCodeExpected = 204) {
     const path = '/api/v1/videos/' + videoId + '/comments/' + commentId;
     return requests_1.makeDeleteRequest({

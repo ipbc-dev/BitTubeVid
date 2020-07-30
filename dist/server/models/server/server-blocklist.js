@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var ServerBlocklistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ServerBlocklistModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const account_1 = require("../account/account");
 const server_1 = require("./server");
@@ -59,6 +52,25 @@ let ServerBlocklistModel = ServerBlocklistModel_1 = class ServerBlocklistModel e
         };
         return ServerBlocklistModel_1.findOne(query);
     }
+    static listHostsBlockedBy(accountIds) {
+        const query = {
+            attributes: [],
+            where: {
+                accountId: {
+                    [sequelize_1.Op.in]: accountIds
+                }
+            },
+            include: [
+                {
+                    attributes: ['host'],
+                    model: server_1.ServerModel.unscoped(),
+                    required: true
+                }
+            ]
+        };
+        return ServerBlocklistModel_1.findAll(query)
+            .then(entries => entries.map(e => e.BlockedServer.host));
+    }
     static listForApi(parameters) {
         const { start, count, sort, search, accountId } = parameters;
         const query = {
@@ -82,20 +94,20 @@ let ServerBlocklistModel = ServerBlocklistModel_1 = class ServerBlocklistModel e
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ServerBlocklistModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ServerBlocklistModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ServerBlocklistModel.prototype, "accountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             name: 'accountId',
@@ -103,23 +115,23 @@ __decorate([
         },
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], ServerBlocklistModel.prototype, "ByAccount", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => server_1.ServerModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ServerBlocklistModel.prototype, "targetServerId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => server_1.ServerModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", server_1.ServerModel)
+    tslib_1.__metadata("design:type", server_1.ServerModel)
 ], ServerBlocklistModel.prototype, "BlockedServer", void 0);
-ServerBlocklistModel = ServerBlocklistModel_1 = __decorate([
+ServerBlocklistModel = ServerBlocklistModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_ACCOUNT]: {
             include: [

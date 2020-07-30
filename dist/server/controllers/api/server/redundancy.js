@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.serverRedundancyRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const users_1 = require("../../../../shared/models/users");
 const middlewares_1 = require("../../../middlewares");
@@ -24,7 +17,7 @@ serverRedundancyRouter.get('/redundancy/videos', middlewares_1.authenticate, mid
 serverRedundancyRouter.post('/redundancy/videos', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_VIDEOS_REDUNDANCIES), redundancy_1.addVideoRedundancyValidator, middlewares_1.asyncMiddleware(addVideoRedundancy));
 serverRedundancyRouter.delete('/redundancy/videos/:redundancyId', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_VIDEOS_REDUNDANCIES), redundancy_1.removeVideoRedundancyValidator, middlewares_1.asyncMiddleware(removeVideoRedundancyController));
 function listVideoRedundancies(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const resultList = yield video_redundancy_1.VideoRedundancyModel.listForApi({
             start: req.query.start,
             count: req.query.count,
@@ -40,7 +33,7 @@ function listVideoRedundancies(req, res) {
     });
 }
 function addVideoRedundancy(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = {
             videoId: res.locals.onlyVideo.id
         };
@@ -52,13 +45,13 @@ function addVideoRedundancy(req, res) {
     });
 }
 function removeVideoRedundancyController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield redundancy_2.removeVideoRedundancy(res.locals.videoRedundancy);
         return res.sendStatus(204);
     });
 }
 function updateRedundancy(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const server = res.locals.server;
         server.redundancyAllowed = req.body.redundancyAllowed;
         yield server.save();

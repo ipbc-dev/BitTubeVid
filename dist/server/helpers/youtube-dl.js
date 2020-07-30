@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildOriginallyPublishedAt = exports.safeGetYoutubeDL = exports.getYoutubeDLInfo = exports.getYoutubeDLSubs = exports.downloadYoutubeDLVideo = exports.updateYoutubeDLBinary = void 0;
+const tslib_1 = require("tslib");
 const constants_1 = require("../initializers/constants");
 const logger_1 = require("./logger");
 const utils_1 = require("./utils");
@@ -51,19 +44,21 @@ function getYoutubeDLSubs(url, opts) {
             youtubeDL.getSubs(url, options, (err, files) => {
                 if (err)
                     return rej(err);
+                if (!files)
+                    return [];
                 logger_1.logger.debug('Get subtitles from youtube dl.', { url, files });
                 const subtitles = files.reduce((acc, filename) => {
                     const matched = filename.match(/\.([a-z]{2})\.(vtt|ttml)/i);
-                    if (matched[1]) {
-                        return [
-                            ...acc,
-                            {
-                                language: matched[1],
-                                path: path_1.join(cwd, filename),
-                                filename
-                            }
-                        ];
-                    }
+                    if (!matched || !matched[1])
+                        return acc;
+                    return [
+                        ...acc,
+                        {
+                            language: matched[1],
+                            path: path_1.join(cwd, filename),
+                            filename
+                        }
+                    ];
                 }, []);
                 return res(subtitles);
             });
@@ -108,7 +103,7 @@ function downloadYoutubeDLVideo(url, extension, timeout) {
 }
 exports.downloadYoutubeDLVideo = downloadYoutubeDLVideo;
 function updateYoutubeDLBinary() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Updating youtubeDL binary.');
         const binDirectory = path_1.join(core_utils_1.root(), 'node_modules', 'youtube-dl', 'bin');
         const bin = path_1.join(binDirectory, 'youtube-dl');
@@ -156,7 +151,7 @@ function updateYoutubeDLBinary() {
 }
 exports.updateYoutubeDLBinary = updateYoutubeDLBinary;
 function safeGetYoutubeDL() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let youtubeDL;
         try {
             youtubeDL = require('youtube-dl');

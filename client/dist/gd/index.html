@@ -7,9 +7,16 @@
     <meta name="theme-color" content="#fff" />
     <meta property="og:platform" content="PeerTube" />
     <!-- Web Manifest file -->
-    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="manifest" href="/manifest.webmanifest?[manifestContentHash]">
 
-    <link rel="icon" type="image/png" href="/client/assets/images/favicon.png" />
+    <link rel="icon" type="image/png" href="/client/assets/images/favicon.png?[faviconContentHash]" />
+
+    <!-- logo background-image -->
+    <style type="text/css">
+      .icon-logo {
+        background-image: url(/client/assets/images/logo.svg?[logoContentHash]);
+      }
+    </style>
 
     <!-- base url -->
     <base href="/client/gd/">
@@ -21,7 +28,7 @@
     <!-- meta tags -->
 
     <!-- /!\ Do not remove it /!\ -->
-  <link rel="stylesheet" href="styles.2423d6ffd43a6935ad87.css"></head>
+  <link rel="stylesheet" href="styles.ef9a7809bf9d73c61a2e.css"></head>
 
   <!-- 3. Display the application -->
   <body id="custom-css">
@@ -31,7 +38,7 @@
 
       <p>There might be numerous reasons you refuse to use JavaScript. If it just has to do with security (or lack thereof) of JavaScript-based web applications, then depending on your threat menace you might want to go through the code running on the node you are trying to access, and look for security audits.</p>
 
-      <p>There will be other non JS-based clients to access PeerTube, but for now none is available. Be sure we will update this page with a list once alternative clients are developed. You can certainly develop your own in the meantime as our code is open source and libre software under the <a href="https://github.com/Chocobozzz/PeerTube/blob/develop/LICENSE" target="_blank" rel="noopener">GNU AGPLv3.0</a> and documented on <a href="https://docs.joinpeertube.org/api-rest-reference.html">docs.joinpeertube.org</a>.</p>
+      <p>There are other non JS-based unofficial clients to access PeerTube. You can find a list maintained by the PeerTube project in <a href="https://framagit.org/framasoft/peertube/documentation/-/raw/master/use-third-party-application.md">the thid-party applications section</a>. You can also develop your own as our code is open source and libre software under the <a href="https://github.com/Chocobozzz/PeerTube/blob/develop/LICENSE" target="_blank" rel="noopener">GNU AGPLv3.0</a> and documented on <a href="https://docs.joinpeertube.org/api-rest-reference.html">docs.joinpeertube.org</a>.</p>
     </noscript>
 
     <div id="incompatible-browser" class="alert alert-danger" style="display: none">
@@ -52,5 +59,5 @@
     <my-app>
     </my-app>
 
-  <script src="runtime-es2015.e2db4e178cb71ac4f532.js" type="module"></script><script src="runtime-es5.e2db4e178cb71ac4f532.js" nomodule defer></script><script src="polyfills-es5.c117cb8a5860bf89e312.js" nomodule defer></script><script src="polyfills-es2015.de570a30aa9f94816646.js" type="module"></script><script src="main-es2015.1f933f87b0ff9b4c5e0c.js" type="module"></script><script src="main-es5.1f933f87b0ff9b4c5e0c.js" nomodule defer></script></body>
+  <script src="runtime-es2015.0d80d97e2cd58920cae5.js" type="module"></script><script src="runtime-es5.0d80d97e2cd58920cae5.js" nomodule defer></script><script src="polyfills-es5.d80f0bf15a1bfef4cfbb.js" nomodule defer></script><script src="polyfills-es2015.92a76c1fd7eb778ac233.js" type="module"></script><script src="main-es2015.41cd3692bd1072f4c692.js" type="module"></script><script src="main-es5.41cd3692bd1072f4c692.js" nomodule defer></script></body>
 </html>

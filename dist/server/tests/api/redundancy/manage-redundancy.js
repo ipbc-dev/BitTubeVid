@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -23,7 +15,7 @@ describe('Test manage videos redundancy', function () {
     let video2Server2UUID;
     let redundanciesToRemove = [];
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const config = {
                 transcoding: {
@@ -62,7 +54,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should not have redundancies on server 3', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const target of targets) {
                 const res = yield redundancy_1.listVideoRedundancies({
                     url: servers[2].url,
@@ -75,7 +67,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should not have "remote-videos" redundancies on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             yield jobs_1.waitJobs(servers);
             yield extra_utils_1.waitUntilLog(servers[0], 'Duplicated ', 10);
@@ -90,7 +82,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should have "my-videos" redundancies on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const res = yield redundancy_1.listVideoRedundancies({
                 url: servers[1].url,
@@ -117,7 +109,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should not have "my-videos" redundancies on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield redundancy_1.listVideoRedundancies({
                 url: servers[0].url,
                 accessToken: servers[0].accessToken,
@@ -128,7 +120,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should have "remote-videos" redundancies on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const res = yield redundancy_1.listVideoRedundancies({
                 url: servers[0].url,
@@ -155,7 +147,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should correctly paginate and sort results', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield redundancy_1.listVideoRedundancies({
                     url: servers[0].url,
@@ -197,7 +189,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should manually add a redundancy and list it', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const uuid = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'video 3 server 2', privacy: models_1.VideoPrivacy.UNLISTED })).uuid;
             yield jobs_1.waitJobs(servers);
@@ -258,7 +250,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should manually remove a redundancy and remove it from the list', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             for (const redundancyId of redundanciesToRemove) {
                 yield redundancy_1.removeVideoRedundancy({
@@ -291,7 +283,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     it('Should remove another (auto) redundancy', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 for (const redundancyId of redundanciesToRemove) {
                     yield redundancy_1.removeVideoRedundancy({
@@ -315,7 +307,7 @@ describe('Test manage videos redundancy', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

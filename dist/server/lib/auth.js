@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.handleTokenRevocation = exports.onExternalUserAuthenticated = exports.handleLogin = exports.oAuthServer = void 0;
+const tslib_1 = require("tslib");
 const users_1 = require("@server/helpers/custom-validators/users");
 const logger_1 = require("@server/helpers/logger");
 const utils_1 = require("@server/helpers/utils");
@@ -28,7 +21,7 @@ const oAuthServer = new OAuthServer({
 exports.oAuthServer = oAuthServer;
 const authBypassTokens = new Map();
 function handleLogin(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const grantType = req.body.grant_type;
         if (grantType === 'password') {
             if (req.body.externalAuthToken)
@@ -44,7 +37,7 @@ function handleLogin(req, res, next) {
 }
 exports.handleLogin = handleLogin;
 function handleTokenRevocation(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const token = res.locals.oauth.token;
         res.locals.explicitLogout = true;
         yield oauth_model_1.revokeToken(token);
@@ -53,7 +46,7 @@ function handleTokenRevocation(req, res) {
 }
 exports.handleTokenRevocation = handleTokenRevocation;
 function onExternalUserAuthenticated(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { npmName, authName, authResult } = options;
         if (!authResult.req || !authResult.res) {
             logger_1.logger.error('Cannot authenticate external user for auth %s of plugin %s: no req or res are provided.', authName, npmName);
@@ -100,7 +93,7 @@ function forwardTokenReq(req, res, next) {
     });
 }
 function proxifyRefreshGrant(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const refreshToken = req.body.refresh_token;
         if (!refreshToken)
             return;
@@ -110,7 +103,7 @@ function proxifyRefreshGrant(req, res) {
     });
 }
 function proxifyPasswordGrant(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const plugins = plugin_manager_1.PluginManager.Instance.getIdAndPassAuths();
         const pluginAuths = [];
         for (const plugin of plugins) {

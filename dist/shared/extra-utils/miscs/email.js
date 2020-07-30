@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MockSmtpServer = void 0;
 const child_process_1 = require("child_process");
 const miscs_1 = require("../../core-utils/miscs/miscs");
 const servers_1 = require("../server/servers");
@@ -26,9 +27,8 @@ class MockSmtpServer {
                 return rej(new Error('maildev exited unexpectedly, confirm port not in use'));
             });
             this.emailChildProcess.on('message', (msg) => {
-                if (msg.err) {
+                if (msg.err)
                     return rej(new Error(msg.err));
-                }
                 this.started = true;
                 this.emails = emailsCollection;
                 return res(port);

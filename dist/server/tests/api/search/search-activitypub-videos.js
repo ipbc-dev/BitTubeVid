@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -20,7 +12,7 @@ describe('Test ActivityPub videos search', function () {
     let videoServer1UUID;
     let videoServer2UUID;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -36,7 +28,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should not find a remote video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const search = 'http://localhost:' + servers[1].port + '/videos/watch/43';
                 const res = yield extra_utils_1.searchVideoWithToken(servers[0].url, search, servers[0].accessToken);
@@ -54,7 +46,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should search a local video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const search = 'http://localhost:' + servers[0].port + '/videos/watch/' + videoServer1UUID;
             const res = yield extra_utils_1.searchVideo(servers[0].url, search);
             expect(res.body.total).to.equal(1);
@@ -64,7 +56,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should search a remote video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const search = 'http://localhost:' + servers[1].port + '/videos/watch/' + videoServer2UUID;
             const res = yield extra_utils_1.searchVideoWithToken(servers[0].url, search, servers[0].accessToken);
             expect(res.body.total).to.equal(1);
@@ -74,7 +66,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should not list this remote video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(servers[0].url);
             expect(res.body.total).to.equal(1);
             expect(res.body.data).to.have.lengthOf(1);
@@ -82,7 +74,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should update video of server 2, and refresh it on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const channelAttributes = {
                 name: 'super_channel',
@@ -112,7 +104,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     it('Should delete video of server 2, and delete it on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.removeVideo(servers[1].url, servers[1].accessToken, videoServer2UUID);
             yield jobs_1.waitJobs(servers);
@@ -126,7 +118,7 @@ describe('Test ActivityPub videos search', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

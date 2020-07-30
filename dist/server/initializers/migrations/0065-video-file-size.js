@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.down = exports.up = void 0;
 const Promise = require("bluebird");
 const fs_extra_1 = require("fs-extra");
 const video_paths_1 = require("@server/lib/video-paths");

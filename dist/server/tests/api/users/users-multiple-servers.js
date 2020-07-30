@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -25,7 +17,7 @@ describe('Test users with multiple servers', function () {
     let userAccessToken;
     let userAvatarFilename;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             yield login_1.setAccessTokensToServers(servers);
@@ -55,7 +47,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should be able to update my display name', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.updateMyUser({
                 url: servers[0].url,
@@ -69,7 +61,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should be able to update my description', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.updateMyUser({
                 url: servers[0].url,
@@ -84,7 +76,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should be able to update my avatar', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const fixture = 'avatar2.png';
             yield index_1.updateMyAvatar({
@@ -100,7 +92,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should have updated my profile on other servers too', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const resAccounts = yield accounts_1.getAccountsList(server.url, '-createdAt');
                 const rootServer1List = resAccounts.body.data.find(a => a.name === 'root' && a.host === 'localhost:' + servers[0].port);
@@ -122,7 +114,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should list account videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield extra_utils_1.getAccountVideos(server.url, server.accessToken, 'user1@localhost:' + servers[0].port, 0, 5);
                 expect(res.body.total).to.equal(1);
@@ -133,7 +125,7 @@ describe('Test users with multiple servers', function () {
         });
     });
     it('Should remove the user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             for (const server of servers) {
                 const resAccounts = yield accounts_1.getAccountsList(server.url, '-createdAt');
@@ -159,25 +151,25 @@ describe('Test users with multiple servers', function () {
             }
         });
     });
-    it('Should not have actor files', () => __awaiter(this, void 0, void 0, function* () {
+    it('Should not have actor files', () => tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const server of servers) {
             yield accounts_1.checkActorFilesWereRemoved(userAvatarFilename, server.internalServerNumber);
         }
     }));
-    it('Should not have video files', () => __awaiter(this, void 0, void 0, function* () {
+    it('Should not have video files', () => tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const server of servers) {
             yield extra_utils_1.checkVideoFilesWereRemoved(videoUUID, server.internalServerNumber);
         }
     }));
     it('Should have an empty tmp directory', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 yield extra_utils_1.checkTmpIsEmpty(server);
             }
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

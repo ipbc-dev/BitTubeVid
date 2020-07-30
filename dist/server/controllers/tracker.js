@@ -1,24 +1,18 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const logger_1 = require("../helpers/logger");
+exports.createWebsocketTrackerServer = exports.trackerRouter = void 0;
+const tslib_1 = require("tslib");
+const bitTorrentTracker = require("bittorrent-tracker");
 const express = require("express");
 const http = require("http");
-const bitTorrentTracker = require("bittorrent-tracker");
 const proxyAddr = require("proxy-addr");
 const ws_1 = require("ws");
+const redis_1 = require("@server/lib/redis");
+const logger_1 = require("../helpers/logger");
+const config_1 = require("../initializers/config");
 const constants_1 = require("../initializers/constants");
 const video_file_1 = require("../models/video/video-file");
 const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
-const config_1 = require("../initializers/config");
 const TrackerServer = bitTorrentTracker.Server;
 const trackerRouter = express.Router();
 exports.trackerRouter = trackerRouter;
@@ -31,7 +25,7 @@ const trackerServer = new TrackerServer({
     ws: false,
     dht: false,
     filter: function (infoHash, params, cb) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (config_1.CONFIG.TRACKER.ENABLED === false) {
                 return cb(new Error('Tracker is disabled on this instance.'));
             }
@@ -57,7 +51,12 @@ const trackerServer = new TrackerServer({
                 const playlistExists = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.doesInfohashExist(infoHash);
                 if (playlistExists === true)
                     return cb();
-                return cb(new Error(`Unknown infoHash ${infoHash}`));
+                cb(new Error(`Unknown infoHash ${infoHash} requested by ip ${ip}`));
+                if (params.type === 'ws') {
+                    redis_1.Redis.Instance.setTrackerBlockIP(ip)
+                        .catch(err => logger_1.logger.error('Cannot set tracker block ip.', { err }));
+                    setTimeout(() => params.socket.close(), 0);
+                }
             }
             catch (err) {
                 logger_1.logger.error('Error in tracker filter.', { err });
@@ -86,7 +85,18 @@ function createWebsocketTrackerServer(app) {
     });
     server.on('upgrade', (request, socket, head) => {
         if (request.url === '/tracker/socket') {
-            wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
+            const ip = proxyAddr(request, config_1.CONFIG.TRUST_PROXY);
+            redis_1.Redis.Instance.doesTrackerBlockIPExist(ip)
+                .then(result => {
+                if (result === true) {
+                    logger_1.logger.debug('Blocking IP %s from tracker.', ip);
+                    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+                    socket.destroy();
+                    return;
+                }
+                return wss.handleUpgrade(request, socket, head, ws => wss.emit('connection', ws, request));
+            })
+                .catch(err => logger_1.logger.error('Cannot check if tracker block ip exists.', { err }));
         }
     });
     return server;

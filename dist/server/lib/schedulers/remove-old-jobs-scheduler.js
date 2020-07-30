@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RemoveOldJobsScheduler = void 0;
 const core_utils_1 = require("../../helpers/core-utils");
 const logger_1 = require("../../helpers/logger");
 const job_queue_1 = require("../job-queue");

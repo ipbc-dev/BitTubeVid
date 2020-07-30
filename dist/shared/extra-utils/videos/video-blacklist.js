@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateVideoBlacklist = exports.getBlacklistedVideosList = exports.removeVideoFromBlacklist = exports.addVideoToBlacklist = void 0;
 const request = require("supertest");
 const __1 = require("..");
 function addVideoToBlacklist(url, token, videoId, reason, unfederate, specialStatus = 204) {

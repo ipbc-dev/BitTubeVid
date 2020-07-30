@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.activityPubRouter = void 0;
 const express = require("express");
 const client_1 = require("./client");
 const inbox_1 = require("./inbox");

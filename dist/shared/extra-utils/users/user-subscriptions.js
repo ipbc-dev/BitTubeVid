@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeUserSubscription = exports.listUserSubscriptionVideos = exports.getUserSubscription = exports.listUserSubscriptions = exports.addUserSubscription = exports.areSubscriptionsExist = void 0;
 const requests_1 = require("../requests/requests");
 function addUserSubscription(url, token, targetUri, statusCodeExpected = 204) {
     const path = '/api/v1/users/me/subscriptions';

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAuditLogs = exports.getLogs = void 0;
 const requests_1 = require("../requests/requests");
 function getLogs(url, accessToken, startDate, endDate, level) {
     const path = '/api/v1/server/logs';

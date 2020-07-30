@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const extra_utils_1 = require("../../../shared/extra-utils");
@@ -21,7 +13,7 @@ describe('Test id and pass auth plugins', function () {
     let lagunaAccessToken;
     let lagunaRefreshToken;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield servers_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -35,7 +27,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should display the correct configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredIdAndPassAuths;
@@ -47,12 +39,12 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should not login', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.userLogin(server, { username: 'toto', password: 'password' }, 400);
         });
     });
     it('Should login Spyro, create the user and use the token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const accessToken = yield extra_utils_1.userLogin(server, { username: 'spyro', password: 'spyro password' });
             const res = yield extra_utils_1.getMyUserInformation(server.url, accessToken);
             const body = res.body;
@@ -62,7 +54,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should login Crash, create the user and use the token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield extra_utils_1.login(server.url, server.client, { username: 'crash', password: 'crash password' });
                 crashAccessToken = res.body.access_token;
@@ -78,7 +70,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should login the first Laguna, create the user and use the token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield extra_utils_1.login(server.url, server.client, { username: 'laguna', password: 'laguna password' });
                 lagunaAccessToken = res.body.access_token;
@@ -94,7 +86,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should refresh crash token, but not laguna token', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const resRefresh = yield extra_utils_1.refreshToken(server, crashRefreshToken);
                 crashAccessToken = resRefresh.body.access_token;
@@ -109,7 +101,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should update Crash profile', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateMyUser({
                 url: server.url,
                 accessToken: crashAccessToken,
@@ -123,18 +115,18 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should logout Crash', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.logout(server.url, crashAccessToken);
         });
     });
     it('Should have logged out Crash', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.waitUntilLog(server, 'On logout for auth 1 - 2');
             yield extra_utils_1.getMyUserInformation(server.url, crashAccessToken, 401);
         });
     });
     it('Should login Crash and keep the old existing profile', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             crashAccessToken = yield extra_utils_1.userLogin(server, { username: 'crash', password: 'crash password' });
             const res = yield extra_utils_1.getMyUserInformation(server.url, crashAccessToken);
             const body = res.body;
@@ -145,14 +137,14 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should reject token of laguna by the plugin hook', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.wait(5000);
             yield extra_utils_1.getMyUserInformation(server.url, lagunaAccessToken, 401);
         });
     });
     it('Should reject an invalid username, email, role or display name', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.userLogin(server, { username: 'ward', password: 'ward password' }, 400);
             yield servers_1.waitUntilLog(server, 'valid username');
             yield extra_utils_1.userLogin(server, { username: 'kiros', password: 'kiros password' }, 400);
@@ -164,7 +156,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should unregister spyro-auth and do not login existing Spyro', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updatePluginSettings({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -176,7 +168,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should have disabled this auth', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredIdAndPassAuths;
@@ -186,7 +178,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should uninstall the plugin one and do not login existing Crash', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uninstallPlugin({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -196,7 +188,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should display the correct configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredIdAndPassAuths;
@@ -206,7 +198,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     it('Should display plugin auth information in users list', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getUsersList(server.url, server.accessToken);
             const users = res.body.data;
             const root = users.find(u => u.username === 'root');
@@ -218,7 +210,7 @@ describe('Test id and pass auth plugins', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.cleanupTests([server]);
         });
     });

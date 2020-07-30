@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.inboxRouter = void 0;
 const express = require("express");
 const activity_1 = require("../../helpers/custom-validators/activitypub/activity");
 const logger_1 = require("../../helpers/logger");

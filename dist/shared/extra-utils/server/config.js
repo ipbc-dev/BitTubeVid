@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateCustomSubConfig = exports.deleteCustomConfig = exports.getAbout = exports.updateCustomConfig = exports.getCustomConfig = exports.getConfig = void 0;
 const requests_1 = require("../requests/requests");
 const lodash_1 = require("lodash");
 function getConfig(url) {
@@ -150,6 +151,24 @@ function updateCustomSubConfig(url, token, newConfig) {
                     indexUrl: 'https://instances.joinpeertube.org/api/v1/instances/hosts',
                     enabled: false
                 }
+            }
+        },
+        broadcastMessage: {
+            enabled: true,
+            level: 'warning',
+            message: 'hello',
+            dismissable: true
+        },
+        search: {
+            remoteUri: {
+                users: true,
+                anonymous: true
+            },
+            searchIndex: {
+                enabled: true,
+                url: 'https://search.joinpeertube.org',
+                disableLocalSearch: true,
+                isDefaultSearch: true
             }
         }
     };

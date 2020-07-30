@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoBlacklistType = void 0;
 var VideoBlacklistType;
 (function (VideoBlacklistType) {
     VideoBlacklistType[VideoBlacklistType["MANUAL"] = 1] = "MANUAL";

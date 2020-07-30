@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const videos_1 = require("../../../../shared/models/videos");
@@ -45,7 +37,7 @@ describe('Test handle downs', function () {
     let checkAttributes;
     let unlistedCheckAttributes;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             checkAttributes = {
@@ -87,7 +79,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should remove followers that are often down', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(240000);
             yield follows_1.follow(servers[1].url, [servers[0].url], servers[1].accessToken);
             yield follows_1.follow(servers[2].url, [servers[0].url], servers[2].accessToken);
@@ -130,7 +122,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should not have pending/processing jobs anymore', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const states = ['waiting', 'active'];
             for (const state of states) {
                 const res = yield jobs_1.getJobsListPaginationAndSort({
@@ -146,7 +138,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should re-follow server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(35000);
             yield extra_utils_1.reRunServer(servers[1]);
             yield extra_utils_1.reRunServer(servers[2]);
@@ -160,7 +152,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should send an update to server 3, and automatically fetch the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             const res1 = yield extra_utils_1.getVideosList(servers[2].url);
             expect(res1.body.data).to.be.an('array');
@@ -177,7 +169,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should send comments on a video to server 3, and automatically fetch the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(25000);
             yield video_comments_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, missedVideo2.uuid, commentIdServer1, 'comment 1-3');
             yield jobs_1.waitJobs(servers);
@@ -206,7 +198,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should correctly reply to the comment', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield video_comments_1.addVideoCommentReply(servers[2].url, servers[2].accessToken, missedVideo2.uuid, commentIdServer2, 'comment 1-4');
             yield jobs_1.waitJobs(servers);
@@ -231,7 +223,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should upload many videos on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             for (let i = 0; i < 10; i++) {
                 const uuid = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[0], videoName: 'video ' + i })).uuid;
@@ -249,7 +241,7 @@ describe('Test handle downs', function () {
         });
     });
     it('Should remove followings that are down', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             extra_utils_1.killallServers([servers[0]]);
             yield extra_utils_1.wait(11000);
@@ -264,7 +256,7 @@ describe('Test handle downs', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.closeAllSequelize([servers[1]]);
             yield extra_utils_1.cleanupTests(servers);
         });

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAccountRatings = exports.checkActorFilesWereRemoved = exports.getAccountsList = exports.expectAccountFollows = exports.getAccount = void 0;
+const tslib_1 = require("tslib");
 const request = require("supertest");
 const chai_1 = require("chai");
 const fs_extra_1 = require("fs-extra");
@@ -35,7 +28,7 @@ function getAccount(url, accountName, statusCodeExpected = 200) {
 }
 exports.getAccount = getAccount;
 function expectAccountFollows(url, nameWithDomain, followersCount, followingCount) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield getAccountsList(url);
         const account = res.body.data.find((a) => a.name + '@' + a.host === nameWithDomain);
         const message = `${nameWithDomain} on ${url}`;
@@ -45,7 +38,7 @@ function expectAccountFollows(url, nameWithDomain, followersCount, followingCoun
 }
 exports.expectAccountFollows = expectAccountFollows;
 function checkActorFilesWereRemoved(filename, serverNumber) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const testDirectory = 'test' + serverNumber;
         for (const directory of ['avatars']) {
             const directoryPath = path_1.join(miscs_1.root(), testDirectory, directory);

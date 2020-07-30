@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkHttpSignature = exports.executeIfActivityPub = exports.checkSignature = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../helpers/logger");
 const peertube_crypto_1 = require("../helpers/peertube-crypto");
 const constants_1 = require("../initializers/constants");
@@ -17,7 +10,7 @@ const webfinger_1 = require("../helpers/webfinger");
 const actor_2 = require("@server/helpers/custom-validators/activitypub/actor");
 const activitypub_1 = require("@server/helpers/activitypub");
 function checkSignature(req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const httpSignatureChecked = yield checkHttpSignature(req, res);
             if (httpSignatureChecked !== true)
@@ -54,7 +47,7 @@ function executeIfActivityPub(req, res, next) {
 }
 exports.executeIfActivityPub = executeIfActivityPub;
 function checkHttpSignature(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const sig = req.headers[constants_1.HTTP_SIGNATURE.HEADER_NAME];
         if (sig && sig.startsWith('Signature ') === true)
             req.headers[constants_1.HTTP_SIGNATURE.HEADER_NAME] = sig.replace(/^Signature /, '');
@@ -82,7 +75,7 @@ function checkHttpSignature(req, res) {
 }
 exports.checkHttpSignature = checkHttpSignature;
 function checkJsonLDSignature(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const signatureObject = req.body.signature;
         if (!signatureObject || !signatureObject.creator) {
             res.sendStatus(403);

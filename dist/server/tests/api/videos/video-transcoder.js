@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const lodash_1 = require("lodash");
@@ -21,7 +13,7 @@ const expect = chai.expect;
 describe('Test video transcoding', function () {
     let servers = [];
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -29,7 +21,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should not transcode video on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'my super name for server 1',
@@ -54,7 +46,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should transcode video on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'my super name for server 2',
@@ -79,7 +71,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should transcode high bit rate mp3 to proper bit rate', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'mp3_256k',
@@ -106,7 +98,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should transcode video with no audio and have no audio itself', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'no_audio',
@@ -127,7 +119,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should leave the audio untouched, but properly transcode the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'untouched_audio',
@@ -156,7 +148,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should transcode a 60 FPS video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributes = {
                 name: 'my super 30fps name for server 2',
@@ -187,7 +179,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should wait for transcoding before publishing the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(80000);
             {
                 const videoAttributes = {
@@ -227,7 +219,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should respect maximum bitrate values', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(160000);
             let tempFixturePath;
             {
@@ -257,7 +249,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should accept and transcode additional extensions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(300000);
             let tempFixturePath;
             {
@@ -285,14 +277,14 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should correctly detect if quick transcode is possible', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             expect(yield ffmpeg_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.mp4'))).to.be.true;
             expect(yield ffmpeg_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.webm'))).to.be.false;
         });
     });
     it('Should merge an audio file with the preview file', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributesArg = { name: 'audio_with_preview', previewfile: 'preview.jpg', fixture: 'sample.ogg' };
             yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, videoAttributesArg);
@@ -311,7 +303,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should upload an audio file and choose a default background image', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoAttributesArg = { name: 'audio_without_preview', fixture: 'sample.ogg' };
             yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, videoAttributesArg);
@@ -330,7 +322,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should downscale to the closest divisor standard framerate', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(160000);
             let tempFixturePath;
             {
@@ -362,7 +354,7 @@ describe('Test video transcoding', function () {
         });
     });
     it('Should provide valid ffprobe data', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(160000);
             const videoUUID = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'ffprobe data' })).uuid;
             yield extra_utils_1.waitJobs(servers);
@@ -409,7 +401,7 @@ describe('Test video transcoding', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../shared/extra-utils");
@@ -17,7 +9,7 @@ const expect = chai.expect;
 describe('Test misc endpoints', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -25,7 +17,7 @@ describe('Test misc endpoints', function () {
     });
     describe('Test a well known endpoints', function () {
         it('Should get security.txt', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/security.txt',
@@ -35,7 +27,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get nodeinfo', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/nodeinfo',
@@ -47,7 +39,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get dnt policy text', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/dnt-policy.txt',
@@ -57,7 +49,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get dnt policy', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/dnt',
@@ -67,7 +59,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get change-password location', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/change-password',
@@ -79,7 +71,7 @@ describe('Test misc endpoints', function () {
     });
     describe('Test classic static endpoints', function () {
         it('Should get robots.txt', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/robots.txt',
@@ -89,7 +81,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get security.txt', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/security.txt',
@@ -98,7 +90,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get nodeinfo', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/nodeinfo/2.0.json',
@@ -110,7 +102,7 @@ describe('Test misc endpoints', function () {
     });
     describe('Test bots endpoints', function () {
         it('Should get the empty sitemap', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/sitemap.xml',
@@ -121,7 +113,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should get the empty cached sitemap', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/sitemap.xml',
@@ -132,7 +124,7 @@ describe('Test misc endpoints', function () {
             });
         });
         it('Should add videos, channel and accounts and get sitemap', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(35000);
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 1', nsfw: false });
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 2', nsfw: false });
@@ -159,7 +151,7 @@ describe('Test misc endpoints', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

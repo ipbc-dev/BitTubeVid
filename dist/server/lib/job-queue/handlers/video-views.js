@@ -1,22 +1,15 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processVideosViews = void 0;
+const tslib_1 = require("tslib");
 const redis_1 = require("../../redis");
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
-const video_views_1 = require("../../../models/video/video-views");
+const video_view_1 = require("../../../models/video/video-view");
 const core_utils_1 = require("../../../helpers/core-utils");
 const videos_1 = require("../../activitypub/videos");
 function processVideosViews() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const lastHour = new Date();
         if (!core_utils_1.isTestInstance())
             lastHour.setHours(lastHour.getHours() - 1);
@@ -39,7 +32,7 @@ function processVideosViews() {
                             logger_1.logger.debug('Video %d does not exist anymore, skipping videos view addition.', videoId);
                             continue;
                         }
-                        yield video_views_1.VideoViewModel.create({
+                        yield video_view_1.VideoViewModel.create({
                             startDate,
                             endDate,
                             views,

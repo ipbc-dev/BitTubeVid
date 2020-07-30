@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.pluginRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const utils_1 = require("../../helpers/utils");
 const middlewares_1 = require("../../middlewares");
@@ -31,7 +24,7 @@ pluginRouter.post('/install', middlewares_1.authenticate, middlewares_1.ensureUs
 pluginRouter.post('/update', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_PLUGINS), plugins_1.installOrUpdatePluginValidator, middlewares_1.asyncMiddleware(updatePlugin));
 pluginRouter.post('/uninstall', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_PLUGINS), plugins_1.uninstallPluginValidator, middlewares_1.asyncMiddleware(uninstallPlugin));
 function listPlugins(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const pluginType = req.query.pluginType;
         const uninstalled = req.query.uninstalled;
         const resultList = yield plugin_1.PluginModel.listForApi({
@@ -49,7 +42,7 @@ function getPlugin(req, res) {
     return res.json(plugin.toFormattedJSON());
 }
 function installPlugin(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const fromDisk = !!body.path;
         const toInstall = body.npmName || body.path;
@@ -64,7 +57,7 @@ function installPlugin(req, res) {
     });
 }
 function updatePlugin(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const fromDisk = !!body.path;
         const toUpdate = body.npmName || body.path;
@@ -79,7 +72,7 @@ function updatePlugin(req, res) {
     });
 }
 function uninstallPlugin(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         yield plugin_manager_1.PluginManager.Instance.uninstall(body.npmName);
         return res.sendStatus(204);
@@ -98,7 +91,7 @@ function getPluginRegisteredSettings(req, res) {
     return res.json(json);
 }
 function updatePluginSettings(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const plugin = res.locals.plugin;
         plugin.settings = req.body.settings;
         yield plugin.save();
@@ -107,7 +100,7 @@ function updatePluginSettings(req, res) {
     });
 }
 function listAvailablePlugins(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const query = req.query;
         const resultList = yield plugin_index_1.listAvailablePluginsFromIndex(query);
         if (!resultList) {

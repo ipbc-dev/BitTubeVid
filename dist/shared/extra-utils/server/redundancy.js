@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeVideoRedundancy = exports.addVideoRedundancy = exports.listVideoRedundancies = exports.updateRedundancy = void 0;
 const requests_1 = require("../requests/requests");
 function updateRedundancy(url, accessToken, host, redundancyAllowed, expectedStatus = 204) {
     const path = '/api/v1/server/redundancy/' + host;

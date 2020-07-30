@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.regexpCapture = void 0;
 function regexpCapture(str, regex, maxIterations = 100) {
     const result = [];
     let m;

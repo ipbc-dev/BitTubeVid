@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Emailer = void 0;
+const tslib_1 = require("tslib");
 const nodemailer_1 = require("nodemailer");
 const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
@@ -82,7 +75,7 @@ class Emailer {
         }
     }
     checkConnectionOrDie() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!this.transporter || config_1.CONFIG.SMTP.TRANSPORT !== 'smtp')
                 return;
             logger_1.logger.info('Testing SMTP server...');
@@ -273,7 +266,7 @@ class Emailer {
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
     addVideoAutoBlacklistModeratorsNotification(to, videoBlacklist) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const VIDEO_AUTO_BLACKLIST_URL = constants_1.WEBSERVER.URL + '/admin/moderation/video-auto-blacklist/list';
             const videoUrl = constants_1.WEBSERVER.URL + videoBlacklist.Video.getWatchStaticPath();
             const channel = (yield video_channel_1.VideoChannelModel.loadByIdAndPopulateAccount(videoBlacklist.Video.channelId)).toFormattedSummaryJSON();
@@ -332,12 +325,13 @@ class Emailer {
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
-    addPasswordResetEmailJob(to, resetPasswordUrl) {
+    addPasswordResetEmailJob(username, to, resetPasswordUrl) {
         const emailPayload = {
             template: 'password-reset',
             to: [to],
             subject: 'Reset your account password',
             locals: {
+                username,
                 resetPasswordUrl
             }
         };
@@ -355,12 +349,13 @@ class Emailer {
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
-    addVerifyEmailJob(to, verifyEmailUrl) {
+    addVerifyEmailJob(username, to, verifyEmailUrl) {
         const emailPayload = {
             template: 'verify-email',
             to: [to],
             subject: `Verify your email on ${constants_1.WEBSERVER.HOST}`,
             locals: {
+                username,
                 verifyEmailUrl
             }
         };
@@ -392,7 +387,7 @@ class Emailer {
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
     sendMail(options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!config_1.isEmailEnabled()) {
                 throw new Error('Cannot send mail because SMTP is not configured.');
             }

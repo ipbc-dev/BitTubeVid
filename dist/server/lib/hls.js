@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateStreamingPlaylistsInfohashesIfNeeded = exports.downloadPlaylistSegments = exports.updateSha256Segments = exports.updateMasterHLSPlaylist = void 0;
+const tslib_1 = require("tslib");
 const path_1 = require("path");
 const constants_1 = require("../initializers/constants");
 const fs_extra_1 = require("fs-extra");
@@ -24,10 +17,10 @@ const config_1 = require("../initializers/config");
 const database_1 = require("../initializers/database");
 const video_paths_1 = require("./video-paths");
 function updateStreamingPlaylistsInfohashesIfNeeded() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const playlistsToUpdate = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.listByIncorrectPeerVersion();
         for (const playlist of playlistsToUpdate) {
-            yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoFiles = yield video_file_1.VideoFileModel.listByStreamingPlaylist(playlist.id, t);
                 playlist.p2pMediaLoaderInfohashes = video_streaming_playlist_1.VideoStreamingPlaylistModel.buildP2PMediaLoaderInfoHashes(playlist.playlistUrl, videoFiles);
                 playlist.p2pMediaLoaderPeerVersion = constants_1.P2P_MEDIA_LOADER_PEER_VERSION;
@@ -38,7 +31,7 @@ function updateStreamingPlaylistsInfohashesIfNeeded() {
 }
 exports.updateStreamingPlaylistsInfohashesIfNeeded = updateStreamingPlaylistsInfohashesIfNeeded;
 function updateMasterHLSPlaylist(video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const directory = path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid);
         const masterPlaylists = ['#EXTM3U', '#EXT-X-VERSION:3'];
         const masterPlaylistPath = path_1.join(directory, video_streaming_playlist_1.VideoStreamingPlaylistModel.getMasterHlsPlaylistFilename());
@@ -65,7 +58,7 @@ function updateMasterHLSPlaylist(video) {
 }
 exports.updateMasterHLSPlaylist = updateMasterHLSPlaylist;
 function updateSha256Segments(video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const json = {};
         const playlistDirectory = path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid);
         const hlsPlaylist = video.getHLSPlaylist();
@@ -107,7 +100,7 @@ function getRangesFromPlaylist(playlistContent) {
 function downloadPlaylistSegments(playlistUrl, destinationDir, timeout) {
     let timer;
     logger_1.logger.info('Importing HLS playlist %s', playlistUrl);
-    return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const tmpDirectory = path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, yield utils_1.generateRandomString(10));
         yield fs_extra_1.ensureDir(tmpDirectory);
         timer = setTimeout(() => {
@@ -138,7 +131,7 @@ function downloadPlaylistSegments(playlistUrl, destinationDir, timeout) {
             .catch(err => logger_1.logger.error('Cannot delete path on HLS download error.', { err }));
     }
     function fetchUniqUrls(playlistUrl) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { body } = yield requests_1.doRequest({ uri: playlistUrl });
             if (!body)
                 return [];

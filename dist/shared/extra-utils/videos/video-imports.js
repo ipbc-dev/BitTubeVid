@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
 const requests_1 = require("../requests/requests");
 function getYoutubeVideoUrl() {
     return 'http://www.youtube.com/watch?v=msX3jv1XdvM';

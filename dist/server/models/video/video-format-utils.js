@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getActivityStreamDuration = exports.videoModelToActivityPubObject = exports.videoFilesModelToFormattedJSON = exports.videoModelToFormattedDetailsJSON = exports.videoModelToFormattedJSON = void 0;
 const video_1 = require("./video");
 const constants_1 = require("../../initializers/constants");
 const video_caption_1 = require("./video-caption");
@@ -125,9 +126,17 @@ function streamingPlaylistsModelToFormattedJSON(video, playlists) {
         };
     });
 }
+function sortByResolutionDesc(fileA, fileB) {
+    if (fileA.resolution < fileB.resolution)
+        return 1;
+    if (fileA.resolution === fileB.resolution)
+        return 0;
+    return -1;
+}
 function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFiles) {
     const video = video_2.extractVideo(model);
-    return videoFiles
+    return [...videoFiles]
+        .sort(sortByResolutionDesc)
         .map(videoFile => {
         return {
             resolution: {
@@ -143,18 +152,12 @@ function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFile
             fileDownloadUrl: model.getVideoFileDownloadUrl(videoFile, baseUrlHttp),
             metadataUrl: video.getVideoFileMetadataUrl(videoFile, baseUrlHttp)
         };
-    })
-        .sort((a, b) => {
-        if (a.resolution.id < b.resolution.id)
-            return 1;
-        if (a.resolution.id === b.resolution.id)
-            return 0;
-        return -1;
     });
 }
 exports.videoFilesModelToFormattedJSON = videoFilesModelToFormattedJSON;
 function addVideoFilesInAPAcc(acc, model, baseUrlHttp, baseUrlWs, files) {
-    for (const file of files) {
+    const sortedFiles = [...files].sort(sortByResolutionDesc);
+    for (const file of sortedFiles) {
         acc.push({
             type: 'Link',
             mediaType: constants_1.MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname],
@@ -248,7 +251,7 @@ function videoModelToActivityPubObject(video) {
             url: caption.getFileUrl(video)
         });
     }
-    const miniature = video.getMiniature();
+    const icons = [video.getMiniature(), video.getPreview()];
     return {
         type: 'Video',
         id: video.url,
@@ -269,16 +272,16 @@ function videoModelToActivityPubObject(video) {
         originallyPublishedAt: video.originallyPublishedAt ? video.originallyPublishedAt.toISOString() : null,
         updated: video.updatedAt.toISOString(),
         mediaType: 'text/markdown',
-        content: video.getTruncatedDescription(),
+        content: video.description,
         support: video.support,
         subtitleLanguage,
-        icon: {
+        icon: icons.map(i => ({
             type: 'Image',
-            url: miniature.getFileUrl(video),
+            url: i.getFileUrl(video),
             mediaType: 'image/jpeg',
-            width: miniature.width,
-            height: miniature.height
-        },
+            width: i.width,
+            height: i.height
+        })),
         url,
         likes: url_1.getVideoLikesActivityPubUrl(video),
         dislikes: url_1.getVideoDislikesActivityPubUrl(video),
