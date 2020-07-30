@@ -41,7 +41,7 @@ import {
   MChannelAP,
   MChannelFormattable,
   MChannelSummaryFormattable
-} from '../../typings/models/video'
+} from '../../types/models/video'
 
 export enum ScopeNames {
   FOR_API = 'FOR_API',
@@ -173,6 +173,10 @@ export type SummaryOptions = {
       attributes: {
         include: [
           [
+            literal('(SELECT COUNT(*) FROM "video" WHERE "channelId" = "VideoChannelModel"."id")'),
+            'videosCount'
+          ],
+          [
             literal(
               '(' +
               `SELECT string_agg(concat_ws('|', t.day, t.views), ',') ` +
@@ -181,20 +185,16 @@ export type SummaryOptions = {
                   'days AS ( ' +
                     `SELECT generate_series(date_trunc('day', now()) - '${daysPrior} day'::interval, ` +
                           `date_trunc('day', now()), '1 day'::interval) AS day ` +
-                  '), ' +
-                  'views AS ( ' +
-                    'SELECT v.* ' +
-                    'FROM "videoView" AS v ' +
-                    'INNER JOIN "video" ON "video"."id" = v."videoId" ' +
-                    'WHERE "video"."channelId" = "VideoChannelModel"."id" ' +
                   ') ' +
-                'SELECT days.day AS day, ' +
-                      'COALESCE(SUM(views.views), 0) AS views ' +
-                'FROM days ' +
-                `LEFT JOIN views ON date_trunc('day', "views"."startDate") = date_trunc('day', days.day) ` +
-                'GROUP BY day ' +
-                'ORDER BY day ' +
-              ') t' +
+                  'SELECT days.day AS day, COALESCE(SUM("videoView".views), 0) AS views ' +
+                  'FROM days ' +
+                  'LEFT JOIN (' +
+                    '"videoView" INNER JOIN "video" ON "videoView"."videoId" = "video"."id" ' +
+                    'AND "video"."channelId" = "VideoChannelModel"."id"' +
+                  `) ON date_trunc('day', "videoView"."startDate") = date_trunc('day', days.day) ` +
+                  'GROUP BY day ' +
+                  'ORDER BY day ' +
+                ') t' +
               ')'
             ),
             'viewsPerDay'
@@ -413,7 +413,7 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
 
     const scopes: string | ScopeOptions | (string | ScopeOptions)[] = [ ScopeNames.WITH_ACTOR ]
 
-    if (options.withStats) {
+    if (options.withStats === true) {
       scopes.push({
         method: [ ScopeNames.WITH_STATS, { daysPrior: 30 } as AvailableWithStatsOptions ]
       })
@@ -548,7 +548,22 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
   }
 
   toFormattedJSON (this: MChannelFormattable): VideoChannel {
-    const viewsPerDay = this.get('viewsPerDay') as string
+    const viewsPerDayString = this.get('viewsPerDay') as string
+    const videosCount = this.get('videosCount') as number
+
+    let viewsPerDay: { date: Date, views: number }[]
+
+    if (viewsPerDayString) {
+      viewsPerDay = viewsPerDayString.split(',')
+        .map(v => {
+          const [ dateString, amount ] = v.split('|')
+
+          return {
+            date: new Date(dateString),
+            views: +amount
+          }
+        })
+    }
 
     const actor = this.Actor.toFormattedJSON()
     const videoChannel = {
@@ -560,15 +575,8 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       ownerAccount: undefined,
-      viewsPerDay: viewsPerDay !== undefined
-        ? viewsPerDay.split(',').map(v => {
-          const o = v.split('|')
-          return {
-            date: new Date(o[0]),
-            views: +o[1]
-          }
-        })
-        : undefined
+      videosCount,
+      viewsPerDay
     }
 
     if (this.Account) videoChannel.ownerAccount = this.Account.toFormattedJSON()

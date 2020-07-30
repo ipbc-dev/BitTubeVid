@@ -1,0 +1,72 @@
+@import '_variables';
+@import '_mixins';
+
+.dropdown-divider:last-child {
+  display: none;
+}
+
+.action-button {
+  @include peertube-button;
+
+  &.button-styled {
+
+    &.grey {
+      @include grey-button;
+    }
+
+    &.orange {
+      @include orange-button;
+    }
+
+    &:hover, &:active, &:focus {
+      background-color: $grey-background-color;
+    }
+  }
+
+  display: inline-block;
+  padding: 0 10px;
+
+  &::after {
+    display: none;
+  }
+
+  .more-icon {
+    width: 21px;
+
+    ::ng-deep {
+      @include apply-svg-color(pvar(--actionButtonColor));
+    }
+  }
+
+  &.small {
+    font-size: 14px;
+    height: 20px;
+    line-height: 20px;
+  }
+}
+
+.dropdown-toggle::after {
+  position: relative;
+  top: 1px;
+}
+
+.dropdown-menu {
+  .dropdown-header {
+    padding: 0.2rem 1rem;
+  }
+
+  .dropdown-item {
+    display: flex;
+    cursor: pointer;
+    color: #000 !important;
+
+    &.with-icon {
+      @include dropdown-with-icon-item;
+    }
+
+    a, span {
+      display: block;
+      width: 100%;
+    }
+  }
+}

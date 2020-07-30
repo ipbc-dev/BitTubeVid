@@ -1,7 +1,8 @@
-import 'multer'
-import * as sharp from 'sharp'
-import { readFile, remove } from 'fs-extra'
+import { remove, rename } from 'fs-extra'
+import { convertWebPToJPG } from './ffmpeg-utils'
 import { logger } from './logger'
+
+const Jimp = require('jimp')
 
 async function processImage (
   path: string,
@@ -10,20 +11,31 @@ async function processImage (
   keepOriginal = false
 ) {
   if (path === destination) {
-    throw new Error('Sharp needs an input path different that the output path.')
+    throw new Error('Jimp needs an input path different that the output path.')
   }
 
   logger.debug('Processing image %s to %s.', path, destination)
 
-  // Avoid sharp cache
-  const buf = await readFile(path)
-  const sharpInstance = sharp(buf)
+  let jimpInstance: any
+
+  try {
+    jimpInstance = await Jimp.read(path)
+  } catch (err) {
+    logger.debug('Cannot read %s with jimp. Try to convert the image using ffmpeg first.', { err })
+
+    const newName = path + '.jpg'
+    await convertWebPToJPG(path, newName)
+    await rename(newName, path)
+
+    jimpInstance = await Jimp.read(path)
+  }
 
   await remove(destination)
 
-  await sharpInstance
+  await jimpInstance
     .resize(newSize.width, newSize.height)
-    .toFile(destination)
+    .quality(80)
+    .writeAsync(destination)
 
   if (keepOriginal !== true) await remove(path)
 }

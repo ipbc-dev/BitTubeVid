@@ -10,21 +10,19 @@
   font-size: 14px;
 
   &::placeholder {
-    color: var(--inputPlaceholderColor);
+    color: pvar(--inputPlaceholderColor);
   }
 }
 
 .icon.icon-search {
   @include icon(25px);
-  height: 21px;
-
-  background-color: var(--mainForegroundColor);
-  mask: url('../../assets/images/header/search.svg') no-repeat 50% 50%;
+  height: 18px;
 
   // yolo
   position: absolute;
   margin-left: -35px;
-  margin-top: 5px;
+  margin-top: 3.5px;
+  right: 10px;
 }
 
 .jump-to-suggestions {
@@ -36,13 +34,20 @@
 
 #typeahead-help,
 #typeahead-instructions,
-my-suggestions ::ng-deep ul {
-  border: 1px solid var(--mainBackgroundColor);
-  border-bottom-right-radius: 3px;
-  border-bottom-left-radius: 3px;
-  background: var(--mainBackgroundColor);
+li.suggestion {
+  border: 1px solid pvar(--mainBackgroundColor);
+  background: pvar(--mainBackgroundColor);
   transition: .3s ease;
   transition-property: box-shadow;
+  cursor: pointer;
+
+  // soft border-radius for the last suggestion and the link inside
+  &:last-of-type {
+    &, & ::ng-deep a {
+      border-bottom-right-radius: 3px;
+      border-bottom-left-radius: 3px;
+    }
+  }
 }
 
 #typeahead-help,
@@ -67,7 +72,7 @@ my-suggestions ::ng-deep ul {
 
 #typeahead-container {
   input {
-    border: 1px solid var(--mainBackgroundColor) !important;
+    border: 1px solid pvar(--mainBackgroundColor) !important;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 20px 0px;
     flex-grow: 1;
     transition: box-shadow .3s ease, width .2s ease;
@@ -90,7 +95,7 @@ my-suggestions ::ng-deep ul {
   }
 
   & > div:last-child {
-    // we have to switch the display and not the opacity, 
+    // we have to switch the display and not the opacity,
     // to avoid clashing with the rest of the interface.
     display: none;
   }
@@ -101,10 +106,10 @@ my-suggestions ::ng-deep ul {
       @media screen and (min-width: $mobile-view) {
         display: initial !important;
       }
-      
+
       #typeahead-help,
       #typeahead-instructions,
-      my-suggestions ::ng-deep ul {
+      li.suggestion {
         box-shadow: rgba(0, 0, 0, 0.2) 0px 10px 20px -5px;
       }
     }

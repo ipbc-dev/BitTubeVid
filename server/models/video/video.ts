@@ -23,7 +23,7 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { UserRight, VideoPrivacy, VideoState } from '../../../shared'
+import { UserRight, VideoPrivacy, VideoState, ResultList } from '../../../shared'
 import { VideoTorrentObject } from '../../../shared/models/activitypub/objects'
 import { Video, VideoDetails } from '../../../shared/models/videos'
 import { VideoFilter } from '../../../shared/models/videos/video-query.type'
@@ -76,7 +76,7 @@ import { ScheduleVideoUpdateModel } from './schedule-video-update'
 import { VideoCaptionModel } from './video-caption'
 import { VideoBlacklistModel } from './video-blacklist'
 import { remove } from 'fs-extra'
-import { VideoViewModel } from './video-views'
+import { VideoViewModel } from './video-view'
 import { VideoRedundancyModel } from '../redundancy/video-redundancy'
 import {
   videoFilesModelToFormattedJSON,
@@ -117,15 +117,16 @@ import {
   MVideoWithAllFiles,
   MVideoWithFile,
   MVideoWithRights
-} from '../../typings/models'
-import { MVideoFile, MVideoFileStreamingPlaylistVideo } from '../../typings/models/video/video-file'
-import { MThumbnail } from '../../typings/models/video/thumbnail'
+} from '../../types/models'
+import { MVideoFile, MVideoFileStreamingPlaylistVideo } from '../../types/models/video/video-file'
+import { MThumbnail } from '../../types/models/video/thumbnail'
 import { VideoFile } from '@shared/models/videos/video-file.model'
 import { getHLSDirectory, getTorrentFileName, getTorrentFilePath, getVideoFilename, getVideoFilePath } from '@server/lib/video-paths'
 import { ModelCache } from '@server/models/model-cache'
 import { buildListQuery, BuildVideosQueryOptions, wrapForAPIResults } from './video-query-builder'
 import { buildNSFWFilter } from '@server/helpers/express-utils'
 import { getServerActor } from '@server/models/application/application'
+import { getPrivaciesForFederation, isPrivacyForFederation } from "@server/helpers/video"
 
 export enum ScopeNames {
   AVAILABLE_FOR_LIST_IDS = 'AVAILABLE_FOR_LIST_IDS',
@@ -499,7 +500,7 @@ export class VideoModel extends Model<VideoModel> {
   @AllowNull(false)
   @Is('VideoPrivacy', value => throwIfNotValid(value, isVideoPrivacyValid, 'privacy'))
   @Column
-  privacy: number
+  privacy: VideoPrivacy
 
   @AllowNull(false)
   @Is('VideoNSFW', value => throwIfNotValid(value, isBooleanValid, 'NSFW boolean'))
@@ -864,10 +865,7 @@ export class VideoModel extends Model<VideoModel> {
         id: {
           [Op.in]: Sequelize.literal('(' + rawQuery + ')')
         },
-        [Op.or]: [
-          { privacy: VideoPrivacy.PUBLIC },
-          { privacy: VideoPrivacy.UNLISTED }
-        ]
+        [Op.or]: getPrivaciesForFederation()
       },
       include: [
         {
@@ -1368,7 +1366,7 @@ export class VideoModel extends Model<VideoModel> {
     // Instances only share videos
     const query = 'SELECT 1 FROM "videoShare" ' +
       'INNER JOIN "actorFollow" ON "actorFollow"."targetActorId" = "videoShare"."actorId" ' +
-      'WHERE "actorFollow"."actorId" = $followerActorId AND "videoShare"."videoId" = $videoId ' +
+      'WHERE "actorFollow"."actorId" = $followerActorId AND "actorFollow"."state" = \'accepted\' AND "videoShare"."videoId" = $videoId ' +
       'LIMIT 1'
 
     const options = {
@@ -1444,7 +1442,7 @@ export class VideoModel extends Model<VideoModel> {
   private static async getAvailableForApi (
     options: BuildVideosQueryOptions,
     countVideos = true
-  ) {
+  ): Promise<ResultList<VideoModel>> {
     function getCount () {
       if (countVideos !== true) return Promise.resolve(undefined)
 
@@ -1582,12 +1580,6 @@ export class VideoModel extends Model<VideoModel> {
     return videos
   }
 
-  private static isPrivacyForFederation (privacy: VideoPrivacy) {
-    const castedPrivacy = parseInt(privacy + '', 10)
-
-    return castedPrivacy === VideoPrivacy.PUBLIC || castedPrivacy === VideoPrivacy.UNLISTED
-  }
-
   static getCategoryLabel (id: number) {
     return VIDEO_CATEGORIES[id] || 'Misc'
   }
@@ -1613,8 +1605,7 @@ export class VideoModel extends Model<VideoModel> {
   }
 
   isBlocked () {
-    return (this.VideoChannel.Account.Actor.Server && this.VideoChannel.Account.Actor.Server.isBlocked()) ||
-      this.VideoChannel.Account.isBlocked()
+    return this.VideoChannel.Account.Actor.Server?.isBlocked() || this.VideoChannel.Account.isBlocked()
   }
 
   getQualityFileBy<T extends MVideoWithFile> (this: T, fun: (files: MVideoFile[], it: (file: MVideoFile) => number) => MVideoFile) {
@@ -1813,11 +1804,11 @@ export class VideoModel extends Model<VideoModel> {
   }
 
   hasPrivacyForFederation () {
-    return VideoModel.isPrivacyForFederation(this.privacy)
+    return isPrivacyForFederation(this.privacy)
   }
 
   isNewVideo (newPrivacy: VideoPrivacy) {
-    return this.hasPrivacyForFederation() === false && VideoModel.isPrivacyForFederation(newPrivacy) === true
+    return this.hasPrivacyForFederation() === false && isPrivacyForFederation(newPrivacy) === true
   }
 
   setAsRefreshed () {

@@ -1,15 +1,15 @@
-import { Component, OnInit, ViewChild } from '@angular/core'
-import { Notifier } from '@app/core'
-import { RestPagination, RestTable } from '@app/shared'
 import { SortMeta } from 'primeng/api'
-import { VideoChangeOwnership } from '../../../../../shared'
-import { VideoOwnershipService } from '@app/shared/video-ownership'
-import { Account } from '@app/shared/account/account.model'
+import { Component, OnInit, ViewChild } from '@angular/core'
+import { Notifier, RestPagination, RestTable } from '@app/core'
+import { VideoOwnershipService, Actor, Video, Account } from '@app/shared/shared-main'
+import { VideoChangeOwnership } from '@shared/models'
 import { MyAccountAcceptOwnershipComponent } from './my-account-accept-ownership/my-account-accept-ownership.component'
+import { getAbsoluteAPIUrl } from '@app/helpers'
 
 @Component({
   selector: 'my-account-ownership',
-  templateUrl: './my-account-ownership.component.html'
+  templateUrl: './my-account-ownership.component.html',
+  styleUrls: [ './my-account-ownership.component.scss' ]
 })
 export class MyAccountOwnershipComponent extends RestTable implements OnInit {
   videoChangeOwnerships: VideoChangeOwnership[] = []
@@ -34,8 +34,8 @@ export class MyAccountOwnershipComponent extends RestTable implements OnInit {
     return 'MyAccountOwnershipComponent'
   }
 
-  createByString (account: Account) {
-    return Account.CREATE_BY_STRING(account.name, account.host)
+  switchToDefaultAvatar ($event: Event) {
+    ($event.target as HTMLImageElement).src = Actor.GET_DEFAULT_AVATAR_URL()
   }
 
   openAcceptModal (videoChangeOwnership: VideoChangeOwnership) {
@@ -58,7 +58,11 @@ export class MyAccountOwnershipComponent extends RestTable implements OnInit {
     return this.videoOwnershipService.getOwnershipChanges(this.pagination, this.sort)
       .subscribe(
         resultList => {
-          this.videoChangeOwnerships = resultList.data
+          this.videoChangeOwnerships = resultList.data.map(change => ({
+            ...change,
+            initiatorAccount: new Account(change.initiatorAccount),
+            nextOwnerAccount: new Account(change.nextOwnerAccount)
+          }))
           this.totalRecords = resultList.total
         },
 

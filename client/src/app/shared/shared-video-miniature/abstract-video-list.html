@@ -1,0 +1,53 @@
+<div class="margin-content">
+  <div class="videos-header">
+    <h1 *ngIf="titlePage" class="title-page title-page-single">
+      <div placement="bottom" [ngbTooltip]="titleTooltip" container="body">
+        {{ titlePage }}
+      </div>
+    </h1>
+
+    <div class="action-block">
+      <my-feed *ngIf="titlePage" [syndicationItems]="syndicationItems"></my-feed>
+      <a [routerLink]="action.routerLink" routerLinkActive="active" *ngFor="let action of actions">
+        <my-button [icon]="action.iconName" [label]="action.label"></my-button>
+      </a>
+    </div>
+
+    <div class="moderation-block" *ngIf="displayModerationBlock">
+      <div class="c-hand" ngbDropdown placement="bottom-right auto">
+        <my-global-icon iconName="cog" ngbDropdownToggle></my-global-icon>
+
+        <div role="menu" class="dropdown-menu" ngbDropdownMenu>
+          <div class="dropdown-item">
+            <my-peertube-checkbox
+              (change)="toggleModerationDisplay()"
+              inputName="display-unlisted-private" i18n-labelText labelText="Display unlisted and private videos"
+            ></my-peertube-checkbox>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="no-results" i18n *ngIf="hasDoneFirstQuery && videos.length === 0">No results.</div>
+  <div
+    myInfiniteScroller (nearOfBottom)="onNearOfBottom()" [autoInit]="true" [dataObservable]="onDataSubject.asObservable()"
+    class="videos"
+  >
+    <ng-container *ngFor="let video of videos; trackBy: videoById;">
+      <h2 class="date-title" *ngIf="getCurrentGroupedDateLabel(video)">
+        {{ getCurrentGroupedDateLabel(video) }}
+      </h2>
+
+      <div class="video-wrapper">
+        <my-video-miniature
+          [fitWidth]="true"
+          [video]="video" [user]="userMiniature" [ownerDisplayType]="ownerDisplayType"
+          [displayVideoActions]="displayVideoActions" [displayOptions]="displayOptions"
+          (videoBlocked)="removeVideoFromArray(video)" (videoRemoved)="removeVideoFromArray(video)"
+        >
+        </my-video-miniature>
+      </div>
+    </ng-container>
+  </div>
+</div>

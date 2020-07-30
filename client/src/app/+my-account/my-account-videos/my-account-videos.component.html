@@ -1,5 +1,5 @@
 <div class="videos-header">
-  <h4 i18n>Videos <span class="badge badge-secondary">{{ pagination.totalItems }}</span></h4>
+  <h1 i18n>Videos <span class="badge badge-secondary">{{ pagination.totalItems }}</span></h1>
 
   <input type="text" placeholder="Search your videos" i18n-placeholder [(ngModel)]="videosSearch" (ngModelChange)="onVideosSearchChanged()" />
 
@@ -13,11 +13,12 @@
   [miniatureDisplayOptions]="miniatureDisplayOptions"
   [titlePage]="titlePage"
   [getVideosObservableFunction]="getVideosObservableFunction"
+  [ownerDisplayType]="ownerDisplayType"
   #videosSelection
 >
   <ng-template ptTemplate="globalButtons">
     <span class="action-button action-button-delete-selection" (click)="deleteSelectedVideos()">
-      <my-global-icon iconName="delete"></my-global-icon>
+      <my-global-icon iconName="delete" aria-hidden="true"></my-global-icon>
       <ng-container i18n>Delete</ng-container>
     </span>
   </ng-template>
@@ -30,7 +31,7 @@
 
       <my-button i18n-label label="Change ownership"
                  className="action-button-change-ownership grey-button"
-                 icon="im-with-her"
+                 icon="ownership-change"
                  (click)="changeOwnership($event, video)"
       ></my-button>
     </div>

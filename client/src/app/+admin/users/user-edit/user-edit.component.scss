@@ -8,6 +8,10 @@ label {
 
 .account-title {
   @include settings-big-title;
+
+  &.account-title-danger {
+    color: lighten($color: #c54130, $amount: 10);
+  }
 }
 
 input:not([type=submit]) {
@@ -36,6 +40,10 @@ input[type=submit], button {
     margin-bottom: 30px;
 
     button {
+      @include peertube-button;
+      @include danger-button;
+      @include disable-outline;
+
       display: block;
       margin-top: 0;
     }
