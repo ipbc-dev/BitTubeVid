@@ -4,7 +4,7 @@ listen:
 
 webserver:
   https: false
-  hostname: 'ice2.tunnel.bittube.app'
+  hostname: 'ice.tunnel.bittube.app'
   port: 80
 rates_limit:
   signup:

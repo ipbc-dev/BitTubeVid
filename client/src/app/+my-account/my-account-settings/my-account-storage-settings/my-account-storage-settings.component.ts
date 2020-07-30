@@ -82,8 +82,13 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
         this.userPremiumPlan = myPlan['data'][myPlan['data'].length - 1]
-        this.chosenPlan = this.userPremiumPlan
-        // this.form.value['storagePlan'] = this.userPremiumPlan
+        if (plans['success']) {
+          plans['plans'].forEach((plan: any) => {
+            if (plan.id == this.userPremiumPlan.planId) {
+              this.chosenPlan = plan
+            }
+          })
+        }
       } else {
         this.userHavePremium = false
         this.userPremiumPlan = {}
@@ -131,6 +136,10 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   getMyPlan () {
     return this.authHttp.get(MyAccountStorageSettingsComponent.GET_PREMIUM_STORAGE_API_URL + 'get-user-active-payment')
                .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  getTubePayId () {
+    return this.chosenPlan.tubePayId
   }
 
   havePremiumStorage () {

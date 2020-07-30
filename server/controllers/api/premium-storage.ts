@@ -193,13 +193,9 @@ async function adminDeletePlan (req: express.Request, res: express.Response) {
       body: JSON.stringify(apiReqBody)
     })
     const firebaseApiResult = await firebaseApiRes.json()
-    if (firebaseApiResult.success) {
-      const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
-      const deleteResponse = deleteResult// .map(del => del.toJSON())
-      return res.json({ success: true, deleted: deleteResponse })
-    } else {
-      return res.json({ success: false, error: firebaseApiResult })
-    }
+    const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
+    const deleteResponse = deleteResult// .map(del => del.toJSON())
+    return res.json({ success: true, deleted: deleteResponse, firebase: firebaseApiResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -368,21 +364,22 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       }
     }
     /* Building body */
-    console.log('ICEICE body is: ', body)
-    const apiReqBody = {
-      id: body.tubePayId,
-      host: WEBSERVER.URL,
-      auth: req.headers.authorization
-    }
-    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubePurchaseProduct', {
-      method: 'post',
-      headers: new Headers({
-        'Content-Type': 'application/json'
-      }),
-      body: JSON.stringify(apiReqBody)
-    })
-    const firebaseApiResult = await firebaseApiRes.json()
-    console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
+    // console.log('ICEICE body is: ', body)
+    // const apiReqBody = {
+    //   id: body.tubePayId,
+    //   host: WEBSERVER.URL,
+    //   auth: req.headers.authorization
+    // }
+    // const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubePurchaseProduct', {
+    //   method: 'post',
+    //   headers: new Headers({
+    //     'Content-Type': 'application/json'
+    //   }),
+    //   body: JSON.stringify(apiReqBody)
+    // })
+    // const firebaseApiResult = await firebaseApiRes.json()
+    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
+    const firebaseApiResult = { success: true }
     if (firebaseApiResult.success) {
       /* Adding payment record to DB */
       const paymentResult = await userPremiumStoragePaymentModel.create(createData)
