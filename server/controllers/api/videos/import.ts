@@ -34,8 +34,8 @@ import {
   MVideoTag,
   MVideoThumbnailAccountDefault,
   MVideoWithBlacklistLight
-} from '@server/typings/models'
-import { MVideoImport, MVideoImportFormattable } from '@server/typings/models/video/video-import'
+} from '@server/types/models'
+import { MVideoImport, MVideoImportFormattable } from '@server/types/models/video/video-import'
 
 const auditLogger = auditLoggerFactory('video-imports')
 const videoImportsRouter = express.Router()
@@ -68,7 +68,7 @@ export {
 function addVideoImport (req: express.Request, res: express.Response) {
   if (req.body.targetUrl) return addYoutubeDLImport(req, res)
 
-  const file = req.files && req.files['torrentfile'] ? req.files['torrentfile'][0] : undefined
+  const file = req.files?.['torrentfile']?.[0]
   if (req.body.magnetUri || file) return addTorrentImport(req, res, file)
 }
 

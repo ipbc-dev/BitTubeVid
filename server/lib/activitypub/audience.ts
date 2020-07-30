@@ -4,7 +4,7 @@ import { ACTIVITY_PUB } from '../../initializers/constants'
 import { ActorModel } from '../../models/activitypub/actor'
 import { VideoModel } from '../../models/video/video'
 import { VideoShareModel } from '../../models/video/video-share'
-import { MActorFollowersUrl, MActorLight, MActorUrl, MCommentOwner, MCommentOwnerVideo, MVideoId } from '../../typings/models'
+import { MActorFollowersUrl, MActorLight, MActorUrl, MCommentOwner, MCommentOwnerVideo, MVideoId } from '../../types/models'
 
 function getRemoteVideoAudience (accountActor: MActorUrl, actorsInvolvedInVideo: MActorFollowersUrl[]): ActivityAudience {
   return {
@@ -55,7 +55,7 @@ async function getActorsInvolvedInVideo (video: MVideoId, t: Transaction) {
 
   const videoAll = video as VideoModel
 
-  const videoActor = videoAll.VideoChannel && videoAll.VideoChannel.Account
+  const videoActor = videoAll.VideoChannel?.Account
     ? videoAll.VideoChannel.Account.Actor
     : await ActorModel.loadFromAccountByVideoId(video.id, t)
 

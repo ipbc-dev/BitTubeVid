@@ -18,6 +18,7 @@ import {
   setDefaultPagination,
   setDefaultSort,
   userAutocompleteValidator,
+  usersListValidator,
   usersAddValidator,
   usersGetValidator,
   usersRegisterValidator,
@@ -48,21 +49,19 @@ import { CONFIG } from '../../../initializers/config'
 import { sequelizeTypescript } from '../../../initializers/database'
 import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
 import { UserRegister } from '../../../../shared/models/users/user-register.model'
-import { MUser, MUserAccountDefault } from '@server/typings/models'
+import { MUser, MUserAccountDefault } from '@server/types/models'
 import { Hooks } from '@server/lib/plugins/hooks'
 import { tokensRouter } from '@server/controllers/api/users/token'
 
 const auditLogger = auditLoggerFactory('users')
 
-// @ts-ignore
 const signupRateLimiter = RateLimit({
   windowMs: CONFIG.RATES_LIMIT.SIGNUP.WINDOW_MS,
   max: CONFIG.RATES_LIMIT.SIGNUP.MAX,
   skipFailedRequests: true
 })
 
-// @ts-ignore
-const askSendEmailLimiter = new RateLimit({
+const askSendEmailLimiter = RateLimit({
   windowMs: CONFIG.RATES_LIMIT.ASK_SEND_EMAIL.WINDOW_MS,
   max: CONFIG.RATES_LIMIT.ASK_SEND_EMAIL.MAX
 })
@@ -89,6 +88,7 @@ usersRouter.get('/',
   usersSortValidator,
   setDefaultSort,
   setDefaultPagination,
+  usersListValidator,
   asyncMiddleware(listUsers)
 )
 
@@ -286,7 +286,13 @@ async function autocompleteUsers (req: express.Request, res: express.Response) {
 }
 
 async function listUsers (req: express.Request, res: express.Response) {
-  const resultList = await UserModel.listForApi(req.query.start, req.query.count, req.query.sort, req.query.search)
+  const resultList = await UserModel.listForApi({
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort,
+    search: req.query.search,
+    blocked: req.query.blocked
+  })
 
   return res.json(getFormattedObjects(resultList.data, resultList.total, { withAdminFlags: true }))
 }
@@ -336,7 +342,7 @@ async function askResetUserPassword (req: express.Request, res: express.Response
 
   const verificationString = await Redis.Instance.setResetPasswordVerificationString(user.id)
   const url = WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString
-  await Emailer.Instance.addPasswordResetEmailJob(user.email, url)
+  await Emailer.Instance.addPasswordResetEmailJob(user.username, user.email, url)
 
   return res.status(202).end()
 }

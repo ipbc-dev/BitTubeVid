@@ -17,8 +17,14 @@
 Be part of a network of multiple small federated, interoperable video hosting providers. Follow video creators and create videos. No vendor lock-in. All on a platform that is community-owned and ad-free.
 </p>
 
+
+<p align="center">
+<strong>Check, share and support PeerTube's v3 roadmap on https://joinpeertube.org/roadmap</strong>
+</p>
+
 <p align="center">
   <strong>Developed with &#10084; by <a href="https://bittube.app">BitTube</a> and <a href="https://framasoft.org">Framasoft</a></strong>
+:rocket::rocket::rocket:
 </p>
 
 <p align="center">

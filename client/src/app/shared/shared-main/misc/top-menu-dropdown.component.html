@@ -1,0 +1,50 @@
+<div class="sub-menu" [ngClass]="{ 'no-scroll': isModalOpened }">
+  <ng-container *ngFor="let menuEntry of menuEntries; index as id">
+
+    <a *ngIf="menuEntry.routerLink" [routerLink]="menuEntry.routerLink" routerLinkActive="active" class="title-page title-page-settings">{{ menuEntry.label }}</a>
+
+    <div *ngIf="!menuEntry.routerLink" ngbDropdown class="parent-entry"
+      #dropdown="ngbDropdown" (mouseleave)="closeDropdownIfHovered(dropdown)">
+      <span
+        *ngIf="isInSmallView"
+        [ngClass]="{ active: !!suffixLabels[menuEntry.label] }"
+        (click)="openModal(id)" role="button" class="title-page title-page-settings">
+        <ng-container i18n>{{ menuEntry.label }}</ng-container>
+        <ng-container *ngIf="!!suffixLabels[menuEntry.label]"> - {{ suffixLabels[menuEntry.label] }}</ng-container>
+      </span>
+
+      <span
+        *ngIf="!isInSmallView"
+        (mouseenter)="openDropdownOnHover(dropdown)" [ngClass]="{ active: !!suffixLabels[menuEntry.label] }" ngbDropdownAnchor
+        (click)="dropdownAnchorClicked(dropdown)" role="button" class="title-page title-page-settings"
+      >
+        <ng-container i18n>{{ menuEntry.label }}</ng-container>
+        <ng-container *ngIf="!!suffixLabels[menuEntry.label]"> - {{ suffixLabels[menuEntry.label] }}</ng-container>
+      </span>
+
+      <div ngbDropdownMenu>
+        <a *ngFor="let menuChild of menuEntry.children" class="dropdown-item" [ngClass]="{ icon: hasIcons }" [routerLink]="menuChild.routerLink">
+          <my-global-icon *ngIf="menuChild.iconName" [iconName]="menuChild.iconName" aria-hidden="true"></my-global-icon>
+
+          {{ menuChild.label }}
+        </a>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<ng-template #modal let-close="close" let-dismiss="dismiss">
+  <div class="modal-body">
+    <ng-container *ngFor="let menuEntry of menuEntries; index as id">
+      <div [ngClass]="{ hidden: id !== currentMenuEntryIndex }">
+        <a *ngFor="let menuChild of menuEntry.children"
+          [ngClass]="{ icon: hasIcons }"
+          [routerLink]="menuChild.routerLink" routerLinkActive="active" (click)="dismissOtherModals()">
+          <my-global-icon *ngIf="menuChild.iconName" [iconName]="menuChild.iconName" aria-hidden="true"></my-global-icon>
+
+          {{ menuChild.label }}
+        </a>
+      </div>
+    </ng-container>
+  </div>
+</ng-template>

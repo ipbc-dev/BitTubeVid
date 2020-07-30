@@ -1,6 +1,6 @@
 import { makeDeleteRequest, makeGetRequest, makePutBodyRequest } from '../requests/requests'
 import { CustomConfig } from '../../models/server/custom-config.model'
-import { DeepPartial } from '@server/typings/utils'
+import { DeepPartial } from '@shared/core-utils'
 import { merge } from 'lodash'
 
 function getConfig (url: string) {
@@ -162,6 +162,24 @@ function updateCustomSubConfig (url: string, token: string, newConfig: DeepParti
     },
     premium_storage: {
       enabled: false
+    },
+    broadcastMessage: {
+      enabled: true,
+      level: 'warning',
+      message: 'hello',
+      dismissable: true
+    },
+    search: {
+      remoteUri: {
+        users: true,
+        anonymous: true
+      },
+      searchIndex: {
+        enabled: true,
+        url: 'https://search.joinpeertube.org',
+        disableLocalSearch: true,
+        isDefaultSearch: true
+      }
     }
   }
 

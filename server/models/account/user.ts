@@ -69,7 +69,7 @@ import {
   MUserNotifSettingChannelDefault,
   MUserWithNotificationSetting,
   MVideoFullLight
-} from '@server/typings/models'
+} from '@server/types/models'
 
 enum ScopeNames {
   FOR_ME_API = 'FOR_ME_API',
@@ -418,11 +418,18 @@ export class UserModel extends Model<UserModel> {
     return this.count()
   }
 
-  static listForApi (start: number, count: number, sort: string, search?: string) {
-    let where: WhereOptions
+  static listForApi (parameters: {
+    start: number
+    count: number
+    sort: string
+    search?: string
+    blocked?: boolean
+  }) {
+    const { start, count, sort, search, blocked } = parameters
+    const where: WhereOptions = {}
 
     if (search) {
-      where = {
+      Object.assign(where, {
         [Op.or]: [
           {
             email: {
@@ -435,7 +442,13 @@ export class UserModel extends Model<UserModel> {
             }
           }
         ]
-      }
+      })
+    }
+
+    if (blocked !== undefined) {
+      Object.assign(where, {
+        blocked: blocked
+      })
     }
 
     const query: FindOptions = {

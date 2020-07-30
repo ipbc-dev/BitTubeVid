@@ -1,12 +1,18 @@
-import { NgModule } from '@angular/core'
-import { TableModule } from 'primeng/table'
 import { AutoCompleteModule } from 'primeng/autocomplete'
 import { InputSwitchModule } from 'primeng/inputswitch'
-import { SharedModule } from '../shared'
+import { TableModule } from 'primeng/table'
+import { NgModule } from '@angular/core'
+import { SharedFormModule } from '@app/shared/shared-forms'
+import { SharedGlobalIconModule } from '@app/shared/shared-icons'
+import { SharedMainModule } from '@app/shared/shared-main'
+import { SharedModerationModule } from '@app/shared/shared-moderation'
+import { SharedUserInterfaceSettingsModule } from '@app/shared/shared-user-settings'
+import { SharedUserSubscriptionModule } from '@app/shared/shared-user-subscription/shared-user-subscription.module'
+import { SharedVideoMiniatureModule } from '@app/shared/shared-video-miniature'
+import { SharedVideoPlaylistModule } from '@app/shared/shared-video-playlist/shared-video-playlist.module'
 import { MyAccountRoutingModule } from './my-account-routing.module'
 import { MyAccountChangePasswordComponent } from './my-account-settings/my-account-change-password/my-account-change-password.component'
 import { MyAccountSettingsComponent } from './my-account-settings/my-account-settings.component'
-import { MyAccountComponent } from './my-account.component'
 import { MyAccountVideosComponent } from './my-account-videos/my-account-videos.component'
 import { VideoChangeOwnershipComponent } from './my-account-videos/video-change-ownership/video-change-ownership.component'
 import { MyAccountOwnershipComponent } from './my-account-ownership/my-account-ownership.component'
@@ -33,15 +39,25 @@ import {
 } from '@app/+my-account/my-account-video-playlists/my-account-video-playlist-elements.component'
 import { DragDropModule } from '@angular/cdk/drag-drop'
 import { MyAccountChangeEmailComponent } from '@app/+my-account/my-account-settings/my-account-change-email'
+import { MyAccountComponent } from './my-account.component'
 
 @NgModule({
   imports: [
-    TableModule,
     MyAccountRoutingModule,
+
     AutoCompleteModule,
-    SharedModule,
+    TableModule,
     InputSwitchModule,
-    DragDropModule
+    DragDropModule,
+
+    SharedMainModule,
+    SharedFormModule,
+    SharedModerationModule,
+    SharedVideoMiniatureModule,
+    SharedUserSubscriptionModule,
+    SharedVideoPlaylistModule,
+    SharedUserInterfaceSettingsModule,
+    SharedGlobalIconModule
   ],
 
   declarations: [

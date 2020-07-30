@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core'
 import { RouterModule, Routes } from '@angular/router'
 import { MetaGuard } from '@ngx-meta/core'
 import { LoginGuard } from '../core'
-import { MyAccountComponent } from './my-account.component'
 import { MyAccountSettingsComponent } from './my-account-settings/my-account-settings.component'
 import { MyAccountVideosComponent } from './my-account-videos/my-account-videos.component'
 import { MyAccountVideoImportsComponent } from '@app/+my-account/my-account-video-imports/my-account-video-imports.component'
@@ -23,6 +22,7 @@ import {
 import {
   MyAccountVideoPlaylistElementsComponent
 } from '@app/+my-account/my-account-video-playlists/my-account-video-playlist-elements.component'
+import { MyAccountComponent } from './my-account.component'
 
 const myAccountRoutes: Routes = [
   {
@@ -47,7 +47,10 @@ const myAccountRoutes: Routes = [
 
       {
         path: 'video-channels',
-        loadChildren: () => import('./my-account-video-channels/my-account-video-channels.module').then(m => m.MyAccountVideoChannelsModule)
+        loadChildren: () => {
+          return import('./+my-account-video-channels/my-account-video-channels.module')
+            .then(m => m.MyAccountVideoChannelsModule)
+        }
       },
 
       {
@@ -150,7 +153,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountServerBlocklistComponent,
         data: {
           meta: {
-            title: 'Muted instances'
+            title: 'Muted servers'
           }
         }
       },

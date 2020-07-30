@@ -6,9 +6,10 @@
   justify-content: space-between;
   margin: 20px 0 50px;
 
-  h4,
+  h1,
   .fake-element {
     flex: 1;
+    font-size: 1.5rem;
   }
 
   input[type=text] {
@@ -84,7 +85,7 @@ my-edit-button {
       .video-bottom,
       .video-bottom .video-miniature-information {
         /* same width than a.video-thumbnail */
-        max-width: 223px !important;
+        max-width: $video-thumbnail-width !important;
       }
     }
   }
@@ -110,7 +111,7 @@ my-edit-button {
     ::ng-deep {
       .action-button {
         /* same width than a.video-thumbnail */
-        width: 223px;
+        width: $video-thumbnail-width;
       }
     }
   }
@@ -124,7 +125,7 @@ my-edit-button {
         flex-direction: column;
 
         .video-miniature-name {
-          max-width: 223px;
+          max-width: $video-thumbnail-width;
         }
       }
     }

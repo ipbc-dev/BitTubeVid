@@ -1,4 +1,5 @@
 import { NSFWPolicyType } from '../videos/nsfw-policy.type'
+import { BroadcastMessageLevel } from './broadcast-message-level.type'
 
 export interface CustomConfig {
   instance: {
@@ -134,5 +135,25 @@ export interface CustomConfig {
 
   premium_storage: {
     enabled: boolean
+  },
+  broadcastMessage: {
+    enabled: boolean
+    message: string
+    level: BroadcastMessageLevel
+    dismissable: boolean
+  }
+
+  search: {
+    remoteUri: {
+      users: boolean
+      anonymous: boolean
+    }
+
+    searchIndex: {
+      enabled: boolean
+      url: string
+      disableLocalSearch: boolean
+      isDefaultSearch: boolean
+    }
   }
 }

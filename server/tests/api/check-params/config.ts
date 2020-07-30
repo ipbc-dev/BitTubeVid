@@ -136,6 +136,24 @@ describe('Test config API validators', function () {
     },
     premium_storage: {
       enabled: false
+    },
+    broadcastMessage: {
+      enabled: true,
+      dismissable: true,
+      message: 'super message',
+      level: 'warning'
+    },
+    search: {
+      remoteUri: {
+        users: true,
+        anonymous: true
+      },
+      searchIndex: {
+        enabled: true,
+        url: 'https://search.joinpeertube.org',
+        disableLocalSearch: true,
+        isDefaultSearch: true
+      }
     }
   }
 

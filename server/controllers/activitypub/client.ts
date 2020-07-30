@@ -35,7 +35,7 @@ import { buildDislikeActivity } from '../../lib/activitypub/send/send-dislike'
 import { videoPlaylistElementAPGetValidator, videoPlaylistsGetValidator } from '../../middlewares/validators/videos/video-playlists'
 import { VideoPlaylistModel } from '../../models/video/video-playlist'
 import { VideoPlaylistPrivacy } from '../../../shared/models/videos/playlist/video-playlist-privacy.model'
-import { MAccountId, MActorId, MVideoAPWithoutCaption, MVideoId, MChannelId } from '@server/typings/models'
+import { MAccountId, MActorId, MVideoAPWithoutCaption, MVideoId, MChannelId } from '@server/types/models'
 import { getServerActor } from '@server/models/application/application'
 import { getRateUrl } from '@server/lib/activitypub/video-rates'
 
@@ -285,7 +285,7 @@ async function videoCommentsController (req: express.Request, res: express.Respo
   const video = res.locals.onlyImmutableVideo
 
   const handler = async (start: number, count: number) => {
-    const result = await VideoCommentModel.listAndCountByVideoId(video.id, start, count)
+    const result = await VideoCommentModel.listAndCountByVideoForAP(video, start, count)
     return {
       total: result.count,
       data: result.rows.map(r => r.url)
