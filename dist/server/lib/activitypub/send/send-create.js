@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendCreateCacheFile = exports.sendCreateVideoPlaylist = exports.sendCreateVideoComment = exports.buildCreateActivity = exports.sendCreateVideo = void 0;
+const tslib_1 = require("tslib");
 const videos_1 = require("../../../../shared/models/videos");
 const video_comment_1 = require("../../../models/video/video-comment");
 const utils_1 = require("./utils");
@@ -17,7 +10,7 @@ const logger_1 = require("../../../helpers/logger");
 const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const application_1 = require("@server/models/application/application");
 function sendCreateVideo(video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!video.hasPrivacyForFederation())
             return undefined;
         logger_1.logger.info('Creating job to send video creation of %s.', video.url);
@@ -30,7 +23,7 @@ function sendCreateVideo(video, t) {
 }
 exports.sendCreateVideo = sendCreateVideo;
 function sendCreateCacheFile(byActor, video, fileRedundancy) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to send file cache of %s.', fileRedundancy.url);
         return sendVideoRelatedCreateActivity({
             byActor,
@@ -43,7 +36,7 @@ function sendCreateCacheFile(byActor, video, fileRedundancy) {
 }
 exports.sendCreateCacheFile = sendCreateCacheFile;
 function sendCreateVideoPlaylist(playlist, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (playlist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE)
             return undefined;
         logger_1.logger.info('Creating job to send create video playlist of %s.', playlist.url);
@@ -60,7 +53,7 @@ function sendCreateVideoPlaylist(playlist, t) {
 }
 exports.sendCreateVideoPlaylist = sendCreateVideoPlaylist;
 function sendCreateVideoComment(comment, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to send comment %s.', comment.url);
         const isOrigin = comment.Video.isOwned();
         const byActor = comment.Account.Actor;
@@ -99,7 +92,7 @@ function buildCreateActivity(url, byActor, object, audience) {
 }
 exports.buildCreateActivity = buildCreateActivity;
 function sendVideoRelatedCreateActivity(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const activityBuilder = (audience) => {
             return buildCreateActivity(options.url, options.byActor, options.object, audience);
         };

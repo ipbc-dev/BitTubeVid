@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.PeerTubeSocket = void 0;
 const SocketIO = require("socket.io");
 const middlewares_1 = require("../middlewares");
 const logger_1 = require("../helpers/logger");

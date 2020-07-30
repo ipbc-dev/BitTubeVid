@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ActorFollowScoreCache = void 0;
 const constants_1 = require("../../initializers/constants");
 const logger_1 = require("../../helpers/logger");
 class ActorFollowScoreCache {

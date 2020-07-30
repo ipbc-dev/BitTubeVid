@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var PluginModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.PluginModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const plugin_type_1 = require("../../../shared/models/plugins/plugin.type");
@@ -195,76 +188,76 @@ let PluginModel = PluginModel_1 = class PluginModel extends sequelize_typescript
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('PluginName', value => utils_1.throwIfNotValid(value, plugins_1.isPluginNameValid, 'name')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "name", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('PluginType', value => utils_1.throwIfNotValid(value, plugins_1.isPluginTypeValid, 'type')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], PluginModel.prototype, "type", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('PluginVersion', value => utils_1.throwIfNotValid(value, plugins_1.isPluginVersionValid, 'version')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "version", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Is('PluginLatestVersion', value => utils_1.throwIfNotValid(value, plugins_1.isPluginVersionValid, 'version')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "latestVersion", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], PluginModel.prototype, "enabled", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], PluginModel.prototype, "uninstalled", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "peertubeEngine", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Is('PluginDescription', value => utils_1.throwIfNotValid(value, plugins_1.isPluginDescriptionValid, 'description')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "description", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('PluginHomepage', value => utils_1.throwIfNotValid(value, plugins_1.isPluginHomepage, 'homepage')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], PluginModel.prototype, "homepage", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.JSONB),
-    __metadata("design:type", Object)
+    tslib_1.__metadata("design:type", Object)
 ], PluginModel.prototype, "settings", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.JSONB),
-    __metadata("design:type", Object)
+    tslib_1.__metadata("design:type", Object)
 ], PluginModel.prototype, "storage", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], PluginModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], PluginModel.prototype, "updatedAt", void 0);
-PluginModel = PluginModel_1 = __decorate([
+PluginModel = PluginModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.DefaultScope(() => ({
         attributes: {
             exclude: ['storage']

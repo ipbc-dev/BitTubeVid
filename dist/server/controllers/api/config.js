@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getRegisteredThemes = exports.getRegisteredPlugins = exports.getEnabledResolutions = exports.configRouter = void 0;
+const tslib_1 = require("tslib");
 const hooks_1 = require("@server/lib/plugins/hooks");
 const express = require("express");
 const fs_extra_1 = require("fs-extra");
@@ -37,7 +30,7 @@ configRouter.put('/custom', middlewares_1.authenticate, middlewares_1.ensureUser
 configRouter.delete('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), middlewares_1.asyncMiddleware(deleteCustomConfig));
 let serverCommit;
 function getConfig(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { allowed } = yield hooks_1.Hooks.wrapPromiseFun(signup_1.isSignupAllowed, {
             ip: req.ip
         }, 'filter:api.user.signup.allowed.result');
@@ -61,6 +54,12 @@ function getConfig(req, res) {
                 remoteUri: {
                     users: config_1.CONFIG.SEARCH.REMOTE_URI.USERS,
                     anonymous: config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+                },
+                searchIndex: {
+                    enabled: config_1.CONFIG.SEARCH.SEARCH_INDEX.ENABLED,
+                    url: config_1.CONFIG.SEARCH.SEARCH_INDEX.URL,
+                    disableLocalSearch: config_1.CONFIG.SEARCH.SEARCH_INDEX.DISABLE_LOCAL_SEARCH,
+                    isDefaultSearch: config_1.CONFIG.SEARCH.SEARCH_INDEX.IS_DEFAULT_SEARCH
                 }
             },
             plugin: {
@@ -159,6 +158,12 @@ function getConfig(req, res) {
             },
             premium_storage: {
                 enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
+            },
+            broadcastMessage: {
+                enabled: config_1.CONFIG.BROADCAST_MESSAGE.ENABLED,
+                message: config_1.CONFIG.BROADCAST_MESSAGE.MESSAGE,
+                level: config_1.CONFIG.BROADCAST_MESSAGE.LEVEL,
+                dismissable: config_1.CONFIG.BROADCAST_MESSAGE.DISMISSABLE
             }
         };
         return res.json(json);
@@ -189,7 +194,7 @@ function getCustomConfig(req, res) {
     return res.json(data).end();
 }
 function deleteCustomConfig(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield fs_extra_1.remove(config_1.CONFIG.CUSTOM_FILE);
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CustomConfigAuditView(customConfig()));
         config_1.reloadConfig();
@@ -199,7 +204,7 @@ function deleteCustomConfig(req, res) {
     });
 }
 function updateCustomConfig(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const oldCustomConfigAuditKeys = new audit_logger_1.CustomConfigAuditView(customConfig());
         const toUpdateJSON = convertCustomConfigBody(req.body);
         logger_1.logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', config_1.CONFIG.CUSTOM_FILE);
@@ -382,6 +387,24 @@ function customConfig() {
         },
         premium_storage: {
             enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
+        },
+        broadcastMessage: {
+            enabled: config_1.CONFIG.BROADCAST_MESSAGE.ENABLED,
+            message: config_1.CONFIG.BROADCAST_MESSAGE.MESSAGE,
+            level: config_1.CONFIG.BROADCAST_MESSAGE.LEVEL,
+            dismissable: config_1.CONFIG.BROADCAST_MESSAGE.DISMISSABLE
+        },
+        search: {
+            remoteUri: {
+                users: config_1.CONFIG.SEARCH.REMOTE_URI.USERS,
+                anonymous: config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+            },
+            searchIndex: {
+                enabled: config_1.CONFIG.SEARCH.SEARCH_INDEX.ENABLED,
+                url: config_1.CONFIG.SEARCH.SEARCH_INDEX.URL,
+                disableLocalSearch: config_1.CONFIG.SEARCH.SEARCH_INDEX.DISABLE_LOCAL_SEARCH,
+                isDefaultSearch: config_1.CONFIG.SEARCH.SEARCH_INDEX.IS_DEFAULT_SEARCH
+            }
         }
     };
 }

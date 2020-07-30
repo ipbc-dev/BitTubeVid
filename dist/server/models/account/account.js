@@ -1,24 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var AccountModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AccountModel = exports.ScopeNames = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const accounts_1 = require("../../helpers/custom-validators/accounts");
 const send_1 = require("../../lib/activitypub/send");
@@ -37,13 +21,14 @@ const account_blocklist_1 = require("./account-blocklist");
 const server_blocklist_1 = require("../server/server-blocklist");
 const actor_follow_1 = require("../activitypub/actor-follow");
 const model_cache_1 = require("@server/models/model-cache");
+const video_1 = require("../video/video");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["SUMMARY"] = "SUMMARY";
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescript_1.Model {
     static sendDeleteIfOwned(instance, options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!instance.Actor) {
                 instance.Actor = yield instance.$get('Actor', { transaction: options.transaction });
             }
@@ -151,6 +136,27 @@ let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescr
             };
         });
     }
+    static loadAccountIdFromVideo(videoId) {
+        const query = {
+            include: [
+                {
+                    attributes: ['id', 'accountId'],
+                    model: video_channel_1.VideoChannelModel.unscoped(),
+                    required: true,
+                    include: [
+                        {
+                            attributes: ['id', 'channelId'],
+                            model: video_1.VideoModel.unscoped(),
+                            where: {
+                                id: videoId
+                            }
+                        }
+                    ]
+                }
+            ]
+        };
+        return AccountModel_1.findOne(query);
+    }
     static listLocalsForSitemap(sort) {
         const query = {
             attributes: [],
@@ -212,69 +218,69 @@ let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescr
         return this.BlockedAccounts && this.BlockedAccounts.length !== 0;
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], AccountModel.prototype, "name", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('AccountDescription', value => utils_1.throwIfNotValid(value, accounts_1.isAccountDescriptionValid, 'description', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.USERS.DESCRIPTION.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], AccountModel.prototype, "description", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], AccountModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], AccountModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_1.ActorModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], AccountModel.prototype, "actorId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_1.ActorModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", actor_1.ActorModel)
+    tslib_1.__metadata("design:type", actor_1.ActorModel)
 ], AccountModel.prototype, "Actor", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => user_1.UserModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], AccountModel.prototype, "userId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => user_1.UserModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", user_1.UserModel)
+    tslib_1.__metadata("design:type", user_1.UserModel)
 ], AccountModel.prototype, "User", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => application_1.ApplicationModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], AccountModel.prototype, "applicationId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => application_1.ApplicationModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", application_1.ApplicationModel)
+    tslib_1.__metadata("design:type", application_1.ApplicationModel)
 ], AccountModel.prototype, "Application", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_channel_1.VideoChannelModel, {
         foreignKey: {
             allowNull: false
@@ -282,9 +288,9 @@ __decorate([
         onDelete: 'cascade',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], AccountModel.prototype, "VideoChannels", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_playlist_1.VideoPlaylistModel, {
         foreignKey: {
             allowNull: false
@@ -292,9 +298,9 @@ __decorate([
         onDelete: 'cascade',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], AccountModel.prototype, "VideoPlaylists", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_comment_1.VideoCommentModel, {
         foreignKey: {
             allowNull: true
@@ -302,9 +308,9 @@ __decorate([
         onDelete: 'cascade',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], AccountModel.prototype, "VideoComments", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => account_blocklist_1.AccountBlocklistModel, {
         foreignKey: {
             name: 'targetAccountId',
@@ -313,15 +319,15 @@ __decorate([
         as: 'BlockedAccounts',
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], AccountModel.prototype, "BlockedAccounts", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [AccountModel, Object]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [AccountModel, Object]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], AccountModel, "sendDeleteIfOwned", null);
-AccountModel = AccountModel_1 = __decorate([
+AccountModel = AccountModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.DefaultScope(() => ({
         include: [
             {

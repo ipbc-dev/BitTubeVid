@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.cacheFileActivityObjectToDBAttributes = exports.updateCacheFile = exports.createCacheFile = exports.createOrUpdateCacheFile = void 0;
+const tslib_1 = require("tslib");
 const video_redundancy_1 = require("../../models/redundancy/video-redundancy");
 const video_streaming_playlist_type_1 = require("../../../shared/models/videos/video-streaming-playlist.type");
 function cacheFileActivityObjectToDBAttributes(cacheFileObject, video, byActor) {
@@ -43,7 +36,7 @@ function cacheFileActivityObjectToDBAttributes(cacheFileObject, video, byActor) 
 }
 exports.cacheFileActivityObjectToDBAttributes = cacheFileActivityObjectToDBAttributes;
 function createOrUpdateCacheFile(cacheFileObject, video, byActor, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const redundancyModel = yield video_redundancy_1.VideoRedundancyModel.loadByUrl(cacheFileObject.id, t);
         if (!redundancyModel) {
             yield createCacheFile(cacheFileObject, video, byActor, t);

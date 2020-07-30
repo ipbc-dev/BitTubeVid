@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchVideoWithSort = exports.searchVideoWithToken = exports.advancedVideosSearch = exports.searchVideo = void 0;
 const request = require("supertest");
 const miscs_1 = require("../miscs/miscs");
 function searchVideo(url, search) {

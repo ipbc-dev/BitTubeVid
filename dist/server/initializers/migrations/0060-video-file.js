@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.down = exports.up = void 0;
 function up(utils) {
     const q = utils.queryInterface;
     const query = 'INSERT INTO "VideoFiles" ("videoId", "resolution", "size", "extname", "infoHash", "createdAt", "updatedAt") ' +

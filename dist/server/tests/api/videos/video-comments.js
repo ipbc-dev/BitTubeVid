@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -23,7 +15,7 @@ describe('Test video comments', function () {
     let replyToDeleteId;
     let userAccessTokenServer1;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield index_1.flushAndRunServer(1);
             yield index_1.setAccessTokensToServers([server]);
@@ -45,7 +37,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should not have threads on this video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.be.an('array');
@@ -53,7 +45,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should create a thread in this video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const text = 'my super first comment';
             const res = yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, videoUUID, text);
             const comment = res.body.comment;
@@ -71,7 +63,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should list threads of this video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
             expect(res.body.total).to.equal(1);
             expect(res.body.data).to.be.an('array');
@@ -92,7 +84,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should get all the thread created', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield video_comments_1.getVideoThreadComments(server.url, videoUUID, threadId);
             const rootComment = res.body.comment;
             expect(rootComment.inReplyToCommentId).to.be.null;
@@ -103,7 +95,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should create multiple replies in this thread', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const text1 = 'my super answer to thread 1';
             const childCommentRes = yield video_comments_1.addVideoCommentReply(server.url, server.accessToken, videoId, threadId, text1);
             const childCommentId = childCommentRes.body.comment.id;
@@ -114,7 +106,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should get correctly the replies', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield video_comments_1.getVideoThreadComments(server.url, videoUUID, threadId);
             const tree = res.body;
             expect(tree.comment.text).equal('my super first comment');
@@ -132,7 +124,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should create other threads', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const text1 = 'super thread 2';
             yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, videoUUID, text1);
             const text2 = 'super thread 3';
@@ -140,7 +132,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should list the threads', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5, 'createdAt');
             expect(res.body.total).to.equal(3);
             expect(res.body.data).to.be.an('array');
@@ -154,7 +146,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should delete a reply', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield video_comments_1.deleteVideoComment(server.url, server.accessToken, videoId, replyToDeleteId);
             const res = yield video_comments_1.getVideoThreadComments(server.url, videoUUID, threadId);
             const tree = res.body;
@@ -175,7 +167,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should delete a complete thread', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield video_comments_1.deleteVideoComment(server.url, server.accessToken, videoId, threadId);
             const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5, 'createdAt');
             expect(res.body.total).to.equal(3);
@@ -193,7 +185,7 @@ describe('Test video comments', function () {
         });
     });
     it('Should count replies from the video author correctly', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const text = 'my super first comment';
             yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, videoUUID, text);
             let res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
@@ -209,7 +201,7 @@ describe('Test video comments', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

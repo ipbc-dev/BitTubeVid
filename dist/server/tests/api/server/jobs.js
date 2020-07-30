@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/extra-utils/index");
@@ -21,7 +13,7 @@ const expect = chai.expect;
 describe('Test jobs', function () {
     let servers;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield servers_1.flushAndRunMultipleServers(2);
             yield index_1.setAccessTokensToServers(servers);
@@ -29,7 +21,7 @@ describe('Test jobs', function () {
         });
     });
     it('Should create some jobs', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield videos_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'video1' });
             yield videos_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'video2' });
@@ -37,14 +29,14 @@ describe('Test jobs', function () {
         });
     });
     it('Should list jobs', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield jobs_1.getJobsList(servers[1].url, servers[1].accessToken, 'completed');
             expect(res.body.total).to.be.above(2);
             expect(res.body.data).to.have.length.above(2);
         });
     });
     it('Should list jobs with sort, pagination and job type', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield jobs_1.getJobsListPaginationAndSort({
                     url: servers[1].url,
@@ -83,7 +75,7 @@ describe('Test jobs', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);
         });
     });

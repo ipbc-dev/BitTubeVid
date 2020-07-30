@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const accounts_1 = require("../../../../shared/extra-utils/users/accounts");
@@ -21,7 +13,7 @@ describe('Test AP refresher', function () {
     let playlistUUID1;
     let playlistUUID2;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2, { transcoding: { enabled: false } });
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -52,7 +44,7 @@ describe('Test AP refresher', function () {
     });
     describe('Videos refresher', function () {
         it('Should remove a deleted remote video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 yield extra_utils_1.wait(10000);
                 yield extra_utils_1.setVideoField(servers[1].internalServerNumber, videoUUID1, 'uuid', '304afe4f-39f9-4d49-8ed7-ac57b86b174f');
@@ -64,7 +56,7 @@ describe('Test AP refresher', function () {
             });
         });
         it('Should not update a remote video if the remote instance is down', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(70000);
                 extra_utils_1.killallServers([servers[1]]);
                 yield extra_utils_1.setVideoField(servers[1].internalServerNumber, videoUUID3, 'uuid', '304afe4f-39f9-4d49-8ed7-ac57b86b174e');
@@ -78,7 +70,7 @@ describe('Test AP refresher', function () {
     });
     describe('Actors refresher', function () {
         it('Should remove a deleted actor', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 yield extra_utils_1.wait(10000);
                 const to = 'http://localhost:' + servers[1].port + '/accounts/user2';
@@ -93,7 +85,7 @@ describe('Test AP refresher', function () {
     });
     describe('Playlist refresher', function () {
         it('Should remove a deleted playlist', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 yield extra_utils_1.wait(10000);
                 yield extra_utils_1.setPlaylistField(servers[1].internalServerNumber, playlistUUID2, 'uuid', '304afe4f-39f9-4d49-8ed7-ac57b86b178e');
@@ -106,7 +98,7 @@ describe('Test AP refresher', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.cleanupTests(servers);
             yield extra_utils_1.closeAllSequelize(servers);

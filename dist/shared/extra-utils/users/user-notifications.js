@@ -1,18 +1,17 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const requests_1 = require("../requests/requests");
-const users_1 = require("../../models/users");
+exports.prepareNotificationsTest = exports.checkNewInstanceFollower = exports.getLastNotification = exports.markAsReadNotifications = exports.getUserNotifications = exports.checkVideoAutoBlacklistForModerators = exports.checkNewVideoAbuseForModerators = exports.updateMyNotificationSettings = exports.checkCommentMention = exports.checkNewBlacklistOnMyVideo = exports.checkNewCommentOnMyVideo = exports.checkNewActorFollow = exports.checkNewVideoFromSubscription = exports.checkVideoIsPublished = exports.checkAutoInstanceFollowing = exports.checkUserRegistered = exports.checkMyVideoImportIsFinished = exports.markAsReadAllNotifications = exports.checkNotification = exports.getAllNotificationsSettings = void 0;
+const tslib_1 = require("tslib");
 const chai_1 = require("chai");
 const util_1 = require("util");
+const users_1 = require("../../models/users");
+const email_1 = require("../miscs/email");
+const requests_1 = require("../requests/requests");
+const follows_1 = require("../server/follows");
+const servers_1 = require("../server/servers");
+const socket_io_1 = require("../socket/socket-io");
+const login_1 = require("./login");
+const users_2 = require("./users");
 function updateMyNotificationSettings(url, token, settings, statusCodeExpected = 204) {
     const path = '/api/v1/users/me/notification-settings';
     return requests_1.makePutBodyRequest({
@@ -25,7 +24,7 @@ function updateMyNotificationSettings(url, token, settings, statusCodeExpected =
 }
 exports.updateMyNotificationSettings = updateMyNotificationSettings;
 function getUserNotifications(url, token, start, count, unread, sort = '-createdAt', statusCodeExpected = 200) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const path = '/api/v1/users/me/notifications';
         return requests_1.makeGetRequest({
             url,
@@ -64,7 +63,7 @@ function markAsReadAllNotifications(url, token, statusCodeExpected = 204) {
 }
 exports.markAsReadAllNotifications = markAsReadAllNotifications;
 function getLastNotification(serverUrl, accessToken) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield getUserNotifications(serverUrl, accessToken, 0, 1, undefined, '-createdAt');
         if (res.body.total === 0)
             return undefined;
@@ -73,7 +72,7 @@ function getLastNotification(serverUrl, accessToken) {
 }
 exports.getLastNotification = getLastNotification;
 function checkNotification(base, notificationChecker, emailNotificationFinder, checkType) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const check = base.check || { web: true, mail: true };
         if (check.web) {
             const notification = yield getLastNotification(base.server.url, base.token);
@@ -91,11 +90,11 @@ function checkNotification(base, notificationChecker, emailNotificationFinder, c
             });
             if (checkType === 'presence') {
                 const obj = util_1.inspect(base.socketNotifications, { depth: 5 });
-                chai_1.expect(socketNotification, 'The socket notification is absent when is should be present. ' + obj).to.not.be.undefined;
+                chai_1.expect(socketNotification, 'The socket notification is absent when it should be present. ' + obj).to.not.be.undefined;
             }
             else {
                 const obj = util_1.inspect(socketNotification, { depth: 5 });
-                chai_1.expect(socketNotification, 'The socket notification is present when is should not be present. ' + obj).to.be.undefined;
+                chai_1.expect(socketNotification, 'The socket notification is present when it should not be present. ' + obj).to.be.undefined;
             }
         }
         if (check.mail) {
@@ -104,7 +103,8 @@ function checkNotification(base, notificationChecker, emailNotificationFinder, c
                 .reverse()
                 .find(e => emailNotificationFinder(e));
             if (checkType === 'presence') {
-                chai_1.expect(email, 'The email is absent when is should be present. ' + util_1.inspect(base.emails)).to.not.be.undefined;
+                const emails = base.emails.map(e => e.text);
+                chai_1.expect(email, 'The email is absent when is should be present. ' + util_1.inspect(emails)).to.not.be.undefined;
             }
             else {
                 chai_1.expect(email, 'The email is present when is should not be present. ' + util_1.inspect(email)).to.be.undefined;
@@ -134,7 +134,7 @@ function checkComment(comment, commentId, threadId) {
     chai_1.expect(comment.threadId).to.equal(threadId);
 }
 function checkNewVideoFromSubscription(base, videoName, videoUUID, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_VIDEO_FROM_SUBSCRIPTION;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -158,7 +158,7 @@ function checkNewVideoFromSubscription(base, videoName, videoUUID, type) {
 }
 exports.checkNewVideoFromSubscription = checkNewVideoFromSubscription;
 function checkVideoIsPublished(base, videoName, videoUUID, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.MY_VIDEO_PUBLISHED;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -180,7 +180,7 @@ function checkVideoIsPublished(base, videoName, videoUUID, type) {
 }
 exports.checkVideoIsPublished = checkVideoIsPublished;
 function checkMyVideoImportIsFinished(base, videoName, videoUUID, url, success, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = success ? users_1.UserNotificationType.MY_VIDEO_IMPORT_SUCCESS : users_1.UserNotificationType.MY_VIDEO_IMPORT_ERROR;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -204,7 +204,7 @@ function checkMyVideoImportIsFinished(base, videoName, videoUUID, url, success, 
 }
 exports.checkMyVideoImportIsFinished = checkMyVideoImportIsFinished;
 function checkUserRegistered(base, username, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_USER_REGISTRATION;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -226,7 +226,7 @@ function checkUserRegistered(base, username, type) {
 }
 exports.checkUserRegistered = checkUserRegistered;
 function checkNewActorFollow(base, followType, followerName, followerDisplayName, followingDisplayName, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_FOLLOW;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -256,7 +256,7 @@ function checkNewActorFollow(base, followType, followerName, followerDisplayName
 }
 exports.checkNewActorFollow = checkNewActorFollow;
 function checkNewInstanceFollower(base, followerHost, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_INSTANCE_FOLLOWER;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -282,7 +282,7 @@ function checkNewInstanceFollower(base, followerHost, type) {
 }
 exports.checkNewInstanceFollower = checkNewInstanceFollower;
 function checkAutoInstanceFollowing(base, followerHost, followingHost, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.AUTO_INSTANCE_FOLLOWING;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -310,7 +310,7 @@ function checkAutoInstanceFollowing(base, followerHost, followingHost, type) {
 }
 exports.checkAutoInstanceFollowing = checkAutoInstanceFollowing;
 function checkCommentMention(base, uuid, commentId, threadId, byAccountDisplayName, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.COMMENT_MENTION;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -335,7 +335,7 @@ function checkCommentMention(base, uuid, commentId, threadId, byAccountDisplayNa
 exports.checkCommentMention = checkCommentMention;
 let lastEmailCount = 0;
 function checkNewCommentOnMyVideo(base, uuid, commentId, threadId, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_COMMENT_ON_MY_VIDEO;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -364,7 +364,7 @@ function checkNewCommentOnMyVideo(base, uuid, commentId, threadId, type) {
 }
 exports.checkNewCommentOnMyVideo = checkNewCommentOnMyVideo;
 function checkNewVideoAbuseForModerators(base, videoUUID, videoName, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -388,7 +388,7 @@ function checkNewVideoAbuseForModerators(base, videoUUID, videoName, type) {
 }
 exports.checkNewVideoAbuseForModerators = checkNewVideoAbuseForModerators;
 function checkVideoAutoBlacklistForModerators(base, videoUUID, videoName, type) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.VIDEO_AUTO_BLACKLIST_FOR_MODERATORS;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
@@ -412,7 +412,7 @@ function checkVideoAutoBlacklistForModerators(base, videoUUID, videoName, type) 
 }
 exports.checkVideoAutoBlacklistForModerators = checkVideoAutoBlacklistForModerators;
 function checkNewBlacklistOnMyVideo(base, videoUUID, videoName, blacklistType) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = blacklistType === 'blacklist'
             ? users_1.UserNotificationType.BLACKLIST_ON_MY_VIDEO
             : users_1.UserNotificationType.UNBLACKLIST_ON_MY_VIDEO;
@@ -430,3 +430,81 @@ function checkNewBlacklistOnMyVideo(base, videoUUID, videoName, blacklistType) {
     });
 }
 exports.checkNewBlacklistOnMyVideo = checkNewBlacklistOnMyVideo;
+function getAllNotificationsSettings() {
+    return {
+        newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        newCommentOnMyVideo: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        videoAbuseAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        videoAutoBlacklistAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        blacklistOnMyVideo: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        myVideoImportFinished: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        myVideoPublished: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        commentMention: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        newFollow: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        newUserRegistration: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        newInstanceFollower: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
+        autoInstanceFollowing: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL
+    };
+}
+exports.getAllNotificationsSettings = getAllNotificationsSettings;
+function prepareNotificationsTest(serversCount = 3) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const userNotifications = [];
+        const adminNotifications = [];
+        const adminNotificationsServer2 = [];
+        const emails = [];
+        const port = yield email_1.MockSmtpServer.Instance.collectEmails(emails);
+        const overrideConfig = {
+            smtp: {
+                hostname: 'localhost',
+                port
+            }
+        };
+        const servers = yield servers_1.flushAndRunMultipleServers(serversCount, overrideConfig);
+        yield login_1.setAccessTokensToServers(servers);
+        if (serversCount > 1) {
+            yield follows_1.doubleFollow(servers[0], servers[1]);
+        }
+        const user = {
+            username: 'user_1',
+            password: 'super password'
+        };
+        yield users_2.createUser({
+            url: servers[0].url,
+            accessToken: servers[0].accessToken,
+            username: user.username,
+            password: user.password,
+            videoQuota: 10 * 1000 * 1000
+        });
+        const userAccessToken = yield login_1.userLogin(servers[0], user);
+        yield updateMyNotificationSettings(servers[0].url, userAccessToken, getAllNotificationsSettings());
+        yield updateMyNotificationSettings(servers[0].url, servers[0].accessToken, getAllNotificationsSettings());
+        if (serversCount > 1) {
+            yield updateMyNotificationSettings(servers[1].url, servers[1].accessToken, getAllNotificationsSettings());
+        }
+        {
+            const socket = socket_io_1.getUserNotificationSocket(servers[0].url, userAccessToken);
+            socket.on('new-notification', n => userNotifications.push(n));
+        }
+        {
+            const socket = socket_io_1.getUserNotificationSocket(servers[0].url, servers[0].accessToken);
+            socket.on('new-notification', n => adminNotifications.push(n));
+        }
+        if (serversCount > 1) {
+            const socket = socket_io_1.getUserNotificationSocket(servers[1].url, servers[1].accessToken);
+            socket.on('new-notification', n => adminNotificationsServer2.push(n));
+        }
+        const resChannel = yield users_2.getMyUserInformation(servers[0].url, servers[0].accessToken);
+        const channelId = resChannel.body.videoChannels[0].id;
+        return {
+            userNotifications,
+            adminNotifications,
+            adminNotificationsServer2,
+            userAccessToken,
+            emails,
+            servers,
+            channelId
+        };
+    });
+}
+exports.prepareNotificationsTest = prepareNotificationsTest;

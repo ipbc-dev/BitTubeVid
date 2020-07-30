@@ -1,28 +1,24 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getVideoIdFromUUID = exports.getLocalIdByUUID = exports.uploadVideoAndGetId = exports.getPlaylistVideos = exports.checkVideoFilesWereRemoved = exports.completeVideoCheck = exports.getLocalVideos = exports.parseTorrentVideo = exports.viewVideo = exports.rateVideo = exports.updateVideo = exports.uploadRandomVideoOnServers = exports.getVideosWithFilters = exports.uploadVideo = exports.getVideosListWithToken = exports.removeVideo = exports.getVideosListSort = exports.getVideosListPagination = exports.getVideosList = exports.getVideoWithToken = exports.getVideoFileMetadataUrl = exports.getVideo = exports.getVideoChannelVideos = exports.getAccountVideos = exports.getMyVideos = exports.getVideoLanguages = exports.getVideoPrivacies = exports.videoUUIDToId = exports.getVideoLicences = exports.uploadRandomVideo = exports.getVideoCategories = exports.getVideoDescription = void 0;
+const tslib_1 = require("tslib");
 const chai_1 = require("chai");
 const fs_extra_1 = require("fs-extra");
 const parseTorrent = require("parse-torrent");
 const path_1 = require("path");
 const request = require("supertest");
-const __1 = require("../");
+const uuid_1 = require("uuid");
 const validator_1 = require("validator");
-const videos_1 = require("../../models/videos");
 const constants_1 = require("../../../server/initializers/constants");
+const videos_1 = require("../../models/videos");
 const miscs_1 = require("../miscs/miscs");
+const requests_1 = require("../requests/requests");
+const jobs_1 = require("../server/jobs");
+const users_1 = require("../users/users");
 constants_1.loadLanguages();
 function getVideoCategories(url) {
     const path = '/api/v1/videos/categories';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
         statusCodeExpected: 200
@@ -31,7 +27,7 @@ function getVideoCategories(url) {
 exports.getVideoCategories = getVideoCategories;
 function getVideoLicences(url) {
     const path = '/api/v1/videos/licences';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
         statusCodeExpected: 200
@@ -40,7 +36,7 @@ function getVideoLicences(url) {
 exports.getVideoLicences = getVideoLicences;
 function getVideoLanguages(url) {
     const path = '/api/v1/videos/languages';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
         statusCodeExpected: 200
@@ -49,7 +45,7 @@ function getVideoLanguages(url) {
 exports.getVideoLanguages = getVideoLanguages;
 function getVideoPrivacies(url) {
     const path = '/api/v1/videos/privacies';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
         statusCodeExpected: 200
@@ -64,6 +60,13 @@ function getVideo(url, id, expectedStatus = 200) {
         .expect(expectedStatus);
 }
 exports.getVideo = getVideo;
+function getVideoIdFromUUID(url, uuid) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const res = yield getVideo(url, uuid);
+        return res.body.id;
+    });
+}
+exports.getVideoIdFromUUID = getVideoIdFromUUID;
 function getVideoFileMetadataUrl(url) {
     return request(url)
         .get('/')
@@ -115,7 +118,7 @@ function getVideosListWithToken(url, token, query = {}) {
     return request(url)
         .get(path)
         .set('Authorization', 'Bearer ' + token)
-        .query(__1.immutableAssign(query, { sort: 'name' }))
+        .query(miscs_1.immutableAssign(query, { sort: 'name' }))
         .set('Accept', 'application/json')
         .expect(200)
         .expect('Content-Type', /json/);
@@ -148,10 +151,10 @@ function getMyVideos(url, accessToken, start, count, sort, search) {
 exports.getMyVideos = getMyVideos;
 function getAccountVideos(url, accessToken, accountName, start, count, sort, query = {}) {
     const path = '/api/v1/accounts/' + accountName + '/videos';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
-        query: __1.immutableAssign(query, {
+        query: miscs_1.immutableAssign(query, {
             start,
             count,
             sort
@@ -163,10 +166,10 @@ function getAccountVideos(url, accessToken, accountName, start, count, sort, que
 exports.getAccountVideos = getAccountVideos;
 function getVideoChannelVideos(url, accessToken, videoChannelName, start, count, sort, query = {}) {
     const path = '/api/v1/video-channels/' + videoChannelName + '/videos';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
-        query: __1.immutableAssign(query, {
+        query: miscs_1.immutableAssign(query, {
             start,
             count,
             sort
@@ -178,10 +181,10 @@ function getVideoChannelVideos(url, accessToken, videoChannelName, start, count,
 exports.getVideoChannelVideos = getVideoChannelVideos;
 function getPlaylistVideos(url, accessToken, playlistId, start, count, query = {}) {
     const path = '/api/v1/video-playlists/' + playlistId + '/videos';
-    return __1.makeGetRequest({
+    return requests_1.makeGetRequest({
         url,
         path,
-        query: __1.immutableAssign(query, {
+        query: miscs_1.immutableAssign(query, {
             start,
             count
         }),
@@ -244,7 +247,7 @@ function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
     path_1.join('playlists', 'hls'),
     path_1.join('redundancy', 'hls')
 ]) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const directory of directories) {
             const directoryPath = miscs_1.buildServerDirectory(serverNumber, directory);
             const directoryExists = yield fs_extra_1.pathExists(directoryPath);
@@ -259,11 +262,11 @@ function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
 }
 exports.checkVideoFilesWereRemoved = checkVideoFilesWereRemoved;
 function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const path = '/api/v1/videos/upload';
         let defaultChannelId = '1';
         try {
-            const res = yield __1.getMyUserInformation(url, accessToken);
+            const res = yield users_1.getMyUserInformation(url, accessToken);
             defaultChannelId = res.body.videoChannels[0].id;
         }
         catch (e) { }
@@ -314,10 +317,10 @@ function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) 
             req.field('tags[' + i + ']', attributes.tags[i]);
         }
         if (attributes.thumbnailfile !== undefined) {
-            req.attach('thumbnailfile', __1.buildAbsoluteFixturePath(attributes.thumbnailfile));
+            req.attach('thumbnailfile', miscs_1.buildAbsoluteFixturePath(attributes.thumbnailfile));
         }
         if (attributes.previewfile !== undefined) {
-            req.attach('previewfile', __1.buildAbsoluteFixturePath(attributes.previewfile));
+            req.attach('previewfile', miscs_1.buildAbsoluteFixturePath(attributes.previewfile));
         }
         if (attributes.scheduleUpdate) {
             req.field('scheduleUpdate[updateAt]', attributes.scheduleUpdate.updateAt);
@@ -328,7 +331,7 @@ function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) 
         if (attributes.originallyPublishedAt !== undefined) {
             req.field('originallyPublishedAt', attributes.originallyPublishedAt);
         }
-        return req.attach('videofile', __1.buildAbsoluteFixturePath(attributes.fixture))
+        return req.attach('videofile', miscs_1.buildAbsoluteFixturePath(attributes.fixture))
             .expect(specialStatus);
     });
 }
@@ -368,7 +371,7 @@ function updateVideo(url, accessToken, id, attributes, statusCodeExpected = 204)
             attaches.thumbnailfile = attributes.thumbnailfile;
         if (attributes.previewfile)
             attaches.previewfile = attributes.previewfile;
-        return __1.makeUploadRequest({
+        return requests_1.makeUploadRequest({
             url,
             method: 'PUT',
             path,
@@ -378,7 +381,7 @@ function updateVideo(url, accessToken, id, attributes, statusCodeExpected = 204)
             statusCodeExpected
         });
     }
-    return __1.makePutBodyRequest({
+    return requests_1.makePutBodyRequest({
         url,
         path,
         fields: body,
@@ -400,7 +403,7 @@ exports.rateVideo = rateVideo;
 function parseTorrentVideo(server, videoUUID, resolution) {
     return new Promise((res, rej) => {
         const torrentName = videoUUID + '-' + resolution + '.torrent';
-        const torrentPath = path_1.join(__1.root(), 'test' + server.internalServerNumber, 'torrents', torrentName);
+        const torrentPath = path_1.join(miscs_1.root(), 'test' + server.internalServerNumber, 'torrents', torrentName);
         fs_extra_1.readFile(torrentPath, (err, data) => {
             if (err)
                 return rej(err);
@@ -410,7 +413,7 @@ function parseTorrentVideo(server, videoUUID, resolution) {
 }
 exports.parseTorrentVideo = parseTorrentVideo;
 function completeVideoCheck(url, video, attributes) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!attributes.likes)
             attributes.likes = 0;
         if (!attributes.dislikes)
@@ -480,15 +483,15 @@ function completeVideoCheck(url, video, attributes) {
             chai_1.expect(torrent.files.length).to.equal(1);
             chai_1.expect(torrent.files[0].path).to.exist.and.to.not.equal('');
         }
-        yield __1.testImage(url, attributes.thumbnailfile || attributes.fixture, videoDetails.thumbnailPath);
+        yield miscs_1.testImage(url, attributes.thumbnailfile || attributes.fixture, videoDetails.thumbnailPath);
         if (attributes.previewfile) {
-            yield __1.testImage(url, attributes.previewfile, videoDetails.previewPath);
+            yield miscs_1.testImage(url, attributes.previewfile, videoDetails.previewPath);
         }
     });
 }
 exports.completeVideoCheck = completeVideoCheck;
 function videoUUIDToId(url, id) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (validator_1.default.isUUID('' + id) === false)
             return id;
         const res = yield getVideo(url, id);
@@ -497,7 +500,7 @@ function videoUUIDToId(url, id) {
 }
 exports.videoUUIDToId = videoUUIDToId;
 function uploadVideoAndGetId(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoAttrs = { name: options.videoName };
         if (options.nsfw)
             videoAttrs.nsfw = options.nsfw;
@@ -509,9 +512,30 @@ function uploadVideoAndGetId(options) {
 }
 exports.uploadVideoAndGetId = uploadVideoAndGetId;
 function getLocalIdByUUID(url, uuid) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield getVideo(url, uuid);
         return res.body.id;
     });
 }
 exports.getLocalIdByUUID = getLocalIdByUUID;
+function uploadRandomVideoOnServers(servers, serverNumber, additionalParams = {}) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const server = servers.find(s => s.serverNumber === serverNumber);
+        const res = yield uploadRandomVideo(server, false, additionalParams);
+        yield jobs_1.waitJobs(servers);
+        return res;
+    });
+}
+exports.uploadRandomVideoOnServers = uploadRandomVideoOnServers;
+function uploadRandomVideo(server, wait = true, additionalParams = {}) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const prefixName = additionalParams.prefixName || '';
+        const name = prefixName + uuid_1.v4();
+        const data = Object.assign({ name }, additionalParams);
+        const res = yield uploadVideo(server.url, server.accessToken, data);
+        if (wait)
+            yield jobs_1.waitJobs([server]);
+        return { uuid: res.body.video.uuid, name };
+    });
+}
+exports.uploadRandomVideo = uploadRandomVideo;

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.removeVideoRedundancyValidator = exports.addVideoRedundancyValidator = exports.listVideoRedundanciesValidator = exports.updateServerRedundancyValidator = exports.videoPlaylistRedundancyGetValidator = exports.videoFileRedundancyGetValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const logger_1 = require("../../helpers/logger");
@@ -27,7 +20,7 @@ const videoFileRedundancyGetValidator = [
         .optional()
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.exists).withMessage('Should have a valid fps'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoFileRedundancyGetValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -57,7 +50,7 @@ const videoPlaylistRedundancyGetValidator = [
     express_validator_1.param('streamingPlaylistType')
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.exists).withMessage('Should have a valid streaming playlist type'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistRedundancyGetValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -82,7 +75,7 @@ const updateServerRedundancyValidator = [
     express_validator_1.body('redundancyAllowed')
         .customSanitizer(misc_1.toBooleanOrNull)
         .custom(misc_1.isBooleanValid).withMessage('Should have a valid redundancyAllowed attribute'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking updateServerRedundancy parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -115,7 +108,7 @@ const addVideoRedundancyValidator = [
     express_validator_1.body('videoId')
         .custom(misc_1.isIdValid)
         .withMessage('Should have a valid video id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking addVideoRedundancyValidator parameters', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -139,7 +132,7 @@ const removeVideoRedundancyValidator = [
     express_validator_1.param('redundancyId')
         .custom(misc_1.isIdValid)
         .withMessage('Should have a valid redundancy id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking removeVideoRedundancyValidator parameters', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))
             return;

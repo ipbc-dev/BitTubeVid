@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 const lodash_1 = require("lodash");
 require("mocha");
@@ -86,14 +78,14 @@ describe('Test a single server', function () {
         ]
     });
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
         });
     });
     it('Should list video categories', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoCategories(server.url);
             const categories = res.body;
             expect(Object.keys(categories)).to.have.length.above(10);
@@ -101,7 +93,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list video licences', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoLicences(server.url);
             const licences = res.body;
             expect(Object.keys(licences)).to.have.length.above(5);
@@ -109,7 +101,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list video languages', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoLanguages(server.url);
             const languages = res.body;
             expect(Object.keys(languages)).to.have.length.above(5);
@@ -117,7 +109,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list video privacies', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoPrivacies(server.url);
             const privacies = res.body;
             expect(Object.keys(privacies)).to.have.length.at.least(3);
@@ -125,7 +117,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should not have videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(server.url);
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.be.an('array');
@@ -133,7 +125,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should upload the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoAttributes = {
                 name: 'my super name',
                 category: 2,
@@ -150,7 +142,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should get and seed the uploaded video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             const res = yield extra_utils_1.getVideosList(server.url);
             expect(res.body.total).to.equal(1);
@@ -161,7 +153,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should get the video by UUID', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             const res = yield extra_utils_1.getVideo(server.url, videoUUID);
             const video = res.body;
@@ -169,7 +161,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should have the views updated', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(20000);
             yield extra_utils_1.viewVideo(server.url, videoId);
             yield extra_utils_1.viewVideo(server.url, videoId);
@@ -187,13 +179,13 @@ describe('Test a single server', function () {
         });
     });
     it('Should remove the video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.removeVideo(server.url, server.accessToken, videoId);
             yield extra_utils_1.checkVideoFilesWereRemoved(videoUUID, 1);
         });
     });
     it('Should not have videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(server.url);
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.be.an('array');
@@ -201,7 +193,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should upload 6 videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(25000);
             const videos = new Set([
                 'video_short.mp4', 'video_short.ogv', 'video_short.webm',
@@ -223,7 +215,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should have the correct durations', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(server.url);
             expect(res.body.total).to.equal(6);
             const videos = res.body.data;
@@ -239,7 +231,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should have the correct thumbnails', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(server.url);
             const videos = res.body.data;
             videosListBase = videos;
@@ -250,7 +242,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list only the two first videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListPagination(server.url, 0, 2, 'name');
             const videos = res.body.data;
             expect(res.body.total).to.equal(6);
@@ -260,7 +252,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list only the next three videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListPagination(server.url, 2, 3, 'name');
             const videos = res.body.data;
             expect(res.body.total).to.equal(6);
@@ -271,7 +263,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list the last video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListPagination(server.url, 5, 6, 'name');
             const videos = res.body.data;
             expect(res.body.total).to.equal(6);
@@ -280,7 +272,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should not have the total field', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListPagination(server.url, 5, 6, 'name', true);
             const videos = res.body.data;
             expect(res.body.total).to.not.exist;
@@ -289,7 +281,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list and sort by name in descending order', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListSort(server.url, '-name');
             const videos = res.body.data;
             expect(res.body.total).to.equal(6);
@@ -305,7 +297,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should list and sort by trending in descending order', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosListPagination(server.url, 0, 2, '-trending');
             const videos = res.body.data;
             expect(res.body.total).to.equal(6);
@@ -313,7 +305,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should update a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attributes = {
                 name: 'my super video updated',
                 category: 4,
@@ -329,7 +321,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should filter by tags and category', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res1 = yield extra_utils_1.getVideosWithFilters(server.url, { tagsAllOf: ['tagup1', 'tagup2'], categoryOneOf: 4 });
             expect(res1.body.total).to.equal(1);
             expect(res1.body.data[0].name).to.equal('my super video updated');
@@ -338,7 +330,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should have the video updated', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const res = yield extra_utils_1.getVideo(server.url, videoId);
             const video = res.body;
@@ -346,7 +338,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should update only the tags of a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attributes = {
                 tags: ['supertag', 'tag1', 'tag2']
             };
@@ -357,7 +349,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should update only the description of a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attributes = {
                 description: 'hello everybody'
             };
@@ -369,7 +361,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should like a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.rateVideo(server.url, server.accessToken, videoId, 'like');
             const res = yield extra_utils_1.getVideo(server.url, videoId);
             const video = res.body;
@@ -378,7 +370,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should dislike the same video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.rateVideo(server.url, server.accessToken, videoId, 'dislike');
             const res = yield extra_utils_1.getVideo(server.url, videoId);
             const video = res.body;
@@ -387,7 +379,7 @@ describe('Test a single server', function () {
         });
     });
     it('Should sort by originallyPublishedAt', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 {
                     const now = new Date();
@@ -419,7 +411,7 @@ describe('Test a single server', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

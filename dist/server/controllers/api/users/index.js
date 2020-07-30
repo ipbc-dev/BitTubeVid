@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.usersRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const RateLimit = require("express-rate-limit");
 const shared_1 = require("../../../../shared");
@@ -42,7 +35,7 @@ const signupRateLimiter = RateLimit({
     max: config_1.CONFIG.RATES_LIMIT.SIGNUP.MAX,
     skipFailedRequests: true
 });
-const askSendEmailLimiter = new RateLimit({
+const askSendEmailLimiter = RateLimit({
     windowMs: config_1.CONFIG.RATES_LIMIT.ASK_SEND_EMAIL.WINDOW_MS,
     max: config_1.CONFIG.RATES_LIMIT.ASK_SEND_EMAIL.MAX
 });
@@ -57,7 +50,7 @@ usersRouter.use('/', my_video_playlists_1.myVideoPlaylistsRouter);
 usersRouter.use('/', me_1.meRouter);
 usersRouter.use('/', firebase_1.firebaseRouter);
 usersRouter.get('/autocomplete', middlewares_1.userAutocompleteValidator, middlewares_1.asyncMiddleware(autocompleteUsers));
-usersRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.paginationValidator, middlewares_1.usersSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listUsers));
+usersRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.paginationValidator, middlewares_1.usersSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.usersListValidator, middlewares_1.asyncMiddleware(listUsers));
 usersRouter.post('/:id/block', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(blockUser));
 usersRouter.post('/:id/unblock', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(unblockUser));
 usersRouter.get('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(middlewares_1.usersGetValidator), getUser);
@@ -70,7 +63,7 @@ usersRouter.post('/:id/reset-password', middlewares_1.asyncMiddleware(validators
 usersRouter.post('/ask-send-verify-email', askSendEmailLimiter, middlewares_1.asyncMiddleware(validators_1.usersAskSendVerifyEmailValidator), middlewares_1.asyncMiddleware(reSendVerifyUserEmail));
 usersRouter.post('/:id/verify-email', middlewares_1.asyncMiddleware(validators_1.usersVerifyEmailValidator), middlewares_1.asyncMiddleware(verifyUserEmail));
 function createUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const userToCreate = new user_2.UserModel({
             username: body.username,
@@ -108,7 +101,7 @@ function createUser(req, res) {
     });
 }
 function registerUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const userToCreate = new user_2.UserModel({
             username: body.username,
@@ -137,7 +130,7 @@ function registerUser(req, res) {
     });
 }
 function unblockUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         yield changeUserBlock(res, user, false);
         hooks_1.Hooks.runAction('action:api.user.unblocked', { user });
@@ -145,7 +138,7 @@ function unblockUser(req, res) {
     });
 }
 function blockUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         const reason = req.body.reason;
         yield changeUserBlock(res, user, true, reason);
@@ -157,19 +150,25 @@ function getUser(req, res) {
     return res.json(res.locals.user.toFormattedJSON({ withAdminFlags: true }));
 }
 function autocompleteUsers(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const resultList = yield user_2.UserModel.autoComplete(req.query.search);
         return res.json(resultList);
     });
 }
 function listUsers(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const resultList = yield user_2.UserModel.listForApi(req.query.start, req.query.count, req.query.sort, req.query.search);
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const resultList = yield user_2.UserModel.listForApi({
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search,
+            blocked: req.query.blocked
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total, { withAdminFlags: true }));
     });
 }
 function removeUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         yield user.destroy();
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
@@ -178,7 +177,7 @@ function removeUser(req, res) {
     });
 }
 function updateUser(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const userToUpdate = res.locals.user;
         const oldUserAuditView = new audit_logger_1.UserAuditView(userToUpdate.toFormattedJSON());
@@ -206,16 +205,16 @@ function updateUser(req, res) {
     });
 }
 function askResetUserPassword(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         const verificationString = yield redis_1.Redis.Instance.setResetPasswordVerificationString(user.id);
         const url = constants_1.WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString;
-        yield emailer_1.Emailer.Instance.addPasswordResetEmailJob(user.email, url);
+        yield emailer_1.Emailer.Instance.addPasswordResetEmailJob(user.username, user.email, url);
         return res.status(202).end();
     });
 }
 function resetUserPassword(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         user.password = req.body.password;
         yield user.save();
@@ -223,14 +222,14 @@ function resetUserPassword(req, res) {
     });
 }
 function reSendVerifyUserEmail(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         yield user_1.sendVerifyUserEmail(user);
         return res.status(204).end();
     });
 }
 function verifyUserEmail(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         user.emailVerified = true;
         if (req.body.isPendingEmail === true) {
@@ -242,11 +241,11 @@ function verifyUserEmail(req, res) {
     });
 }
 function changeUserBlock(res, user, block, reason) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const oldUserAuditView = new audit_logger_1.UserAuditView(user.toFormattedJSON());
         user.blocked = block;
         user.blockedReason = reason || null;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield oauth_model_1.deleteUserToken(user.id, t);
             yield user.save({ transaction: t });
         }));

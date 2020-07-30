@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processVideoFileImport = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
 const video_transcoding_1 = require("./video-transcoding");
@@ -19,7 +12,7 @@ const path_1 = require("path");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("@server/lib/video-paths");
 function processVideoFileImport(job) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
         logger_1.logger.info('Processing video file import in job %d.', job.id);
         const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(payload.videoUUID);
@@ -34,7 +27,7 @@ function processVideoFileImport(job) {
 }
 exports.processVideoFileImport = processVideoFileImport;
 function updateVideoFile(video, inputFilePath) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { videoFileResolution } = yield ffmpeg_utils_1.getVideoFileResolution(inputFilePath);
         const { size } = yield fs_extra_1.stat(inputFilePath);
         const fps = yield ffmpeg_utils_1.getVideoFileFPS(inputFilePath);

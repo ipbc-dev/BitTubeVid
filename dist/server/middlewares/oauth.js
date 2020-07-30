@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.optionalAuthenticate = exports.authenticatePromiseIfNeeded = exports.authenticateSocket = exports.authenticate = void 0;
 const logger_1 = require("../helpers/logger");
 const oauth_model_1 = require("../lib/oauth-model");
 const auth_1 = require("@server/lib/auth");
@@ -38,7 +39,8 @@ function authenticateSocket(socket, next) {
 exports.authenticateSocket = authenticateSocket;
 function authenticatePromiseIfNeeded(req, res, authenticateInQuery = false) {
     return new Promise(resolve => {
-        if (res.locals.oauth && res.locals.oauth.token.User)
+        var _a;
+        if ((_a = res.locals.oauth) === null || _a === void 0 ? void 0 : _a.token.User)
             return resolve();
         if (res.locals.authenticated === false)
             return res.sendStatus(401);

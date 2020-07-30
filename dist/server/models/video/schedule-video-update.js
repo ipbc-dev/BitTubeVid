@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var ScheduleVideoUpdateModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ScheduleVideoUpdateModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const video_1 = require("./video");
 const sequelize_1 = require("sequelize");
@@ -66,41 +59,41 @@ let ScheduleVideoUpdateModel = ScheduleVideoUpdateModel_1 = class ScheduleVideoU
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ScheduleVideoUpdateModel.prototype, "updateAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ScheduleVideoUpdateModel.prototype, "privacy", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ScheduleVideoUpdateModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ScheduleVideoUpdateModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_1.VideoModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ScheduleVideoUpdateModel.prototype, "videoId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_1.VideoModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_1.VideoModel)
+    tslib_1.__metadata("design:type", video_1.VideoModel)
 ], ScheduleVideoUpdateModel.prototype, "Video", void 0);
-ScheduleVideoUpdateModel = ScheduleVideoUpdateModel_1 = __decorate([
+ScheduleVideoUpdateModel = ScheduleVideoUpdateModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'scheduleVideoUpdate',
         indexes: [

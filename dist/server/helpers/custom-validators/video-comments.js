@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isValidVideoCommentText = void 0;
 require("multer");
 const validator_1 = require("validator");
 const constants_1 = require("../../initializers/constants");

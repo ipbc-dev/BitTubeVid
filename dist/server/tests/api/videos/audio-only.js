@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -19,7 +11,7 @@ describe('Test audio only video transcoding', function () {
     let servers = [];
     let videoUUID;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const configOverride = {
                 transcoding: {
@@ -47,7 +39,7 @@ describe('Test audio only video transcoding', function () {
         });
     });
     it('Should upload a video and transcode it', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const resUpload = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'audio only' });
             videoUUID = resUpload.body.video.uuid;
@@ -66,7 +58,7 @@ describe('Test audio only video transcoding', function () {
         });
     });
     it('0p transcoded video should not have video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const paths = [
                 path_1.join(extra_utils_1.root(), 'test' + servers[0].internalServerNumber, 'videos', videoUUID + '-0.mp4'),
                 path_1.join(extra_utils_1.root(), 'test' + servers[0].internalServerNumber, 'streaming-playlists', 'hls', videoUUID, videoUUID + '-0-fragmented.mp4')
@@ -82,7 +74,7 @@ describe('Test audio only video transcoding', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.outboxRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const videos_1 = require("../../../shared/models/videos");
 const activitypub_1 = require("../../helpers/activitypub");
@@ -24,7 +17,7 @@ exports.outboxRouter = outboxRouter;
 outboxRouter.get('/accounts/:name/outbox', activitypub_2.apPaginationValidator, middlewares_1.localAccountValidator, middlewares_1.asyncMiddleware(outboxController));
 outboxRouter.get('/video-channels/:name/outbox', activitypub_2.apPaginationValidator, middlewares_1.localVideoChannelValidator, middlewares_1.asyncMiddleware(outboxController));
 function outboxController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const accountOrVideoChannel = res.locals.account || res.locals.videoChannel;
         const actor = accountOrVideoChannel.Actor;
         const actorOutboxUrl = actor.url + '/outbox';
@@ -35,7 +28,7 @@ function outboxController(req, res) {
     });
 }
 function buildActivities(actor, start, count) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const data = yield video_1.VideoModel.listAllAndSharedByActorForOutbox(actor.id, start, count);
         const activities = [];
         for (const video of data.data) {

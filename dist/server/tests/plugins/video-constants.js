@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
@@ -18,7 +10,7 @@ const expect = chai.expect;
 describe('Test plugin altering video constants', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield servers_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -30,7 +22,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should have updated languages', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoLanguages(server.url);
             const languages = res.body;
             expect(languages['en']).to.not.exist;
@@ -40,7 +32,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should have updated categories', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoCategories(server.url);
             const categories = res.body;
             expect(categories[1]).to.not.exist;
@@ -50,7 +42,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should have updated licences', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoLicences(server.url);
             const licences = res.body;
             expect(licences[1]).to.not.exist;
@@ -60,7 +52,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should have updated video privacies', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoPrivacies(server.url);
             const privacies = res.body;
             expect(privacies[1]).to.exist;
@@ -70,7 +62,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should have updated playlist privacies', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoPlaylistPrivacies(server.url);
             const playlistPrivacies = res.body;
             expect(playlistPrivacies[1]).to.exist;
@@ -79,19 +71,19 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should not be able to create a video with this privacy', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attrs = { name: 'video', privacy: 2 };
             yield extra_utils_1.uploadVideo(server.url, server.accessToken, attrs, 400);
         });
     });
     it('Should not be able to create a video with this privacy', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attrs = { displayName: 'video playlist', privacy: videos_1.VideoPlaylistPrivacy.PRIVATE };
             yield extra_utils_1.createVideoPlaylist({ url: server.url, token: server.accessToken, playlistAttrs: attrs, expectedStatus: 400 });
         });
     });
     it('Should be able to upload a video with these values', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attrs = { name: 'video', category: 42, licence: 42, language: 'al_bhed2' };
             const resUpload = yield extra_utils_1.uploadVideo(server.url, server.accessToken, attrs);
             const res = yield extra_utils_1.getVideo(server.url, resUpload.body.video.uuid);
@@ -102,7 +94,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     it('Should uninstall the plugin and reset languages, categories, licences and privacies', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uninstallPlugin({ url: server.url, accessToken: server.accessToken, npmName: 'peertube-plugin-test-three' });
             {
                 const res = yield extra_utils_1.getVideoLanguages(server.url);
@@ -146,7 +138,7 @@ describe('Test plugin altering video constants', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.cleanupTests([server]);
         });
     });

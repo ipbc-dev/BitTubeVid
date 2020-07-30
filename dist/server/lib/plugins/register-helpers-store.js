@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.RegisterHelpersStore = void 0;
 const express = require("express");
 const logger_1 = require("@server/helpers/logger");
 const constants_1 = require("@server/initializers/constants");

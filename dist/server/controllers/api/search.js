@@ -1,25 +1,23 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.searchRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
-const express_utils_1 = require("../../helpers/express-utils");
-const utils_1 = require("../../helpers/utils");
-const video_1 = require("../../models/video/video");
-const middlewares_1 = require("../../middlewares");
-const actor_1 = require("../../lib/activitypub/actor");
-const logger_1 = require("../../helpers/logger");
-const video_channel_1 = require("../../models/video/video-channel");
-const webfinger_1 = require("../../helpers/webfinger");
-const application_1 = require("@server/models/application/application");
+const core_utils_1 = require("@server/helpers/core-utils");
+const requests_1 = require("@server/helpers/requests");
+const config_1 = require("@server/initializers/config");
 const videos_1 = require("@server/lib/activitypub/videos");
+const account_blocklist_1 = require("@server/models/account/account-blocklist");
+const application_1 = require("@server/models/application/application");
+const server_blocklist_1 = require("@server/models/server/server-blocklist");
+const express_utils_1 = require("../../helpers/express-utils");
+const logger_1 = require("../../helpers/logger");
+const utils_1 = require("../../helpers/utils");
+const webfinger_1 = require("../../helpers/webfinger");
+const actor_1 = require("../../lib/activitypub/actor");
+const middlewares_1 = require("../../middlewares");
+const video_1 = require("../../models/video/video");
+const video_channel_1 = require("../../models/video/video-channel");
 const searchRouter = express.Router();
 exports.searchRouter = searchRouter;
 searchRouter.get('/videos', middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.videosSearchSortValidator, middlewares_1.setDefaultSearchSort, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.videosSearchValidator, middlewares_1.asyncMiddleware(searchVideos));
@@ -36,10 +34,29 @@ function searchVideoChannels(req, res) {
         return searchVideoChannelURI(search, isWebfingerSearch, res);
     if (query.search.startsWith('@'))
         query.search = query.search.replace(/^@/, '');
+    if (isSearchIndexSearch(query)) {
+        return searchVideoChannelsIndex(query, res);
+    }
     return searchVideoChannelsDB(query, res);
 }
+function searchVideoChannelsIndex(query, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        logger_1.logger.debug('Doing channels search on search index.');
+        const result = yield buildMutedForSearchIndex(res);
+        const body = Object.assign(query, result);
+        const url = core_utils_1.sanitizeUrl(config_1.CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/video-channels';
+        try {
+            const searchIndexResult = yield requests_1.doRequest({ uri: url, body, json: true });
+            return res.json(searchIndexResult.body);
+        }
+        catch (err) {
+            logger_1.logger.warn('Cannot use search index to make video channels search.', { err });
+            return res.sendStatus(500);
+        }
+    });
+}
 function searchVideoChannelsDB(query, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         const options = {
             actorId: serverActor.id,
@@ -53,7 +70,7 @@ function searchVideoChannelsDB(query, res) {
     });
 }
 function searchVideoChannelURI(search, isWebfingerSearch, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let videoChannel;
         let uri = search;
         if (isWebfingerSearch) {
@@ -89,10 +106,37 @@ function searchVideos(req, res) {
     if (search && (search.startsWith('http://') || search.startsWith('https://'))) {
         return searchVideoURI(search, res);
     }
+    if (isSearchIndexSearch(query)) {
+        return searchVideosIndex(query, res);
+    }
     return searchVideosDB(query, res);
 }
+function searchVideosIndex(query, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        logger_1.logger.debug('Doing videos search on search index.');
+        const result = yield buildMutedForSearchIndex(res);
+        const body = Object.assign(query, result);
+        if (!body.nsfw) {
+            const nsfwPolicy = res.locals.oauth
+                ? res.locals.oauth.token.User.nsfwPolicy
+                : config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY;
+            body.nsfw = nsfwPolicy === 'do_not_list'
+                ? 'false'
+                : 'both';
+        }
+        const url = core_utils_1.sanitizeUrl(config_1.CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/videos';
+        try {
+            const searchIndexResult = yield requests_1.doRequest({ uri: url, body, json: true });
+            return res.json(searchIndexResult.body);
+        }
+        catch (err) {
+            logger_1.logger.warn('Cannot use search index to make video search.', { err });
+            return res.sendStatus(500);
+        }
+    });
+}
 function searchVideosDB(query, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = Object.assign(query, {
             includeLocalVideos: true,
             nsfw: express_utils_1.buildNSFWFilter(res, query.nsfw),
@@ -104,7 +148,7 @@ function searchVideosDB(query, res) {
     });
 }
 function searchVideoURI(url, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let video;
         if (express_utils_1.isUserAbleToSearchRemoteURI(res)) {
             try {
@@ -130,5 +174,34 @@ function searchVideoURI(url, res) {
             total: video ? 1 : 0,
             data: video ? [video.toFormattedJSON()] : []
         });
+    });
+}
+function isSearchIndexSearch(query) {
+    if (query.searchTarget === 'search-index')
+        return true;
+    const searchIndexConfig = config_1.CONFIG.SEARCH.SEARCH_INDEX;
+    if (searchIndexConfig.ENABLED !== true)
+        return false;
+    if (searchIndexConfig.DISABLE_LOCAL_SEARCH)
+        return true;
+    if (searchIndexConfig.IS_DEFAULT_SEARCH && !query.searchTarget)
+        return true;
+    return false;
+}
+function buildMutedForSearchIndex(res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const serverActor = yield application_1.getServerActor();
+        const accountIds = [serverActor.Account.id];
+        if (res.locals.oauth) {
+            accountIds.push(res.locals.oauth.token.User.Account.id);
+        }
+        const [blockedHosts, blockedAccounts] = yield Promise.all([
+            server_blocklist_1.ServerBlocklistModel.listHostsBlockedBy(accountIds),
+            account_blocklist_1.AccountBlocklistModel.listHandlesBlockedBy(accountIds)
+        ]);
+        return {
+            blockedHosts,
+            blockedAccounts
+        };
     });
 }

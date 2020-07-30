@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.resolveThread = exports.addVideoComments = void 0;
+const tslib_1 = require("tslib");
 const video_comments_1 = require("../../helpers/custom-validators/activitypub/video-comments");
 const logger_1 = require("../../helpers/logger");
 const requests_1 = require("../../helpers/requests");
@@ -19,7 +12,7 @@ const videos_1 = require("./videos");
 const Bluebird = require("bluebird");
 const activitypub_1 = require("../../helpers/activitypub");
 function addVideoComments(commentUrls) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         return Bluebird.map(commentUrls, commentUrl => {
             return resolveThread({ url: commentUrl, isVideo: false });
         }, { concurrency: constants_1.CRAWL_REQUEST_CONCURRENCY });
@@ -27,7 +20,7 @@ function addVideoComments(commentUrls) {
 }
 exports.addVideoComments = addVideoComments;
 function resolveThread(params) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, isVideo } = params;
         if (params.commentCreated === undefined)
             params.commentCreated = false;
@@ -51,7 +44,7 @@ function resolveThread(params) {
 }
 exports.resolveThread = resolveThread;
 function resolveCommentFromDB(params) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, comments, commentCreated } = params;
         const commentFromDatabase = yield video_comment_1.VideoCommentModel.loadByUrlAndPopulateReplyAndVideoUrlAndAccount(url);
         if (commentFromDatabase) {
@@ -71,7 +64,7 @@ function resolveCommentFromDB(params) {
     });
 }
 function tryResolveThreadFromVideo(params) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, comments, commentCreated } = params;
         const syncParam = { likes: true, dislikes: true, shares: true, comments: false, thumbnail: true, refreshVideo: false };
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: url, syncParam });
@@ -99,7 +92,7 @@ function tryResolveThreadFromVideo(params) {
     });
 }
 function resolveParentComment(params) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, comments } = params;
         if (comments.length > constants_1.ACTIVITY_PUB.MAX_RECURSION_COMMENTS) {
             throw new Error('Recursion limit reached when resolving a thread');

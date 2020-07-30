@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
@@ -60,7 +52,7 @@ if (!process.argv.slice(2).length) {
 }
 program.parse(process.argv);
 function pluginsListCLI() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, username, password } = yield cli_1.getServerCredentials(program);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
         let pluginType;
@@ -96,7 +88,7 @@ function pluginsListCLI() {
     });
 }
 function installPluginCLI(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!options['path'] && !options['npmName']) {
             console.error('You need to specify the npm name or the path of the plugin you want to install.\n');
             program.outputHelp();
@@ -125,7 +117,7 @@ function installPluginCLI(options) {
     });
 }
 function updatePluginCLI(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!options['path'] && !options['npmName']) {
             console.error('You need to specify the npm name or the path of the plugin you want to update.\n');
             program.outputHelp();
@@ -154,7 +146,7 @@ function updatePluginCLI(options) {
     });
 }
 function uninstallPluginCLI(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!options['npmName']) {
             console.error('You need to specify the npm name of the plugin/theme you want to uninstall.\n');
             program.outputHelp();

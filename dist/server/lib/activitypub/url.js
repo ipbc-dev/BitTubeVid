@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getVideoCacheFileActivityPubUrl = exports.getVideoDislikesActivityPubUrl = exports.getVideoLikesActivityPubUrl = exports.getVideoCommentsActivityPubUrl = exports.getVideoSharesActivityPubUrl = exports.getDeleteActivityPubUrl = exports.getVideoCommentActivityPubUrl = exports.getActorFollowRejectActivityPubUrl = exports.getVideoDislikeActivityPubUrl = exports.getVideoLikeActivityPubUrl = exports.getVideoViewActivityPubUrl = exports.getUndoActivityPubUrl = exports.getUpdateActivityPubUrl = exports.getVideoAnnounceActivityPubUrl = exports.getActorFollowAcceptActivityPubUrl = exports.getActorFollowActivityPubUrl = exports.getVideoAbuseActivityPubUrl = exports.getAccountActivityPubUrl = exports.getVideoChannelActivityPubUrl = exports.getVideoCacheStreamingPlaylistActivityPubUrl = exports.getVideoPlaylistActivityPubUrl = exports.getVideoPlaylistElementActivityPubUrl = exports.getVideoActivityPubUrl = void 0;
 const constants_1 = require("../../initializers/constants");
 function getVideoActivityPubUrl(video) {
     return constants_1.WEBSERVER.URL + '/videos/watch/' + video.uuid;

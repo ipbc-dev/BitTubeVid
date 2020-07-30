@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteVideoCaptionValidator = exports.listVideoCaptionsValidator = exports.addVideoCaptionValidator = void 0;
+const tslib_1 = require("tslib");
 const utils_1 = require("../utils");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const express_validator_1 = require("express-validator");
@@ -26,7 +19,7 @@ const addVideoCaptionValidator = [
         .withMessage('This caption file is not supported or too large. ' +
         `Please, make sure it is under ${constants_1.CONSTRAINTS_FIELDS.VIDEO_CAPTIONS.CAPTION_FILE.FILE_SIZE} and one of the following mimetypes: ` +
         Object.keys(constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT).map(key => `${key} (${constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT[key]})`).join(', ')),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking addVideoCaption parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
@@ -42,7 +35,7 @@ exports.addVideoCaptionValidator = addVideoCaptionValidator;
 const deleteVideoCaptionValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid video id'),
     express_validator_1.param('captionLanguage').custom(video_captions_1.isVideoCaptionLanguageValid).not().isEmpty().withMessage('Should have a valid caption language'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking deleteVideoCaption parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -59,7 +52,7 @@ const deleteVideoCaptionValidator = [
 exports.deleteVideoCaptionValidator = deleteVideoCaptionValidator;
 const listVideoCaptionsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid video id'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking listVideoCaptions parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;

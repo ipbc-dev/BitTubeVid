@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/extra-utils/index");
@@ -21,7 +13,7 @@ describe('Test video description', function () {
     let videoId;
     const longDescription = 'my super description for server 1'.repeat(50);
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(40000);
             servers = yield index_1.flushAndRunMultipleServers(2);
             yield index_1.setAccessTokensToServers(servers);
@@ -29,7 +21,7 @@ describe('Test video description', function () {
         });
     });
     it('Should upload video with long description', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const attributes = {
                 description: longDescription
@@ -42,7 +34,7 @@ describe('Test video description', function () {
         });
     });
     it('Should have a truncated description on each server', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield index_1.getVideo(server.url, videoUUID);
                 const video = res.body;
@@ -53,7 +45,7 @@ describe('Test video description', function () {
         });
     });
     it('Should fetch long description on each server', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield index_1.getVideo(server.url, videoUUID);
                 const video = res.body;
@@ -63,7 +55,7 @@ describe('Test video description', function () {
         });
     });
     it('Should update with a short description', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const attributes = {
                 description: 'short description'
@@ -73,7 +65,7 @@ describe('Test video description', function () {
         });
     });
     it('Should have a small description on each server', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield index_1.getVideo(server.url, videoUUID);
                 const video = res.body;
@@ -84,7 +76,7 @@ describe('Test video description', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);
         });
     });

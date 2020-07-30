@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.cacheRoute = void 0;
 const redis_1 = require("../lib/redis");
 const apicache = require("apicache");
 redis_1.Redis.Instance.init();

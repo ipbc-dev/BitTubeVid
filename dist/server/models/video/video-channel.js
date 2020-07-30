@@ -1,24 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var VideoChannelModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoChannelModel = exports.ScopeNames = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const video_channels_1 = require("../../helpers/custom-validators/video-channels");
 const send_1 = require("../../lib/activitypub/send");
@@ -42,7 +26,7 @@ var ScopeNames;
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends sequelize_typescript_1.Model {
     static sendDeleteIfOwned(instance, options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!instance.Actor) {
                 instance.Actor = yield instance.$get('Actor', { transaction: options.transaction });
             }
@@ -140,7 +124,7 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             ]
         };
         const scopes = [ScopeNames.WITH_ACTOR];
-        if (options.withStats) {
+        if (options.withStats === true) {
             scopes.push({
                 method: [ScopeNames.WITH_STATS, { daysPrior: 30 }]
             });
@@ -257,7 +241,19 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
         };
     }
     toFormattedJSON() {
-        const viewsPerDay = this.get('viewsPerDay');
+        const viewsPerDayString = this.get('viewsPerDay');
+        const videosCount = this.get('videosCount');
+        let viewsPerDay;
+        if (viewsPerDayString) {
+            viewsPerDay = viewsPerDayString.split(',')
+                .map(v => {
+                const [dateString, amount] = v.split('|');
+                return {
+                    date: new Date(dateString),
+                    views: +amount
+                };
+            });
+        }
         const actor = this.Actor.toFormattedJSON();
         const videoChannel = {
             id: this.id,
@@ -268,15 +264,8 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
             ownerAccount: undefined,
-            viewsPerDay: viewsPerDay !== undefined
-                ? viewsPerDay.split(',').map(v => {
-                    const o = v.split('|');
-                    return {
-                        date: new Date(o[0]),
-                        views: +o[1]
-                    };
-                })
-                : undefined
+            videosCount,
+            viewsPerDay
         };
         if (this.Account)
             videoChannel.ownerAccount = this.Account.toFormattedJSON();
@@ -302,63 +291,63 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
         return this.Actor.isOutdated();
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoChannelName', value => utils_1.throwIfNotValid(value, video_channels_1.isVideoChannelNameValid, 'name')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoChannelModel.prototype, "name", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoChannelDescription', value => utils_1.throwIfNotValid(value, video_channels_1.isVideoChannelDescriptionValid, 'description', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_CHANNELS.DESCRIPTION.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoChannelModel.prototype, "description", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoChannelSupport', value => utils_1.throwIfNotValid(value, video_channels_1.isVideoChannelSupportValid, 'support', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_CHANNELS.SUPPORT.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoChannelModel.prototype, "support", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoChannelModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoChannelModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_1.ActorModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoChannelModel.prototype, "actorId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_1.ActorModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", actor_1.ActorModel)
+    tslib_1.__metadata("design:type", actor_1.ActorModel)
 ], VideoChannelModel.prototype, "Actor", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => account_1.AccountModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoChannelModel.prototype, "accountId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => account_1.AccountModel, {
         foreignKey: {
             allowNull: false
         },
         hooks: true
     }),
-    __metadata("design:type", account_1.AccountModel)
+    tslib_1.__metadata("design:type", account_1.AccountModel)
 ], VideoChannelModel.prototype, "Account", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_1.VideoModel, {
         foreignKey: {
             name: 'channelId',
@@ -367,9 +356,9 @@ __decorate([
         onDelete: 'CASCADE',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoChannelModel.prototype, "Videos", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_playlist_1.VideoPlaylistModel, {
         foreignKey: {
             allowNull: true
@@ -377,15 +366,15 @@ __decorate([
         onDelete: 'CASCADE',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoChannelModel.prototype, "VideoPlaylists", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [VideoChannelModel, Object]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [VideoChannelModel, Object]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], VideoChannelModel, "sendDeleteIfOwned", null);
-VideoChannelModel = VideoChannelModel_1 = __decorate([
+VideoChannelModel = VideoChannelModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.DefaultScope(() => ({
         include: [
             {
@@ -489,6 +478,10 @@ VideoChannelModel = VideoChannelModel_1 = __decorate([
                 attributes: {
                     include: [
                         [
+                            sequelize_1.literal('(SELECT COUNT(*) FROM "video" WHERE "channelId" = "VideoChannelModel"."id")'),
+                            'videosCount'
+                        ],
+                        [
                             sequelize_1.literal('(' +
                                 `SELECT string_agg(concat_ws('|', t.day, t.views), ',') ` +
                                 'FROM ( ' +
@@ -496,17 +489,13 @@ VideoChannelModel = VideoChannelModel_1 = __decorate([
                                 'days AS ( ' +
                                 `SELECT generate_series(date_trunc('day', now()) - '${daysPrior} day'::interval, ` +
                                 `date_trunc('day', now()), '1 day'::interval) AS day ` +
-                                '), ' +
-                                'views AS ( ' +
-                                'SELECT v.* ' +
-                                'FROM "videoView" AS v ' +
-                                'INNER JOIN "video" ON "video"."id" = v."videoId" ' +
-                                'WHERE "video"."channelId" = "VideoChannelModel"."id" ' +
                                 ') ' +
-                                'SELECT days.day AS day, ' +
-                                'COALESCE(SUM(views.views), 0) AS views ' +
+                                'SELECT days.day AS day, COALESCE(SUM("videoView".views), 0) AS views ' +
                                 'FROM days ' +
-                                `LEFT JOIN views ON date_trunc('day', "views"."startDate") = date_trunc('day', days.day) ` +
+                                'LEFT JOIN (' +
+                                '"videoView" INNER JOIN "video" ON "videoView"."videoId" = "video"."id" ' +
+                                'AND "video"."channelId" = "VideoChannelModel"."id"' +
+                                `) ON date_trunc('day', "videoView"."startDate") = date_trunc('day', days.day) ` +
                                 'GROUP BY day ' +
                                 'ORDER BY day ' +
                                 ') t' +

@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const extra_utils_1 = require("@shared/extra-utils");
@@ -19,7 +11,7 @@ run()
     process.exit(-1);
 });
 function run() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const blacklist = getContributorsBlacklist();
         let contributors = yield getGitContributors();
         contributors = contributors.concat(getZanataContributors());
@@ -32,15 +24,16 @@ function run() {
             console.log('\n\n# Design\n');
             console.log(' * [Olivier Massain](https://dribbble.com/omassain)');
             console.log('\n\n# Icons\n');
-            console.log(' * [Robbie Pearce](https://robbiepearce.com/softies/)');
-            console.log(' * [Fork-Awesome](https://github.com/ForkAwesome/Fork-Awesome)');
-            console.log(' * `playlist add` by Material UI');
-            console.log(' * `language` by Aaron Jin');
+            console.log(' * [Feather Icons](feathericons.com/) (MIT)');
+            console.log(' * `playlist add`, `history`, `subscriptions`, `miscellaneous_services` by Material UI (Apache 2.0)');
+            console.log(' * `support` by Chocobozzz (CC-BY)');
+            console.log(' * `language` by Aaron Jin (CC-BY)');
+            console.log(' * `video-language` by Rigel Kent (CC-BY)');
         }
     });
 }
 function getGitContributors() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const output = yield extra_utils_1.execCLI(`git --no-pager shortlog -sn < /dev/tty | sed 's/^\\s\\+[0-9]\\+\\s\\+//g'`);
         return output.split('\n')
             .filter(l => !!l)

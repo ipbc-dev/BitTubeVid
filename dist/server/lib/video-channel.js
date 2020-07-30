@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.federateAllVideosOfChannel = exports.createLocalVideoChannel = void 0;
+const tslib_1 = require("tslib");
 const uuid_1 = require("uuid");
 const video_channel_1 = require("../models/video/video-channel");
 const actor_1 = require("./activitypub/actor");
@@ -16,7 +9,7 @@ const video_1 = require("../models/video/video");
 const url_1 = require("./activitypub/url");
 const videos_1 = require("./activitypub/videos");
 function createLocalVideoChannel(videoChannelInfo, account, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const uuid = uuid_1.v4();
         const url = url_1.getVideoChannelActivityPubUrl(videoChannelInfo.name);
         const actorInstance = actor_1.buildActorInstance('Group', url, videoChannelInfo.name, uuid);
@@ -38,7 +31,7 @@ function createLocalVideoChannel(videoChannelInfo, account, t) {
 }
 exports.createLocalVideoChannel = createLocalVideoChannel;
 function federateAllVideosOfChannel(videoChannel) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoIds = yield video_1.VideoModel.getAllIdsFromChannel(videoChannel);
         for (const videoId of videoIds) {
             const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoId);

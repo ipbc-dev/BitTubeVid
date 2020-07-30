@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.logsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const users_1 = require("../../../../shared/models/users");
 const middlewares_1 = require("../../../middlewares");
@@ -25,7 +18,7 @@ logsRouter.get('/logs', middlewares_1.authenticate, middlewares_1.ensureUserHasR
 logsRouter.get('/audit-logs', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_LOGS), logs_2.getAuditLogsValidator, middlewares_1.asyncMiddleware(getAuditLogs));
 const auditLogNameFilter = generateLogNameFilter(constants_1.AUDIT_LOG_FILENAME);
 function getAuditLogs(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const output = yield generateOutput({
             startDateQuery: req.query.startDate,
             endDateQuery: req.query.endDate,
@@ -37,7 +30,7 @@ function getAuditLogs(req, res) {
 }
 const logNameFilter = generateLogNameFilter(constants_1.LOG_FILENAME);
 function getLogs(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const output = yield generateOutput({
             startDateQuery: req.query.startDate,
             endDateQuery: req.query.endDate,
@@ -48,7 +41,7 @@ function getLogs(req, res) {
     });
 }
 function generateOutput(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { startDateQuery, level, nameFilter } = options;
         const logFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.LOG_DIR);
         const sortedLogFiles = yield logs_1.mtimeSortFilesDesc(logFiles, config_1.CONFIG.STORAGE.LOG_DIR);
@@ -73,7 +66,7 @@ function generateOutput(options) {
     });
 }
 function getOutputFromFile(path, startDate, endDate, level, currentSize) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const startTime = startDate.getTime();
         const endTime = endDate.getTime();
         let logTime;

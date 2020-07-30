@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
@@ -19,7 +11,7 @@ const expect = chai.expect;
 describe('Test update host scripts', function () {
     let server;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const overrideConfig = {
                 webserver: {
@@ -45,7 +37,7 @@ describe('Test update host scripts', function () {
         });
     });
     it('Should run update host', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             extra_utils_1.killallServers([server]);
             yield extra_utils_1.reRunServer(server);
@@ -54,7 +46,7 @@ describe('Test update host scripts', function () {
         });
     });
     it('Should have updated videos url', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(server.url);
             expect(res.body.total).to.equal(2);
             for (const video of res.body.data) {
@@ -69,7 +61,7 @@ describe('Test update host scripts', function () {
         });
     });
     it('Should have updated video channels url', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideoChannelsList(server.url, 0, 5, '-name');
             expect(res.body.total).to.equal(3);
             for (const channel of res.body.data) {
@@ -79,7 +71,7 @@ describe('Test update host scripts', function () {
         });
     });
     it('Should have updated accounts url', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield accounts_1.getAccountsList(server.url);
             expect(res.body.total).to.equal(3);
             for (const account of res.body.data) {
@@ -90,7 +82,7 @@ describe('Test update host scripts', function () {
         });
     });
     it('Should have updated torrent hosts', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             const res = yield extra_utils_1.getVideosList(server.url);
             const videos = res.body.data;
@@ -113,7 +105,7 @@ describe('Test update host scripts', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

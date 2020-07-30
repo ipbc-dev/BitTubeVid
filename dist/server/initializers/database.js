@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sequelizeTypescript = exports.initDatabaseModels = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
@@ -35,7 +28,7 @@ const config_1 = require("./config");
 const schedule_video_update_1 = require("../models/video/schedule-video-update");
 const video_caption_1 = require("../models/video/video-caption");
 const video_import_1 = require("../models/video/video-import");
-const video_views_1 = require("../models/video/video-views");
+const video_view_1 = require("../models/video/video-view");
 const video_change_ownership_1 = require("../models/video/video-change-ownership");
 const video_redundancy_1 = require("../models/redundancy/video-redundancy");
 const user_video_history_1 = require("../models/account/user-video-history");
@@ -82,7 +75,7 @@ const sequelizeTypescript = new sequelize_typescript_1.Sequelize({
 });
 exports.sequelizeTypescript = sequelizeTypescript;
 function initDatabaseModels(silent) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         sequelizeTypescript.addModels([
             application_1.ApplicationModel,
             actor_1.ActorModel,
@@ -107,7 +100,7 @@ function initDatabaseModels(silent) {
             video_comment_1.VideoCommentModel,
             schedule_video_update_1.ScheduleVideoUpdateModel,
             video_import_1.VideoImportModel,
-            video_views_1.VideoViewModel,
+            video_view_1.VideoViewModel,
             video_redundancy_1.VideoRedundancyModel,
             user_video_history_1.UserVideoHistoryModel,
             account_blocklist_1.AccountBlocklistModel,
@@ -130,7 +123,7 @@ function initDatabaseModels(silent) {
 }
 exports.initDatabaseModels = initDatabaseModels;
 function checkPostgresExtensions() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const promises = [
             checkPostgresExtension('pg_trgm'),
             checkPostgresExtension('unaccent')
@@ -139,7 +132,7 @@ function checkPostgresExtensions() {
     });
 }
 function checkPostgresExtension(extension) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const query = `SELECT 1 FROM pg_available_extensions WHERE name = '${extension}' AND installed_version IS NOT NULL;`;
         const options = {
             type: sequelize_1.QueryTypes.SELECT,

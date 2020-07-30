@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.wrapForAPIResults = exports.buildListQuery = void 0;
 const models_1 = require("@shared/models");
 const utils_1 = require("@server/models/utils");
 const validator_1 = require("validator");
@@ -62,12 +63,14 @@ function buildListQuery(model, options) {
             '  EXISTS (' +
             '    SELECT 1 FROM "videoShare" ' +
             '    INNER JOIN "actorFollow" "actorFollowShare" ON "actorFollowShare"."targetActorId" = "videoShare"."actorId" ' +
-            '    AND "actorFollowShare"."actorId" = :followerActorId WHERE "videoShare"."videoId" = "video"."id"' +
+            '    AND "actorFollowShare"."actorId" = :followerActorId AND "actorFollowShare"."state" = \'accepted\' ' +
+            '    WHERE "videoShare"."videoId" = "video"."id"' +
             '  )' +
             '  OR' +
             '  EXISTS (' +
             '    SELECT 1 from "actorFollow" ' +
-            '    WHERE "actorFollow"."targetActorId" = "videoChannel"."actorId" AND "actorFollow"."actorId" = :followerActorId' +
+            '    WHERE "actorFollow"."targetActorId" = "videoChannel"."actorId" AND "actorFollow"."actorId" = :followerActorId ' +
+            '    AND "actorFollow"."state" = \'accepted\'' +
             '  )';
         if (options.includeLocalVideos) {
             query += '  OR "video"."remote" IS FALSE';

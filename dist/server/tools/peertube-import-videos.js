@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
@@ -61,13 +53,13 @@ cli_1.getServerCredentials(command)
 })
     .catch(err => console.error(err));
 function run(url, user) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!user.password) {
             user.password = yield promptPassword();
         }
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
         const options = ['-j', '--flat-playlist', '--playlist-reverse', ...command.args];
-        youtubeDL.getInfo(program['targetUrl'], options, processOptions, (err, info) => __awaiter(this, void 0, void 0, function* () {
+        youtubeDL.getInfo(program['targetUrl'], options, processOptions, (err, info) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (err) {
                 exitError(err.stderr + ' ' + err.message);
             }
@@ -101,7 +93,7 @@ function run(url, user) {
 }
 function processVideo(parameters) {
     const { youtubeInfo, cwd, url, user } = parameters;
-    return new Promise((res) => __awaiter(this, void 0, void 0, function* () {
+    return new Promise((res) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         log.debug('Fetching object.', youtubeInfo);
         const videoInfo = yield fetchObject(youtubeInfo);
         log.debug('Fetched object.', videoInfo);
@@ -128,7 +120,7 @@ function processVideo(parameters) {
         const options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', ...command.args, '-o', path];
         try {
             const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-            youtubeDL.exec(videoInfo.url, options, processOptions, (err, output) => __awaiter(this, void 0, void 0, function* () {
+            youtubeDL.exec(videoInfo.url, options, processOptions, (err, output) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 if (err) {
                     log.error(err);
                     return res();
@@ -151,7 +143,7 @@ function processVideo(parameters) {
     }));
 }
 function uploadVideoOnPeerTube(parameters) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { videoInfo, videoPath, cwd, url, user } = parameters;
         const category = yield getCategory(videoInfo.categories, url);
         const licence = getLicence(videoInfo.license);
@@ -212,7 +204,7 @@ function uploadVideoOnPeerTube(parameters) {
     });
 }
 function getCategory(categories, url) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!categories)
             return undefined;
         const categoryString = categories[0];
@@ -252,7 +244,7 @@ function normalizeObject(obj) {
 }
 function fetchObject(info) {
     const url = buildUrl(info);
-    return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
         youtubeDL.getInfo(url, undefined, processOptions, (err, videoInfo) => {
             if (err)
@@ -282,7 +274,7 @@ function normalizeTargetUrl(url) {
     return normalizedUrl;
 }
 function promptPassword() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         return new Promise((res, rej) => {
             prompt.start();
             const schema = {
@@ -303,7 +295,7 @@ function promptPassword() {
     });
 }
 function getAccessTokenOrDie(url, user) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const resClient = yield index_1.getClient(url);
         const client = {
             id: resClient.body.client_id,

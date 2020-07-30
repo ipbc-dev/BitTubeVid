@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isSignatureValueValid = exports.isSignatureCreatorValid = exports.isSignatureTypeValid = void 0;
 const misc_1 = require("../misc");
 const misc_2 = require("./misc");
 function isSignatureTypeValid(signatureType) {

@@ -1,22 +1,14 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const chai = require("chai");
+const tslib_1 = require("tslib");
 require("mocha");
-const extra_utils_1 = require("../../../shared/extra-utils");
+const chai = require("chai");
 const libxmljs = require("libxmljs");
-const video_comments_1 = require("../../../shared/extra-utils/videos/video-comments");
-const jobs_1 = require("../../../shared/extra-utils/server/jobs");
-const models_1 = require("@shared/models");
 const blocklist_1 = require("@shared/extra-utils/users/blocklist");
+const models_1 = require("@shared/models");
+const extra_utils_1 = require("../../../shared/extra-utils");
+const jobs_1 = require("../../../shared/extra-utils/server/jobs");
+const video_comments_1 = require("../../../shared/extra-utils/videos/video-comments");
 chai.use(require('chai-xml'));
 chai.use(require('chai-json-schema'));
 chai.config.includeStack = true;
@@ -29,7 +21,7 @@ describe('Test syndication feeds', () => {
     let userAccountId;
     let userChannelId;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -74,7 +66,7 @@ describe('Test syndication feeds', () => {
     });
     describe('All feed', function () {
         it('Should be well formed XML (covers RSS 2.0 and ATOM 1.0 endpoints)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const feed of ['video-comments', 'videos']) {
                     const rss = yield extra_utils_1.getXMLfeed(servers[0].url, feed);
                     expect(rss.text).xml.to.be.valid();
@@ -84,7 +76,7 @@ describe('Test syndication feeds', () => {
             });
         });
         it('Should be well formed JSON (covers JSON feed 1.0 endpoint)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const feed of ['video-comments', 'videos']) {
                     const json = yield extra_utils_1.getJSONfeed(servers[0].url, feed);
                     expect(JSON.parse(json.text)).to.be.jsonSchema({ type: 'object' });
@@ -94,7 +86,7 @@ describe('Test syndication feeds', () => {
     });
     describe('Videos feed', function () {
         it('Should contain a valid enclosure (covers RSS 2.0 endpoint)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const rss = yield extra_utils_1.getXMLfeed(server.url, 'videos');
                     const xmlDoc = libxmljs.parseXmlString(rss.text);
@@ -107,7 +99,7 @@ describe('Test syndication feeds', () => {
             });
         });
         it('Should contain a valid \'attachments\' object (covers JSON feed 1.0 endpoint)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const json = yield extra_utils_1.getJSONfeed(server.url, 'videos');
                     const jsonObj = JSON.parse(json.text);
@@ -121,7 +113,7 @@ describe('Test syndication feeds', () => {
             });
         });
         it('Should filter by account', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'videos', { accountId: rootAccountId });
                     const jsonObj = JSON.parse(json.text);
@@ -153,7 +145,7 @@ describe('Test syndication feeds', () => {
             });
         });
         it('Should filter by video channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'videos', { videoChannelId: rootChannelId });
                     const jsonObj = JSON.parse(json.text);
@@ -187,7 +179,7 @@ describe('Test syndication feeds', () => {
     });
     describe('Video comments feed', function () {
         it('Should contain valid comments (covers JSON feed 1.0 endpoint) and not from unlisted videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const json = yield extra_utils_1.getJSONfeed(server.url, 'video-comments');
                     const jsonObj = JSON.parse(json.text);
@@ -198,18 +190,36 @@ describe('Test syndication feeds', () => {
             });
         });
         it('Should not list comments from muted accounts or instances', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                yield blocklist_1.addAccountToServerBlocklist(servers[1].url, servers[1].accessToken, 'root@localhost:' + servers[0].port);
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(30000);
+                const remoteHandle = 'root@localhost:' + servers[0].port;
+                yield blocklist_1.addAccountToServerBlocklist(servers[1].url, servers[1].accessToken, remoteHandle);
                 {
                     const json = yield extra_utils_1.getJSONfeed(servers[1].url, 'video-comments', { version: 2 });
                     const jsonObj = JSON.parse(json.text);
                     expect(jsonObj.items.length).to.be.equal(0);
                 }
+                yield blocklist_1.removeAccountFromServerBlocklist(servers[1].url, servers[1].accessToken, remoteHandle);
+                {
+                    const videoUUID = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'server 2' })).uuid;
+                    yield jobs_1.waitJobs(servers);
+                    yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'super comment');
+                    yield jobs_1.waitJobs(servers);
+                    const json = yield extra_utils_1.getJSONfeed(servers[1].url, 'video-comments', { version: 3 });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(3);
+                }
+                yield blocklist_1.addAccountToAccountBlocklist(servers[1].url, servers[1].accessToken, remoteHandle);
+                {
+                    const json = yield extra_utils_1.getJSONfeed(servers[1].url, 'video-comments', { version: 4 });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(2);
+                }
             });
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

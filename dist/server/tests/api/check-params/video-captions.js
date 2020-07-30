@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const path_1 = require("path");
@@ -19,7 +11,7 @@ describe('Test video captions API validator', function () {
     let userAccessToken;
     let videoUUID;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -43,7 +35,7 @@ describe('Test video captions API validator', function () {
             captionfile: path_1.join(__dirname, '..', '..', 'fixtures', 'subtitle-good1.vtt')
         };
         it('Should fail without a valid uuid', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
                     url: server.url,
@@ -55,7 +47,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with an unknown id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
                     url: server.url,
@@ -67,7 +59,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with a missing language in path', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions';
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
@@ -80,7 +72,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with an unknown language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/15';
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
@@ -93,7 +85,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail without access token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
@@ -106,7 +98,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with a bad access token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
@@ -120,7 +112,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should succeed with a valid captionfile extension and octet-stream mime type', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield video_captions_1.createVideoCaption({
                     url: server.url,
                     accessToken: server.accessToken,
@@ -132,7 +124,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
@@ -148,24 +140,24 @@ describe('Test video captions API validator', function () {
     });
     describe('When listing video captions', function () {
         it('Should fail without a valid uuid', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: path + '4da6fde3-88f7-4d16-b119-108df563d0b06/captions' });
             });
         });
         it('Should fail with an unknown id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions', statusCodeExpected: 404 });
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: path + videoUUID + '/captions', statusCodeExpected: 200 });
             });
         });
     });
     describe('When deleting video caption', function () {
         it('Should fail without a valid uuid', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '4da6fde3-88f7-4d16-b119-108df563d0b06/captions/fr',
@@ -174,7 +166,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with an unknown id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions/fr',
@@ -184,7 +176,7 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with an invalid language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions/16',
@@ -193,44 +185,44 @@ describe('Test video captions API validator', function () {
             });
         });
         it('Should fail with a missing language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: server.accessToken });
             });
         });
         it('Should fail with an unknown language', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/15';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: server.accessToken });
             });
         });
         it('Should fail without access token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, statusCodeExpected: 401 });
             });
         });
         it('Should fail with a bad access token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: 'coucou', statusCodeExpected: 401 });
             });
         });
         it('Should fail with another user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: userAccessToken, statusCodeExpected: 403 });
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
                 yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: server.accessToken, statusCodeExpected: 204 });
             });
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

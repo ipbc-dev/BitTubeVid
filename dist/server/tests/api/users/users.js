@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const index_1 = require("../../../../shared/index");
@@ -29,7 +21,7 @@ describe('Test users', function () {
         password: 'super password'
     };
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1, {
                 rates_limit: {
@@ -47,14 +39,14 @@ describe('Test users', function () {
         it('Should return the first client');
         it('Should remove the last client');
         it('Should not login with an invalid client id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const client = { id: 'client', secret: server.client.secret };
                 const res = yield extra_utils_1.login(server.url, client, server.user, 400);
                 expect(res.body.error).to.contain('client is invalid');
             });
         });
         it('Should not login with an invalid client secret', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const client = { id: server.client.id, secret: 'coucou' };
                 const res = yield extra_utils_1.login(server.url, client, server.user, 400);
                 expect(res.body.error).to.contain('client is invalid');
@@ -63,41 +55,41 @@ describe('Test users', function () {
     });
     describe('Login', function () {
         it('Should not login with an invalid username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: 'captain crochet', password: server.user.password };
                 const res = yield extra_utils_1.login(server.url, server.client, user, 400);
                 expect(res.body.error).to.contain('credentials are invalid');
             });
         });
         it('Should not login with an invalid password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: server.user.username, password: 'mew_three' };
                 const res = yield extra_utils_1.login(server.url, server.client, user, 400);
                 expect(res.body.error).to.contain('credentials are invalid');
             });
         });
         it('Should not be able to upload a video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 accessToken = 'my_super_token';
                 const videoAttributes = {};
                 yield extra_utils_1.uploadVideo(server.url, accessToken, videoAttributes, 401);
             });
         });
         it('Should not be able to follow', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 accessToken = 'my_super_token';
                 yield follows_1.follow(server.url, ['http://example.com'], accessToken, 401);
             });
         });
         it('Should not be able to unfollow');
         it('Should be able to login', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.login(server.url, server.client, server.user, 200);
                 accessToken = res.body.access_token;
             });
         });
         it('Should be able to login with an insensitive username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: 'RoOt', password: server.user.password };
                 yield extra_utils_1.login(server.url, server.client, user, 200);
                 const user2 = { username: 'rOoT', password: server.user.password };
@@ -109,7 +101,7 @@ describe('Test users', function () {
     });
     describe('Upload', function () {
         it('Should upload the video with the correct token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoAttributes = {};
                 yield extra_utils_1.uploadVideo(server.url, accessToken, videoAttributes);
                 const res = yield extra_utils_1.getVideosList(server.url);
@@ -119,7 +111,7 @@ describe('Test users', function () {
             });
         });
         it('Should upload the video again with the correct token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoAttributes = {};
                 yield extra_utils_1.uploadVideo(server.url, accessToken, videoAttributes);
             });
@@ -127,7 +119,7 @@ describe('Test users', function () {
     });
     describe('Ratings', function () {
         it('Should retrieve a video rating', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.rateVideo(server.url, accessToken, videoId, 'like');
                 const res = yield extra_utils_1.getMyUserVideoRating(server.url, accessToken, videoId);
                 const rating = res.body;
@@ -136,7 +128,7 @@ describe('Test users', function () {
             });
         });
         it('Should retrieve ratings list', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.rateVideo(server.url, accessToken, videoId, 'like');
                 const res = yield extra_utils_1.getAccountRatings(server.url, server.user.username, server.accessToken, null, 200);
                 const ratings = res.body;
@@ -146,7 +138,7 @@ describe('Test users', function () {
             });
         });
         it('Should retrieve ratings list by rating type', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield extra_utils_1.getAccountRatings(server.url, server.user.username, server.accessToken, 'like');
                     const ratings = res.body;
@@ -162,35 +154,35 @@ describe('Test users', function () {
     });
     describe('Remove video', function () {
         it('Should not be able to remove the video with an incorrect token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeVideo(server.url, 'bad_token', videoId, 401);
             });
         });
         it('Should not be able to remove the video with the token of another account');
         it('Should be able to remove the video with the correct token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeVideo(server.url, accessToken, videoId);
             });
         });
     });
     describe('Logout', function () {
         it('Should logout (revoke token)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield login_1.logout(server.url, server.accessToken);
             });
         });
         it('Should not be able to get the user information', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserInformation(server.url, server.accessToken, 401);
             });
         });
         it('Should not be able to upload a video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video' }, 401);
             });
         });
         it('Should not be able to rate a video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = '/api/v1/videos/';
                 const data = {
                     rating: 'likes'
@@ -206,38 +198,38 @@ describe('Test users', function () {
             });
         });
         it('Should be able to login again', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 server.accessToken = yield login_1.serverLogin(server);
             });
         });
         it('Should have an expired access token');
         it('Should refresh the token');
         it('Should be able to get my user information again', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserInformation(server.url, server.accessToken);
             });
         });
     });
     describe('Creating a user', function () {
         it('Should be able to create a new user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.createUser({
                     url: server.url,
                     accessToken: accessToken,
                     username: user.username,
                     password: user.password,
                     videoQuota: 2 * 1024 * 1024,
-                    adminFlags: user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST
+                    adminFlags: user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST
                 });
             });
         });
         it('Should be able to login with this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 accessTokenUser = yield extra_utils_1.userLogin(server, user);
             });
         });
         it('Should be able to get user information', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res1 = yield extra_utils_1.getMyUserInformation(server.url, accessTokenUser);
                 const userMe = res1.body;
                 const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, userMe.id, true);
@@ -253,7 +245,7 @@ describe('Test users', function () {
                     expect(user.account.description).to.be.null;
                 }
                 expect(userMe.adminFlags).to.be.undefined;
-                expect(userGet.adminFlags).to.equal(user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST);
+                expect(userGet.adminFlags).to.equal(user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST);
                 expect(userMe.specialPlaylists).to.have.lengthOf(1);
                 expect(userMe.specialPlaylists[0].type).to.equal(index_1.VideoPlaylistType.WATCH_LATER);
                 expect(userGet.videosCount).to.be.a('number');
@@ -269,7 +261,7 @@ describe('Test users', function () {
     });
     describe('My videos & quotas', function () {
         it('Should be able to upload a video with this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const videoAttributes = {
                     name: 'super user video',
@@ -279,7 +271,7 @@ describe('Test users', function () {
             });
         });
         it('Should have video quota updated', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser);
                 const data = res.body;
                 expect(data.videoQuotaUsed).to.equal(218910);
@@ -290,7 +282,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to list my videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield videos_1.getMyVideos(server.url, accessTokenUser, 0, 5);
                 expect(res.body.total).to.equal(1);
                 const videos = res.body.data;
@@ -302,7 +294,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to search in my videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield videos_1.getMyVideos(server.url, accessTokenUser, 0, 5, '-createdAt', 'user video');
                     expect(res.body.total).to.equal(1);
@@ -318,7 +310,7 @@ describe('Test users', function () {
             });
         });
         it('Should disable webtorrent, enable HLS, and update my quota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 {
                     const res = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
@@ -346,7 +338,7 @@ describe('Test users', function () {
     });
     describe('Users listing', function () {
         it('Should list all the users', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersList(server.url, server.accessToken);
                 const result = res.body;
                 const total = result.total;
@@ -368,7 +360,7 @@ describe('Test users', function () {
             });
         });
         it('Should list only the first user by username asc', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 1, 'username');
                 const result = res.body;
                 const total = result.total;
@@ -383,7 +375,7 @@ describe('Test users', function () {
             });
         });
         it('Should list only the first user by username desc', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 1, '-username');
                 const result = res.body;
                 const total = result.total;
@@ -397,7 +389,7 @@ describe('Test users', function () {
             });
         });
         it('Should list only the second user by createdAt desc', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 1, '-createdAt');
                 const result = res.body;
                 const total = result.total;
@@ -411,7 +403,7 @@ describe('Test users', function () {
             });
         });
         it('Should list all the users by createdAt asc', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt');
                 const result = res.body;
                 const total = result.total;
@@ -427,7 +419,7 @@ describe('Test users', function () {
             });
         });
         it('Should search user by username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', 'oot');
                 const users = res.body.data;
                 expect(res.body.total).to.equal(1);
@@ -436,7 +428,7 @@ describe('Test users', function () {
             });
         });
         it('Should search user by email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', 'r_1@exam');
                     const users = res.body.data;
@@ -458,7 +450,7 @@ describe('Test users', function () {
     });
     describe('Update my account', function () {
         it('Should update my password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -470,7 +462,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to change the NSFW display attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -488,7 +480,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to change the autoPlayVideo attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -500,7 +492,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to change the autoPlayNextVideo attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -512,7 +504,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to change the email attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -531,7 +523,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to update my avatar', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fixture = 'avatar.png';
                 yield extra_utils_1.updateMyAvatar({
                     url: server.url,
@@ -544,7 +536,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to update my display name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -562,7 +554,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to update my description', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -582,7 +574,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to update my theme', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const theme of ['background-red', 'default', 'instance-default']) {
                     yield extra_utils_1.updateMyUser({
                         url: server.url,
@@ -596,7 +588,7 @@ describe('Test users', function () {
             });
         });
         it('Should be able to update my modal preferences', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateMyUser({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -612,7 +604,7 @@ describe('Test users', function () {
     });
     describe('Updating another user', function () {
         it('Should be able to update another user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId,
@@ -636,13 +628,13 @@ describe('Test users', function () {
             });
         });
         it('Should have removed the user token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser, 401);
                 accessTokenUser = yield extra_utils_1.userLogin(server, user);
             });
         });
         it('Should be able to update another user password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId,
@@ -658,24 +650,24 @@ describe('Test users', function () {
     });
     describe('Video blacklists', function () {
         it('Should be able to list video blacklist by a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getBlacklistedVideosList({ url: server.url, token: accessTokenUser });
             });
         });
     });
     describe('Remove a user', function () {
         it('Should be able to remove this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, userId, accessToken);
             });
         });
         it('Should not be able to login with this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.userLogin(server, user, 400);
             });
         });
         it('Should not have videos of this user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getVideosList(server.url);
                 expect(res.body.total).to.equal(1);
                 const video = res.body.data[0];
@@ -686,14 +678,14 @@ describe('Test users', function () {
     describe('Registering a new user', function () {
         let user15AccessToken;
         it('Should register a new user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { displayName: 'super user 15', username: 'user_15', password: 'my super password' };
                 const channel = { name: 'my_user_15_channel', displayName: 'my channel rocks' };
                 yield extra_utils_1.registerUserWithChannel({ url: server.url, user, channel });
             });
         });
         it('Should be able to login with this registered user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user15 = {
                     username: 'user_15',
                     password: 'my super password'
@@ -702,27 +694,27 @@ describe('Test users', function () {
             });
         });
         it('Should have the correct display name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getMyUserInformation(server.url, user15AccessToken);
                 const user = res.body;
                 expect(user.account.displayName).to.equal('super user 15');
             });
         });
         it('Should have the correct video quota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getMyUserInformation(server.url, user15AccessToken);
                 const user = res.body;
                 expect(user.videoQuota).to.equal(5 * 1024 * 1024);
             });
         });
         it('Should have created the channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield extra_utils_1.getVideoChannel(server.url, 'my_user_15_channel');
                 expect(res.body.displayName).to.equal('my channel rocks');
             });
         });
         it('Should remove me', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const res = yield extra_utils_1.getUsersList(server.url, server.accessToken);
                     expect(res.body.data.find(u => u.username === 'user_15')).to.not.be.undefined;
@@ -738,12 +730,12 @@ describe('Test users', function () {
     describe('User blocking', function () {
         let user16Id;
         let user16AccessToken;
-        it('Should block and unblock a user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                const user16 = {
-                    username: 'user_16',
-                    password: 'my super password'
-                };
+        const user16 = {
+            username: 'user_16',
+            password: 'my super password'
+        };
+        it('Should block a user', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const resUser = yield extra_utils_1.createUser({
                     url: server.url,
                     accessToken: server.accessToken,
@@ -756,6 +748,28 @@ describe('Test users', function () {
                 yield extra_utils_1.blockUser(server.url, user16Id, server.accessToken);
                 yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 401);
                 yield extra_utils_1.userLogin(server, user16, 400);
+            });
+        });
+        it('Should search user by banned status', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                {
+                    const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', undefined, true);
+                    const users = res.body.data;
+                    expect(res.body.total).to.equal(1);
+                    expect(users.length).to.equal(1);
+                    expect(users[0].username).to.equal(user16.username);
+                }
+                {
+                    const res = yield extra_utils_1.getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', undefined, false);
+                    const users = res.body.data;
+                    expect(res.body.total).to.equal(1);
+                    expect(users.length).to.equal(1);
+                    expect(users[0].username).to.not.equal(user16.username);
+                }
+            });
+        });
+        it('Should unblock a user', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.unblockUser(server.url, user16Id, server.accessToken);
                 user16AccessToken = yield extra_utils_1.userLogin(server, user16);
                 yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 200);
@@ -766,7 +780,7 @@ describe('Test users', function () {
         let user17Id;
         let user17AccessToken;
         it('Should report correct initial statistics about a user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user17 = {
                     username: 'user_17',
                     password: 'my super password'
@@ -789,7 +803,7 @@ describe('Test users', function () {
             });
         });
         it('Should report correct videos count', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoAttributes = {
                     name: 'video to test user stats'
                 };
@@ -802,7 +816,7 @@ describe('Test users', function () {
             });
         });
         it('Should report correct video comments for user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const text = 'super comment';
                 yield extra_utils_1.addVideoCommentThread(server.url, user17AccessToken, videoId, text);
                 const res = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
@@ -811,7 +825,7 @@ describe('Test users', function () {
             });
         });
         it('Should report correct video abuses counts', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const reason = 'my super bad reason';
                 yield extra_utils_1.reportVideoAbuse(server.url, user17AccessToken, videoId, reason);
                 const res1 = yield extra_utils_1.getVideoAbusesList({ url: server.url, token: server.accessToken });
@@ -829,7 +843,7 @@ describe('Test users', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

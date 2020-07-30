@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processUpdateActivity = void 0;
+const tslib_1 = require("tslib");
 const database_utils_1 = require("../../../helpers/database-utils");
 const logger_1 = require("../../../helpers/logger");
 const database_1 = require("../../../initializers/database");
@@ -23,7 +16,7 @@ const utils_1 = require("../send/utils");
 const playlist_1 = require("../playlist");
 const redundancy_1 = require("@server/lib/redundancy");
 function processUpdateActivity(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
         const objectType = activity.object.type;
         if (objectType === 'Video') {
@@ -45,7 +38,7 @@ function processUpdateActivity(options) {
 }
 exports.processUpdateActivity = processUpdateActivity;
 function processUpdateVideo(actor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoObject = activity.object;
         if (videos_2.sanitizeAndCheckVideoTorrentObject(videoObject) === false) {
             logger_1.logger.debug('Video sent by update is not valid.', { videoObject });
@@ -66,7 +59,7 @@ function processUpdateVideo(actor, activity) {
     });
 }
 function processUpdateCacheFile(byActor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if ((yield redundancy_1.isRedundancyAccepted(activity, byActor)) !== true)
             return;
         const cacheFileObject = activity.object;
@@ -75,7 +68,7 @@ function processUpdateCacheFile(byActor, activity) {
             return undefined;
         }
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: cacheFileObject.object });
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield cache_file_2.createOrUpdateCacheFile(cacheFileObject, video, byActor, t);
         }));
         if (video.isOwned()) {
@@ -85,7 +78,7 @@ function processUpdateCacheFile(byActor, activity) {
     });
 }
 function processUpdateActor(actor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actorAttributesToUpdate = activity.object;
         logger_1.logger.debug('Updating remote account "%s".', actorAttributesToUpdate.url);
         let accountOrChannelInstance;
@@ -93,7 +86,7 @@ function processUpdateActor(actor, activity) {
         let accountOrChannelFieldsSave;
         const avatarInfo = yield actor_2.getAvatarInfoIfExists(actorAttributesToUpdate);
         try {
-            yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 actorFieldsSave = actor.toJSON();
                 if (actorAttributesToUpdate.type === 'Group')
                     accountOrChannelInstance = actor.VideoChannel;
@@ -127,7 +120,7 @@ function processUpdateActor(actor, activity) {
     });
 }
 function processUpdatePlaylist(byActor, activity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const playlistObject = activity.object;
         const byAccount = byActor.Account;
         if (!byAccount)

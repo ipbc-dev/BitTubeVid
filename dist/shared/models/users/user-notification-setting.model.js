@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserNotificationSettingValue = void 0;
 var UserNotificationSettingValue;
 (function (UserNotificationSettingValue) {
     UserNotificationSettingValue[UserNotificationSettingValue["NONE"] = 0] = "NONE";

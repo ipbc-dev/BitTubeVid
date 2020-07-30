@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserNotificationType = void 0;
 var UserNotificationType;
 (function (UserNotificationType) {
     UserNotificationType[UserNotificationType["NEW_VIDEO_FROM_SUBSCRIPTION"] = 1] = "NEW_VIDEO_FROM_SUBSCRIPTION";

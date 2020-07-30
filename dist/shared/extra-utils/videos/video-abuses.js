@@ -1,23 +1,25 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteVideoAbuse = exports.updateVideoAbuse = exports.getVideoAbusesList = exports.reportVideoAbuse = void 0;
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
-function reportVideoAbuse(url, token, videoId, reason, specialStatus = 200) {
+function reportVideoAbuse(url, token, videoId, reason, predefinedReasons, startAt, endAt, specialStatus = 200) {
     const path = '/api/v1/videos/' + videoId + '/abuse';
     return request(url)
         .post(path)
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + token)
-        .send({ reason })
+        .send({ reason, predefinedReasons, startAt, endAt })
         .expect(specialStatus);
 }
 exports.reportVideoAbuse = reportVideoAbuse;
 function getVideoAbusesList(options) {
-    const { url, token, id, search, state, videoIs, searchReporter, searchReportee, searchVideo, searchVideoChannel } = options;
+    const { url, token, id, predefinedReason, search, state, videoIs, searchReporter, searchReportee, searchVideo, searchVideoChannel } = options;
     const path = '/api/v1/videos/abuse';
     const query = {
         sort: 'createdAt',
         id,
+        predefinedReason,
         search,
         state,
         videoIs,

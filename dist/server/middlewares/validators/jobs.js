@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.listJobsValidator = void 0;
 const express_validator_1 = require("express-validator");
 const jobs_1 = require("../../helpers/custom-validators/jobs");
 const logger_1 = require("../../helpers/logger");

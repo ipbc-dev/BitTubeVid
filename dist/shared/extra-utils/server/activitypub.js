@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.makeActivityPubGetRequest = void 0;
 const request = require("supertest");
 function makeActivityPubGetRequest(url, path, expectedStatus = 200) {
     return request(url)

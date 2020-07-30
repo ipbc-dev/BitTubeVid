@@ -1,15 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var TagModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.TagModel = void 0;
+const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const videos_1 = require("../../helpers/custom-validators/videos");
@@ -54,29 +47,29 @@ let TagModel = TagModel_1 = class TagModel extends sequelize_typescript_1.Model 
             .then(data => data.map(d => d.name));
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoTag', value => utils_1.throwIfNotValid(value, videos_1.isVideoTagValid, 'tag')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], TagModel.prototype, "name", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], TagModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], TagModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsToMany(() => video_1.VideoModel, {
         foreignKey: 'tagId',
         through: () => video_tag_1.VideoTagModel,
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], TagModel.prototype, "Videos", void 0);
-TagModel = TagModel_1 = __decorate([
+TagModel = TagModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'tag',
         timestamps: false,

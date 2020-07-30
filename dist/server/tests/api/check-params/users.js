@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 require("mocha");
 const path_1 = require("path");
@@ -33,9 +25,8 @@ describe('Test users API validators', function () {
     let moderatorAccessToken = '';
     let emailPort;
     let overrideConfig;
-    let channelId;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             const emails = [];
             emailPort = yield email_1.MockSmtpServer.Instance.collectEmails(emails);
@@ -92,10 +83,6 @@ describe('Test users API validators', function () {
                 });
             }
             {
-                const res = yield extra_utils_1.getMyUserInformation(server.url, server.accessToken);
-                channelId = res.body.videoChannels[0].id;
-            }
-            {
                 const res = yield extra_utils_1.uploadVideo(server.url, server.accessToken, {});
                 videoId = res.body.video.id;
             }
@@ -110,22 +97,35 @@ describe('Test users API validators', function () {
     });
     describe('When listing users', function () {
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, path, server.accessToken);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, path, server.accessToken);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, server.accessToken);
             });
         });
+        it('Should fail with a bad blocked/banned user filter', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path,
+                    query: {
+                        blocked: 42
+                    },
+                    token: server.accessToken,
+                    statusCodeExpected: 400
+                });
+            });
+        });
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -134,7 +134,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a non admin user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -152,64 +152,64 @@ describe('Test users API validators', function () {
             videoQuota: -1,
             videoQuotaDaily: -1,
             role: shared_1.UserRole.USER,
-            adminFlags: user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST
+            adminFlags: user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST
         };
         it('Should fail with a too small username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: '' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too long username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'super'.repeat(50) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a not lowercase username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'Toto' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an incorrect username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'my username' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a missing email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'email');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { email: 'test_example.com' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too small password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: 'bla' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too long password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: 'super'.repeat(61) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with empty password and no smtp configured', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: '' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should succeed with no password on a server with smtp enabled', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 extra_utils_1.killallServers([server]);
                 const config = extra_utils_1.immutableAssign(overrideConfig, {
@@ -234,13 +234,13 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with invalid admin flags', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { adminFlags: 'toto' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -251,55 +251,55 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail if we add a user with the same username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'user1' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
             });
         });
         it('Should fail if we add a user with the same email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { email: 'user1@example.com' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
             });
         });
         it('Should fail without a videoQuota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'videoQuota');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail without a videoQuotaDaily', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'videoQuotaDaily');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid videoQuota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { videoQuota: -5 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid videoQuotaDaily', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { videoQuotaDaily: -7 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail without a user role', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'role');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid user role', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { role: 88989 });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with a "peertube" username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'peertube' });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -311,7 +311,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail to create a moderator or an admin with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const role of [shared_1.UserRole.MODERATOR, shared_1.UserRole.ADMINISTRATOR]) {
                     const fields = extra_utils_1.immutableAssign(baseCorrectParams, { role });
                     yield extra_utils_1.makePostBodyRequest({
@@ -325,7 +325,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed to create a user with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'a4656', email: 'a4656@example.com', role: shared_1.UserRole.USER });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -337,7 +337,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
@@ -348,7 +348,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a non admin user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = {
                     username: 'user1',
                     password: 'my super password'
@@ -366,7 +366,7 @@ describe('Test users API validators', function () {
     });
     describe('When updating my account', function () {
         it('Should fail with an invalid email attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     email: 'blabla'
                 };
@@ -374,7 +374,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a too small password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'bla'
@@ -383,7 +383,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a too long password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'super'.repeat(61)
@@ -392,7 +392,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail without the current password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'super'.repeat(61)
@@ -401,7 +401,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid current password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password fail',
                     password: 'super'.repeat(61)
@@ -410,7 +410,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid NSFW policy attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     nsfwPolicy: 'hello'
                 };
@@ -418,7 +418,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid autoPlayVideo attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     autoPlayVideo: -1
                 };
@@ -426,7 +426,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid autoPlayNextVideo attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     autoPlayNextVideo: -1
                 };
@@ -434,7 +434,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid videosHistoryEnabled attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     videosHistoryEnabled: -1
                 };
@@ -442,7 +442,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'my super password'
@@ -451,7 +451,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a too long description', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     description: 'super'.repeat(201)
                 };
@@ -459,7 +459,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid videoLanguages attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
                     const fields = {
                         videoLanguages: 'toto'
@@ -479,19 +479,19 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid theme', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { theme: 'invalid' };
                 yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields });
             });
         });
         it('Should fail with an unknown theme', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { theme: 'peertube-theme-unknown' };
                 yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields });
             });
         });
         it('Should fail with an invalid noInstanceConfigWarningModal attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     noInstanceConfigWarningModal: -1
                 };
@@ -499,7 +499,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid noWelcomeModal attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     noWelcomeModal: -1
                 };
@@ -507,7 +507,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed to change password with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'my super password',
@@ -522,7 +522,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed without password change with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     nsfwPolicy: 'blur',
                     autoPlayVideo: false
@@ -533,7 +533,7 @@ describe('Test users API validators', function () {
     });
     describe('When updating my avatar', function () {
         it('Should fail without an incorrect input file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
                     avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
@@ -542,7 +542,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a big file', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
                     avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
@@ -551,7 +551,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an unauthenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
                     avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
@@ -566,7 +566,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 const attaches = {
                     avatarfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
@@ -584,24 +584,24 @@ describe('Test users API validators', function () {
     });
     describe('When getting a user', function () {
         it('Should fail with an non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: path + userId, token: 'super token', statusCodeExpected: 401 });
             });
         });
         it('Should fail with a non admin user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 403 });
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path: path + userId, token: server.accessToken, statusCodeExpected: 200 });
             });
         });
     });
     describe('When updating a user', function () {
         it('Should fail with an invalid email attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     email: 'blabla'
                 };
@@ -609,7 +609,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid emailVerified attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     emailVerified: 'yes'
                 };
@@ -617,7 +617,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid videoQuota attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     videoQuota: -90
                 };
@@ -625,7 +625,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an invalid user role attribute', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     role: 54878
                 };
@@ -633,7 +633,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a too small password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'bla'
@@ -642,7 +642,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a too long password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     currentPassword: 'my super password',
                     password: 'super'.repeat(61)
@@ -651,7 +651,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with an non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     videoQuota: 42
                 };
@@ -659,7 +659,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail when updating root role', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     role: shared_1.UserRole.MODERATOR
                 };
@@ -667,13 +667,13 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with invalid admin flags', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { adminFlags: 'toto' };
                 yield extra_utils_1.makePutBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail to update an admin with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     videoQuota: 42
                 };
@@ -687,7 +687,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed to update a user with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     videoQuota: 42
                 };
@@ -701,7 +701,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     email: 'email@example.com',
                     emailVerified: true,
@@ -714,34 +714,34 @@ describe('Test users API validators', function () {
     });
     describe('When getting my information', function () {
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserInformation(server.url, 'fake_token', 401);
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserInformation(server.url, userAccessToken);
             });
         });
     });
     describe('When getting my video rating', function () {
         it('Should fail with a non authenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserVideoRating(server.url, 'fake_token', videoId, 401);
             });
         });
         it('Should fail with an incorrect video uuid', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, 'blabla', 400);
             });
         });
         it('Should fail with an unknown video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', 404);
             });
         });
         it('Should succeed with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, videoId);
             });
         });
@@ -749,79 +749,79 @@ describe('Test users API validators', function () {
     describe('When retrieving my global ratings', function () {
         const path = '/api/v1/accounts/user1/ratings';
         it('Should fail with a bad start pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadStartPagination(server.url, path, userAccessToken);
             });
         });
         it('Should fail with a bad count pagination', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadCountPagination(server.url, path, userAccessToken);
             });
         });
         it('Should fail with an incorrect sort', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, userAccessToken);
             });
         });
         it('Should fail with a unauthenticated user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 401 });
             });
         });
         it('Should fail with a another user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: 403 });
             });
         });
         it('Should fail with a bad type', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, query: { rating: 'toto ' }, statusCodeExpected: 400 });
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 200 });
             });
         });
     });
     describe('When blocking/unblocking/removing user', function () {
         it('Should fail with an incorrect id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, 'blabla', server.accessToken, 400);
                 yield extra_utils_1.blockUser(server.url, 'blabla', server.accessToken, 400);
                 yield extra_utils_1.unblockUser(server.url, 'blabla', server.accessToken, 400);
             });
         });
         it('Should fail with the root user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, rootId, server.accessToken, 400);
                 yield extra_utils_1.blockUser(server.url, rootId, server.accessToken, 400);
                 yield extra_utils_1.unblockUser(server.url, rootId, server.accessToken, 400);
             });
         });
         it('Should return 404 with a non existing id', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, 4545454, server.accessToken, 404);
                 yield extra_utils_1.blockUser(server.url, 4545454, server.accessToken, 404);
                 yield extra_utils_1.unblockUser(server.url, 4545454, server.accessToken, 404);
             });
         });
         it('Should fail with a non admin user', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, userId, userAccessToken, 403);
                 yield extra_utils_1.blockUser(server.url, userId, userAccessToken, 403);
                 yield extra_utils_1.unblockUser(server.url, userId, userAccessToken, 403);
             });
         });
         it('Should fail on a moderator with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.removeUser(server.url, moderatorId, moderatorAccessToken, 403);
                 yield extra_utils_1.blockUser(server.url, moderatorId, moderatorAccessToken, 403);
                 yield extra_utils_1.unblockUser(server.url, moderatorId, moderatorAccessToken, 403);
             });
         });
         it('Should succeed on a user with a moderator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.blockUser(server.url, userId, moderatorAccessToken);
                 yield extra_utils_1.unblockUser(server.url, userId, moderatorAccessToken);
             });
@@ -829,7 +829,7 @@ describe('Test users API validators', function () {
     });
     describe('When deleting our account', function () {
         it('Should fail with with the root account', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.deleteMe(server.url, server.accessToken, 400);
             });
         });
@@ -843,49 +843,49 @@ describe('Test users API validators', function () {
             password: 'my super password'
         };
         it('Should fail with a too small username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: '' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too long username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'super'.repeat(50) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with an incorrect username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'my username' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a missing email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'email');
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { email: 'test_example.com' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too small password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: 'bla' });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a too long password', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { password: 'super'.repeat(61) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail if we register a user with the same username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'root' });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -897,7 +897,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a "peertube" username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'peertube' });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -909,7 +909,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail if we register a user with the same email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { email: 'admin' + server.internalServerNumber + '@example.com' });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -921,32 +921,32 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a bad display name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { displayName: 'a'.repeat(150) });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad channel name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channel: { name: '[]azf', displayName: 'toto' } });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad channel display name', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channel: { name: 'toto', displayName: '' } });
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with a channel name that is the same as username', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const source = { username: 'super_user', channel: { name: 'super_user', displayName: 'display name' } };
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, source);
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields });
             });
         });
         it('Should fail with an existing channel', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoChannelAttributesArg = { name: 'existing_channel', displayName: 'hello', description: 'super description' };
                 yield extra_utils_1.addVideoChannel(server.url, server.accessToken, videoChannelAttributesArg);
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channel: { name: 'existing_channel', displayName: 'toto' } });
@@ -954,7 +954,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channel: { name: 'super_channel', displayName: 'toto' } });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -966,7 +966,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail on a server with registration disabled', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {
                     username: 'user4',
                     email: 'test4@example.com',
@@ -984,14 +984,14 @@ describe('Test users API validators', function () {
     });
     describe('When registering multiple users on a server with users limit', function () {
         it('Should fail when after 3 registrations', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.registerUser(server.url, 'user42', 'super password', 403);
             });
         });
     });
     describe('When having a video quota', function () {
         it('Should fail with a user having too many videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId: rootId,
@@ -1002,7 +1002,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail with a registered user having too many videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 const user = {
                     username: 'user3',
@@ -1019,7 +1019,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail to import with HTTP/Torrent/magnet', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(120000);
                 const baseAttributes = {
                     channelId: 1,
@@ -1043,7 +1043,7 @@ describe('Test users API validators', function () {
     });
     describe('When having a daily video quota', function () {
         it('Should fail with a user having too many videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId: rootId,
@@ -1056,7 +1056,7 @@ describe('Test users API validators', function () {
     });
     describe('When having an absolute and daily video quota', function () {
         it('Should fail if exceeding total quota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId: rootId,
@@ -1068,7 +1068,7 @@ describe('Test users API validators', function () {
             });
         });
         it('Should fail if exceeding daily quota', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
                     userId: rootId,
@@ -1083,19 +1083,19 @@ describe('Test users API validators', function () {
     describe('When asking a password reset', function () {
         const path = '/api/v1/users/ask-reset-password';
         it('Should fail with a missing email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'hello' };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should success with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'admin@example.com' };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 });
             });
@@ -1104,26 +1104,26 @@ describe('Test users API validators', function () {
     describe('When asking for an account verification email', function () {
         const path = '/api/v1/users/ask-send-verify-email';
         it('Should fail with a missing email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = {};
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should fail with an invalid email', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'hello' };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
         it('Should succeed with the correct params', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'admin@example.com' };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 });
             });
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             email_1.MockSmtpServer.Instance.kill();
             yield extra_utils_1.cleanupTests([server, serverWithRegistrationDisabled]);
         });

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.refreshVideoPlaylistIfNeeded = exports.createOrUpdateVideoPlaylist = exports.playlistElementObjectToDBAttributes = exports.playlistObjectToDBAttributes = exports.createAccountPlaylists = void 0;
+const tslib_1 = require("tslib");
 const crawl_1 = require("./crawl");
 const constants_1 = require("../../initializers/constants");
 const misc_1 = require("../../helpers/custom-validators/misc");
@@ -53,8 +46,8 @@ function playlistElementObjectToDBAttributes(elementObject, videoPlaylist, video
 }
 exports.playlistElementObjectToDBAttributes = playlistElementObjectToDBAttributes;
 function createAccountPlaylists(playlistUrls, account) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield Bluebird.map(playlistUrls, (playlistUrl) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        yield Bluebird.map(playlistUrls, (playlistUrl) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const exists = yield video_playlist_1.VideoPlaylistModel.doesPlaylistExist(playlistUrl);
                 if (exists === true)
@@ -80,7 +73,7 @@ function createAccountPlaylists(playlistUrls, account) {
 }
 exports.createAccountPlaylists = createAccountPlaylists;
 function createOrUpdateVideoPlaylist(playlistObject, byAccount, to) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const playlistAttributes = playlistObjectToDBAttributes(playlistObject, byAccount, to);
         if (misc_1.isArray(playlistObject.attributedTo) && playlistObject.attributedTo.length === 1) {
             const actor = yield actor_1.getOrCreateActorAndServerAndModel(playlistObject.attributedTo[0]);
@@ -116,7 +109,7 @@ function createOrUpdateVideoPlaylist(playlistObject, byAccount, to) {
 }
 exports.createOrUpdateVideoPlaylist = createOrUpdateVideoPlaylist;
 function refreshVideoPlaylistIfNeeded(videoPlaylist) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!videoPlaylist.isOutdated())
             return videoPlaylist;
         try {
@@ -144,9 +137,9 @@ function refreshVideoPlaylistIfNeeded(videoPlaylist) {
 }
 exports.refreshVideoPlaylistIfNeeded = refreshVideoPlaylistIfNeeded;
 function resetVideoPlaylistElements(elementUrls, playlist) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const elementsToCreate = [];
-        yield Bluebird.map(elementUrls, (elementUrl) => __awaiter(this, void 0, void 0, function* () {
+        yield Bluebird.map(elementUrls, (elementUrl) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const { body } = yield requests_1.doRequest({
                     uri: elementUrl,
@@ -165,7 +158,7 @@ function resetVideoPlaylistElements(elementUrls, playlist) {
                 logger_1.logger.warn('Cannot add playlist element %s.', elementUrl, { err });
             }
         }), { concurrency: constants_1.CRAWL_REQUEST_CONCURRENCY });
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield video_playlist_element_1.VideoPlaylistElementModel.deleteAllOf(playlist.id, t);
             for (const element of elementsToCreate) {
                 yield video_playlist_element_1.VideoPlaylistElementModel.create(element, { transaction: t });
@@ -176,7 +169,7 @@ function resetVideoPlaylistElements(elementUrls, playlist) {
     });
 }
 function fetchRemoteVideoPlaylist(playlistUrl) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
             uri: playlistUrl,
             method: 'GET',

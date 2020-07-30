@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.signatureValidator = void 0;
 const express_validator_1 = require("express-validator");
 const signature_1 = require("../../../helpers/custom-validators/activitypub/signature");
 const misc_1 = require("../../../helpers/custom-validators/misc");

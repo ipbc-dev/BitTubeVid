@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./accounts");
 require("./blocklist");
+require("./bulk");
 require("./config");
 require("./contact-form");
 require("./debug");

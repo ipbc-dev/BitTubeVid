@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.refuseChangeOwnership = exports.acceptChangeOwnership = exports.getVideoChangeOwnershipList = exports.changeVideoOwnership = void 0;
 const request = require("supertest");
 function changeVideoOwnership(url, token, videoId, username, expectedStatus = 204) {
     const path = '/api/v1/videos/' + videoId + '/give-ownership';

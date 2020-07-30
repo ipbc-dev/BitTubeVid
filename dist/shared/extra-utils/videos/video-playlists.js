@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.doVideosExistInMyPlaylist = exports.checkPlaylistFilesWereRemoved = exports.reorderVideosPlaylist = exports.removeVideoFromPlaylist = exports.updateVideoPlaylistElement = exports.addVideoInPlaylist = exports.deleteVideoPlaylist = exports.updateVideoPlaylist = exports.createVideoPlaylist = exports.getVideoPlaylistWithToken = exports.getVideoPlaylist = exports.getAccountPlaylistsListWithToken = exports.getAccountPlaylistsList = exports.getVideoChannelPlaylistsList = exports.getVideoPlaylistsList = exports.getVideoPlaylistPrivacies = void 0;
+const tslib_1 = require("tslib");
 const requests_1 = require("../requests/requests");
 const lodash_1 = require("lodash");
 const videos_1 = require("./videos");
@@ -143,7 +136,7 @@ function updateVideoPlaylist(options) {
 }
 exports.updateVideoPlaylist = updateVideoPlaylist;
 function addVideoInPlaylist(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         options.elementAttrs.videoId = yield videos_1.videoUUIDToId(options.url, options.elementAttrs.videoId);
         const path = '/api/v1/video-playlists/' + options.playlistId + '/videos';
         return requests_1.makePostBodyRequest({
@@ -189,7 +182,7 @@ function reorderVideosPlaylist(options) {
 }
 exports.reorderVideosPlaylist = reorderVideosPlaylist;
 function checkPlaylistFilesWereRemoved(playlistUUID, internalServerNumber, directories = ['thumbnails']) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const testDirectory = 'test' + internalServerNumber;
         for (const directory of directories) {
             const directoryPath = path_1.join(__1.root(), testDirectory, directory);

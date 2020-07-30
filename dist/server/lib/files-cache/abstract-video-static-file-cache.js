@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.AbstractVideoStaticFileCache = void 0;
 const fs_extra_1 = require("fs-extra");
 const logger_1 = require("../../helpers/logger");
 const memoizee = require("memoizee");

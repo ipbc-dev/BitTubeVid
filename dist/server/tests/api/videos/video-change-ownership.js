@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -28,7 +20,7 @@ describe('Test video change ownership - nominal', function () {
     let secondUserAccessToken = '';
     let lastRequestChangeOwnershipId = '';
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -65,7 +57,7 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should not have video change ownership', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resFirstUser = yield extra_utils_1.getVideoChangeOwnershipList(servers[0].url, firstUserAccessToken);
             expect(resFirstUser.body.total).to.equal(0);
             expect(resFirstUser.body.data).to.be.an('array');
@@ -77,13 +69,13 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should send a request to change ownership of a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.changeVideoOwnership(servers[0].url, firstUserAccessToken, servers[0].video.id, secondUser.username);
         });
     });
     it('Should only return a request to change ownership for the second user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resFirstUser = yield extra_utils_1.getVideoChangeOwnershipList(servers[0].url, firstUserAccessToken);
             expect(resFirstUser.body.total).to.equal(0);
             expect(resFirstUser.body.data).to.be.an('array');
@@ -96,13 +88,13 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should accept the same change ownership request without crashing', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.changeVideoOwnership(servers[0].url, firstUserAccessToken, servers[0].video.id, secondUser.username);
         });
     });
     it('Should not create multiple change ownership requests while one is waiting', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const resSecondUser = yield extra_utils_1.getVideoChangeOwnershipList(servers[0].url, secondUserAccessToken);
             expect(resSecondUser.body.total).to.equal(1);
@@ -111,25 +103,25 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should not be possible to refuse the change of ownership from first user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.refuseChangeOwnership(servers[0].url, firstUserAccessToken, lastRequestChangeOwnershipId, 403);
         });
     });
     it('Should be possible to refuse the change of ownership from second user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.refuseChangeOwnership(servers[0].url, secondUserAccessToken, lastRequestChangeOwnershipId);
         });
     });
     it('Should send a new request to change ownership of a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.changeVideoOwnership(servers[0].url, firstUserAccessToken, servers[0].video.id, secondUser.username);
         });
     });
     it('Should return two requests to change ownership for the second user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resFirstUser = yield extra_utils_1.getVideoChangeOwnershipList(servers[0].url, firstUserAccessToken);
             expect(resFirstUser.body.total).to.equal(0);
             expect(resFirstUser.body.data).to.be.an('array');
@@ -142,7 +134,7 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should not be possible to accept the change of ownership from first user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const secondUserInformationResponse = yield extra_utils_1.getMyUserInformation(servers[0].url, secondUserAccessToken);
             const secondUserInformation = secondUserInformationResponse.body;
@@ -151,7 +143,7 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should be possible to accept the change of ownership from second user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const secondUserInformationResponse = yield extra_utils_1.getMyUserInformation(servers[0].url, secondUserAccessToken);
             const secondUserInformation = secondUserInformationResponse.body;
@@ -161,7 +153,7 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     it('Should have the channel of the video updated', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield extra_utils_1.getVideo(server.url, servers[0].video.uuid);
                 const video = res.body;
@@ -172,7 +164,7 @@ describe('Test video change ownership - nominal', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });
@@ -191,7 +183,7 @@ describe('Test video change ownership - quota too small', function () {
     let secondUserAccessToken = '';
     let lastRequestChangeOwnershipId = '';
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(50000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -226,13 +218,13 @@ describe('Test video change ownership - quota too small', function () {
         });
     });
     it('Should send a request to change ownership of a video', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.changeVideoOwnership(server.url, firstUserAccessToken, server.video.id, secondUser.username);
         });
     });
     it('Should only return a request to change ownership for the second user', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resFirstUser = yield extra_utils_1.getVideoChangeOwnershipList(server.url, firstUserAccessToken);
             expect(resFirstUser.body.total).to.equal(0);
             expect(resFirstUser.body.data).to.be.an('array');
@@ -245,7 +237,7 @@ describe('Test video change ownership - quota too small', function () {
         });
     });
     it('Should not be possible to accept the change of ownership from second user because of exceeded quota', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             const secondUserInformationResponse = yield extra_utils_1.getMyUserInformation(server.url, secondUserAccessToken);
             const secondUserInformation = secondUserInformationResponse.body;
@@ -254,7 +246,7 @@ describe('Test video change ownership - quota too small', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

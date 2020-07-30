@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.oembedValidator = void 0;
+const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const path_1 = require("path");
 const core_utils_1 = require("../../helpers/core-utils");
@@ -31,7 +24,7 @@ const oembedValidator = [
     express_validator_1.query('maxwidth').optional().isInt().withMessage('Should have a valid max width'),
     express_validator_1.query('maxheight').optional().isInt().withMessage('Should have a valid max height'),
     express_validator_1.query('format').optional().isIn(['xml', 'json']).withMessage('Should have a valid format'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking oembed parameters', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -40,8 +33,9 @@ const oembedValidator = [
                 .json({ error: 'Requested format is not implemented on server.' })
                 .end();
         }
-        const startIsOk = req.query.url.startsWith(urlShouldStartWith);
-        const matches = videoWatchRegex.exec(req.query.url);
+        const url = req.query.url;
+        const startIsOk = url.startsWith(urlShouldStartWith);
+        const matches = videoWatchRegex.exec(url);
         if (startIsOk === false || matches === null) {
             return res.status(400)
                 .json({ error: 'Invalid url.' })

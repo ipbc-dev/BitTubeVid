@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.jsonld = void 0;
 const AsyncLRU = require("async-lru");
 const jsonld = require("jsonld");
 exports.jsonld = jsonld;

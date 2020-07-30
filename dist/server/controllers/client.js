@@ -1,14 +1,8 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.clientsRouter = void 0;
+const tslib_1 = require("tslib");
+const fs_1 = require("fs");
 const express = require("express");
 const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
@@ -31,19 +25,34 @@ const embedCSPMiddleware = config_1.CONFIG.CSP.ENABLED
     : (req, res, next) => next();
 clientsRouter.use('/videos/embed', embedCSPMiddleware, (req, res) => {
     res.removeHeader('X-Frame-Options');
-    res.sendFile(embedPath);
+    res.sendFile(embedPath, { maxAge: 0 });
 });
 clientsRouter.use('/videos/test-embed', (req, res) => res.sendFile(testEmbedPath));
 const staticClientFiles = [
-    'manifest.webmanifest',
     'ngsw-worker.js',
     'ngsw.json'
 ];
 for (const staticClientFile of staticClientFiles) {
     const path = path_1.join(core_utils_1.root(), 'client', 'dist', staticClientFile);
-    clientsRouter.get('/' + staticClientFile, (req, res) => {
+    clientsRouter.get(`/${staticClientFile}`, (req, res) => {
         res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
     });
+}
+clientsRouter.get('/manifest.webmanifest', middlewares_1.asyncMiddleware(generateManifest));
+const staticClientOverrides = [
+    'assets/images/logo.svg',
+    'assets/images/favicon.png',
+    'assets/images/icons/icon-36x36.png',
+    'assets/images/icons/icon-48x48.png',
+    'assets/images/icons/icon-72x72.png',
+    'assets/images/icons/icon-96x96.png',
+    'assets/images/icons/icon-144x144.png',
+    'assets/images/icons/icon-192x192.png',
+    'assets/images/icons/icon-512x512.png'
+];
+for (const staticClientOverride of staticClientOverrides) {
+    const overridePhysicalPath = path_1.join(config_1.CONFIG.STORAGE.CLIENT_OVERRIDES_DIR, staticClientOverride);
+    clientsRouter.use(`/client/${staticClientOverride}`, middlewares_1.asyncMiddleware(serveClientOverride(overridePhysicalPath)));
 }
 clientsRouter.use('/client/locales/:locale/:file.json', serveServerTranslations);
 clientsRouter.use('/client', express.static(distPath, { maxAge: constants_1.STATIC_MAX_AGE.CLIENT }));
@@ -63,7 +72,7 @@ function serveServerTranslations(req, res) {
     return res.sendStatus(404);
 }
 function serveIndexHTML(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (req.accepts(constants_1.ACCEPT_HEADERS) === 'html') {
             try {
                 yield generateHTMLPage(req, res, req.params.language);
@@ -77,25 +86,25 @@ function serveIndexHTML(req, res) {
     });
 }
 function generateHTMLPage(req, res, paramLang) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getDefaultHTMLPage(req, res, paramLang);
         return sendHTML(html, res);
     });
 }
 function generateWatchHtmlPage(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getWatchHTMLPage(req.params.id + '', req, res);
         return sendHTML(html, res);
     });
 }
 function generateAccountHtmlPage(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getAccountHTMLPage(req.params.nameWithHost, req, res);
         return sendHTML(html, res);
     });
 }
 function generateVideoChannelHtmlPage(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getVideoChannelHTMLPage(req.params.nameWithHost, req, res);
         return sendHTML(html, res);
     });
@@ -103,4 +112,26 @@ function generateVideoChannelHtmlPage(req, res) {
 function sendHTML(html, res) {
     res.set('Content-Type', 'text/html; charset=UTF-8');
     return res.send(html);
+}
+function generateManifest(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const manifestPhysicalPath = path_1.join(core_utils_1.root(), 'client', 'dist', 'manifest.webmanifest');
+        const manifestJson = yield fs_1.promises.readFile(manifestPhysicalPath, 'utf8');
+        const manifest = JSON.parse(manifestJson);
+        manifest.name = config_1.CONFIG.INSTANCE.NAME;
+        manifest.short_name = config_1.CONFIG.INSTANCE.NAME;
+        manifest.description = config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION;
+        res.json(manifest);
+    });
+}
+function serveClientOverride(path) {
+    return (req, res, next) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        try {
+            yield fs_1.promises.access(path, fs_1.constants.F_OK);
+            res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
+        }
+        catch (_a) {
+            next();
+        }
+    });
 }

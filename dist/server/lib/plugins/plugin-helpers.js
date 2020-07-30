@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildPluginHelpers = void 0;
+const tslib_1 = require("tslib");
 const database_1 = require("@server/initializers/database");
 const logger_1 = require("@server/helpers/logger");
 const video_1 = require("@server/models/video/video");
@@ -57,7 +50,7 @@ function buildVideosHelpers() {
             return video_1.VideoModel.loadByUrl(url);
         },
         removeVideo: (id) => {
-            return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(id, t);
                 yield video.destroy({ transaction: t });
             }));
@@ -66,23 +59,23 @@ function buildVideosHelpers() {
 }
 function buildModerationHelpers() {
     return {
-        blockServer: (options) => __awaiter(this, void 0, void 0, function* () {
+        blockServer: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverToBlock = yield server_1.ServerModel.loadOrCreateByHost(options.hostToBlock);
             yield blocklist_1.addServerInBlocklist(options.byAccountId, serverToBlock.id);
         }),
-        unblockServer: (options) => __awaiter(this, void 0, void 0, function* () {
+        unblockServer: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverBlock = yield server_blocklist_1.ServerBlocklistModel.loadByAccountAndHost(options.byAccountId, options.hostToUnblock);
             if (!serverBlock)
                 return;
             yield blocklist_1.removeServerFromBlocklist(serverBlock);
         }),
-        blockAccount: (options) => __awaiter(this, void 0, void 0, function* () {
+        blockAccount: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const accountToBlock = yield account_1.AccountModel.loadByNameWithHost(options.handleToBlock);
             if (!accountToBlock)
                 return;
             yield blocklist_1.addAccountInBlocklist(options.byAccountId, accountToBlock.id);
         }),
-        unblockAccount: (options) => __awaiter(this, void 0, void 0, function* () {
+        unblockAccount: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const targetAccount = yield account_1.AccountModel.loadByNameWithHost(options.handleToUnblock);
             if (!targetAccount)
                 return;
@@ -91,13 +84,13 @@ function buildModerationHelpers() {
                 return;
             yield blocklist_1.removeAccountFromBlocklist(accountBlock);
         }),
-        blacklistVideo: (options) => __awaiter(this, void 0, void 0, function* () {
+        blacklistVideo: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(options.videoIdOrUUID);
             if (!video)
                 return;
             yield video_blacklist_1.blacklistVideo(video, options.createOptions);
         }),
-        unblacklistVideo: (options) => __awaiter(this, void 0, void 0, function* () {
+        unblacklistVideo: (options) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(options.videoIdOrUUID);
             if (!video)
                 return;

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.feedsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const constants_1 = require("../initializers/constants");
 const middlewares_1 = require("../middlewares");
@@ -24,21 +17,45 @@ feedsRouter.get('/feeds/video-comments.:format', middlewares_1.feedsFormatValida
     headerBlacklist: [
         'Content-Type'
     ]
-})(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.asyncMiddleware(middlewares_1.videoCommentsFeedsValidator), middlewares_1.asyncMiddleware(generateVideoCommentsFeed));
+})(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.asyncMiddleware(middlewares_1.videoFeedsValidator), middlewares_1.asyncMiddleware(middlewares_1.videoCommentsFeedsValidator), middlewares_1.asyncMiddleware(generateVideoCommentsFeed));
 feedsRouter.get('/feeds/videos.:format', middlewares_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.feedsFormatValidator, middlewares_1.setFeedFormatContentType, middlewares_1.asyncMiddleware(cache_1.cacheRoute({
     headerBlacklist: [
         'Content-Type'
     ]
 })(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(middlewares_1.videoFeedsValidator), middlewares_1.asyncMiddleware(generateVideoFeed));
 function generateVideoCommentsFeed(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const start = 0;
         const video = res.locals.videoAll;
-        const videoId = video ? video.id : undefined;
-        const comments = yield video_comment_1.VideoCommentModel.listForFeed(start, constants_1.FEEDS.COUNT, videoId);
-        const name = video ? video.name : config_1.CONFIG.INSTANCE.NAME;
-        const description = video ? video.description : config_1.CONFIG.INSTANCE.DESCRIPTION;
-        const feed = initFeed(name, description);
+        const account = res.locals.account;
+        const videoChannel = res.locals.videoChannel;
+        const comments = yield video_comment_1.VideoCommentModel.listForFeed({
+            start,
+            count: constants_1.FEEDS.COUNT,
+            videoId: video ? video.id : undefined,
+            accountId: account ? account.id : undefined,
+            videoChannelId: videoChannel ? videoChannel.id : undefined
+        });
+        let name;
+        let description;
+        if (videoChannel) {
+            name = videoChannel.getDisplayName();
+            description = videoChannel.description;
+        }
+        else if (account) {
+            name = account.getDisplayName();
+            description = account.description;
+        }
+        else {
+            name = video ? video.name : config_1.CONFIG.INSTANCE.NAME;
+            description = video ? video.description : config_1.CONFIG.INSTANCE.DESCRIPTION;
+        }
+        const feed = initFeed({
+            name,
+            description,
+            resourceType: 'video-comments',
+            queryString: new URL(constants_1.WEBSERVER.URL + req.originalUrl).search
+        });
         for (const comment of comments) {
             const link = constants_1.WEBSERVER.URL + comment.getCommentStaticPath();
             let title = comment.Video.name;
@@ -63,7 +80,7 @@ function generateVideoCommentsFeed(req, res) {
     });
 }
 function generateVideoFeed(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const start = 0;
         const account = res.locals.account;
         const videoChannel = res.locals.videoChannel;
@@ -82,7 +99,12 @@ function generateVideoFeed(req, res) {
             name = config_1.CONFIG.INSTANCE.NAME;
             description = config_1.CONFIG.INSTANCE.DESCRIPTION;
         }
-        const feed = initFeed(name, description);
+        const feed = initFeed({
+            name,
+            description,
+            resourceType: 'videos',
+            queryString: new URL(constants_1.WEBSERVER.URL + req.url).search
+        });
         const resultList = yield video_1.VideoModel.listForApi({
             start,
             count: constants_1.FEEDS.COUNT,
@@ -163,8 +185,9 @@ function generateVideoFeed(req, res) {
         return sendFeed(feed, req, res);
     });
 }
-function initFeed(name, description) {
+function initFeed(parameters) {
     const webserverUrl = constants_1.WEBSERVER.URL;
+    const { name, description, resourceType, queryString } = parameters;
     return new Feed({
         title: name,
         description,
@@ -176,9 +199,9 @@ function initFeed(name, description) {
             ` and potential licenses granted by each content's rightholder.`,
         generator: `Toraifōsu`,
         feedLinks: {
-            json: `${webserverUrl}/feeds/videos.json`,
-            atom: `${webserverUrl}/feeds/videos.atom`,
-            rss: `${webserverUrl}/feeds/videos.xml`
+            json: `${webserverUrl}/feeds/${resourceType}.json${queryString}`,
+            atom: `${webserverUrl}/feeds/${resourceType}.atom${queryString}`,
+            rss: `${webserverUrl}/feeds/${resourceType}.xml${queryString}`
         },
         author: {
             name: 'Instance admin of ' + config_1.CONFIG.INSTANCE.NAME,

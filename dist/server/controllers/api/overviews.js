@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.overviewsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const express_utils_1 = require("../../helpers/express-utils");
 const video_1 = require("../../models/video/video");
@@ -21,7 +14,7 @@ const overviewsRouter = express.Router();
 exports.overviewsRouter = overviewsRouter;
 overviewsRouter.get('/videos', middlewares_1.videosOverviewValidator, middlewares_1.optionalAuthenticate, middlewares_1.asyncMiddleware(getVideosOverview));
 const buildSamples = memoizee(function () {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const [categories, channels, tags] = yield Promise.all([
             video_1.VideoModel.getRandomFieldSamples('category', constants_1.OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD, constants_1.OVERVIEWS.VIDEOS.SAMPLES_COUNT),
             video_1.VideoModel.getRandomFieldSamples('channelId', constants_1.OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD, constants_1.OVERVIEWS.VIDEOS.SAMPLES_COUNT),
@@ -33,7 +26,7 @@ const buildSamples = memoizee(function () {
     });
 }, { maxAge: constants_1.MEMOIZE_TTL.OVERVIEWS_SAMPLE });
 function getVideosOverview(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const attributes = yield buildSamples();
         const page = req.query.page || 1;
         const index = page - 1;
@@ -54,7 +47,7 @@ function getVideosOverview(req, res) {
     });
 }
 function getVideosByTag(tagsSample, index, res, acc) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (tagsSample.length <= index)
             return;
         const tag = tagsSample[index];
@@ -68,7 +61,7 @@ function getVideosByTag(tagsSample, index, res, acc) {
     });
 }
 function getVideosByCategory(categoriesSample, index, res, acc) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (categoriesSample.length <= index)
             return;
         const category = categoriesSample[index];
@@ -82,7 +75,7 @@ function getVideosByCategory(categoriesSample, index, res, acc) {
     });
 }
 function getVideosByChannel(channelsSample, index, res, acc) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (channelsSample.length <= index)
             return;
         const channelId = channelsSample[index];
@@ -96,7 +89,7 @@ function getVideosByChannel(channelsSample, index, res, acc) {
     });
 }
 function getVideos(res, where) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const query = Object.assign({
             start: 0,
             count: 12,

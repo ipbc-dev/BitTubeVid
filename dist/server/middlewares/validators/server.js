@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.contactAdministratorValidator = exports.serverGetValidator = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../../helpers/logger");
 const utils_1 = require("./utils");
 const servers_1 = require("../../helpers/custom-validators/servers");
@@ -19,7 +12,7 @@ const redis_1 = require("../../lib/redis");
 const config_1 = require("../../initializers/config");
 const serverGetValidator = [
     express_validator_1.body('host').custom(servers_1.isHostValid).withMessage('Should have a valid host'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking serverGetValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;
@@ -41,7 +34,7 @@ const contactAdministratorValidator = [
         .isEmail().withMessage('Should have a valid email'),
     express_validator_1.body('body')
         .custom(servers_1.isValidContactBody).withMessage('Should have a valid body'),
-    (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking contactAdministratorValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
             return;

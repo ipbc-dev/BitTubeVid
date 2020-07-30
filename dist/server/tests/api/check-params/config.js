@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -128,10 +120,28 @@ describe('Test config API validators', function () {
         },
         premium_storage: {
             enabled: false
+        },
+        broadcastMessage: {
+            enabled: true,
+            dismissable: true,
+            message: 'super message',
+            level: 'warning'
+        },
+        search: {
+            remoteUri: {
+                users: true,
+                anonymous: true
+            },
+            searchIndex: {
+                enabled: true,
+                url: 'https://search.joinpeertube.org',
+                disableLocalSearch: true,
+                isDefaultSearch: true
+            }
         }
     };
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -145,7 +155,7 @@ describe('Test config API validators', function () {
     });
     describe('When getting the configuration', function () {
         it('Should fail without token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -154,7 +164,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail if the user is not an administrator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
@@ -166,7 +176,7 @@ describe('Test config API validators', function () {
     });
     describe('When updating the configuration', function () {
         it('Should fail without token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -176,7 +186,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail if the user is not an administrator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -187,7 +197,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail if it misses a key', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const newUpdateParams = lodash_1.omit(updateParams, 'admin.email');
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
@@ -199,7 +209,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail with a bad default NSFW policy', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const newUpdateParams = extra_utils_1.immutableAssign(updateParams, {
                     instance: {
                         defaultNSFWPolicy: 'hello'
@@ -215,7 +225,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail if email disabled and signup requires email verification', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const newUpdateParams = extra_utils_1.immutableAssign(updateParams, {
                     signup: {
                         enabled: true,
@@ -233,7 +243,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail with a disabled webtorrent & hls transcoding', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const newUpdateParams = extra_utils_1.immutableAssign(updateParams, {
                     transcoding: {
                         hls: {
@@ -254,7 +264,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should success with the correct parameters', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path,
@@ -267,7 +277,7 @@ describe('Test config API validators', function () {
     });
     describe('When deleting the configuration', function () {
         it('Should fail without token', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path,
@@ -276,7 +286,7 @@ describe('Test config API validators', function () {
             });
         });
         it('Should fail if the user is not an administrator', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path,
@@ -287,7 +297,7 @@ describe('Test config API validators', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

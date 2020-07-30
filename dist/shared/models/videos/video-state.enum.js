@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoState = void 0;
 var VideoState;
 (function (VideoState) {
     VideoState[VideoState["PUBLISHED"] = 1] = "PUBLISHED";

@@ -1,19 +1,12 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildAnnounceWithVideoAudience = exports.buildAnnounceActivity = exports.sendVideoAnnounce = void 0;
+const tslib_1 = require("tslib");
 const utils_1 = require("./utils");
 const audience_1 = require("../audience");
 const logger_1 = require("../../../helpers/logger");
 function buildAnnounceWithVideoAudience(byActor, videoShare, video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const announcedObject = video.url;
         const actorsInvolvedInVideo = yield audience_1.getActorsInvolvedInVideo(video, t);
         const audience = audience_1.getAudienceFromFollowersOf(actorsInvolvedInVideo);
@@ -23,7 +16,7 @@ function buildAnnounceWithVideoAudience(byActor, videoShare, video, t) {
 }
 exports.buildAnnounceWithVideoAudience = buildAnnounceWithVideoAudience;
 function sendVideoAnnounce(byActor, videoShare, video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, actorsInvolvedInVideo } = yield buildAnnounceWithVideoAudience(byActor, videoShare, video, t);
         logger_1.logger.info('Creating job to send announce %s.', videoShare.url);
         const followersException = [byActor];

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendUndoCacheFile = exports.sendUndoAnnounce = exports.sendUndoDislike = exports.sendUndoLike = exports.sendUndoFollow = void 0;
+const tslib_1 = require("tslib");
 const video_1 = require("../../../models/video/video");
 const url_1 = require("../url");
 const utils_1 = require("./utils");
@@ -33,7 +26,7 @@ function sendUndoFollow(actorFollow, t) {
 }
 exports.sendUndoFollow = sendUndoFollow;
 function sendUndoAnnounce(byActor, videoShare, video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to undo announce %s.', videoShare.url);
         const undoUrl = url_1.getUndoActivityPubUrl(videoShare.url);
         const { activity: announceActivity, actorsInvolvedInVideo } = yield send_announce_1.buildAnnounceWithVideoAudience(byActor, videoShare, video, t);
@@ -44,7 +37,7 @@ function sendUndoAnnounce(byActor, videoShare, video, t) {
 }
 exports.sendUndoAnnounce = sendUndoAnnounce;
 function sendUndoLike(byActor, video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to undo a like of video %s.', video.url);
         const likeUrl = url_1.getVideoLikeActivityPubUrl(byActor, video);
         const likeActivity = send_like_1.buildLikeActivity(likeUrl, byActor, video);
@@ -53,7 +46,7 @@ function sendUndoLike(byActor, video, t) {
 }
 exports.sendUndoLike = sendUndoLike;
 function sendUndoDislike(byActor, video, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to undo a dislike of video %s.', video.url);
         const dislikeUrl = url_1.getVideoDislikeActivityPubUrl(byActor, video);
         const dislikeActivity = send_dislike_1.buildDislikeActivity(dislikeUrl, byActor, video);
@@ -62,7 +55,7 @@ function sendUndoDislike(byActor, video, t) {
 }
 exports.sendUndoDislike = sendUndoDislike;
 function sendUndoCacheFile(byActor, redundancyModel, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to undo cache file %s.', redundancyModel.url);
         const videoId = redundancyModel.getVideo().id;
         const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoId);
@@ -82,7 +75,7 @@ function undoActivityData(url, byActor, object, audience) {
     }, audience);
 }
 function sendUndoVideoRelatedActivity(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const activityBuilder = (audience) => {
             const undoUrl = url_1.getUndoActivityPubUrl(options.url);
             return undoActivityData(undoUrl, options.byActor, options.activity, audience);

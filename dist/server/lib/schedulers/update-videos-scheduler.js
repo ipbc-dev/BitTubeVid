@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UpdateVideosScheduler = void 0;
+const tslib_1 = require("tslib");
 const logger_1 = require("../../helpers/logger");
 const abstract_scheduler_1 = require("./abstract-scheduler");
 const schedule_video_update_1 = require("../../models/video/schedule-video-update");
@@ -23,15 +16,15 @@ class UpdateVideosScheduler extends abstract_scheduler_1.AbstractScheduler {
         this.schedulerIntervalMs = constants_1.SCHEDULER_INTERVALS_MS.updateVideos;
     }
     internalExecute() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return database_utils_1.retryTransactionWrapper(this.updateVideos.bind(this));
         });
     }
     updateVideos() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!(yield schedule_video_update_1.ScheduleVideoUpdateModel.areVideosToUpdate()))
                 return undefined;
-            const publishedVideos = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const publishedVideos = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const schedules = yield schedule_video_update_1.ScheduleVideoUpdateModel.listVideosToUpdate(t);
                 const publishedVideos = [];
                 for (const schedule of schedules) {

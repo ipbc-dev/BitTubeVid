@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CustomConfigAuditView = exports.VideoAbuseAuditView = exports.VideoAuditView = exports.UserAuditView = exports.CommentAuditView = exports.VideoChannelAuditView = exports.VideoImportAuditView = exports.auditLoggerFactory = exports.getAuditIdFromRes = void 0;
 const path = require("path");
 const deep_object_diff_1 = require("deep-object-diff");
 const lodash_1 = require("lodash");

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isWebfingerLocalResourceValid = void 0;
 const constants_1 = require("../../initializers/constants");
 const core_utils_1 = require("../core-utils");
 const misc_1 = require("./misc");

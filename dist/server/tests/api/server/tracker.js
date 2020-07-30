@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const magnetUtil = require("magnet-uri");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -19,7 +11,7 @@ describe('Test tracker', function () {
     let badMagnet;
     let goodMagnet;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield index_1.setAccessTokensToServers([server]);
@@ -34,18 +26,6 @@ describe('Test tracker', function () {
                 badMagnet = magnetUtil.encode(parsed);
             }
         });
-    });
-    it('Should return an error when adding an incorrect infohash', function (done) {
-        this.timeout(10000);
-        const webtorrent = new WebTorrent();
-        const torrent = webtorrent.add(badMagnet);
-        torrent.on('error', done);
-        torrent.on('warning', warn => {
-            const message = typeof warn === 'string' ? warn : warn.message;
-            if (message.includes('Unknown infoHash '))
-                return done();
-        });
-        torrent.on('done', () => done(new Error('No error on infohash')));
     });
     it('Should succeed with the correct infohash', function (done) {
         this.timeout(10000);
@@ -78,8 +58,34 @@ describe('Test tracker', function () {
             torrent.on('done', errCb);
         });
     });
+    it('Should return an error when adding an incorrect infohash', function (done) {
+        this.timeout(20000);
+        extra_utils_1.killallServers([server]);
+        extra_utils_1.reRunServer(server)
+            .then(() => {
+            const webtorrent = new WebTorrent();
+            const torrent = webtorrent.add(badMagnet);
+            torrent.on('error', done);
+            torrent.on('warning', warn => {
+                const message = typeof warn === 'string' ? warn : warn.message;
+                if (message.includes('Unknown infoHash '))
+                    return done();
+            });
+            torrent.on('done', () => done(new Error('No error on infohash')));
+        });
+    });
+    it('Should block the IP after the failed infohash', function (done) {
+        const webtorrent = new WebTorrent();
+        const torrent = webtorrent.add(goodMagnet);
+        torrent.on('error', done);
+        torrent.on('warning', warn => {
+            const message = typeof warn === 'string' ? warn : warn.message;
+            if (message.includes('Unsupported tracker protocol'))
+                return done();
+        });
+    });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

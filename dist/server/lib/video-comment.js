@@ -1,19 +1,31 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.markCommentAsDeleted = exports.buildFormattedCommentTree = exports.createVideoComment = exports.removeComment = void 0;
+const tslib_1 = require("tslib");
+const lodash_1 = require("lodash");
+const logger_1 = require("@server/helpers/logger");
+const database_1 = require("@server/initializers/database");
 const video_comment_1 = require("../models/video/video-comment");
-const url_1 = require("./activitypub/url");
 const send_1 = require("./activitypub/send");
+const url_1 = require("./activitypub/url");
+const hooks_1 = require("./plugins/hooks");
+function removeComment(videoCommentInstance) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const videoCommentInstanceBefore = lodash_1.cloneDeep(videoCommentInstance);
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (videoCommentInstance.isOwned() || videoCommentInstance.Video.isOwned()) {
+                yield send_1.sendDeleteVideoComment(videoCommentInstance, t);
+            }
+            markCommentAsDeleted(videoCommentInstance);
+            yield videoCommentInstance.save();
+        }));
+        logger_1.logger.info('Video comment %d deleted.', videoCommentInstance.id);
+        hooks_1.Hooks.runAction('action:api.video-comment.deleted', { comment: videoCommentInstanceBefore });
+    });
+}
+exports.removeComment = removeComment;
 function createVideoComment(obj, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let originCommentId = null;
         let inReplyToCommentId = null;
         if (obj.inReplyToComment && obj.inReplyToComment !== null) {

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendVerifyUserEmail = exports.createLocalAccountWithoutKeys = exports.createUserAccountAndChannelAndPlaylist = exports.createApplicationActor = void 0;
+const tslib_1 = require("tslib");
 const uuid_1 = require("uuid");
 const constants_1 = require("../initializers/constants");
 const account_1 = require("../models/account/account");
@@ -23,9 +16,9 @@ const redis_1 = require("./redis");
 const emailer_1 = require("./emailer");
 const url_1 = require("./activitypub/url");
 function createUserAccountAndChannelAndPlaylist(parameters) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { userToCreate, userDisplayName, channelNames, validateUser = true } = parameters;
-        const { user, account, videoChannel } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const { user, account, videoChannel } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const userOptions = {
                 transaction: t,
                 validate: validateUser
@@ -56,7 +49,7 @@ function createUserAccountAndChannelAndPlaylist(parameters) {
 }
 exports.createUserAccountAndChannelAndPlaylist = createUserAccountAndChannelAndPlaylist;
 function createLocalAccountWithoutKeys(parameters) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { name, displayName, userId, applicationId, t, type = 'Person' } = parameters;
         const url = url_1.getAccountActivityPubUrl(name);
         const actorInstance = actor_1.buildActorInstance(type, url, name);
@@ -74,7 +67,7 @@ function createLocalAccountWithoutKeys(parameters) {
 }
 exports.createLocalAccountWithoutKeys = createLocalAccountWithoutKeys;
 function createApplicationActor(applicationId) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const accountCreated = yield createLocalAccountWithoutKeys({
             name: constants_1.SERVER_ACTOR_NAME,
             userId: null,
@@ -88,13 +81,14 @@ function createApplicationActor(applicationId) {
 }
 exports.createApplicationActor = createApplicationActor;
 function sendVerifyUserEmail(user, isPendingEmail = false) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const verificationString = yield redis_1.Redis.Instance.setVerifyEmailVerificationString(user.id);
         let url = constants_1.WEBSERVER.URL + '/verify-account/email?userId=' + user.id + '&verificationString=' + verificationString;
         if (isPendingEmail)
             url += '&isPendingEmail=true';
         const email = isPendingEmail ? user.pendingEmail : user.email;
-        yield emailer_1.Emailer.Instance.addVerifyEmailJob(email, url);
+        const username = user.username;
+        yield emailer_1.Emailer.Instance.addVerifyEmailJob(username, email, url);
     });
 }
 exports.sendVerifyUserEmail = sendVerifyUserEmail;
@@ -117,7 +111,7 @@ function createDefaultUserNotificationSettings(user, t) {
     return user_notification_setting_1.UserNotificationSettingModel.create(values, { transaction: t });
 }
 function buildChannelAttributes(user, channelNames) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (channelNames)
             return channelNames;
         let channelName = user.username + '_channel';

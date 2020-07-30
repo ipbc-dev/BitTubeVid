@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -17,7 +9,7 @@ const expect = chai.expect;
 describe('Test plugins', function () {
     let server = null;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             const configOverride = {
                 plugins: {
@@ -29,7 +21,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should list and search available plugins and themes', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             {
                 const res = yield extra_utils_1.listAvailablePlugins({
@@ -83,13 +75,13 @@ describe('Test plugins', function () {
         });
     });
     it('Should have an empty global css', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPluginsCSS(server.url);
             expect(res.text).to.be.empty;
         });
     });
     it('Should install a plugin and a theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield extra_utils_1.installPlugin({
                 url: server.url,
@@ -104,13 +96,13 @@ describe('Test plugins', function () {
         });
     });
     it('Should have the correct global css', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPluginsCSS(server.url);
             expect(res.text).to.contain('background-color: red');
         });
     });
     it('Should have the plugin loaded in the configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const theme = config.theme.registered.find(r => r.name === 'background-red');
@@ -120,7 +112,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should update the default theme in the configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, { theme: { default: 'background-red' } });
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
@@ -128,7 +120,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should update my default theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.updateMyUser({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -139,7 +131,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should list plugins and themes', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield extra_utils_1.listPlugins({
                     url: server.url,
@@ -179,7 +171,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should get registered settings', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPluginRegisteredSettings({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -192,7 +184,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should get public settings', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPublicSettings({ url: server.url, npmName: 'peertube-plugin-hello-world' });
             const publicSettings = res.body.publicSettings;
             expect(Object.keys(publicSettings)).to.have.lengthOf(1);
@@ -201,7 +193,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should update the settings', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const settings = {
                 'admin-name': 'Cid'
             };
@@ -214,13 +206,13 @@ describe('Test plugins', function () {
         });
     });
     it('Should have watched settings changes', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.waitUntilLog(server, 'Settings changed!');
         });
     });
     it('Should get a plugin and a theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield extra_utils_1.getPlugin({
                     url: server.url,
@@ -263,7 +255,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should update the plugin and the theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield extra_utils_1.wait(6000);
             yield extra_utils_1.setPluginVersion(server.internalServerNumber, 'hello-world', '0.0.1');
@@ -303,7 +295,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should uninstall the plugin', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uninstallPlugin({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -319,13 +311,13 @@ describe('Test plugins', function () {
         });
     });
     it('Should have an empty global css', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getPluginsCSS(server.url);
             expect(res.text).to.be.empty;
         });
     });
     it('Should list uninstalled plugins', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.listPlugins({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -341,7 +333,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should uninstall the theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uninstallPlugin({
                 url: server.url,
                 accessToken: server.accessToken,
@@ -350,7 +342,7 @@ describe('Test plugins', function () {
         });
     });
     it('Should have updated the configuration', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             expect(config.theme.default).to.equal('default');
@@ -361,13 +353,13 @@ describe('Test plugins', function () {
         });
     });
     it('Should have updated the user theme', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getMyUserInformation(server.url, server.accessToken);
             expect(res.body.theme).to.equal('instance-default');
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.closeAllSequelize([server]);
             yield extra_utils_1.cleanupTests([server]);
         });

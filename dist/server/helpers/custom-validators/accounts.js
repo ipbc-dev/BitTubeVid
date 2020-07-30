@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isAccountNameValid = exports.isAccountDescriptionValid = exports.isAccountIdValid = void 0;
 const users_1 = require("./users");
 const misc_1 = require("./misc");
 function isAccountNameValid(value) {

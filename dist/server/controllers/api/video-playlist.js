@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videoPlaylistRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const utils_1 = require("../../helpers/utils");
 const middlewares_1 = require("../../middlewares");
@@ -48,7 +41,7 @@ function listVideoPlaylistPrivacies(req, res) {
     res.json(constants_1.VIDEO_PLAYLIST_PRIVACIES);
 }
 function listVideoPlaylists(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         const resultList = yield video_playlist_1.VideoPlaylistModel.listForApi({
             followerActorId: serverActor.id,
@@ -68,7 +61,7 @@ function getVideoPlaylist(req, res) {
     return res.json(videoPlaylist.toFormattedJSON());
 }
 function addVideoPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylistInfo = req.body;
         const user = res.locals.oauth.token.User;
         const videoPlaylist = new video_playlist_1.VideoPlaylistModel({
@@ -87,7 +80,7 @@ function addVideoPlaylist(req, res) {
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createPlaylistMiniatureFromExisting(thumbnailField[0].path, videoPlaylist, false)
             : undefined;
-        const videoPlaylistCreated = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const videoPlaylistCreated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoPlaylistCreated = yield videoPlaylist.save({ transaction: t });
             if (thumbnailModel) {
                 thumbnailModel.automaticallyGenerated = false;
@@ -107,7 +100,7 @@ function addVideoPlaylist(req, res) {
     });
 }
 function updateVideoPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylistInstance = res.locals.videoPlaylistFull;
         const videoPlaylistFieldsSave = videoPlaylistInstance.toJSON();
         const videoPlaylistInfoToUpdate = req.body;
@@ -118,7 +111,7 @@ function updateVideoPlaylist(req, res) {
             ? yield thumbnail_1.createPlaylistMiniatureFromExisting(thumbnailField[0].path, videoPlaylistInstance, false)
             : undefined;
         try {
-            yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const sequelizeOptions = {
                     transaction: t
                 };
@@ -167,9 +160,9 @@ function updateVideoPlaylist(req, res) {
     });
 }
 function removeVideoPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylistInstance = res.locals.videoPlaylistSummary;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield videoPlaylistInstance.destroy({ transaction: t });
             yield send_1.sendDeleteVideoPlaylist(videoPlaylistInstance, t);
             logger_1.logger.info('Video playlist %s deleted.', videoPlaylistInstance.uuid);
@@ -178,11 +171,11 @@ function removeVideoPlaylist(req, res) {
     });
 }
 function addVideoInPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const videoPlaylist = res.locals.videoPlaylistFull;
         const video = res.locals.onlyVideo;
-        const playlistElement = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const playlistElement = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const position = yield video_playlist_element_1.VideoPlaylistElementModel.getNextPositionOf(videoPlaylist.id, t);
             const playlistElement = yield video_playlist_element_1.VideoPlaylistElementModel.create({
                 url: url_1.getVideoPlaylistElementActivityPubUrl(videoPlaylist, video),
@@ -210,11 +203,11 @@ function addVideoInPlaylist(req, res) {
     });
 }
 function updateVideoPlaylistElement(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const videoPlaylist = res.locals.videoPlaylistFull;
         const videoPlaylistElement = res.locals.videoPlaylistElement;
-        const playlistElement = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const playlistElement = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (body.startTimestamp !== undefined)
                 videoPlaylistElement.startTimestamp = body.startTimestamp;
             if (body.stopTimestamp !== undefined)
@@ -230,11 +223,11 @@ function updateVideoPlaylistElement(req, res) {
     });
 }
 function removeVideoFromPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylistElement = res.locals.videoPlaylistElement;
         const videoPlaylist = res.locals.videoPlaylistFull;
         const positionToDelete = videoPlaylistElement.position;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield videoPlaylistElement.destroy({ transaction: t });
             yield video_playlist_element_1.VideoPlaylistElementModel.increasePositionOf(videoPlaylist.id, positionToDelete, null, -1, t);
             videoPlaylist.changed('updatedAt', true);
@@ -250,7 +243,7 @@ function removeVideoFromPlaylist(req, res) {
     });
 }
 function reorderVideosPlaylist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylist = res.locals.videoPlaylistFull;
         const body = req.body;
         const start = body.startPosition;
@@ -259,7 +252,7 @@ function reorderVideosPlaylist(req, res) {
         if (start === insertAfter) {
             return res.status(204).end();
         }
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const newPosition = insertAfter + 1;
             yield video_playlist_element_1.VideoPlaylistElementModel.increasePositionOf(videoPlaylist.id, newPosition, null, reorderLength, t);
             let oldPosition = start;
@@ -280,7 +273,7 @@ function reorderVideosPlaylist(req, res) {
     });
 }
 function getVideoPlaylistVideos(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPlaylistInstance = res.locals.videoPlaylistSummary;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
         const server = yield application_1.getServerActor();
@@ -299,7 +292,7 @@ function getVideoPlaylistVideos(req, res) {
     });
 }
 function regeneratePlaylistThumbnail(videoPlaylist) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield videoPlaylist.Thumbnail.destroy();
         videoPlaylist.Thumbnail = null;
         const firstElement = yield video_playlist_element_1.VideoPlaylistElementModel.loadFirstElementWithVideoThumbnail(videoPlaylist.id);
@@ -308,7 +301,7 @@ function regeneratePlaylistThumbnail(videoPlaylist) {
     });
 }
 function generateThumbnailForPlaylist(videoPlaylist, video) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Generating default thumbnail to playlist %s.', videoPlaylist.url);
         const videoMiniature = video.getMiniature();
         if (!videoMiniature) {

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.customConfigUpdateValidator = void 0;
 const express_validator_1 = require("express-validator");
 const users_1 = require("../../helpers/custom-validators/users");
 const logger_1 = require("../../helpers/logger");
@@ -44,6 +45,16 @@ const customConfigUpdateValidator = [
     express_validator_1.body('followers.instance.manualApproval').isBoolean().withMessage('Should have a valid manual approval boolean'),
     express_validator_1.body('theme.default').custom(v => plugins_1.isThemeNameValid(v) && theme_utils_1.isThemeRegistered(v)).withMessage('Should have a valid theme'),
     express_validator_1.body('premium_storage.enabled').isBoolean().withMessage('Should have a valid premium_storage enabled boolean'),
+    express_validator_1.body('broadcastMessage.enabled').isBoolean().withMessage('Should have a valid broadcast message enabled boolean'),
+    express_validator_1.body('broadcastMessage.message').exists().withMessage('Should have a valid broadcast message'),
+    express_validator_1.body('broadcastMessage.level').exists().withMessage('Should have a valid broadcast level'),
+    express_validator_1.body('broadcastMessage.dismissable').isBoolean().withMessage('Should have a valid broadcast dismissable boolean'),
+    express_validator_1.body('search.remoteUri.users').isBoolean().withMessage('Should have a remote URI search for users boolean'),
+    express_validator_1.body('search.remoteUri.anonymous').isBoolean().withMessage('Should have a valid remote URI search for anonymous boolean'),
+    express_validator_1.body('search.searchIndex.enabled').isBoolean().withMessage('Should have a valid search index enabled boolean'),
+    express_validator_1.body('search.searchIndex.url').exists().withMessage('Should have a valid search index URL'),
+    express_validator_1.body('search.searchIndex.disableLocalSearch').isBoolean().withMessage('Should have a valid search index disable local search boolean'),
+    express_validator_1.body('search.searchIndex.isDefaultSearch').isBoolean().withMessage('Should have a valid search index default enabled boolean'),
     (req, res, next) => {
         logger_1.logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))

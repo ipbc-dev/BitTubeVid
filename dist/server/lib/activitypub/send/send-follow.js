@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildFollowActivity = exports.sendFollow = void 0;
 const url_1 = require("../url");
 const utils_1 = require("./utils");
 const logger_1 = require("../../../helpers/logger");

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.processVideoImport = void 0;
+const tslib_1 = require("tslib");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const video_1 = require("@server/helpers/video");
@@ -33,7 +26,7 @@ const videos_2 = require("../../activitypub/videos");
 const notifier_1 = require("../../notifier");
 const thumbnail_1 = require("../../thumbnail");
 function processVideoImport(job) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
         if (payload.type === 'youtube-dl')
             return processYoutubeDLImport(job, payload);
@@ -43,7 +36,7 @@ function processVideoImport(job) {
 }
 exports.processVideoImport = processVideoImport;
 function processTorrentImport(job, payload) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Processing torrent video import in job %d.', job.id);
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
@@ -60,7 +53,7 @@ function processTorrentImport(job, payload) {
     });
 }
 function processYoutubeDLImport(job, payload) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Processing youtubeDL video import in job %d.', job.id);
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
@@ -73,7 +66,7 @@ function processYoutubeDLImport(job, payload) {
     });
 }
 function getVideoImportOrDie(videoImportId) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoImport = yield video_import_1.VideoImportModel.loadAndPopulateVideo(videoImportId);
         if (!videoImport || !videoImport.Video) {
             throw new Error('Cannot import video %s: the video import or video linked to this import does not exist anymore.');
@@ -82,7 +75,7 @@ function getVideoImportOrDie(videoImportId) {
     });
 }
 function processFile(downloader, videoImport, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let tempVideoPath;
         let videoDestFile;
         let videoFile;
@@ -135,7 +128,7 @@ function processFile(downloader, videoImport, options) {
                 previewModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
             }
             yield webtorrent_1.createTorrentAndSetInfoHash(videoImportWithFiles.Video, videoFile);
-            const { videoImportUpdated, video } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const { videoImportUpdated, video } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const videoImportToUpdate = videoImportWithFiles;
                 const video = yield video_2.VideoModel.load(videoImportToUpdate.videoId, t);
                 if (!video)

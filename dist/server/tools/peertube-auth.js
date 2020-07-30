@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
@@ -18,7 +10,7 @@ const users_1 = require("../helpers/custom-validators/users");
 const extra_utils_1 = require("../../shared/extra-utils");
 const CliTable3 = require("cli-table3");
 function delInstance(url) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const [settings, netrc] = yield Promise.all([cli_1.getSettings(), cli_1.getNetrc()]);
         const index = settings.remotes.indexOf(url);
         settings.remotes.splice(index);
@@ -30,9 +22,9 @@ function delInstance(url) {
     });
 }
 function setInstance(url, username, password, isDefault) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const [settings, netrc] = yield Promise.all([cli_1.getSettings(), cli_1.getNetrc()]);
-        if (settings.remotes.indexOf(url) === -1) {
+        if (settings.remotes.includes(url) === false) {
             settings.remotes.push(url);
         }
         if (isDefault || settings.remotes.length === 1) {
@@ -78,7 +70,7 @@ program
                 required: true
             }
         }
-    }, (_, result) => __awaiter(void 0, void 0, void 0, function* () {
+    }, (_, result) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         try {
             yield extra_utils_1.getAccessToken(result.url, result.username, result.password);
         }
@@ -93,14 +85,14 @@ program
 program
     .command('del <url>')
     .description('unregisters a remote instance')
-    .action((url) => __awaiter(void 0, void 0, void 0, function* () {
+    .action((url) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     yield delInstance(url);
     process.exit(0);
 }));
 program
     .command('list')
     .description('lists registered remote instances')
-    .action(() => __awaiter(void 0, void 0, void 0, function* () {
+    .action(() => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     const [settings, netrc] = yield Promise.all([cli_1.getSettings(), cli_1.getNetrc()]);
     const table = new CliTable3({
         head: ['instance', 'login'],
@@ -120,7 +112,7 @@ program
 program
     .command('set-default <url>')
     .description('set an existing entry as default')
-    .action((url) => __awaiter(void 0, void 0, void 0, function* () {
+    .action((url) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     const settings = yield cli_1.getSettings();
     const instanceExists = settings.remotes.includes(url);
     if (instanceExists) {

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateAvatarValidator = void 0;
 const express_validator_1 = require("express-validator");
 const users_1 = require("../../helpers/custom-validators/users");
 const utils_1 = require("./utils");

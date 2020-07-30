@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -17,14 +9,14 @@ const expect = chai.expect;
 describe('Test a videos overview', function () {
     let server = null;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
         });
     });
     it('Should send empty overview', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield overviews_1.getVideosOverview(server.url, 1);
             const overview = res.body;
             expect(overview.tags).to.have.lengthOf(0);
@@ -33,7 +25,7 @@ describe('Test a videos overview', function () {
         });
     });
     it('Should upload 5 videos in a specific category, tag and channel but not include them in overview', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.wait(3000);
             yield extra_utils_1.uploadVideo(server.url, server.accessToken, {
@@ -49,7 +41,7 @@ describe('Test a videos overview', function () {
         });
     });
     it('Should upload another video and include all videos in the overview', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             for (let i = 1; i < 6; i++) {
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, {
@@ -76,7 +68,7 @@ describe('Test a videos overview', function () {
         });
     });
     it('Should have the correct overview', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res1 = yield overviews_1.getVideosOverview(server.url, 1);
             const res2 = yield overviews_1.getVideosOverview(server.url, 2);
             const overview1 = res1.body;
@@ -106,7 +98,7 @@ describe('Test a videos overview', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

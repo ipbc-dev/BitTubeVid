@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.internalRunHook = exports.getHookType = void 0;
+const tslib_1 = require("tslib");
 const hook_type_enum_1 = require("../../models/plugins/hook-type.enum");
 const miscs_1 = require("../miscs/miscs");
 function getHookType(hookName) {
@@ -20,7 +13,7 @@ function getHookType(hookName) {
 }
 exports.getHookType = getHookType;
 function internalRunHook(handler, hookType, result, params, onError) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             if (hookType === hook_type_enum_1.HookType.FILTER) {
                 const p = handler(result, params);

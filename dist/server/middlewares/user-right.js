@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ensureUserHasRight = void 0;
 const shared_1 = require("../../shared");
 const logger_1 = require("../helpers/logger");
 function ensureUserHasRight(userRight) {

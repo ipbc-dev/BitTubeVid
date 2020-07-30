@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.premiumStorageRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const middlewares_1 = require("../../middlewares");
 const shared_1 = require("@server/../shared");
@@ -26,7 +19,7 @@ premiumStorageRouter.post('/delete-plan', middlewares_1.authenticate, middleware
 premiumStorageRouter.post('/add-plan', middlewares_1.authenticate, middlewares_2.ensureUserHasRight(shared_1.UserRight.ALL), middlewares_1.asyncMiddleware(adminAddPlan));
 premiumStorageRouter.post('/update-plan', middlewares_1.authenticate, middlewares_2.ensureUserHasRight(shared_1.UserRight.ALL), middlewares_1.asyncMiddleware(adminUpdatePlan));
 function adminUpdatePlan(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const body = req.body;
             if (body.id === undefined ||
@@ -52,7 +45,7 @@ function adminUpdatePlan(req, res) {
     });
 }
 function adminAddPlan(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const body = req.body;
             if (body === undefined ||
@@ -73,7 +66,7 @@ function adminAddPlan(req, res) {
     });
 }
 function adminDeletePlan(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const body = req.body;
             if (body.planId === undefined ||
@@ -90,7 +83,7 @@ function adminDeletePlan(req, res) {
     });
 }
 function getUserBilling(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const user = res.locals.oauth.token.User;
             const userId = user.Account.id;
@@ -104,7 +97,7 @@ function getUserBilling(req, res) {
     });
 }
 function getPlans(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const plansResult = yield premium_storage_plan_1.PremiumStoragePlanModel.getPlans();
             const plansResponse = plansResult.map(plan => plan.toJSON());
@@ -116,7 +109,7 @@ function getPlans(req, res) {
     });
 }
 function getPlansInfo() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const plansResult = yield premium_storage_plan_1.PremiumStoragePlanModel.getPlans();
             const plansResponse = plansResult.map(plan => plan.toJSON());
@@ -128,7 +121,7 @@ function getPlansInfo() {
     });
 }
 function getUserPayments(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const user = res.locals.oauth.token.User;
             const userId = user.Account.id;
@@ -147,7 +140,7 @@ function getUserPayments(req, res) {
     });
 }
 function getUserActivePayment(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const user = res.locals.oauth.token.User;
             const userId = user.Account.id;
@@ -166,7 +159,7 @@ function getUserActivePayment(req, res) {
     });
 }
 function getAllActivePayments(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const user = res.locals.oauth.token.User;
             console.log(user);
@@ -185,7 +178,7 @@ function getAllActivePayments(req, res) {
     });
 }
 function userPayPlan(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             const userToUpdate = res.locals.oauth.token.User;
             const userId = userToUpdate.Account.id;

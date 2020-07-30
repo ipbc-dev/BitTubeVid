@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.videosRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const path_1 = require("path");
 const shared_1 = require("../../../../shared");
@@ -96,7 +89,7 @@ function listVideoPrivacies(req, res) {
     res.json(constants_1.VIDEO_PRIVACIES);
 }
 const aDelay = (ms) => { return new Promise((resolve) => setTimeout(resolve, ms)); };
-const copyFile = (pathFrom, pathTo, copyFileRetries = 5) => __awaiter(void 0, void 0, void 0, function* () {
+const copyFile = (pathFrom, pathTo, copyFileRetries = 5) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     while (true) {
         try {
             yield fs_extra_1.copy(pathFrom, pathTo);
@@ -112,7 +105,7 @@ const copyFile = (pathFrom, pathTo, copyFileRetries = 5) => __awaiter(void 0, vo
         yield aDelay(2000);
     }
 });
-const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, void 0, void 0, function* () {
+const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     while (true) {
         try {
             yield fs_extra_1.move(pathFrom, pathTo);
@@ -130,7 +123,7 @@ const moveFile = (pathFrom, pathTo, moveFileRetries = 5) => __awaiter(void 0, vo
 });
 let addVideoCounterMain = 0;
 function addVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const addVideoCounter = ++addVideoCounterMain;
         logger_1.logger.info('Inside addVideo function');
         logger_1.logger.debug(`ICEICE ${addVideoCounter} Inside addVideo function`);
@@ -208,7 +201,7 @@ function addVideo(req, res) {
         yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile, addVideoCounter, true);
         logger_1.logger.debug(`ICEICE ${addVideoCounter}  after Create the torrent file  ${(Date.now() - startingTime) / 1000} sec`);
         startingTime = Date.now();
-        const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
             const videoCreated = yield video.save(sequelizeOptions);
             yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
@@ -261,21 +254,20 @@ function addVideo(req, res) {
     });
 }
 function updateVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    var _a, _b;
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
         const videoFieldsSave = videoInstance.toJSON();
         const oldVideoAuditView = new audit_logger_1.VideoAuditView(videoInstance.toFormattedDetailsJSON());
         const videoInfoToUpdate = req.body;
         const wasConfidentialVideo = videoInstance.isConfidential();
         const hadPrivacyForFederation = videoInstance.hasPrivacyForFederation();
-        const thumbnailModel = req.files && req.files['thumbnailfile']
-            ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['thumbnailfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.MINIATURE, false)
+        const thumbnailModel = ((_a = req.files) === null || _a === void 0 ? void 0 : _a['thumbnailfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['thumbnailfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.MINIATURE, false)
             : undefined;
-        const previewModel = req.files && req.files['previewfile']
-            ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['previewfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.PREVIEW, false)
+        const previewModel = ((_b = req.files) === null || _b === void 0 ? void 0 : _b['previewfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['previewfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.PREVIEW, false)
             : undefined;
         try {
-            const videoInstanceUpdated = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            const videoInstanceUpdated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const sequelizeOptions = { transaction: t };
                 const oldVideoChannel = videoInstance.VideoChannel;
                 if (videoInfoToUpdate.name !== undefined)
@@ -361,7 +353,7 @@ function updateVideo(req, res) {
     });
 }
 function getVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : null;
         const video = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
         if (video.isOutdated()) {
@@ -371,7 +363,7 @@ function getVideo(req, res) {
     });
 }
 function viewVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.onlyImmutableVideo;
         const ip = req.ip;
         const exists = yield redis_1.Redis.Instance.doesVideoIPViewExist(ip, videoInstance.uuid);
@@ -390,7 +382,7 @@ function viewVideo(req, res) {
     });
 }
 function getVideoDescription(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
         let description = '';
         if (videoInstance.isOwned()) {
@@ -403,13 +395,13 @@ function getVideoDescription(req, res) {
     });
 }
 function getVideoFileMetadata(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoFile = yield video_file_1.VideoFileModel.loadWithMetadata(toInt_1.default(req.params.videoFileId));
         return res.json(videoFile.metadata);
     });
 }
 function listVideos(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const countVideos = express_utils_1.getCountVideos(req);
         const apiOptions = yield hooks_1.Hooks.wrapObject({
             start: req.query.start,
@@ -432,9 +424,9 @@ function listVideos(req, res) {
     });
 }
 function removeVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield videoInstance.destroy({ transaction: t });
         }));
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoInstance.toFormattedDetailsJSON()));

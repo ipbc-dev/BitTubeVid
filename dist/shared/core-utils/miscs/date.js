@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.isLastWeek = exports.isLastMonth = exports.isToday = exports.isThisMonth = exports.isThisWeek = exports.isYesterday = void 0;
 function isToday(d) {
     const today = new Date();
     return areDatesEqual(d, today);

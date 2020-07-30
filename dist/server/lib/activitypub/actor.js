@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.addFetchOutboxJob = exports.updateActorAvatarInstance = exports.refreshActorIfNeeded = exports.updateActorInstance = exports.getAvatarInfoIfExists = exports.fetchActorTotalItems = exports.setAsyncActorKeys = exports.buildActorInstance = exports.getOrCreateActorAndServerAndModel = void 0;
+const tslib_1 = require("tslib");
 const url_1 = require("url");
 const uuid_1 = require("uuid");
 const activitypub_1 = require("../../helpers/activitypub");
@@ -44,7 +37,7 @@ function setAsyncActorKeys(actor) {
 }
 exports.setAsyncActorKeys = setAsyncActorKeys;
 function getOrCreateActorAndServerAndModel(activityActor, fetchType = 'association-ids', recurseIfNeeded = true, updateCollections = false) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actorUrl = activitypub_1.getAPId(activityActor);
         let created = false;
         let accountPlaylistsUrl;
@@ -116,7 +109,8 @@ function buildActorInstance(type, url, preferredUsername, uuid) {
 }
 exports.buildActorInstance = buildActorInstance;
 function updateActorInstance(actorInstance, attributes) {
-    return __awaiter(this, void 0, void 0, function* () {
+    var _a;
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const followersCount = yield fetchActorTotalItems(attributes.followers);
         const followingCount = yield fetchActorTotalItems(attributes.following);
         actorInstance.type = attributes.type;
@@ -129,14 +123,14 @@ function updateActorInstance(actorInstance, attributes) {
         actorInstance.outboxUrl = attributes.outbox;
         actorInstance.followersUrl = attributes.followers;
         actorInstance.followingUrl = attributes.following;
-        if (attributes.endpoints && attributes.endpoints.sharedInbox) {
+        if ((_a = attributes.endpoints) === null || _a === void 0 ? void 0 : _a.sharedInbox) {
             actorInstance.sharedInboxUrl = attributes.endpoints.sharedInbox;
         }
     });
 }
 exports.updateActorInstance = updateActorInstance;
 function updateActorAvatarInstance(actor, info, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!info.name)
             return actor;
         if (actor.Avatar) {
@@ -161,7 +155,7 @@ function updateActorAvatarInstance(actor, info, t) {
 }
 exports.updateActorAvatarInstance = updateActorAvatarInstance;
 function fetchActorTotalItems(url) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
             uri: url,
             method: 'GET',
@@ -202,7 +196,7 @@ function getAvatarInfoIfExists(actorJSON) {
 }
 exports.getAvatarInfoIfExists = getAvatarInfoIfExists;
 function addFetchOutboxJob(actor) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
         if (serverActor.id === actor.id) {
             logger_1.logger.error('Cannot fetch our own outbox!');
@@ -217,7 +211,7 @@ function addFetchOutboxJob(actor) {
 }
 exports.addFetchOutboxJob = addFetchOutboxJob;
 function refreshActorIfNeeded(actorArg, fetchedType) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!actorArg.isOutdated())
             return { actor: actorArg, refreshed: false };
         const actor = fetchedType === 'all'
@@ -244,7 +238,7 @@ function refreshActorIfNeeded(actorArg, fetchedType) {
                 logger_1.logger.warn('Cannot fetch remote actor in refresh actor.');
                 return { actor, refreshed: false };
             }
-            return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+            return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 database_utils_1.updateInstanceWithAnother(actor, result.actor);
                 if (result.avatar !== undefined) {
                     const avatarInfo = {
@@ -283,7 +277,7 @@ function saveActorAndServerAndModelIfNotExist(result, ownerActor, t) {
         return save(t);
     return database_1.sequelizeTypescript.transaction(t => save(t));
     function save(t) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actorHost = new url_1.URL(actor.url).host;
             const serverOptions = {
                 where: {
@@ -325,7 +319,8 @@ function saveActorAndServerAndModelIfNotExist(result, ownerActor, t) {
     }
 }
 function fetchRemoteActor(actorUrl) {
-    return __awaiter(this, void 0, void 0, function* () {
+    var _a;
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
             uri: actorUrl,
             method: 'GET',
@@ -357,8 +352,7 @@ function fetchRemoteActor(actorUrl) {
             outboxUrl: actorJSON.outbox,
             followersUrl: actorJSON.followers,
             followingUrl: actorJSON.following,
-            sharedInboxUrl: actorJSON.endpoints && actorJSON.endpoints.sharedInbox
-                ? actorJSON.endpoints.sharedInbox
+            sharedInboxUrl: ((_a = actorJSON.endpoints) === null || _a === void 0 ? void 0 : _a.sharedInbox) ? actorJSON.endpoints.sharedInbox
                 : null
         });
         const avatarInfo = yield getAvatarInfoIfExists(actorJSON);
@@ -378,7 +372,7 @@ function fetchRemoteActor(actorUrl) {
     });
 }
 function saveAccount(actor, result, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const [accountCreated] = yield account_1.AccountModel.findOrCreate({
             defaults: {
                 name: result.name,
@@ -394,7 +388,7 @@ function saveAccount(actor, result, t) {
     });
 }
 function saveVideoChannel(actor, result, ownerActor, t) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const [videoChannelCreated] = yield video_channel_1.VideoChannelModel.findOrCreate({
             defaults: {
                 name: result.name,

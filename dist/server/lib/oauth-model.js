@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.saveToken = exports.revokeToken = exports.getUser = exports.getRefreshToken = exports.getClient = exports.getAccessToken = exports.clearCacheByToken = exports.clearCacheByUserId = exports.deleteUserToken = void 0;
+const tslib_1 = require("tslib");
 const node_fetch_1 = require("node-fetch");
 const oauth2_server_1 = require("oauth2-server");
 const logger_1 = require("../helpers/logger");
@@ -47,7 +40,7 @@ function clearCacheByToken(token) {
 }
 exports.clearCacheByToken = clearCacheByToken;
 function getAccessToken(bearerToken) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Getting access token (bearerToken: ' + bearerToken + ').');
         if (!bearerToken)
             return undefined;
@@ -79,7 +72,7 @@ function getClient(clientId, clientSecret) {
 }
 exports.getClient = getClient;
 function getRefreshToken(refreshToken) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Getting RefreshToken (refreshToken: ' + refreshToken + ').');
         const tokenInfo = yield oauth_token_1.OAuthTokenModel.getByRefreshTokenAndPopulateClient(refreshToken);
         if (!tokenInfo)
@@ -96,7 +89,7 @@ function getRefreshToken(refreshToken) {
 exports.getRefreshToken = getRefreshToken;
 const USERS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.USERS;
 function generateUntakenUsername(username, email) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const newUsernameFromEmail = `${(email || '').split('@')[0].toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9._]/g, '').trim()}`;
         let newUsernameFromName = `${(username || newUsernameFromEmail).toLowerCase().replace(/\s/g, '_').replace(/[^a-z0-9._]/g, '').trim()}`;
         newUsernameFromName = newUsernameFromEmail;
@@ -117,7 +110,7 @@ function generateUntakenUsername(username, email) {
     });
 }
 function getUserFirebase(usernameOrEmail, password, user) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (usernameOrEmail.indexOf('@') === -1) {
             return null;
         }
@@ -171,7 +164,7 @@ function getUserFirebase(usernameOrEmail, password, user) {
     });
 }
 function getUser(usernameOrEmail, password) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = this.request.res;
         if (res.locals.bypassLogin && res.locals.bypassLogin.bypass === true) {
             const obj = res.locals.bypassLogin;
@@ -206,7 +199,7 @@ function getUser(usernameOrEmail, password) {
 }
 exports.getUser = getUser;
 function revokeToken(tokenInfo) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = this.request.res;
         const token = yield oauth_token_1.OAuthTokenModel.getByRefreshTokenAndPopulateUser(tokenInfo.refreshToken);
         if (token) {
@@ -224,7 +217,7 @@ function revokeToken(tokenInfo) {
 exports.revokeToken = revokeToken;
 function saveToken(token, client, user) {
     var _a;
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = this.request.res;
         let authName = null;
         if (((_a = res.locals.bypassLogin) === null || _a === void 0 ? void 0 : _a.bypass) === true) {
@@ -251,7 +244,7 @@ function saveToken(token, client, user) {
 }
 exports.saveToken = saveToken;
 function createUserFromExternal(pluginAuth, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actor = yield actor_1.ActorModel.loadLocalByName(options.username);
         if (actor)
             return null;

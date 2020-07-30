@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const videos_1 = require("../../../../shared/models/videos");
@@ -27,14 +19,14 @@ const expect = chai.expect;
 describe('Test follows', function () {
     let servers = [];
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             servers = yield index_1.flushAndRunMultipleServers(3);
             yield index_1.setAccessTokensToServers(servers);
         });
     });
     it('Should not have followers', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield follows_1.getFollowersListPaginationAndSort({ url: server.url, start: 0, count: 5, sort: 'createdAt' });
                 const follows = res.body.data;
@@ -45,7 +37,7 @@ describe('Test follows', function () {
         });
     });
     it('Should not have following', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield follows_1.getFollowingListPaginationAndSort({ url: server.url, start: 0, count: 5, sort: 'createdAt' });
                 const follows = res.body.data;
@@ -56,14 +48,14 @@ describe('Test follows', function () {
         });
     });
     it('Should have server 1 following server 2 and 3', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield follows_1.follow(servers[0].url, [servers[1].url, servers[2].url], servers[0].accessToken);
             yield jobs_1.waitJobs(servers);
         });
     });
     it('Should have 2 followings on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let res = yield follows_1.getFollowingListPaginationAndSort({ url: servers[0].url, start: 0, count: 1, sort: 'createdAt' });
             let follows = res.body.data;
             expect(res.body.total).to.equal(2);
@@ -80,7 +72,7 @@ describe('Test follows', function () {
         });
     });
     it('Should search/filter followings on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sort = 'createdAt';
             const start = 0;
             const count = 1;
@@ -132,7 +124,7 @@ describe('Test follows', function () {
         });
     });
     it('Should have 0 followings on server 2 and 3', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of [servers[1], servers[2]]) {
                 const res = yield follows_1.getFollowingListPaginationAndSort({ url: server.url, start: 0, count: 5, sort: 'createdAt' });
                 const follows = res.body.data;
@@ -143,7 +135,7 @@ describe('Test follows', function () {
         });
     });
     it('Should have 1 followers on server 2 and 3', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of [servers[1], servers[2]]) {
                 const res = yield follows_1.getFollowersListPaginationAndSort({ url: server.url, start: 0, count: 1, sort: 'createdAt' });
                 const follows = res.body.data;
@@ -155,7 +147,7 @@ describe('Test follows', function () {
         });
     });
     it('Should search/filter followers on server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const url = servers[2].url;
             const start = 0;
             const count = 5;
@@ -207,7 +199,7 @@ describe('Test follows', function () {
         });
     });
     it('Should have 0 followers on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield follows_1.getFollowersListPaginationAndSort({ url: servers[0].url, start: 0, count: 5, sort: 'createdAt' });
             const follows = res.body.data;
             expect(res.body.total).to.equal(0);
@@ -216,7 +208,7 @@ describe('Test follows', function () {
         });
     });
     it('Should have the correct follows counts', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[0].port, 0, 2);
             yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[1].port, 1, 0);
             yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[2].port, 1, 0);
@@ -227,14 +219,14 @@ describe('Test follows', function () {
         });
     });
     it('Should unfollow server 3 on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(5000);
             yield follows_1.unfollow(servers[0].url, servers[0].accessToken, servers[2]);
             yield jobs_1.waitJobs(servers);
         });
     });
     it('Should not follow server 3 on server 1 anymore', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield follows_1.getFollowingListPaginationAndSort({ url: servers[0].url, start: 0, count: 2, sort: 'createdAt' });
             const follows = res.body.data;
             expect(res.body.total).to.equal(1);
@@ -244,7 +236,7 @@ describe('Test follows', function () {
         });
     });
     it('Should not have server 1 as follower on server 3 anymore', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield follows_1.getFollowersListPaginationAndSort({ url: servers[2].url, start: 0, count: 1, sort: 'createdAt' });
             const follows = res.body.data;
             expect(res.body.total).to.equal(0);
@@ -253,7 +245,7 @@ describe('Test follows', function () {
         });
     });
     it('Should have the correct follows counts 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[0].port, 0, 1);
             yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[1].port, 1, 0);
             yield accounts_1.expectAccountFollows(servers[1].url, 'peertube@localhost:' + servers[0].port, 0, 1);
@@ -263,7 +255,7 @@ describe('Test follows', function () {
         });
     });
     it('Should upload a video on server 2 and 3 and propagate only the video of server 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(35000);
             yield index_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'server2' });
             yield index_1.uploadVideo(servers[2].url, servers[2].accessToken, { name: 'server3' });
@@ -282,8 +274,8 @@ describe('Test follows', function () {
     describe('Should propagate data on a new following', function () {
         let video4;
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(50000);
                 const video4Attributes = {
                     name: 'server3-4',
                     category: 2,
@@ -350,7 +342,7 @@ describe('Test follows', function () {
             });
         });
         it('Should have the correct follows counts 3', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[0].port, 0, 2);
                 yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[1].port, 1, 0);
                 yield accounts_1.expectAccountFollows(servers[0].url, 'peertube@localhost:' + servers[2].port, 1, 0);
@@ -361,7 +353,7 @@ describe('Test follows', function () {
             });
         });
         it('Should have propagated videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield index_1.getVideosList(servers[0].url);
                 expect(res.body.total).to.equal(7);
                 const video2 = res.body.data.find(v => v.name === 'server3-2');
@@ -409,7 +401,7 @@ describe('Test follows', function () {
             });
         });
         it('Should have propagated comments', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res1 = yield video_comments_1.getVideoCommentThreads(servers[0].url, video4.id, 0, 5, 'createdAt');
                 expect(res1.body.total).to.equal(2);
                 expect(res1.body.data).to.be.an('array');
@@ -473,7 +465,7 @@ describe('Test follows', function () {
             });
         });
         it('Should have propagated captions', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res = yield video_captions_1.listVideoCaptions(servers[0].url, video4.id);
                 expect(res.body.total).to.equal(1);
                 expect(res.body.data).to.have.lengthOf(1);
@@ -485,7 +477,7 @@ describe('Test follows', function () {
             });
         });
         it('Should unfollow server 3 on server 1 and does not list server 3 videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(5000);
                 yield follows_1.unfollow(servers[0].url, servers[0].accessToken, servers[2]);
                 yield jobs_1.waitJobs(servers);
@@ -495,7 +487,7 @@ describe('Test follows', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

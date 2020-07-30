@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.updateAvatarRequest = exports.makeRawRequest = exports.makeDeleteRequest = exports.makePutBodyRequest = exports.makePostBodyRequest = exports.makeUploadRequest = exports.decodeQueryString = exports.makeGetRequest = exports.makeHTMLRequest = exports.get4KFileUrl = void 0;
 const request = require("supertest");
 const miscs_1 = require("../miscs/miscs");
 const path_1 = require("path");

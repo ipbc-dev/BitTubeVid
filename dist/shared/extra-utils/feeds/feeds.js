@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getJSONfeed = exports.getXMLfeed = void 0;
 const request = require("supertest");
 function getXMLfeed(url, feed, format) {
     const path = '/feeds/' + feed + '.xml';

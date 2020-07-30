@@ -1,12 +1,10 @@
 "use strict";
-function __export(m) {
-    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
-}
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./accounts"));
-__export(require("./video-abuses"));
-__export(require("./video-blacklists"));
-__export(require("./video-captions"));
-__export(require("./video-channels"));
-__export(require("./video-playlists"));
-__export(require("./videos"));
+const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./accounts"), exports);
+tslib_1.__exportStar(require("./video-abuses"), exports);
+tslib_1.__exportStar(require("./video-blacklists"), exports);
+tslib_1.__exportStar(require("./video-captions"), exports);
+tslib_1.__exportStar(require("./video-channels"), exports);
+tslib_1.__exportStar(require("./video-playlists"), exports);
+tslib_1.__exportStar(require("./videos"), exports);

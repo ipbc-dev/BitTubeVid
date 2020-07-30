@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.rateVideoRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const logger_1 = require("../../../helpers/logger");
 const constants_1 = require("../../../initializers/constants");
@@ -21,12 +14,12 @@ const rateVideoRouter = express.Router();
 exports.rateVideoRouter = rateVideoRouter;
 rateVideoRouter.put('/:id/rate', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.videoUpdateRateValidator), middlewares_1.asyncRetryTransactionMiddleware(rateVideo));
 function rateVideo(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         const rateType = body.rating;
         const videoInstance = res.locals.videoAll;
         const userAccount = res.locals.oauth.token.User.Account;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
             const accountInstance = yield account_1.AccountModel.load(userAccount.id, t);
             const previousRate = yield account_video_rate_1.AccountVideoRateModel.load(accountInstance.id, videoInstance.id, t);

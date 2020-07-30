@@ -1,24 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var VideoModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoModel = exports.ScopeNames = void 0;
+const tslib_1 = require("tslib");
 const Bluebird = require("bluebird");
 const lodash_1 = require("lodash");
 const path_1 = require("path");
@@ -50,7 +34,7 @@ const schedule_video_update_1 = require("./schedule-video-update");
 const video_caption_1 = require("./video-caption");
 const video_blacklist_1 = require("./video-blacklist");
 const fs_extra_1 = require("fs-extra");
-const video_views_1 = require("./video-views");
+const video_view_1 = require("./video-view");
 const video_redundancy_1 = require("../redundancy/video-redundancy");
 const video_format_utils_1 = require("./video-format-utils");
 const user_video_history_1 = require("../account/user-video-history");
@@ -66,6 +50,7 @@ const model_cache_1 = require("@server/models/model-cache");
 const video_query_builder_1 = require("./video-query-builder");
 const express_utils_1 = require("@server/helpers/express-utils");
 const application_1 = require("@server/models/application/application");
+const video_1 = require("@server/helpers/video");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["AVAILABLE_FOR_LIST_IDS"] = "AVAILABLE_FOR_LIST_IDS";
@@ -83,7 +68,7 @@ var ScopeNames;
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.Model {
     static sendDelete(instance, options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (instance.isOwned()) {
                 if (!instance.VideoChannel) {
                     instance.VideoChannel = (yield instance.$get('VideoChannel', {
@@ -100,7 +85,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         });
     }
     static removeFiles(instance) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const tasks = [];
             logger_1.logger.info('Removing files of video %s.', instance.url);
             if (instance.isOwned()) {
@@ -129,7 +114,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         model_cache_1.ModelCache.Instance.invalidateCache('video', instance.id);
     }
     static saveEssentialDataToAbuses(instance, options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const tasks = [];
             logger_1.logger.info('Saving video abuses details of video %s.', instance.url);
             if (!Array.isArray(instance.VideoAbuses)) {
@@ -183,10 +168,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
                 id: {
                     [sequelize_1.Op.in]: sequelize_1.Sequelize.literal('(' + rawQuery + ')')
                 },
-                [sequelize_1.Op.or]: [
-                    { privacy: shared_1.VideoPrivacy.PUBLIC },
-                    { privacy: shared_1.VideoPrivacy.UNLISTED }
-                ]
+                [sequelize_1.Op.or]: video_1.getPrivaciesForFederation()
             },
             include: [
                 {
@@ -312,7 +294,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         });
     }
     static listForApi(options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (options.filter && options.filter === 'all-local' && !options.user.hasRight(shared_1.UserRight.SEE_ALL_VIDEOS)) {
                 throw new Error('Try to filter all-local but no user has not the see all videos right');
             }
@@ -349,7 +331,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         });
     }
     static searchAndPopulateAccountAndServer(options) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverActor = yield application_1.getServerActor();
             const queryOptions = {
                 followerActorId: serverActor.id,
@@ -542,7 +524,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             .findOne(options);
     }
     static getStats() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const totalLocalVideos = yield VideoModel_1.count({
                 where: {
                     remote: false
@@ -581,7 +563,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     static checkVideoHasInstanceFollow(videoId, followerActorId) {
         const query = 'SELECT 1 FROM "videoShare" ' +
             'INNER JOIN "actorFollow" ON "actorFollow"."targetActorId" = "videoShare"."actorId" ' +
-            'WHERE "actorFollow"."actorId" = $followerActorId AND "videoShare"."videoId" = $videoId ' +
+            'WHERE "actorFollow"."actorId" = $followerActorId AND "actorFollow"."state" = \'accepted\' AND "videoShare"."videoId" = $videoId ' +
             'LIMIT 1';
         const options = {
             type: sequelize_1.QueryTypes.SELECT,
@@ -611,7 +593,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             .then(videos => videos.map(v => v.id));
     }
     static getRandomFieldSamples(field, threshold, count) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverActor = yield application_1.getServerActor();
             const followerActorId = serverActor.id;
             const queryOptions = {
@@ -634,7 +616,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return {
             attributes: [],
             subQuery: false,
-            model: video_views_1.VideoViewModel,
+            model: video_view_1.VideoViewModel,
             required: false,
             where: {
                 startDate: {
@@ -644,7 +626,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         };
     }
     static getAvailableForApi(options, countVideos = true) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             function getCount() {
                 if (countVideos !== true)
                     return Promise.resolve(undefined);
@@ -754,10 +736,6 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         }
         return videos;
     }
-    static isPrivacyForFederation(privacy) {
-        const castedPrivacy = parseInt(privacy + '', 10);
-        return castedPrivacy === shared_1.VideoPrivacy.PUBLIC || castedPrivacy === shared_1.VideoPrivacy.UNLISTED;
-    }
     static getCategoryLabel(id) {
         return constants_1.VIDEO_CATEGORIES[id] || 'Misc';
     }
@@ -777,8 +755,8 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return !!this.VideoBlacklist;
     }
     isBlocked() {
-        return (this.VideoChannel.Account.Actor.Server && this.VideoChannel.Account.Actor.Server.isBlocked()) ||
-            this.VideoChannel.Account.isBlocked();
+        var _a;
+        return ((_a = this.VideoChannel.Account.Actor.Server) === null || _a === void 0 ? void 0 : _a.isBlocked()) || this.VideoChannel.Account.isBlocked();
     }
     getQualityFileBy(fun) {
         if (Array.isArray(this.VideoFiles) && this.VideoFiles.length !== 0) {
@@ -807,7 +785,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return Object.assign(file, { Video: this });
     }
     addAndSaveThumbnail(thumbnail, transaction) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             thumbnail.videoId = this.id;
             const savedThumbnail = yield thumbnail.save({ transaction });
             if (Array.isArray(this.Thumbnails) === false)
@@ -913,7 +891,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             .catch(err => logger_1.logger.warn('Cannot delete torrent %s.', torrentPath, { err }));
     }
     removeStreamingPlaylistFiles(streamingPlaylist, isRedundancy = false) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const directoryPath = video_paths_1.getHLSDirectory(this, isRedundancy);
             yield fs_extra_1.remove(directoryPath);
             if (isRedundancy !== true) {
@@ -932,10 +910,10 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return utils_1.isOutdated(this, constants_1.ACTIVITY_PUB.VIDEO_REFRESH_INTERVAL);
     }
     hasPrivacyForFederation() {
-        return VideoModel_1.isPrivacyForFederation(this.privacy);
+        return video_1.isPrivacyForFederation(this.privacy);
     }
     isNewVideo(newPrivacy) {
-        return this.hasPrivacyForFederation() === false && VideoModel_1.isPrivacyForFederation(newPrivacy) === true;
+        return this.hasPrivacyForFederation() === false && video_1.isPrivacyForFederation(newPrivacy) === true;
     }
     setAsRefreshed() {
         this.changed('updatedAt', true);
@@ -956,7 +934,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             this.privacy === shared_1.VideoPrivacy.INTERNAL;
     }
     publishIfNeededAndSave(t) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (this.state !== shared_1.VideoState.PUBLISHED) {
                 this.state = shared_1.VideoState.PUBLISHED;
                 this.publishedAt = new Date();
@@ -1006,172 +984,172 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return Math.ceil((videoFile.size * 8) / this.duration);
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(sequelize_typescript_1.DataType.UUIDV4),
     sequelize_typescript_1.IsUUID(4),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.UUID),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "uuid", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoName', value => utils_1.throwIfNotValid(value, videos_1.isVideoNameValid, 'name')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "name", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoCategory', value => utils_1.throwIfNotValid(value, videos_1.isVideoCategoryValid, 'category', true)),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "category", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoLicence', value => utils_1.throwIfNotValid(value, videos_1.isVideoLicenceValid, 'licence', true)),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "licence", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoLanguage', value => utils_1.throwIfNotValid(value, videos_1.isVideoLanguageValid, 'language', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS.LANGUAGE.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "language", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoPrivacy', value => utils_1.throwIfNotValid(value, videos_1.isVideoPrivacyValid, 'privacy')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "privacy", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoNSFW', value => utils_1.throwIfNotValid(value, misc_2.isBooleanValid, 'NSFW boolean')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], VideoModel.prototype, "nsfw", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoDescription', value => utils_1.throwIfNotValid(value, videos_1.isVideoDescriptionValid, 'description', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS.DESCRIPTION.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "description", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoSupport', value => utils_1.throwIfNotValid(value, videos_1.isVideoSupportValid, 'support', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS.SUPPORT.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "support", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoDuration', value => utils_1.throwIfNotValid(value, videos_1.isVideoDurationValid, 'duration')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "duration", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(0),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(0),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "views", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(0),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(0),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "likes", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(0),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Min(0),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "dislikes", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], VideoModel.prototype, "remote", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS.URL.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoModel.prototype, "url", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], VideoModel.prototype, "commentsEnabled", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], VideoModel.prototype, "downloadEnabled", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Boolean)
+    tslib_1.__metadata("design:type", Boolean)
 ], VideoModel.prototype, "waitTranscoding", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Is('VideoState', value => utils_1.throwIfNotValid(value, videos_1.isVideoStateValid, 'state')),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "state", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(sequelize_typescript_1.DataType.NOW),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoModel.prototype, "publishedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoModel.prototype, "originallyPublishedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_channel_1.VideoChannelModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoModel.prototype, "channelId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_channel_1.VideoChannelModel, {
         foreignKey: {
             allowNull: true
         },
         hooks: true
     }),
-    __metadata("design:type", video_channel_1.VideoChannelModel)
+    tslib_1.__metadata("design:type", video_channel_1.VideoChannelModel)
 ], VideoModel.prototype, "VideoChannel", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsToMany(() => tag_1.TagModel, {
         foreignKey: 'videoId',
         through: () => video_tag_1.VideoTagModel,
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "Tags", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => thumbnail_1.ThumbnailModel, {
         foreignKey: {
             name: 'videoId',
@@ -1180,9 +1158,9 @@ __decorate([
         hooks: true,
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "Thumbnails", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_playlist_element_1.VideoPlaylistElementModel, {
         foreignKey: {
             name: 'videoId',
@@ -1190,9 +1168,9 @@ __decorate([
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoPlaylistElements", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_abuse_1.VideoAbuseModel, {
         foreignKey: {
             name: 'videoId',
@@ -1200,9 +1178,9 @@ __decorate([
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoAbuses", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_file_1.VideoFileModel, {
         foreignKey: {
             name: 'videoId',
@@ -1211,9 +1189,9 @@ __decorate([
         hooks: true,
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoFiles", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_streaming_playlist_1.VideoStreamingPlaylistModel, {
         foreignKey: {
             name: 'videoId',
@@ -1222,9 +1200,9 @@ __decorate([
         hooks: true,
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoStreamingPlaylists", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_share_1.VideoShareModel, {
         foreignKey: {
             name: 'videoId',
@@ -1232,9 +1210,9 @@ __decorate([
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoShares", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => account_video_rate_1.AccountVideoRateModel, {
         foreignKey: {
             name: 'videoId',
@@ -1242,9 +1220,9 @@ __decorate([
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "AccountVideoRates", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_comment_1.VideoCommentModel, {
         foreignKey: {
             name: 'videoId',
@@ -1253,19 +1231,19 @@ __decorate([
         onDelete: 'cascade',
         hooks: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoComments", void 0);
-__decorate([
-    sequelize_typescript_1.HasMany(() => video_views_1.VideoViewModel, {
+tslib_1.__decorate([
+    sequelize_typescript_1.HasMany(() => video_view_1.VideoViewModel, {
         foreignKey: {
             name: 'videoId',
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoViews", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => user_video_history_1.UserVideoHistoryModel, {
         foreignKey: {
             name: 'videoId',
@@ -1273,9 +1251,9 @@ __decorate([
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "UserVideoHistories", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasOne(() => schedule_video_update_1.ScheduleVideoUpdateModel, {
         foreignKey: {
             name: 'videoId',
@@ -1283,9 +1261,9 @@ __decorate([
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", schedule_video_update_1.ScheduleVideoUpdateModel)
+    tslib_1.__metadata("design:type", schedule_video_update_1.ScheduleVideoUpdateModel)
 ], VideoModel.prototype, "ScheduleVideoUpdate", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasOne(() => video_blacklist_1.VideoBlacklistModel, {
         foreignKey: {
             name: 'videoId',
@@ -1293,9 +1271,9 @@ __decorate([
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_blacklist_1.VideoBlacklistModel)
+    tslib_1.__metadata("design:type", video_blacklist_1.VideoBlacklistModel)
 ], VideoModel.prototype, "VideoBlacklist", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasOne(() => video_import_1.VideoImportModel, {
         foreignKey: {
             name: 'videoId',
@@ -1303,9 +1281,9 @@ __decorate([
         },
         onDelete: 'set null'
     }),
-    __metadata("design:type", video_import_1.VideoImportModel)
+    tslib_1.__metadata("design:type", video_import_1.VideoImportModel)
 ], VideoModel.prototype, "VideoImport", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.HasMany(() => video_caption_1.VideoCaptionModel, {
         foreignKey: {
             name: 'videoId',
@@ -1315,33 +1293,33 @@ __decorate([
         hooks: true,
         ['separate']: true
     }),
-    __metadata("design:type", Array)
+    tslib_1.__metadata("design:type", Array)
 ], VideoModel.prototype, "VideoCaptions", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [Object, Object]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], VideoModel, "sendDelete", null);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [VideoModel]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [VideoModel]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], VideoModel, "removeFiles", null);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [VideoModel]),
-    __metadata("design:returntype", void 0)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [VideoModel]),
+    tslib_1.__metadata("design:returntype", void 0)
 ], VideoModel, "invalidateCache", null);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [VideoModel, Object]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [VideoModel, Object]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], VideoModel, "saveEssentialDataToAbuses", null);
-VideoModel = VideoModel_1 = __decorate([
+VideoModel = VideoModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_IMMUTABLE_ATTRIBUTES]: {
             attributes: ['id', 'url', 'uuid', 'remote']
@@ -1352,7 +1330,8 @@ VideoModel = VideoModel_1 = __decorate([
                     {
                         model: video_channel_1.VideoChannelModel.scope({
                             method: [
-                                video_channel_1.ScopeNames.SUMMARY, {
+                                video_channel_1.ScopeNames.SUMMARY,
+                                {
                                     withAccount: true,
                                     withAccountBlockerIds: options.withAccountBlockerIds
                                 }

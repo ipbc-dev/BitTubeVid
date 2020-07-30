@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const path_1 = require("path");
@@ -24,7 +16,7 @@ describe('Test multiple servers', function () {
     let videoUUID = '';
     let videoChannelId;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             yield extra_utils_1.setAccessTokensToServers(servers);
@@ -44,7 +36,7 @@ describe('Test multiple servers', function () {
         });
     });
     it('Should not have videos for all servers', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (const server of servers) {
                 const res = yield extra_utils_1.getVideosList(server.url);
                 const videos = res.body.data;
@@ -55,7 +47,7 @@ describe('Test multiple servers', function () {
     });
     describe('Should upload the video and propagate on each server', function () {
         it('Should upload the video on server 1 and propagate on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(25000);
                 const videoAttributes = {
                     name: 'my super name for server 1',
@@ -120,7 +112,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should upload the video on server 2 and propagate on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(50000);
                 const user = {
                     username: 'user1',
@@ -201,7 +193,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should upload two videos on server 3 and propagate on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(45000);
                 const videoAttributes1 = {
                     name: 'my super name for server 3',
@@ -316,7 +308,7 @@ describe('Test multiple servers', function () {
     });
     describe('It should list local videos', function () {
         it('Should list only local videos on server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const { body } = yield extra_utils_1.getLocalVideos(servers[0].url);
                 expect(body.total).to.equal(1);
                 expect(body.data).to.be.an('array');
@@ -325,7 +317,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should list only local videos on server 2', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const { body } = yield extra_utils_1.getLocalVideos(servers[1].url);
                 expect(body.total).to.equal(1);
                 expect(body.data).to.be.an('array');
@@ -334,7 +326,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should list only local videos on server 3', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const { body } = yield extra_utils_1.getLocalVideos(servers[2].url);
                 expect(body.total).to.equal(2);
                 expect(body.data).to.be.an('array');
@@ -346,7 +338,7 @@ describe('Test multiple servers', function () {
     });
     describe('Should seed the uploaded video', function () {
         it('Should add the file 1 by asking server 3', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield extra_utils_1.getVideosList(servers[2].url);
                 const video = res.body.data[0];
@@ -361,7 +353,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should add the file 2 by asking server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield extra_utils_1.getVideosList(servers[0].url);
                 const video = res.body.data[1];
@@ -374,7 +366,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should add the file 3 by asking server 2', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield extra_utils_1.getVideosList(servers[1].url);
                 const video = res.body.data[2];
@@ -387,7 +379,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should add the file 3-2 by asking server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield extra_utils_1.getVideosList(servers[0].url);
                 const video = res.body.data[3];
@@ -400,7 +392,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should add the file 2 in 360p by asking server 1', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield extra_utils_1.getVideosList(servers[0].url);
                 const video = res.body.data.find(v => v.name === 'my super name for server 2');
@@ -421,7 +413,7 @@ describe('Test multiple servers', function () {
         let remoteVideosServer2 = [];
         let remoteVideosServer3 = [];
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const res1 = yield extra_utils_1.getVideosList(servers[0].url);
                 remoteVideosServer1 = res1.body.data.filter(video => video.isLocal === false).map(video => video.uuid);
                 const res2 = yield extra_utils_1.getVideosList(servers[1].url);
@@ -432,7 +424,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should view multiple videos on owned servers', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 yield extra_utils_1.viewVideo(servers[2].url, localVideosServer3[0]);
                 yield extra_utils_1.wait(1000);
@@ -455,7 +447,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should view multiple videos on each servers', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(45000);
                 const tasks = [];
                 tasks.push(extra_utils_1.viewVideo(servers[0].url, remoteVideosServer1[0]));
@@ -488,7 +480,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should like and dislikes videos on different services', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield extra_utils_1.rateVideo(servers[0].url, servers[0].accessToken, remoteVideosServer1[0], 'like');
                 yield extra_utils_1.wait(500);
@@ -521,7 +513,7 @@ describe('Test multiple servers', function () {
     });
     describe('Should manipulate these videos', function () {
         it('Should update the video 3 by asking server 3', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const attributes = {
                     name: 'my super video updated',
@@ -541,7 +533,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have the video 3 updated on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideosList(server.url);
@@ -589,7 +581,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should remove the videos 3 and 3-2 by asking server 3', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.removeVideo(servers[2].url, servers[2].accessToken, toRemove[0].id);
                 yield extra_utils_1.removeVideo(servers[2].url, servers[2].accessToken, toRemove[1].id);
@@ -597,7 +589,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should not have files of videos 3 and 3-2 on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     yield extra_utils_1.checkVideoFilesWereRemoved(toRemove[0].uuid, server.internalServerNumber);
                     yield extra_utils_1.checkVideoFilesWereRemoved(toRemove[1].uuid, server.internalServerNumber);
@@ -605,7 +597,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have videos 1 and 3 on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideosList(server.url);
                     const videos = res.body.data;
@@ -621,7 +613,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should get the same video by UUID on each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 let baseVideo = null;
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideo(server.url, videoUUID);
@@ -645,7 +637,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should get the preview from each server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideo(server.url, videoUUID);
                     const video = res.body;
@@ -657,7 +649,7 @@ describe('Test multiple servers', function () {
     describe('Should comment these videos', function () {
         let childOfFirstChild;
         it('Should add comment (threads and replies)', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(25000);
                 {
                     const text = 'my super first comment';
@@ -669,15 +661,13 @@ describe('Test multiple servers', function () {
                 }
                 yield jobs_1.waitJobs(servers);
                 {
-                    const res = yield video_comments_1.getVideoCommentThreads(servers[1].url, videoUUID, 0, 5);
-                    const threadId = res.body.data.find(c => c.text === 'my super first comment').id;
+                    const threadId = yield video_comments_1.findCommentId(servers[1].url, videoUUID, 'my super first comment');
                     const text = 'my super answer to thread 1';
                     yield video_comments_1.addVideoCommentReply(servers[1].url, servers[1].accessToken, videoUUID, threadId, text);
                 }
                 yield jobs_1.waitJobs(servers);
                 {
-                    const res1 = yield video_comments_1.getVideoCommentThreads(servers[2].url, videoUUID, 0, 5);
-                    const threadId = res1.body.data.find(c => c.text === 'my super first comment').id;
+                    const threadId = yield video_comments_1.findCommentId(servers[2].url, videoUUID, 'my super first comment');
                     const res2 = yield video_comments_1.getVideoThreadComments(servers[2].url, videoUUID, threadId);
                     const childCommentId = res2.body.children[0].comment.id;
                     const text3 = 'my second answer to thread 1';
@@ -689,7 +679,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have these threads', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
                     expect(res.body.total).to.equal(2);
@@ -719,7 +709,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have these comments', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res1 = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
                     const threadId = res1.body.data.find(c => c.text === 'my super first comment').id;
@@ -748,14 +738,14 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should delete a reply', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield video_comments_1.deleteVideoComment(servers[2].url, servers[2].accessToken, videoUUID, childOfFirstChild.comment.id);
                 yield jobs_1.waitJobs(servers);
             });
         });
         it('Should have this comment marked as deleted', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res1 = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
                     const threadId = res1.body.data.find(c => c.text === 'my super first comment').id;
@@ -776,7 +766,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should delete the thread comments', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const res = yield video_comments_1.getVideoCommentThreads(servers[0].url, videoUUID, 0, 5);
                 const threadId = res.body.data.find(c => c.text === 'my super first comment').id;
@@ -785,7 +775,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have the threads marked as deleted on other servers too', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
                     expect(res.body.total).to.equal(2);
@@ -818,7 +808,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should delete a remote thread by the origin server', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(5000);
                 const res = yield video_comments_1.getVideoCommentThreads(servers[0].url, videoUUID, 0, 5);
                 const threadId = res.body.data.find(c => c.text === 'my super second comment').id;
@@ -827,7 +817,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should have the threads marked as deleted on other servers too', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     const res = yield video_comments_1.getVideoCommentThreads(server.url, videoUUID, 0, 5);
                     expect(res.body.total).to.equal(2);
@@ -854,7 +844,7 @@ describe('Test multiple servers', function () {
             });
         });
         it('Should disable comments and download', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 const attributes = {
                     commentsEnabled: false,
@@ -874,7 +864,7 @@ describe('Test multiple servers', function () {
     });
     describe('With minimum parameters', function () {
         it('Should upload and propagate the video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
                 const path = '/api/v1/videos/upload';
                 const req = request(servers[1].url)
@@ -943,7 +933,7 @@ describe('Test multiple servers', function () {
     });
     describe('TMP directory', function () {
         it('Should have an empty tmp directory', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     yield extra_utils_1.checkTmpIsEmpty(server);
                 }
@@ -951,7 +941,7 @@ describe('Test multiple servers', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

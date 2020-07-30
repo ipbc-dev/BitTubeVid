@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.unblacklistVideo = exports.blacklistVideo = exports.autoBlacklistVideoIfNeeded = void 0;
+const tslib_1 = require("tslib");
 const database_1 = require("@server/initializers/database");
 const models_1 = require("../../shared/models");
 const user_flag_model_1 = require("../../shared/models/users/user-flag.model");
@@ -20,7 +13,7 @@ const videos_1 = require("./activitypub/videos");
 const notifier_1 = require("./notifier");
 const hooks_1 = require("./plugins/hooks");
 function autoBlacklistVideoIfNeeded(parameters) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { video, user, isRemote, isNew, notify = true, transaction } = parameters;
         const doAutoBlacklist = yield hooks_1.Hooks.wrapFun(autoBlacklistNeeded, { video, user, isRemote, isNew }, 'filter:video.auto-blacklist.result');
         if (!doAutoBlacklist)
@@ -48,7 +41,7 @@ function autoBlacklistVideoIfNeeded(parameters) {
 }
 exports.autoBlacklistVideoIfNeeded = autoBlacklistVideoIfNeeded;
 function blacklistVideo(videoInstance, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const blacklist = yield video_blacklist_1.VideoBlacklistModel.create({
             videoId: videoInstance.id,
             unfederated: options.unfederate === true,
@@ -64,8 +57,8 @@ function blacklistVideo(videoInstance, options) {
 }
 exports.blacklistVideo = blacklistVideo;
 function unblacklistVideo(videoBlacklist, video) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const videoBlacklistType = yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const videoBlacklistType = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const unfederated = videoBlacklist.unfederated;
             const videoBlacklistType = videoBlacklist.type;
             yield videoBlacklist.destroy({ transaction: t });
@@ -92,7 +85,7 @@ function autoBlacklistNeeded(parameters) {
         return false;
     if (isRemote || isNew === false)
         return false;
-    if (user.hasRight(models_1.UserRight.MANAGE_VIDEO_BLACKLIST) || user.hasAdminFlag(user_flag_model_1.UserAdminFlag.BY_PASS_VIDEO_AUTO_BLACKLIST))
+    if (user.hasRight(models_1.UserRight.MANAGE_VIDEO_BLACKLIST) || user.hasAdminFlag(user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST))
         return false;
     return true;
 }

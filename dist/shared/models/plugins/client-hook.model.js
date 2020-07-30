@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.clientHookObject = exports.clientActionHookObject = exports.clientFilterHookObject = void 0;
 exports.clientFilterHookObject = {
     'filter:api.trending-videos.videos.list.params': true,
     'filter:api.trending-videos.videos.list.result': true,

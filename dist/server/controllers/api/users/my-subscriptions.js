@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.mySubscriptionsRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 require("multer");
 const utils_1 = require("../../../helpers/utils");
@@ -29,7 +22,7 @@ mySubscriptionsRouter.post('/me/subscriptions', middlewares_1.authenticate, midd
 mySubscriptionsRouter.get('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, getUserSubscription);
 mySubscriptionsRouter.delete('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, middlewares_1.asyncRetryTransactionMiddleware(deleteUserSubscription));
 function areSubscriptionsExist(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const uris = req.query.uris;
         const user = res.locals.oauth.token.User;
         const handles = uris.map(u => {
@@ -69,16 +62,16 @@ function getUserSubscription(req, res) {
     return res.json(subscription.ActorFollowing.VideoChannel.toFormattedJSON());
 }
 function deleteUserSubscription(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const subscription = res.locals.subscription;
-        yield database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             return subscription.destroy({ transaction: t });
         }));
         return res.type('json').status(204).end();
     });
 }
 function getUserSubscriptions(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const actorId = user.Account.Actor.id;
         const resultList = yield actor_follow_1.ActorFollowModel.listSubscriptionsForApi(actorId, req.query.start, req.query.count, req.query.sort);
@@ -86,7 +79,7 @@ function getUserSubscriptions(req, res) {
     });
 }
 function getUserSubscriptionVideos(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const countVideos = express_utils_1.getCountVideos(req);
         const resultList = yield video_1.VideoModel.listForApi({

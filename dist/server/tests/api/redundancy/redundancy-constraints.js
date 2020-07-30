@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -20,7 +12,7 @@ describe('Test redundancy constraints', function () {
     let localServer;
     let servers;
     function getTotalRedundanciesLocalServer() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield redundancy_1.listVideoRedundancies({
                 url: localServer.url,
                 accessToken: localServer.accessToken,
@@ -30,7 +22,7 @@ describe('Test redundancy constraints', function () {
         });
     }
     function getTotalRedundanciesRemoteServer() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield redundancy_1.listVideoRedundancies({
                 url: remoteServer.url,
                 accessToken: remoteServer.accessToken,
@@ -40,7 +32,7 @@ describe('Test redundancy constraints', function () {
         });
     }
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             {
                 const config = {
@@ -81,7 +73,7 @@ describe('Test redundancy constraints', function () {
         });
     });
     it('Should have redundancy on server 1 but not on server 2 with a nobody filter', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             yield jobs_1.waitJobs(servers);
             yield extra_utils_1.waitUntilLog(remoteServer, 'Duplicated ', 5);
@@ -97,7 +89,7 @@ describe('Test redundancy constraints', function () {
         });
     });
     it('Should have redundancy on server 1 and on server 2 with an anybody filter', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const config = {
                 remote_redundancy: {
@@ -123,7 +115,7 @@ describe('Test redundancy constraints', function () {
         });
     });
     it('Should have redundancy on server 1 but not on server 2 with a followings filter', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const config = {
                 remote_redundancy: {
@@ -149,7 +141,7 @@ describe('Test redundancy constraints', function () {
         });
     });
     it('Should have redundancy on server 1 and on server 2 with followings filter now server 2 follows server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             yield extra_utils_1.follow(localServer.url, [remoteServer.url], localServer.accessToken);
             yield jobs_1.waitJobs(servers);
@@ -168,7 +160,7 @@ describe('Test redundancy constraints', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

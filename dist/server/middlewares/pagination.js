@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.setDefaultPagination = void 0;
 const constants_1 = require("../initializers/constants");
 function setDefaultPagination(req, res, next) {
     if (!req.query.start)

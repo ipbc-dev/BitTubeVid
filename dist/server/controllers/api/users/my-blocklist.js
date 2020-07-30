@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.myBlocklistRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 require("multer");
 const utils_1 = require("../../../helpers/utils");
@@ -26,7 +19,7 @@ myBlocklistRouter.get('/me/blocklist/servers', middlewares_1.authenticate, middl
 myBlocklistRouter.post('/me/blocklist/servers', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.blockServerValidator), middlewares_1.asyncRetryTransactionMiddleware(blockServer));
 myBlocklistRouter.delete('/me/blocklist/servers/:host', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.unblockServerByAccountValidator), middlewares_1.asyncRetryTransactionMiddleware(unblockServer));
 function listBlockedAccounts(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const resultList = yield account_blocklist_1.AccountBlocklistModel.listForApi({
             start: req.query.start,
@@ -39,7 +32,7 @@ function listBlockedAccounts(req, res) {
     });
 }
 function blockAccount(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const accountToBlock = res.locals.account;
         yield blocklist_1.addAccountInBlocklist(user.Account.id, accountToBlock.id);
@@ -47,14 +40,14 @@ function blockAccount(req, res) {
     });
 }
 function unblockAccount(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const accountBlock = res.locals.accountBlock;
         yield blocklist_1.removeAccountFromBlocklist(accountBlock);
         return res.status(204).end();
     });
 }
 function listBlockedServers(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const resultList = yield server_blocklist_1.ServerBlocklistModel.listForApi({
             start: req.query.start,
@@ -67,7 +60,7 @@ function listBlockedServers(req, res) {
     });
 }
 function blockServer(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const serverToBlock = res.locals.server;
         yield blocklist_1.addServerInBlocklist(user.Account.id, serverToBlock.id);
@@ -75,7 +68,7 @@ function blockServer(req, res) {
     });
 }
 function unblockServer(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverBlock = res.locals.serverBlock;
         yield blocklist_1.removeServerFromBlocklist(serverBlock);
         return res.status(204).end();

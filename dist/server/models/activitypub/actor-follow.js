@@ -1,24 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var ActorFollowModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ActorFollowModel = void 0;
+const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const logger_1 = require("../../helpers/logger");
@@ -63,7 +47,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         return ActorFollowModel_1.destroy(query);
     }
     static removeBadActorFollows() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actorFollows = yield ActorFollowModel_1.listBadActorFollows();
             const actorFollowsRemovePromises = actorFollows.map(actorFollow => actorFollow.destroy());
             yield Promise.all(actorFollowsRemovePromises);
@@ -371,7 +355,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         });
     }
     static keepUnfollowedInstance(hosts) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const followerId = (yield application_1.getServerActor()).id;
             const query = {
                 attributes: ['id'],
@@ -417,7 +401,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         return ActorFollowModel_1.createListAcceptedFollowForApiQuery('following', actorIds, t, start, count);
     }
     static getStats() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverActor = yield application_1.getServerActor();
             const totalInstanceFollowing = yield ActorFollowModel_1.count({
                 where: {
@@ -449,7 +433,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         return ActorFollowModel_1.sequelize.query(query, options);
     }
     static updateScoreByFollowingServers(serverIds, value, t) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (serverIds.length === 0)
                 return;
             const me = yield application_1.getServerActor();
@@ -469,7 +453,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         });
     }
     static createListAcceptedFollowForApiQuery(type, actorIds, t, start, count, columnUrl = 'url', distinct = false) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let firstJoin;
             let secondJoin;
             if (type === 'followers') {
@@ -536,33 +520,33 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ENUM(...lodash_1.values(constants_1.FOLLOW_STATES))),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], ActorFollowModel.prototype, "state", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(constants_1.ACTOR_FOLLOW_SCORE.BASE),
     sequelize_typescript_1.IsInt,
     sequelize_typescript_1.Max(constants_1.ACTOR_FOLLOW_SCORE.MAX),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ActorFollowModel.prototype, "score", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ActorFollowModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], ActorFollowModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_1.ActorModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ActorFollowModel.prototype, "actorId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_1.ActorModel, {
         foreignKey: {
             name: 'actorId',
@@ -571,14 +555,14 @@ __decorate([
         as: 'ActorFollower',
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", actor_1.ActorModel)
+    tslib_1.__metadata("design:type", actor_1.ActorModel)
 ], ActorFollowModel.prototype, "ActorFollower", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_1.ActorModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], ActorFollowModel.prototype, "targetActorId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_1.ActorModel, {
         foreignKey: {
             name: 'targetActorId',
@@ -587,22 +571,22 @@ __decorate([
         as: 'ActorFollowing',
         onDelete: 'CASCADE'
     }),
-    __metadata("design:type", actor_1.ActorModel)
+    tslib_1.__metadata("design:type", actor_1.ActorModel)
 ], ActorFollowModel.prototype, "ActorFollowing", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AfterCreate,
     sequelize_typescript_1.AfterUpdate,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ActorFollowModel, Object]),
-    __metadata("design:returntype", void 0)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [ActorFollowModel, Object]),
+    tslib_1.__metadata("design:returntype", void 0)
 ], ActorFollowModel, "incrementFollowerAndFollowingCount", null);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AfterDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [ActorFollowModel, Object]),
-    __metadata("design:returntype", void 0)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [ActorFollowModel, Object]),
+    tslib_1.__metadata("design:returntype", void 0)
 ], ActorFollowModel, "decrementFollowerAndFollowingCount", null);
-ActorFollowModel = ActorFollowModel_1 = __decorate([
+ActorFollowModel = ActorFollowModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'actorFollow',
         indexes: [

@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -19,7 +11,7 @@ describe('Test videos search', function () {
     let startDate;
     let videoUUID;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
@@ -116,14 +108,14 @@ describe('Test videos search', function () {
         });
     });
     it('Should make a simple search and not have results', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.searchVideo(server.url, 'abc');
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.have.lengthOf(0);
         });
     });
     it('Should make a simple search and have results', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.searchVideo(server.url, '4444 5555 duplicate');
             expect(res.body.total).to.equal(2);
             const videos = res.body.data;
@@ -133,7 +125,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should make a search on tags too, and have results', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: 'aaaa',
                 categoryOneOf: [1]
@@ -147,7 +139,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should filter on tags without a search', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 tagsAllOf: ['bbbb']
             };
@@ -160,7 +152,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should filter on category without a search', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 categoryOneOf: [3]
             };
@@ -172,7 +164,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by tags (one of)', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '9999',
                 categoryOneOf: [1],
@@ -185,7 +177,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by tags (all of)', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '9999',
                 categoryOneOf: [1],
@@ -200,7 +192,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by category', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '6666',
                 categoryOneOf: [3]
@@ -213,7 +205,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by licence', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '4444 5555',
                 licenceOneOf: [2]
@@ -227,7 +219,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by languages', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'en']
@@ -252,7 +244,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by start date', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 startDate
@@ -267,7 +259,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should make an advanced search', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'fr'],
@@ -285,7 +277,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should make an advanced search and sort results', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'fr'],
@@ -304,7 +296,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should make an advanced search and only show the first result', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'fr'],
@@ -322,7 +314,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should make an advanced search and only show the last result', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'fr'],
@@ -340,7 +332,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search on originally published date', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const baseQuery = {
                 search: '1111 2222 3333',
                 languageOneOf: ['pl', 'fr'],
@@ -390,7 +382,7 @@ describe('Test videos search', function () {
         });
     });
     it('Should search by UUID', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const search = videoUUID;
             const res = yield extra_utils_1.advancedVideosSearch(server.url, { search });
             expect(res.body.total).to.equal(1);
@@ -398,7 +390,7 @@ describe('Test videos search', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests([server]);
         });
     });

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.setDefaultVideoChannel = exports.getVideoChannel = exports.deleteVideoChannel = exports.updateVideoChannel = exports.addVideoChannel = exports.getAccountVideoChannelsList = exports.getVideoChannelsList = exports.updateVideoChannelAvatar = void 0;
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
 const users_1 = require("../users/users");

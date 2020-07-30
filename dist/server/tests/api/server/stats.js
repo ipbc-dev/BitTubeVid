@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -24,7 +16,7 @@ describe('Test stats (excluding redundancy)', function () {
         password: 'super_password'
     };
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             yield index_1.setAccessTokensToServers(servers);
@@ -40,7 +32,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     it('Should have the correct stats on instance 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield stats_1.getStats(servers[0].url);
             const data = res.body;
             expect(data.totalLocalVideoComments).to.equal(1);
@@ -55,7 +47,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     it('Should have the correct stats on instance 2', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield stats_1.getStats(servers[1].url);
             const data = res.body;
             expect(data.totalLocalVideoComments).to.equal(0);
@@ -70,7 +62,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     it('Should have the correct stats on instance 3', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield stats_1.getStats(servers[2].url);
             const data = res.body;
             expect(data.totalLocalVideoComments).to.equal(0);
@@ -84,7 +76,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     it('Should have the correct total videos stats after an unfollow', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.unfollow(servers[2].url, servers[2].accessToken, servers[0]);
             yield jobs_1.waitJobs(servers);
@@ -94,7 +86,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     it('Should have the correct active users stats', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const server = servers[0];
             {
                 const res = yield stats_1.getStats(server.url);
@@ -114,7 +106,7 @@ describe('Test stats (excluding redundancy)', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

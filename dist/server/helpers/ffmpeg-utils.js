@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.canDoQuickTranscode = exports.getVideoFileBitrate = exports.audio = exports.computeResolutionsToTranscode = exports.getVideoFileFPS = exports.transcode = exports.generateImageFromVideoFile = exports.getDurationFromVideoFile = exports.getMetadataFromFile = exports.getVideoFileResolution = exports.getVideoStreamSize = exports.convertWebPToJPG = exports.getAudioStreamCodec = exports.getVideoStreamCodec = void 0;
+const tslib_1 = require("tslib");
 const ffmpeg = require("fluent-ffmpeg");
 const path_1 = require("path");
 const videos_1 = require("../../shared/models/videos");
@@ -86,7 +79,7 @@ function computeResolutionsToTranscode(videoFileHeight) {
 }
 exports.computeResolutionsToTranscode = computeResolutionsToTranscode;
 function getVideoStreamSize(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoStream = yield getVideoStreamFromFile(path);
         return videoStream === null
             ? { width: 0, height: 0 }
@@ -95,7 +88,7 @@ function getVideoStreamSize(path) {
 }
 exports.getVideoStreamSize = getVideoStreamSize;
 function getVideoStreamCodec(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoStream = yield getVideoStreamFromFile(path);
         if (!videoStream)
             return '';
@@ -118,7 +111,7 @@ function getVideoStreamCodec(path) {
 }
 exports.getVideoStreamCodec = getVideoStreamCodec;
 function getAudioStreamCodec(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { audioStream } = yield audio.get(path);
         if (!audioStream)
             return '';
@@ -131,7 +124,7 @@ function getAudioStreamCodec(path) {
 }
 exports.getAudioStreamCodec = getAudioStreamCodec;
 function getVideoFileResolution(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const size = yield getVideoStreamSize(path);
         return {
             videoFileResolution: Math.min(size.height, size.width),
@@ -141,7 +134,7 @@ function getVideoFileResolution(path) {
 }
 exports.getVideoFileResolution = getVideoFileResolution;
 function getVideoFileFPS(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoStream = yield getVideoStreamFromFile(path);
         if (videoStream === null)
             return 0;
@@ -161,7 +154,7 @@ function getVideoFileFPS(path) {
 }
 exports.getVideoFileFPS = getVideoFileFPS;
 function getMetadataFromFile(path, cb = metadata => metadata) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         return new Promise((res, rej) => {
             ffmpeg.ffprobe(path, (err, metadata) => {
                 if (err)
@@ -173,7 +166,7 @@ function getMetadataFromFile(path, cb = metadata => metadata) {
 }
 exports.getMetadataFromFile = getMetadataFromFile;
 function getVideoFileBitrate(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         return getMetadataFromFile(path, metadata => metadata.format.bit_rate);
     });
 }
@@ -186,7 +179,7 @@ function getVideoStreamFromFile(path) {
     return getMetadataFromFile(path, metadata => metadata.streams.find(s => s.codec_type === 'video') || null);
 }
 function generateImageFromVideoFile(fromPath, folder, imageName, size) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const pendingImageName = 'pending-' + imageName;
         const options = {
             filename: pendingImageName,
@@ -217,7 +210,7 @@ function generateImageFromVideoFile(fromPath, folder, imageName, size) {
 }
 exports.generateImageFromVideoFile = generateImageFromVideoFile;
 function transcode(options) {
-    return new Promise((res, rej) => __awaiter(this, void 0, void 0, function* () {
+    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
             let command = ffmpeg(options.inputPath, { niceness: constants_1.FFMPEG_NICE.TRANSCODING })
                 .output(options.outputPath);
@@ -258,7 +251,7 @@ function transcode(options) {
 }
 exports.transcode = transcode;
 function canDoQuickTranscode(path) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoStream = yield getVideoStreamFromFile(path);
         const parsedAudio = yield audio.get(path);
         const fps = yield getVideoFileFPS(path);
@@ -289,8 +282,25 @@ function getClosestFramerateStandard(fps, type) {
     return constants_1.VIDEO_TRANSCODING_FPS[type].slice(0)
         .sort((a, b) => fps % a - fps % b)[0];
 }
+function convertWebPToJPG(path, destination) {
+    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+        try {
+            const command = ffmpeg(path).output(destination);
+            command.on('error', (err, stdout, stderr) => {
+                logger_1.logger.error('Error in ffmpeg webp convert process.', { stdout, stderr });
+                return rej(err);
+            })
+                .on('end', () => res())
+                .run();
+        }
+        catch (err) {
+            return rej(err);
+        }
+    }));
+}
+exports.convertWebPToJPG = convertWebPToJPG;
 function buildx264Command(command, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let fps = yield getVideoFileFPS(options.inputPath);
         if (options.resolution !== undefined &&
             options.resolution < constants_1.VIDEO_TRANSCODING_FPS.KEEP_ORIGIN_FPS_RESOLUTION_MIN &&
@@ -313,7 +323,7 @@ function buildx264Command(command, options) {
     });
 }
 function buildAudioMergeCommand(command, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
@@ -334,7 +344,7 @@ function buildQuickTranscodeCommand(command) {
     return command;
 }
 function buildHLSCommand(command, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPath = getHLSVideoPath(options);
         if (options.copyCodecs)
             command = presetCopy(command);
@@ -356,7 +366,7 @@ function getHLSVideoPath(options) {
     return `${path_1.dirname(options.outputPath)}/${options.hlsPlaylist.videoFilename}`;
 }
 function fixHLSPlaylistIfNeeded(options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (options.type !== 'hls')
             return;
         const fileContent = yield fs_extra_1.readFile(options.outputPath);
@@ -368,7 +378,7 @@ function fixHLSPlaylistIfNeeded(options) {
     });
 }
 function presetH264VeryFast(command, input, resolution, fps) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let localCommand = yield presetH264(command, input, resolution, fps);
         if (!input.includes('.mp3') && !input.includes('.wav') && !input.includes('.flac')) {
             localCommand = localCommand.outputOption('-preset:v veryfast');
@@ -377,7 +387,7 @@ function presetH264VeryFast(command, input, resolution, fps) {
     });
 }
 function presetH264(command, input, resolution, fps) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let localCommand = command
             .format('mp4')
             .videoCodec('h264_vaapi')

@@ -1,24 +1,8 @@
 "use strict";
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var VideoRedundancyModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.VideoRedundancyModel = exports.ScopeNames = void 0;
+const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const actor_1 = require("../activitypub/actor");
 const utils_1 = require("../utils");
@@ -42,7 +26,7 @@ var ScopeNames;
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel extends sequelize_typescript_1.Model {
     static removeFile(instance) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!instance.isOwned())
                 return;
             if (instance.videoFileId) {
@@ -63,7 +47,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static loadLocalByFileId(videoFileId) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 where: {
@@ -75,7 +59,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static loadLocalByStreamingPlaylistId(videoStreamingPlaylistId) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 where: {
@@ -103,7 +87,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         return VideoRedundancyModel_1.findOne(query);
     }
     static isLocalByVideoUUIDExists(uuid) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 raw: true,
@@ -134,7 +118,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static getVideoSample(p) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const rows = yield p;
             if (rows.length === 0)
                 return undefined;
@@ -144,7 +128,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static findMostViewToDuplicate(randomizedFactor) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 attributes: ['id', 'views'],
                 limit: randomizedFactor,
@@ -161,7 +145,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static findTrendingToDuplicate(randomizedFactor) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 attributes: ['id', 'views'],
                 subQuery: false,
@@ -181,7 +165,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static findRecentlyAddedToDuplicate(randomizedFactor, minViews) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const query = {
                 attributes: ['id', 'publishedAt'],
                 limit: randomizedFactor,
@@ -201,7 +185,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static loadOldestLocalExpired(strategy, expiresAfterMs) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const expiredDate = new Date();
             expiredDate.setMilliseconds(expiredDate.getMilliseconds() - expiresAfterMs);
             const actor = yield application_1.getServerActor();
@@ -218,7 +202,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static getTotalDuplicated(strategy) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const redundancyInclude = {
                 attributes: [],
@@ -260,7 +244,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static listLocalExpired() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 where: {
@@ -274,7 +258,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static listRemoteExpired() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 where: {
@@ -291,7 +275,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         });
     }
     static listLocalOfServer(serverId) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const buildVideoInclude = () => ({
                 model: video_1.VideoModel,
@@ -420,7 +404,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         ]).then(([data, total]) => ({ total, data }));
     }
     static getStats(strategy) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const query = {
                 raw: true,
@@ -528,7 +512,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         };
     }
     static buildVideoFileForDuplication() {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
             const notIn = sequelize_1.literal('(' +
                 `SELECT "videoFileId" FROM "videoRedundancy" WHERE "actorId" = ${actor.id} AND "videoFileId" IS NOT NULL` +
@@ -570,85 +554,85 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         };
     }
 };
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoRedundancyModel.prototype, "createdAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.UpdatedAt,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoRedundancyModel.prototype, "updatedAt", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Date)
+    tslib_1.__metadata("design:type", Date)
 ], VideoRedundancyModel.prototype, "expiresOn", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoRedundancyFileUrl', value => utils_1.throwIfNotValid(value, misc_1.isUrlValid, 'fileUrl')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS_REDUNDANCY.URL.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoRedundancyModel.prototype, "fileUrl", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Is('VideoRedundancyUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEOS_REDUNDANCY.URL.max)),
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoRedundancyModel.prototype, "url", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column,
-    __metadata("design:type", String)
+    tslib_1.__metadata("design:type", String)
 ], VideoRedundancyModel.prototype, "strategy", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_file_1.VideoFileModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoRedundancyModel.prototype, "videoFileId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_file_1.VideoFileModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_file_1.VideoFileModel)
+    tslib_1.__metadata("design:type", video_file_1.VideoFileModel)
 ], VideoRedundancyModel.prototype, "VideoFile", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_streaming_playlist_1.VideoStreamingPlaylistModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoRedundancyModel.prototype, "videoStreamingPlaylistId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => video_streaming_playlist_1.VideoStreamingPlaylistModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", video_streaming_playlist_1.VideoStreamingPlaylistModel)
+    tslib_1.__metadata("design:type", video_streaming_playlist_1.VideoStreamingPlaylistModel)
 ], VideoRedundancyModel.prototype, "VideoStreamingPlaylist", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => actor_1.ActorModel),
     sequelize_typescript_1.Column,
-    __metadata("design:type", Number)
+    tslib_1.__metadata("design:type", Number)
 ], VideoRedundancyModel.prototype, "actorId", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BelongsTo(() => actor_1.ActorModel, {
         foreignKey: {
             allowNull: false
         },
         onDelete: 'cascade'
     }),
-    __metadata("design:type", actor_1.ActorModel)
+    tslib_1.__metadata("design:type", actor_1.ActorModel)
 ], VideoRedundancyModel.prototype, "Actor", void 0);
-__decorate([
+tslib_1.__decorate([
     sequelize_typescript_1.BeforeDestroy,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [VideoRedundancyModel]),
-    __metadata("design:returntype", Promise)
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [VideoRedundancyModel]),
+    tslib_1.__metadata("design:returntype", Promise)
 ], VideoRedundancyModel, "removeFile", null);
-VideoRedundancyModel = VideoRedundancyModel_1 = __decorate([
+VideoRedundancyModel = VideoRedundancyModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.WITH_VIDEO]: {
             include: [

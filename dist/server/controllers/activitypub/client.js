@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.activityPubClientRouter = void 0;
+const tslib_1 = require("tslib");
 const express = require("express");
 const cors = require("cors");
 const videos_1 = require("../../../shared/models/videos");
@@ -67,28 +60,28 @@ function accountController(req, res) {
     return utils_1.activityPubResponse(activitypub_1.activityPubContextify(account.toActivityPubObject()), res);
 }
 function accountFollowersController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const account = res.locals.account;
         const activityPubResult = yield actorFollowers(req, account.Actor);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
     });
 }
 function accountFollowingController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const account = res.locals.account;
         const activityPubResult = yield actorFollowing(req, account.Actor);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
     });
 }
 function accountPlaylistsController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const account = res.locals.account;
         const activityPubResult = yield actorPlaylists(req, { account });
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
     });
 }
 function videoChannelPlaylistsController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const channel = res.locals.videoChannel;
         const activityPubResult = yield actorPlaylists(req, { channel });
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
@@ -106,7 +99,7 @@ function getAccountVideoRateFactory(rateType) {
     };
 }
 function videoController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = yield video_1.VideoModel.loadForGetAPI({ id: res.locals.onlyVideoWithRights.id });
         if (video.url.startsWith(constants_1.WEBSERVER.URL) === false)
             return res.redirect(video.url);
@@ -122,7 +115,7 @@ function videoController(req, res) {
     });
 }
 function videoAnnounceController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const share = res.locals.videoShare;
         if (share.url.startsWith(constants_1.WEBSERVER.URL) === false)
             return res.redirect(share.url);
@@ -131,9 +124,9 @@ function videoAnnounceController(req, res) {
     });
 }
 function videoAnnouncesController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
-        const handler = (start, count) => __awaiter(this, void 0, void 0, function* () {
+        const handler = (start, count) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const result = yield video_share_1.VideoShareModel.listAndCountByVideoId(video.id, start, count);
             return {
                 total: result.count,
@@ -145,24 +138,24 @@ function videoAnnouncesController(req, res) {
     });
 }
 function videoLikesController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
         const json = yield videoRates(req, 'like', video, url_1.getVideoLikesActivityPubUrl(video));
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
 function videoDislikesController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
         const json = yield videoRates(req, 'dislike', video, url_1.getVideoDislikesActivityPubUrl(video));
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
 function videoCommentsController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
-        const handler = (start, count) => __awaiter(this, void 0, void 0, function* () {
-            const result = yield video_comment_1.VideoCommentModel.listAndCountByVideoId(video.id, start, count);
+        const handler = (start, count) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const result = yield video_comment_1.VideoCommentModel.listAndCountByVideoForAP(video, start, count);
             return {
                 total: result.count,
                 data: result.rows.map(r => r.url)
@@ -177,21 +170,21 @@ function videoChannelController(req, res) {
     return utils_1.activityPubResponse(activitypub_1.activityPubContextify(videoChannel.toActivityPubObject()), res);
 }
 function videoChannelFollowersController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoChannel = res.locals.videoChannel;
         const activityPubResult = yield actorFollowers(req, videoChannel.Actor);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
     });
 }
 function videoChannelFollowingController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoChannel = res.locals.videoChannel;
         const activityPubResult = yield actorFollowing(req, videoChannel.Actor);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activityPubResult), res);
     });
 }
 function videoCommentController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoComment = res.locals.videoCommentFull;
         if (videoComment.url.startsWith(constants_1.WEBSERVER.URL) === false)
             return res.redirect(videoComment.url);
@@ -210,7 +203,7 @@ function videoCommentController(req, res) {
     });
 }
 function videoRedundancyController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoRedundancy = res.locals.videoRedundancy;
         if (videoRedundancy.url.startsWith(constants_1.WEBSERVER.URL) === false)
             return res.redirect(videoRedundancy.url);
@@ -225,7 +218,7 @@ function videoRedundancyController(req, res) {
     });
 }
 function videoPlaylistController(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const playlist = res.locals.videoPlaylistFull;
         playlist.OwnerAccount = yield account_1.AccountModel.load(playlist.ownerAccountId);
         const json = yield playlist.toActivityPubObject(req.query.page, null);
@@ -240,7 +233,7 @@ function videoPlaylistElementController(req, res) {
     return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
 }
 function actorFollowing(req, actor) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const handler = (start, count) => {
             return actor_follow_1.ActorFollowModel.listAcceptedFollowingUrlsForApi([actor.id], undefined, start, count);
         };
@@ -248,7 +241,7 @@ function actorFollowing(req, actor) {
     });
 }
 function actorFollowers(req, actor) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const handler = (start, count) => {
             return actor_follow_1.ActorFollowModel.listAcceptedFollowerUrlsForAP([actor.id], undefined, start, count);
         };
@@ -256,7 +249,7 @@ function actorFollowers(req, actor) {
     });
 }
 function actorPlaylists(req, options) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const handler = (start, count) => {
             return video_playlist_1.VideoPlaylistModel.listPublicUrlsOfForAP(options, start, count);
         };
@@ -264,7 +257,7 @@ function actorPlaylists(req, options) {
     });
 }
 function videoRates(req, rateType, video, url) {
-    const handler = (start, count) => __awaiter(this, void 0, void 0, function* () {
+    const handler = (start, count) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         const result = yield account_video_rate_1.AccountVideoRateModel.listAndCountAccountUrlsByVideoId(rateType, video.id, start, count);
         return {
             total: result.count,

@@ -1,14 +1,7 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.migrate = void 0;
+const tslib_1 = require("tslib");
 const path = require("path");
 const logger_1 = require("../helpers/logger");
 const constants_1 = require("./constants");
@@ -17,7 +10,7 @@ const fs_extra_1 = require("fs-extra");
 const sequelize_1 = require("sequelize");
 function migrate() {
     var _a;
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const tables = yield database_1.sequelizeTypescript.getQueryInterface().showAllTables();
         if (tables.length === 0)
             return;
@@ -52,7 +45,7 @@ function migrate() {
 }
 exports.migrate = migrate;
 function getMigrationScripts() {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const files = yield fs_extra_1.readdir(path.join(__dirname, 'migrations'));
         const filesToMigrate = [];
         files
@@ -68,14 +61,14 @@ function getMigrationScripts() {
     });
 }
 function executeMigration(actualVersion, entity) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const versionScript = parseInt(entity.version, 10);
         if (versionScript <= actualVersion)
             return undefined;
         const migrationScriptName = entity.script;
         logger_1.logger.info('Executing %s migration script.', migrationScriptName);
         const migrationScript = require(path.join(__dirname, 'migrations', migrationScriptName));
-        return database_1.sequelizeTypescript.transaction((t) => __awaiter(this, void 0, void 0, function* () {
+        return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const options = {
                 transaction: t,
                 queryInterface: database_1.sequelizeTypescript.getQueryInterface(),

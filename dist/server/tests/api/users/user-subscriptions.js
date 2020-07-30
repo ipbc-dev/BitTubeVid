@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -22,7 +14,7 @@ describe('Test users subscriptions', function () {
     const users = [];
     let video3UUID;
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(3);
             yield login_1.setAccessTokensToServers(servers);
@@ -43,13 +35,13 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should display videos of server 2 on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(servers[0].url);
             expect(res.body.total).to.equal(4);
         });
     });
     it('User of server 1 should follow user of server 3 and root of server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield user_subscriptions_1.addUserSubscription(servers[0].url, users[0].accessToken, 'user3_channel@localhost:' + servers[2].port);
             yield user_subscriptions_1.addUserSubscription(servers[0].url, users[0].accessToken, 'root_channel@localhost:' + servers[0].port);
@@ -60,7 +52,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should not display videos of server 3 on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(servers[0].url);
             expect(res.body.total).to.equal(4);
             for (const video of res.body.data) {
@@ -71,7 +63,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should list subscriptions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield user_subscriptions_1.listUserSubscriptions(servers[0].url, servers[0].accessToken);
                 expect(res.body.total).to.equal(0);
@@ -90,7 +82,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should get subscription', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield user_subscriptions_1.getUserSubscription(servers[0].url, users[0].accessToken, 'user3_channel@localhost:' + servers[2].port);
                 const videoChannel = res.body;
@@ -112,7 +104,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should return the existing subscriptions', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const uris = [
                 'user3_channel@localhost:' + servers[2].port,
                 'root2_channel@localhost:' + servers[0].port,
@@ -128,7 +120,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should list subscription videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, servers[0].accessToken);
                 expect(res.body.total).to.equal(0);
@@ -148,7 +140,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should upload a video by root on server 1 and see it in the subscription videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             const videoName = 'video server 1 added after follow';
             yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: videoName });
@@ -182,7 +174,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should have server 1 follow server 3 and display server 3 videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.follow(servers[0].url, [servers[2].url], servers[0].accessToken);
             yield jobs_1.waitJobs(servers);
@@ -196,7 +188,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should remove follow server 1 -> server 3 and hide server 3 videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield extra_utils_1.unfollow(servers[0].url, servers[0].accessToken, servers[2]);
             yield jobs_1.waitJobs(servers);
@@ -210,7 +202,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should still list subscription videos', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, servers[0].accessToken);
                 expect(res.body.total).to.equal(0);
@@ -231,7 +223,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should update a video of server 3 and see the updated video on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield extra_utils_1.updateVideo(servers[2].url, users[2].accessToken, video3UUID, { name: 'video server 3 added after follow updated' });
             yield jobs_1.waitJobs(servers);
@@ -241,14 +233,14 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should remove user of server 3 subscription', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield user_subscriptions_1.removeUserSubscription(servers[0].url, users[0].accessToken, 'user3_channel@localhost:' + servers[2].port);
             yield jobs_1.waitJobs(servers);
         });
     });
     it('Should not display its videos anymore', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             {
                 const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, users[0].accessToken, 'createdAt');
                 expect(res.body.total).to.equal(1);
@@ -260,7 +252,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should remove the root subscription and not display the videos anymore', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
             yield user_subscriptions_1.removeUserSubscription(servers[0].url, users[0].accessToken, 'root_channel@localhost:' + servers[0].port);
             yield jobs_1.waitJobs(servers);
@@ -274,7 +266,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should correctly display public videos on server 1', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideosList(servers[0].url);
             expect(res.body.total).to.equal(5);
             for (const video of res.body.data) {
@@ -285,7 +277,7 @@ describe('Test users subscriptions', function () {
         });
     });
     it('Should follow user of server 3 again', function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             yield user_subscriptions_1.addUserSubscription(servers[0].url, users[0].accessToken, 'user3_channel@localhost:' + servers[2].port);
             yield jobs_1.waitJobs(servers);
@@ -311,7 +303,7 @@ describe('Test users subscriptions', function () {
         });
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

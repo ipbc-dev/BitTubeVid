@@ -1,14 +1,6 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
@@ -17,7 +9,7 @@ const path_1 = require("path");
 const constants_1 = require("../../../initializers/constants");
 const expect = chai.expect;
 function checkHlsPlaylist(servers, videoUUID, hlsOnly, resolutions = [240, 360, 480, 720]) {
-    return __awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const server of servers) {
             const resVideoDetails = yield extra_utils_1.getVideo(server.url, videoUUID);
             const videoDetails = resVideoDetails.body;
@@ -77,7 +69,7 @@ describe('Test HLS videos', function () {
     let videoAudioUUID = '';
     function runTestSuite(hlsOnly) {
         it('Should upload a video and transcode it to HLS', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(120000);
                 const res = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video 1', fixture: 'video_short.webm' });
                 videoUUID = res.body.video.uuid;
@@ -86,7 +78,7 @@ describe('Test HLS videos', function () {
             });
         });
         it('Should upload an audio file and transcode it to HLS', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(120000);
                 const res = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video audio', fixture: 'sample.ogg' });
                 videoAudioUUID = res.body.video.uuid;
@@ -95,7 +87,7 @@ describe('Test HLS videos', function () {
             });
         });
         it('Should update the video', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, videoUUID, { name: 'video 1 updated' });
                 yield extra_utils_1.waitJobs(servers);
@@ -103,7 +95,7 @@ describe('Test HLS videos', function () {
             });
         });
         it('Should delete videos', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 yield extra_utils_1.removeVideo(servers[0].url, servers[0].accessToken, videoUUID);
                 yield extra_utils_1.removeVideo(servers[0].url, servers[0].accessToken, videoAudioUUID);
@@ -115,7 +107,7 @@ describe('Test HLS videos', function () {
             });
         });
         it('Should have the playlists/segment deleted from the disk', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     yield extra_utils_1.checkDirectoryIsEmpty(server, 'videos');
                     yield extra_utils_1.checkDirectoryIsEmpty(server, path_1.join('streaming-playlists', 'hls'));
@@ -123,7 +115,7 @@ describe('Test HLS videos', function () {
             });
         });
         it('Should have an empty tmp directory', function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 for (const server of servers) {
                     yield extra_utils_1.checkTmpIsEmpty(server);
                 }
@@ -131,7 +123,7 @@ describe('Test HLS videos', function () {
         });
     }
     before(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             const configOverride = {
                 transcoding: {
@@ -152,7 +144,7 @@ describe('Test HLS videos', function () {
     });
     describe('With only HLS enabled', function () {
         before(function () {
-            return __awaiter(this, void 0, void 0, function* () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
                     transcoding: {
                         enabled: true,
@@ -178,7 +170,7 @@ describe('Test HLS videos', function () {
         runTestSuite(true);
     });
     after(function () {
-        return __awaiter(this, void 0, void 0, function* () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);
         });
     });

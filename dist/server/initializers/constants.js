@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIDEO_VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.VIDEO_ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.API_VERSION = exports.WEBSERVER = void 0;
 const path_1 = require("path");
+const crypto_1 = require("crypto");
 const models_1 = require("../../shared/models");
 const videos_1 = require("../../shared/models/videos");
 const core_utils_1 = require("../helpers/core-utils");
@@ -8,7 +10,7 @@ const lodash_1 = require("lodash");
 const video_playlist_privacy_model_1 = require("../../shared/models/videos/playlist/video-playlist-privacy.model");
 const video_playlist_type_model_1 = require("../../shared/models/videos/playlist/video-playlist-type.model");
 const config_1 = require("./config");
-const LAST_MIGRATION_VERSION = 510;
+const LAST_MIGRATION_VERSION = 515;
 exports.LAST_MIGRATION_VERSION = LAST_MIGRATION_VERSION;
 const API_VERSION = 'v1';
 exports.API_VERSION = API_VERSION;
@@ -607,7 +609,8 @@ exports.AUDIT_LOG_FILENAME = AUDIT_LOG_FILENAME;
 const TRACKER_RATE_LIMITS = {
     INTERVAL: 60000 * 5,
     ANNOUNCES_PER_IP_PER_INFOHASH: 15,
-    ANNOUNCES_PER_IP: 30
+    ANNOUNCES_PER_IP: 30,
+    BLOCK_IP_LIFETIME: 60000 * 10
 };
 exports.TRACKER_RATE_LIMITS = TRACKER_RATE_LIMITS;
 const P2P_MEDIA_LOADER_PEER_VERSION = 2;
@@ -622,6 +625,13 @@ const DEFAULT_THEME_NAME = 'instance-default';
 exports.DEFAULT_THEME_NAME = DEFAULT_THEME_NAME;
 const DEFAULT_USER_THEME_NAME = 'instance-default';
 exports.DEFAULT_USER_THEME_NAME = DEFAULT_USER_THEME_NAME;
+const SEARCH_INDEX = {
+    ROUTES: {
+        VIDEOS: '/api/v1/search/videos',
+        VIDEO_CHANNELS: '/api/v1/search/video-channels'
+    }
+};
+exports.SEARCH_INDEX = SEARCH_INDEX;
 if (core_utils_1.isTestInstance() === true) {
     exports.PRIVATE_RSA_KEY_SIZE = PRIVATE_RSA_KEY_SIZE = 1024;
     ACTOR_FOLLOW_SCORE.BASE = 20;
@@ -655,6 +665,12 @@ config_1.registerConfigChangedHandler(() => {
     updateWebserverUrls();
     updateWebserverConfig();
 });
+const FILES_CONTENT_HASH = {
+    MANIFEST: generateContentHash(),
+    FAVICON: generateContentHash(),
+    LOGO: generateContentHash()
+};
+exports.FILES_CONTENT_HASH = FILES_CONTENT_HASH;
 function buildVideoMimetypeExt() {
     const data = {
         'video/webm': '.webm',
@@ -736,3 +752,7 @@ function buildLanguages() {
     return languages;
 }
 exports.buildLanguages = buildLanguages;
+function generateContentHash() {
+    return crypto_1.randomBytes(20).toString('hex');
+}
+exports.generateContentHash = generateContentHash;
