@@ -35,8 +35,22 @@ import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
 import { isThemeRegistered } from '../../lib/plugins/theme-utils'
 import { doesVideoExist } from '../../helpers/middlewares'
 import { UserRole } from '../../../shared/models/users'
-import { MUserDefault } from '@server/typings/models'
+import { MUserDefault } from '@server/types/models'
 import { Hooks } from '@server/lib/plugins/hooks'
+
+const usersListValidator = [
+  query('blocked')
+    .optional()
+    .isBoolean().withMessage('Should be a valid boolean banned state'),
+
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.debug('Checking usersList parameters', { parameters: req.query })
+
+    if (areValidationErrors(req, res)) return
+
+    return next()
+  }
+]
 
 const usersAddValidator = [
   body('username').custom(isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
@@ -444,6 +458,7 @@ const ensureCanManageUser = [
 // ---------------------------------------------------------------------------
 
 export {
+  usersListValidator,
   usersAddValidator,
   deleteMeValidator,
   usersRegisterValidator,

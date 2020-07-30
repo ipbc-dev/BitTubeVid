@@ -6,6 +6,7 @@ import { buildPath, parseBytes, parseDurationToMs, root } from '../helpers/core-
 import { NSFWPolicyType } from '../../shared/models/videos/nsfw-policy.type'
 import * as bytes from 'bytes'
 import { VideoRedundancyConfigFilter } from '@shared/models/redundancy/video-redundancy-config-filter.type'
+import { BroadcastMessageLevel } from '@shared/models/server'
 
 // Use a variable to reload the configuration if we need
 let config: IConfig = require('config')
@@ -19,7 +20,7 @@ const CONFIG = {
     HOSTNAME: config.get<string>('listen.hostname')
   },
   DATABASE: {
-    DBNAME: 'peertube' + config.get<string>('database.suffix'),
+    DBNAME: config.has('database.name') ? config.get<string>('database.name') : 'peertube' + config.get<string>('database.suffix'),
     HOSTNAME: config.get<string>('database.hostname'),
     PORT: config.get<number>('database.port'),
     USERNAME: config.get<string>('database.username'),
@@ -67,7 +68,8 @@ const CONFIG = {
     CAPTIONS_DIR: buildPath(config.get<string>('storage.captions')),
     TORRENTS_DIR: buildPath(config.get<string>('storage.torrents')),
     CACHE_DIR: buildPath(config.get<string>('storage.cache')),
-    PLUGINS_DIR: buildPath(config.get<string>('storage.plugins'))
+    PLUGINS_DIR: buildPath(config.get<string>('storage.plugins')),
+    CLIENT_OVERRIDES_DIR: buildPath(config.get<string>('storage.client_overrides'))
   },
   WEBSERVER: {
     SCHEME: config.get<boolean>('webserver.https') === true ? 'https' : 'http',
@@ -102,12 +104,6 @@ const CONFIG = {
       MAX_FILES: config.get<number>('log.rotation.maxFiles')
     },
     ANONYMIZE_IP: config.get<boolean>('log.anonymizeIP')
-  },
-  SEARCH: {
-    REMOTE_URI: {
-      USERS: config.get<boolean>('search.remote_uri.users'),
-      ANONYMOUS: config.get<boolean>('search.remote_uri.anonymous')
-    }
   },
   TRENDING: {
     VIDEOS: {
@@ -152,6 +148,11 @@ const CONFIG = {
       ENABLED: config.get<boolean>('plugins.index.enabled'),
       CHECK_LATEST_VERSIONS_INTERVAL: parseDurationToMs(config.get<string>('plugins.index.check_latest_versions_interval')),
       URL: config.get<string>('plugins.index.url')
+    }
+  },
+  FEDERATION: {
+    VIDEOS: {
+      FEDERATE_UNLISTED: config.get<boolean>('federation.videos.federate_unlisted')
     }
   },
   ADMIN: {
@@ -285,6 +286,24 @@ const CONFIG = {
   },
   THEME: {
     get DEFAULT () { return config.get<string>('theme.default') }
+  },
+  BROADCAST_MESSAGE: {
+    get ENABLED () { return config.get<boolean>('broadcast_message.enabled') },
+    get MESSAGE () { return config.get<string>('broadcast_message.message') },
+    get LEVEL () { return config.get<BroadcastMessageLevel>('broadcast_message.level') },
+    get DISMISSABLE () { return config.get<boolean>('broadcast_message.dismissable') }
+  },
+  SEARCH: {
+    REMOTE_URI: {
+      USERS: config.get<boolean>('search.remote_uri.users'),
+      ANONYMOUS: config.get<boolean>('search.remote_uri.anonymous')
+    },
+    SEARCH_INDEX: {
+      get ENABLED () { return config.get<boolean>('search.search_index.enabled') },
+      get URL () { return config.get<string>('search.search_index.url') },
+      get DISABLE_LOCAL_SEARCH () { return config.get<boolean>('search.search_index.disable_local_search') },
+      get IS_DEFAULT_SEARCH () { return config.get<boolean>('search.search_index.is_default_search') }
+    }
   }
 }
 

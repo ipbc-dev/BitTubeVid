@@ -33,7 +33,7 @@ rates_limit:
 trust_proxy:
   - 'loopback'
 
-# Your database name will be "peertube"+database.suffix
+# Your database name will be database.name OR "peertube"+database.suffix
 database:
   hostname: 'localhost'
   port: 5432
@@ -85,6 +85,11 @@ storage:
   captions: 'storage/captions/'
   cache: 'storage/cache/'
   plugins: 'storage/plugins/'
+  # Overridable client files : logo.svg, favicon.png and icons/*.png (PWA) in client/dist/assets/images
+  # Could contain for example assets/images/favicon.png
+  # If the file exists, peertube will serve it
+  # If not, peertube will fallback to the default fil
+  client_overrides: 'storage/client-overrides/'
 
 log:
   level: 'info' # debug/info/warning/error
@@ -93,14 +98,6 @@ log:
     maxFileSize: 12MB
     maxFiles: 20
   anonymizeIP: false
-
-search:
-  # Add ability to fetch remote videos/actors by their URI, that may not be federated with your instance
-  # If enabled, the associated group will be able to "escape" from the instance follows
-  # That means they will be able to follow channels, watch videos, list videos of non followed instances
-  remote_uri:
-    users: true
-    anonymous: false
 
 trending:
   videos:
@@ -177,6 +174,10 @@ plugins:
     enabled: true
     check_latest_versions_interval: '12 hours' # How often you want to check new plugins/themes versions
     url: 'https://packages.joinpeertube.org'
+
+federation:
+  videos:
+    federate_unlisted: true
 
 cache:
   previews:
@@ -372,3 +373,34 @@ followings:
 
 theme:
   default: 'default'
+
+broadcast_message:
+  enabled: false
+  message: '' # Support markdown
+  level: 'info' # 'info' | 'warning' | 'error'
+  dismissable: false
+
+search:
+  # Add ability to fetch remote videos/actors by their URI, that may not be federated with your instance
+  # If enabled, the associated group will be able to "escape" from the instance follows
+  # That means they will be able to follow channels, watch videos, list videos of non followed instances
+  remote_uri:
+    users: true
+    anonymous: false
+
+  # Use a third party index instead of your local index, only for search results
+  # Useful to discover content outside of your instance
+  # If you enable search_index, you must enable remote_uri search for users
+  # If you do not enable remote_uri search for anonymous user, your instance will redirect the user on the origin instance
+  # instead of loading the video locally
+  search_index:
+    enabled: false
+    # URL of the search index, that should use the same search API and routes
+    # than PeerTube: https://docs.joinpeertube.org/api-rest-reference.html
+    # You should deploy your own with https://framagit.org/framasoft/peertube/search-index,
+    # and can use https://search.joinpeertube.org/ for tests, but keep in mind the latter is an unmoderated search index
+    url: ''
+    # You can disable local search, so users only use the search index
+    disable_local_search: false
+    # If you did not disable local search, you can decide to use the search index by default
+    is_default_search: false

@@ -1,7 +1,8 @@
-import { NSFWQuery } from './nsfw-query.model'
 import { VideoFilter } from '../videos'
+import { NSFWQuery } from './nsfw-query.model'
+import { SearchTargetQuery } from './search-target-query.model'
 
-export interface VideosSearchQuery {
+export interface VideosSearchQuery extends SearchTargetQuery {
   search?: string
 
   start?: number

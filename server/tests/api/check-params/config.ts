@@ -133,6 +133,24 @@ describe('Test config API validators', function () {
           indexUrl: 'https://index.example.com'
         }
       }
+    },
+    broadcastMessage: {
+      enabled: true,
+      dismissable: true,
+      message: 'super message',
+      level: 'warning'
+    },
+    search: {
+      remoteUri: {
+        users: true,
+        anonymous: true
+      },
+      searchIndex: {
+        enabled: true,
+        url: 'https://search.joinpeertube.org',
+        disableLocalSearch: true,
+        isDefaultSearch: true
+      }
     }
   }
 

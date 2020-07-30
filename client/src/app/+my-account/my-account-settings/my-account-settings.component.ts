@@ -1,11 +1,8 @@
-import { Component, OnInit, AfterViewChecked } from '@angular/core'
-import { Notifier } from '@app/core'
 import { BytesPipe } from 'ngx-pipes'
-import { AuthService } from '../../core'
-import { User } from '../../shared'
-import { UserService } from '../../shared/users'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ViewportScroller } from '@angular/common'
+import { AfterViewChecked, Component, OnInit } from '@angular/core'
+import { AuthService, Notifier, User, UserService } from '@app/core'
+import { I18n } from '@ngx-translate/i18n-polyfill'
 
 @Component({
   selector: 'my-account-settings',
@@ -22,6 +19,8 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
   userVideoQuotaDaily = '0'
   userVideoQuotaUsedDaily = 0
   userVideoQuotaDailyPercentage = 15
+
+  private lastScrollHash: string
 
   constructor (
     private viewportScroller: ViewportScroller,
@@ -42,14 +41,12 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
       () => {
         if (this.user.videoQuota !== -1) {
           this.userVideoQuota = new BytesPipe().transform(this.user.videoQuota, 0).toString()
-          this.userVideoQuotaPercentage = this.user.videoQuota * 100 / this.userVideoQuotaUsed
         } else {
           this.userVideoQuota = this.i18n('Unlimited')
         }
 
         if (this.user.videoQuotaDaily !== -1) {
           this.userVideoQuotaDaily = new BytesPipe().transform(this.user.videoQuotaDaily, 0).toString()
-          this.userVideoQuotaDailyPercentage = this.user.videoQuotaDaily * 100 / this.userVideoQuotaUsedDaily
         } else {
           this.userVideoQuotaDaily = this.i18n('Unlimited')
         }
@@ -59,12 +56,19 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
     this.userService.getMyVideoQuotaUsed()
       .subscribe(data => {
         this.userVideoQuotaUsed = data.videoQuotaUsed
+        this.userVideoQuotaPercentage = this.userVideoQuotaUsed * 100 / this.user.videoQuota
+
         this.userVideoQuotaUsedDaily = data.videoQuotaUsedDaily
+        this.userVideoQuotaDailyPercentage = this.userVideoQuotaUsedDaily * 100 / this.user.videoQuotaDaily
       })
   }
 
   ngAfterViewChecked () {
-    if (window.location.hash) this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+    if (window.location.hash && window.location.hash !== this.lastScrollHash) {
+      this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+
+      this.lastScrollHash = window.location.hash
+    }
   }
 
   onAvatarChange (formData: FormData) {

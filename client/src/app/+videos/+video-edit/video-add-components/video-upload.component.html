@@ -1,0 +1,87 @@
+<div *ngIf="!isUploadingVideo" class="upload-video-container" dragDrop (fileDropped)="setVideoFile($event)">
+  <div class="first-step-block">
+    <my-global-icon class="upload-icon" iconName="upload" aria-hidden="true"></my-global-icon>
+
+    <div class="button-file form-control" [ngbTooltip]="'(extensions: ' + videoExtensions + ')'">
+      <span i18n>Select the file to upload</span>
+      <input #videofileInput type="file" name="videofile" id="videofile" [accept]="videoExtensions" (change)="fileChange()" autofocus />
+    </div>
+
+    <div class="form-group form-group-channel">
+      <label i18n for="first-step-channel">Channel</label>
+      <div class="peertube-select-container">
+        <select id="first-step-channel" [(ngModel)]="firstStepChannelId" class="form-control">
+          <option *ngFor="let channel of userVideoChannels" [value]="channel.id">{{ channel.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label i18n for="first-step-privacy">Privacy</label>
+      <div class="peertube-select-container">
+        <select id="first-step-privacy" [(ngModel)]="firstStepPrivacyId" class="form-control">
+          <option *ngFor="let privacy of videoPrivacies" [value]="privacy.id">{{ privacy.label }}</option>
+          <option i18n [value]="SPECIAL_SCHEDULED_PRIVACY">Scheduled</option>
+        </select>
+      </div>
+    </div>
+
+    <ng-container *ngIf="isUploadingAudioFile">
+      <div  class="form-group audio-preview">
+        <label i18n for="previewfileUpload">Video background image</label>
+
+        <div i18n class="audio-image-info">
+          Image that will be merged with your audio file.
+          <br />
+          The chosen image will be definitive and cannot be modified.
+        </div>
+
+        <my-preview-upload
+          i18n-inputLabel inputLabel="Edit" inputName="previewfileUpload" [(ngModel)]="previewfileUpload"
+          previewWidth="360px" previewHeight="200px"
+        ></my-preview-upload>
+      </div>
+
+      <div class="form-group upload-audio-button">
+        <my-button className="orange-button" i18n-label [label]="getAudioUploadLabel()" icon="upload" (click)="uploadFirstStep(true)"></my-button>
+      </div>
+    </ng-container>
+  </div>
+</div>
+
+<div *ngIf="isUploadingVideo && !error" class="upload-progress-cancel">
+  <div class="progress" i18n-title title="Total video quota">
+    <div class="progress-bar" role="progressbar" [style]="{ width: videoUploadPercents + '%' }" [attr.aria-valuenow]="videoUploadPercents" aria-valuemin="0" [attr.aria-valuemax]="100">
+      <span *ngIf="videoUploadPercents === 100 && videoUploaded === false" i18n>Processing…</span>
+      <span *ngIf="videoUploadPercents !== 100 || videoUploaded">{{ videoUploadPercents }}%</span>
+    </div>
+  </div>
+  <input *ngIf="videoUploaded === false" type="button" value="Cancel" (click)="cancelUpload()" />
+</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  <div i18n>Sorry, but something went wrong</div>
+  {{ error }}
+</div>
+
+<div *ngIf="videoUploaded && !error" class="alert alert-info" i18n>
+  Congratulations! Your video is now available in your private library.
+</div>
+
+<!-- Hidden because we want to load the component -->
+<form [hidden]="!isUploadingVideo" novalidate [formGroup]="form" class="mb-3">
+  <my-video-edit
+    [form]="form" [formErrors]="formErrors" [videoCaptions]="videoCaptions"
+    [validationMessages]="validationMessages" [userVideoChannels]="userVideoChannels"
+    [waitTranscodingEnabled]="waitTranscodingEnabled"
+  ></my-video-edit>
+
+  <div class="submit-container">
+    <div i18n *ngIf="videoUploaded === false" class="message-submit">Publish will be available when upload is finished</div>
+
+    <my-button className="submit-button orange-button" i18n-label label="Publish" icon="circle-tick"
+               (click)="updateSecondStep()" (keydown.enter)="updateSecondStep()"
+               [disabled]="isPublishingButtonDisabled()"
+    ></my-button>
+  </div>
+</form>

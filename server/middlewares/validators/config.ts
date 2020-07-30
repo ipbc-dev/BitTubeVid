@@ -55,6 +55,18 @@ const customConfigUpdateValidator = [
 
   body('theme.default').custom(v => isThemeNameValid(v) && isThemeRegistered(v)).withMessage('Should have a valid theme'),
 
+  body('broadcastMessage.enabled').isBoolean().withMessage('Should have a valid broadcast message enabled boolean'),
+  body('broadcastMessage.message').exists().withMessage('Should have a valid broadcast message'),
+  body('broadcastMessage.level').exists().withMessage('Should have a valid broadcast level'),
+  body('broadcastMessage.dismissable').isBoolean().withMessage('Should have a valid broadcast dismissable boolean'),
+
+  body('search.remoteUri.users').isBoolean().withMessage('Should have a remote URI search for users boolean'),
+  body('search.remoteUri.anonymous').isBoolean().withMessage('Should have a valid remote URI search for anonymous boolean'),
+  body('search.searchIndex.enabled').isBoolean().withMessage('Should have a valid search index enabled boolean'),
+  body('search.searchIndex.url').exists().withMessage('Should have a valid search index URL'),
+  body('search.searchIndex.disableLocalSearch').isBoolean().withMessage('Should have a valid search index disable local search boolean'),
+  body('search.searchIndex.isDefaultSearch').isBoolean().withMessage('Should have a valid search index default enabled boolean'),
+
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body })
 

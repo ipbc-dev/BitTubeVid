@@ -1,16 +1,14 @@
-import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
-import { ConfigService } from '@app/+admin/config/shared/config.service'
-import { ServerService } from '@app/core/server/server.service'
-import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
-import { Notifier } from '@app/core'
-import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
 import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
-import { ServerConfig } from '@shared/models'
 import { ViewportScroller } from '@angular/common'
+import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
+import { ConfigService } from '@app/+admin/config/shared/config.service'
+import { Notifier } from '@app/core'
+import { ServerService } from '@app/core/server/server.service'
+import { CustomConfigValidatorsService, FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+import { I18n } from '@ngx-translate/i18n-polyfill'
+import { CustomConfig, ServerConfig } from '@shared/models'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -215,6 +213,24 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
             indexUrl: this.customConfigValidatorsService.INDEX_URL
           }
         }
+      },
+      broadcastMessage: {
+        enabled: null,
+        level: null,
+        dismissable: null,
+        message: null
+      },
+      search: {
+        remoteUri: {
+          users: null,
+          anonymous: null
+        },
+        searchIndex: {
+          enabled: null,
+          url: this.customConfigValidatorsService.SEARCH_INDEX_URL,
+          disableLocalSearch: null,
+          isDefaultSearch: null
+        }
       }
     }
 
@@ -246,6 +262,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   isSignupEnabled () {
     return this.form.value['signup']['enabled'] === true
+  }
+
+  isSearchIndexEnabled () {
+    return this.form.value['search']['searchIndex']['enabled'] === true
   }
 
   isAutoFollowIndexEnabled () {

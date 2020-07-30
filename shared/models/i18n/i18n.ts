@@ -4,6 +4,7 @@ export const I18N_LOCALES = {
   // Always first to avoid issues when using express acceptLanguages function when no accept language header is set
   'en-US': 'English',
 
+  'ar': 'العربية',
   'ca-ES': 'Català',
   'cs-CZ': 'Čeština',
   'de-DE': 'Deutsch',
@@ -17,18 +18,22 @@ export const I18N_LOCALES = {
   'hu-HU': 'magyar',
   'it-IT': 'Italiano',
   'ja-JP': '日本語',
+  'kab': 'Taqbaylit',
   'nl-NL': 'Nederlands',
+  'oc': 'Occitan',
   'pl-PL': 'Polski',
   'pt-BR': 'Português (Brasil)',
   'pt-PT': 'Português (Portugal)',
   'ru-RU': 'русский',
   'sv-SE': 'svenska',
   'th-TH': 'ไทย',
+  'vi-VN': 'Tiếng Việt',
   'zh-Hans-CN': '简体中文（中国）',
   'zh-Hant-TW': '繁體中文（台灣）'
 }
 
 const I18N_LOCALE_ALIAS = {
+  'ar-001': 'ar',
   'ca': 'ca-ES',
   'cs': 'cs-CZ',
   'de': 'de-DE',
@@ -38,20 +43,21 @@ const I18N_LOCALE_ALIAS = {
   'eu': 'eu-ES',
   'fi': 'fi-FI',
   'fr': 'fr-FR',
-  'ja': 'ja-JP',
-  'it': 'it-IT',
   'hu': 'hu-HU',
+  'it': 'it-IT',
+  'ja': 'ja-JP',
   'nl': 'nl-NL',
   'pl': 'pl-PL',
   'pt': 'pt-BR',
   'ru': 'ru-RU',
   'sv': 'sv-SE',
   'th': 'th-TH',
-  'zh': 'zh-Hans-CN',
-  'zh-Hans': 'zh-Hans-CN',
+  'vi': 'vi-VN',
   'zh-CN': 'zh-Hans-CN',
+  'zh-Hans': 'zh-Hans-CN',
   'zh-Hant': 'zh-Hant-TW',
-  'zh-TW': 'zh-Hant-TW'
+  'zh-TW': 'zh-Hant-TW',
+  'zh': 'zh-Hans-CN'
 }
 
 export const POSSIBLE_LOCALES = Object.keys(I18N_LOCALES)

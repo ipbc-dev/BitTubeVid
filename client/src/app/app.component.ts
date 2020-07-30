@@ -1,24 +1,22 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core'
+import { Hotkey, HotkeysService } from 'angular2-hotkeys'
+import { concat } from 'rxjs'
+import { filter, first, map, pairwise } from 'rxjs/operators'
+import { DOCUMENT, PlatformLocation, ViewportScroller } from '@angular/common'
+import { AfterViewInit, Component, Inject, LOCALE_ID, OnInit, ViewChild } from '@angular/core'
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser'
 import { Event, GuardsCheckStart, NavigationEnd, Router, Scroll } from '@angular/router'
-import { AuthService, RedirectService, ServerService, ThemeService } from '@app/core'
-import { is18nPath } from '../../../shared/models/i18n'
-import { ScreenService } from '@app/shared/misc/screen.service'
-import { filter, map, pairwise } from 'rxjs/operators'
-import { Hotkey, HotkeysService } from 'angular2-hotkeys'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { PlatformLocation, ViewportScroller } from '@angular/common'
-import { PluginService } from '@app/core/plugins/plugin.service'
+import { AuthService, MarkdownService, RedirectService, ScreenService, ServerService, ThemeService, User } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
-import { POP_STATE_MODAL_DISMISS } from '@app/shared/misc/constants'
-import { WelcomeModalComponent } from '@app/modal/welcome-modal.component'
-import { InstanceConfigWarningModalComponent } from '@app/modal/instance-config-warning-modal.component'
+import { PluginService } from '@app/core/plugins/plugin.service'
 import { CustomModalComponent } from '@app/modal/custom-modal.component'
-import { ServerConfig, UserRole } from '@shared/models'
-import { User } from '@app/shared'
-import { InstanceService } from '@app/shared/instance/instance.service'
+import { InstanceConfigWarningModalComponent } from '@app/modal/instance-config-warning-modal.component'
+import { WelcomeModalComponent } from '@app/modal/welcome-modal.component'
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
+import { I18n } from '@ngx-translate/i18n-polyfill'
+import { BroadcastMessageLevel, getShortLocale, is18nPath, ServerConfig, UserRole } from '@shared/models'
 import { MenuService } from './core/menu/menu.service'
+import { peertubeLocalStorage, POP_STATE_MODAL_DISMISS } from './helpers'
+import { InstanceService } from './shared/shared-instance'
 
 @Component({
   selector: 'my-app',
@@ -26,15 +24,20 @@ import { MenuService } from './core/menu/menu.service'
   styleUrls: [ './app.component.scss' ]
 })
 export class AppComponent implements OnInit, AfterViewInit {
+  private static BROADCAST_MESSAGE_KEY = 'app-broadcast-message-dismissed'
+
   @ViewChild('welcomeModal') welcomeModal: WelcomeModalComponent
   @ViewChild('instanceConfigWarningModal') instanceConfigWarningModal: InstanceConfigWarningModalComponent
   @ViewChild('customModal') customModal: CustomModalComponent
 
   customCSS: SafeHtml
+  broadcastMessage: { message: string, dismissable: boolean, class: string } | null = null
 
   private serverConfig: ServerConfig
 
   constructor (
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(LOCALE_ID) private localeId: string,
     private i18n: I18n,
     private viewportScroller: ViewportScroller,
     private router: Router,
@@ -50,6 +53,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     private hooks: HooksService,
     private location: PlatformLocation,
     private modalService: NgbModal,
+    private markdownService: MarkdownService,
     public menu: MenuService
   ) { }
 
@@ -81,12 +85,15 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.initRouteEvents()
     this.injectJS()
     this.injectCSS()
+    this.injectBroadcastMessage()
 
     this.initHotkeys()
 
     this.location.onPopState(() => this.modalService.dismissAll(POP_STATE_MODAL_DISMISS))
 
     this.openModalsIfNeeded()
+
+    this.document.documentElement.lang = getShortLocale(this.localeId)
   }
 
   ngAfterViewInit () {
@@ -95,6 +102,12 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   isUserLoggedIn () {
     return this.authService.isLoggedIn()
+  }
+
+  hideBroadcastMessage () {
+    peertubeLocalStorage.setItem(AppComponent.BROADCAST_MESSAGE_KEY, this.serverConfig.broadcastMessage.message)
+
+    this.broadcastMessage = null
   }
 
   private initRouteEvents () {
@@ -165,6 +178,36 @@ export class AppComponent implements OnInit, AfterViewInit {
     ).subscribe(() => this.menu.isMenuDisplayed = false) // User clicked on a link in the menu, change the page
   }
 
+  private injectBroadcastMessage () {
+    concat(
+      this.serverService.getConfig().pipe(first()),
+      this.serverService.configReloaded
+    ).subscribe(async config => {
+      this.broadcastMessage = null
+
+      const messageConfig = config.broadcastMessage
+
+      if (messageConfig.enabled) {
+        // Already dismissed this message?
+        if (messageConfig.dismissable && localStorage.getItem(AppComponent.BROADCAST_MESSAGE_KEY) === messageConfig.message) {
+          return
+        }
+
+        const classes: { [id in BroadcastMessageLevel]: string } = {
+          info: 'alert-info',
+          warning: 'alert-warning',
+          error: 'alert-danger'
+        }
+
+        this.broadcastMessage = {
+          message: await this.markdownService.completeMarkdownToHTML(messageConfig.message),
+          dismissable: messageConfig.dismissable,
+          class: classes[messageConfig.level]
+        }
+      }
+    })
+  }
+
   private injectJS () {
     // Inject JS
     this.serverService.getConfig()
@@ -182,17 +225,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   private injectCSS () {
     // Inject CSS if modified (admin config settings)
-    this.serverService.configReloaded
-        .subscribe(() => {
-          const headStyle = document.querySelector('style.custom-css-style')
-          if (headStyle) headStyle.parentNode.removeChild(headStyle)
+    concat(
+      this.serverService.getConfig().pipe(first()),
+      this.serverService.configReloaded
+    ).subscribe(config => {
+      const headStyle = document.querySelector('style.custom-css-style')
+      if (headStyle) headStyle.parentNode.removeChild(headStyle)
 
-          // We test customCSS if the admin removed the css
-          if (this.customCSS || this.serverConfig.instance.customizations.css) {
-            const styleTag = '<style>' + this.serverConfig.instance.customizations.css + '</style>'
-            this.customCSS = this.domSanitizer.bypassSecurityTrustHtml(styleTag)
-          }
-        })
+      // We test customCSS if the admin removed the css
+      if (this.customCSS || config.instance.customizations.css) {
+        const styleTag = '<style>' + config.instance.customizations.css + '</style>'
+        this.customCSS = this.domSanitizer.bypassSecurityTrustHtml(styleTag)
+      }
+    })
   }
 
   private async loadPlugins () {

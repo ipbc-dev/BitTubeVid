@@ -1,0 +1,197 @@
+// Bootstrap grid utilities require functions, variables and mixins
+@import 'node_modules/bootstrap/scss/functions';
+@import 'node_modules/bootstrap/scss/variables';
+@import 'node_modules/bootstrap/scss/mixins';
+@import 'node_modules/bootstrap/scss/grid';
+
+@import 'variables';
+@import 'mixins';
+
+label {
+  font-weight: $font-regular;
+  font-size: 100%;
+}
+
+.peertube-select-container {
+  @include peertube-select-container(auto);
+}
+
+.title-page a {
+  color: pvar(--mainForegroundColor);
+
+  &:hover {
+    text-decoration: none;
+    opacity: .8;
+  }
+}
+
+my-peertube-checkbox {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.nav-tabs {
+  margin-bottom: 15px;
+}
+
+.video-edit {
+  height: 100%;
+  min-height: 300px;
+
+  .form-group {
+    margin-bottom: 25px;
+  }
+
+  input {
+    @include peertube-input-text(100%);
+    display: block;
+  }
+
+  .label-tags + span {
+    font-size: 15px;
+  }
+
+  .advanced-settings .form-group {
+    margin-bottom: 20px;
+  }
+}
+
+.captions {
+
+  .captions-header {
+    text-align: right;
+    margin-bottom: 1rem;
+
+    .create-caption {
+      @include create-button;
+    }
+  }
+
+  .caption-entry {
+    display: flex;
+    height: 40px;
+    align-items: center;
+
+    a.caption-entry-label {
+      @include disable-default-a-behaviour;
+
+      flex-grow: 1;
+      color: #000;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+
+    .caption-entry-label {
+      font-size: 15px;
+      font-weight: bold;
+
+      margin-right: 20px;
+      width: 150px;
+    }
+
+    .caption-entry-state {
+      width: 200px;
+
+      &.caption-entry-state-create {
+        color: #39CC0B;
+      }
+
+      &.caption-entry-state-delete {
+        color: #FF0000;
+      }
+    }
+
+    .caption-entry-delete {
+      @include peertube-button;
+      @include grey-button;
+    }
+  }
+
+  .no-caption {
+    text-align: center;
+    font-size: 15px;
+  }
+}
+
+.submit-container {
+  text-align: right;
+
+  .message-submit {
+    display: inline-block;
+    margin-right: 25px;
+
+    color: pvar(--greyForegroundColor);
+    font-size: 15px;
+  }
+
+  .submit-button {
+    @include peertube-button;
+    @include orange-button;
+    @include button-with-icon(20px, 1px);
+
+    display: inline-block;
+
+    input {
+      cursor: inherit;
+      background-color: inherit;
+      border: none;
+      padding: 0;
+      outline: 0;
+      color: inherit;
+      font-weight: $font-semibold;
+    }
+  }
+}
+
+p-calendar {
+  display: block;
+
+  ::ng-deep {
+    input,
+    .ui-calendar {
+      width: 100%;
+    }
+
+    input {
+      @include peertube-input-text(100%);
+      color: #000;
+    }
+  }
+}
+
+@include ng2-tags;
+
+// columns for the video
+.col-video-edit {
+  @include make-col-ready();
+
+  @include media-breakpoint-up(md) {
+    @include make-col(7);
+
+    & + .col-video-edit {
+      @include make-col(5);
+    }
+  }
+
+  @include media-breakpoint-up(xl) {
+    @include make-col(8);
+
+    & + .col-video-edit {
+      @include make-col(4);
+    }
+  }
+}
+
+:host-context(.expanded) {
+  .col-video-edit {
+    @include media-breakpoint-up(md) {
+      @include make-col(8);
+
+      & + .col-video-edit {
+        @include make-col(4);
+      }
+    }
+  }
+}
