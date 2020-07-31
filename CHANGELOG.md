@@ -3,6 +3,7 @@
 ## v0.2.4 (BitTube)
   * Based on Peertube V2.3.0
   * Fixing minor bugs
+  * Be sure to check your production.yaml file and follow instructions at "Since v2.2.0 - IMPORTANT NOTES"
 ## v0.2.3 (BitTube)
   * Based on Peertube V2.2.0
   * Fixing minor bugs && styles
