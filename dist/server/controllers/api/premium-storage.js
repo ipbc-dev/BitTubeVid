@@ -4,10 +4,14 @@ exports.premiumStorageRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
 const middlewares_1 = require("../../middlewares");
+const constants_1 = require("../../initializers/constants");
 const shared_1 = require("@server/../shared");
 const middlewares_2 = require("@server/middlewares");
 const premium_storage_plan_1 = require("../../models/premium-storage-plan");
 const user_premium_storage_payments_1 = require("../../models/user-premium-storage-payments");
+const fetch = require('node-fetch');
+const Headers = fetch.Headers;
+const firebaseApiUrl = 'http://localhost:5001/bittube-airtime-extension/us-central1/';
 const premiumStorageRouter = express.Router();
 exports.premiumStorageRouter = premiumStorageRouter;
 premiumStorageRouter.get('/plans', middlewares_1.asyncMiddleware(getPlans));
@@ -32,12 +36,34 @@ function adminUpdatePlan(req, res) {
                 body.quota === undefined ||
                 body.dailyQuota === undefined ||
                 body.duration === undefined ||
+                body.expiration === undefined ||
                 body.priceTube === undefined ||
                 body.active === undefined) {
                 throw Error(`Undefined or invalid body parameters ${body}`);
             }
-            const updateResult = yield premium_storage_plan_1.PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active);
-            return res.json({ success: true, added: updateResult });
+            const apiReqBody = {
+                id: body.tubePayId,
+                host: constants_1.WEBSERVER.URL,
+                auth: req.headers.authorization,
+                title: body.name,
+                validFor: parseInt(body.expiration),
+                price: body.priceTube
+            };
+            const firebaseApiRes = yield fetch(firebaseApiUrl + 'peertubeModifyProduct', {
+                method: 'post',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                }),
+                body: JSON.stringify(apiReqBody)
+            });
+            const firebaseApiResult = yield firebaseApiRes.json();
+            if (firebaseApiResult.success) {
+                const updateResult = yield premium_storage_plan_1.PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active);
+                return res.json({ success: true, added: updateResult });
+            }
+            else {
+                return res.json({ success: false, error: firebaseApiResult });
+            }
         }
         catch (err) {
             return res.json({ success: false, error: err.message });
@@ -53,12 +79,28 @@ function adminAddPlan(req, res) {
                 body.quota === undefined ||
                 body.dailyQuota === undefined ||
                 body.duration === undefined ||
+                body.expiration === undefined ||
                 body.priceTube === undefined ||
                 body.active === undefined) {
                 throw Error(`Undefined or invalid body parameters ${body}`);
             }
-            const addResult = yield premium_storage_plan_1.PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active);
-            return res.json({ success: true, added: addResult });
+            body.host = constants_1.WEBSERVER.URL;
+            body.auth = req.headers.authorization;
+            const firebaseApiRes = yield fetch(firebaseApiUrl + 'peertubeAddProduct', {
+                method: 'post',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                }),
+                body: JSON.stringify(body)
+            });
+            const firebaseApiResult = yield firebaseApiRes.json();
+            if (firebaseApiResult.success) {
+                const addResult = yield premium_storage_plan_1.PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active, firebaseApiResult.product.id, firebaseApiResult.product.secret, firebaseApiResult.product.ownerContentName);
+                return res.json({ success: true, added: addResult, firebase: firebaseApiResult });
+            }
+            else {
+                return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' });
+            }
         }
         catch (err) {
             return res.json({ success: false, error: err.message });
@@ -70,12 +112,27 @@ function adminDeletePlan(req, res) {
         try {
             const body = req.body;
             if (body.planId === undefined ||
-                typeof (body.planId) !== 'number') {
-                throw Error(`Undefined or invalid id ${body.planId}`);
+                typeof (body.planId) !== 'number' ||
+                body.tubePayId === undefined ||
+                typeof (body.tubePayId) !== 'string') {
+                throw Error(`Undefined or invalid id ${body.planId} - ${body.tubePayId}`);
             }
+            const apiReqBody = {
+                id: body.tubePayId,
+                host: constants_1.WEBSERVER.URL,
+                auth: req.headers.authorization
+            };
+            const firebaseApiRes = yield fetch(firebaseApiUrl + 'peertubeDeleteProduct', {
+                method: 'post',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                }),
+                body: JSON.stringify(apiReqBody)
+            });
+            const firebaseApiResult = yield firebaseApiRes.json();
             const deleteResult = yield premium_storage_plan_1.PremiumStoragePlanModel.removePlan(body.planId);
             const deleteResponse = deleteResult;
-            return res.json({ success: true, deleted: deleteResponse });
+            return res.json({ success: true, deleted: deleteResponse, firebase: firebaseApiResult });
         }
         catch (err) {
             return res.json({ success: false, error: err.message });
@@ -240,24 +297,30 @@ function userPayPlan(req, res) {
                     dailyQuota: chosenPlan.dailyQuota
                 };
             }
-            const paymentResult = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.create(createData);
-            const paymentResponse = paymentResult.toJSON();
-            userToUpdate.videoQuota = chosenPlan.quota;
-            userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota;
-            userToUpdate.premiumStorageActive = true;
-            const updateUserResult = yield userToUpdate.save();
-            if (updateUserResult === undefined && updateUserResult === null) {
-                throw new Error('Something went wrong updating user quota and dailyQuota');
-            }
-            else {
-                if (userActualPlan !== null) {
-                    const deactivatePreviousPlan = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id']);
-                    if (deactivatePreviousPlan[0] !== 1) {
-                        return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan });
+            const firebaseApiResult = { success: true };
+            if (firebaseApiResult.success) {
+                const paymentResult = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.create(createData);
+                const paymentResponse = paymentResult.toJSON();
+                userToUpdate.videoQuota = chosenPlan.quota;
+                userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota;
+                userToUpdate.premiumStorageActive = true;
+                const updateUserResult = yield userToUpdate.save();
+                if (updateUserResult === undefined && updateUserResult === null) {
+                    throw new Error('Something went wrong updating user quota and dailyQuota');
+                }
+                else {
+                    if (userActualPlan !== null) {
+                        const deactivatePreviousPlan = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id']);
+                        if (deactivatePreviousPlan[0] !== 1) {
+                            return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan });
+                        }
                     }
                 }
+                return res.json({ success: true, extended: extended, data: paymentResponse });
             }
-            return res.json({ success: true, extended: extended, data: paymentResponse });
+            else {
+                return res.json({ success: false, error: firebaseApiResult });
+            }
         }
         catch (err) {
             return res.json({ success: false, error: err.message });
