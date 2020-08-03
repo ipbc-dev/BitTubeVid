@@ -5,10 +5,10 @@ import { AuthService, Notifier, UserService } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
 import { InstanceService } from '@app/shared/shared-instance'
 import { NgbAccordion } from '@ng-bootstrap/ng-bootstrap'
-import { firebaseAuth } from '../../core/firebase'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { UserRegister } from '@shared/models/users/user-register.model'
 import { About, ServerConfig } from '@shared/models/server'
+import { firebaseAuth } from '../../core/firebase'
 
 @Component({
   selector: 'my-register',

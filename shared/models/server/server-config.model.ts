@@ -172,7 +172,7 @@ export interface ServerConfig {
 
   premium_storage: {
     enabled: boolean
-  },
+  }
   broadcastMessage: {
     enabled: boolean
     message: string
