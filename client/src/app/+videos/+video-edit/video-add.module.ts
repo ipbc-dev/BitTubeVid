@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core'
-import { CanDeactivateGuard } from '@app/core'
+import { CanDeactivateGuard } from '@app/core/routing/can-deactivate-guard.service'
 import { VideoEditModule } from './shared/video-edit.module'
 import { DragDropDirective } from './video-add-components/drag-drop.directive'
 import { VideoImportTorrentComponent } from './video-add-components/video-import-torrent.component'

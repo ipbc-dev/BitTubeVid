@@ -7,11 +7,11 @@ import {
   getCompleteLocale,
   isDefaultLocale,
   peertubeTranslate,
-  SearchTargetType,
   ServerConfig,
   ServerStats,
   VideoConstant
 } from '@shared/models'
+import { SearchTargetType } from '@shared/models/search/search-target-query.model'
 import { environment } from '../../../environments/environment'
 
 @Injectable()

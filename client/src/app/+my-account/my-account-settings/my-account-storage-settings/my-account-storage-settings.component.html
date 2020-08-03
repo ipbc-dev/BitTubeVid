@@ -53,7 +53,7 @@
     </div> -->
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
-      <select [value] formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
+      <select formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
         <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
         <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
       </select>
@@ -81,7 +81,11 @@
           <th class="planField">{{ chosenPlan.priceTube }}</th>
         </tr>
       </table>
-      <input type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()">
+      <div *ngFor="let plan of storagePlans" >
+        <div *ngIf="plan.tubePayId == chosenPlan.tubePayId" [attr.data-tubepay-product]="plan.tubePayId"  data-tubepay-type="html"  data-tubepay-source="http://ice.tunnel.bittube.app/my-account/premium-storage/billing" class="button-tubePay">
+          <!-- <input type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()"> -->
+        </div>
+      </div>
     </div>
     <div *ngIf="!havePremiumStorage()" class="form-group col-12 col-lg-4 col-xl-3">
       <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->

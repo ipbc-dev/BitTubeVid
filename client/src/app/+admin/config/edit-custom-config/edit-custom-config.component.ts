@@ -4,9 +4,9 @@ import { ServerService } from '@app/core/server/server.service'
 import { Notifier, RestExtractor } from '@app/core'
 import { ConfirmService } from '@app/core/confirm'
 import { interfacePremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
-import { catchError } from 'rxjs/operators'
 import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
+import { catchError } from 'rxjs/operators'
 import { ViewportScroller } from '@angular/common'
 import { CustomConfigValidatorsService, FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
@@ -283,7 +283,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       dailyQuota: 0,
       priceTube: 0,
       duration: 0,
-      active: false
+      expiration: 0,
+      active: false,
+      tubePayId: null
     }
   }
 
@@ -292,11 +294,15 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       this.getPlans(),
       this.serverService.getConfig()
     ]).subscribe(([ plans, config ]) => {
-      if (plans['success'] && plans['plans'].length > 0) {
+      if (plans['success']) {
         this.storagePlans = plans['plans']
         this.storagePlans.forEach(plan => {
+          plan.quota = Math.round(plan.quota / 1073741824)
+          plan.dailyQuota = Math.round(plan.dailyQuota / 1073741824)
           plan.updateData = plan
         })
+      } else {
+        this.storagePlans = []
       }
       if (config) {
         this.serverConfig = config
@@ -308,6 +314,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   addPlanButtonClick () {
     if (!this.isAddPlanButtonDisabled()) {
       console.log('ICEICE going to call addPlan with body. ', this.newStoragePlan)
+      this.newStoragePlan.quota = this.newStoragePlan.quota * 1073741824 /* to bytes */
+      this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota * 1073741824 /* to bytes */
       this.addPlan(this.newStoragePlan).subscribe(resp => {
         console.log('ICEICE addPlanButtonClick response is: ', resp)
         if (resp['success']) {
@@ -331,17 +339,20 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   addPlan (body: interfacePremiumStoragePlan) {
-    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', body)
+    const bodyWithToken: any = body
+    bodyWithToken.accessToken = localStorage.getItem('access_token')
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', bodyWithToken)
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
   isAddPlanButtonDisabled () {
-    const { name, quota, dailyQuota, priceTube, duration, active } = this.newStoragePlan
+    const { name, quota, dailyQuota, priceTube, duration, active, expiration } = this.newStoragePlan
     if (typeof name !== 'string' || name === null || name === '' || name.length > 50) return true
     if (typeof quota !== 'number' || quota < -1 || quota === 0) return true
     if (typeof dailyQuota !== 'number' || dailyQuota < -1 || dailyQuota === 0) return true
     if (typeof priceTube !== 'number' || priceTube < 0) return true
     if (typeof duration !== 'number' || duration < 2628000000 || duration > 31536000000) return true
+    if (typeof expiration !== 'number' || expiration < 0) return true
     if (typeof active !== 'boolean') return true
     return false
   }
@@ -364,6 +375,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     }
   }
 
+  numberRound (num: number) {
+    return Math.round(num)
+  }
+
   onRowEditInit (rowData: interfacePremiumStoragePlan) {
     // this.updateStoragePlan = rowData
   }
@@ -375,14 +390,15 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     )
     if (res === false) return
     const body = {
-      planId: rowData.id
+      planId: rowData.id,
+      tubePayId: rowData.tubePayId
     }
     console.log('ICEICE calling onRowDelete function with data: ', body)
     this.deletePlan(body).subscribe(resp => {
       console.log('ICEICE deletePlan response is: ', resp)
       if (resp['success']) {
         this.subscribeConfigAndPlans()
-        this.notifier.success('Plan successfully deleted')
+        setTimeout(() => { this.notifier.success('Plan successfully deleted') } , 1000) /* Wait 1 sec for subscription */
       } else {
         this.notifier.error(`Something went wrong deleting the plan, reload and try again`)
       }
@@ -398,11 +414,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     console.log('ICEICE calling onRowEditSave function with data: ', rowData)
     const body = {
       id: rowData.id,
+      tubePayId: rowData.tubePayId,
       name: rowData.name,
-      quota: rowData.quota,
-      dailyQuota: rowData.dailyQuota,
+      quota: rowData.quota * 1073741824, /* to bytes */
+      dailyQuota: rowData.dailyQuota * 1073741824, /* to bytes */
       priceTube: rowData.priceTube,
       duration: rowData.duration,
+      expiration: rowData.expiration,
       active: rowData.active
     }
     console.log('ICEICE calling onRowEditSave function with body: ', body)

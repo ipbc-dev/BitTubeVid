@@ -2,10 +2,8 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Notifier, ServerService, RestExtractor, User, UserService } from '@app/core'
 import { environment } from '../../../../environments/environment'
-// import { UserUpdateMe } from '../../../../../../shared/models/users'
-import { AuthService } from '../../../core'
-import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { I18n } from '@ngx-translate/i18n-polyfill'
+import { FormValidatorService, FormReactive } from '@app/shared/shared-forms'
 import { forkJoin, Subject, Subscription } from 'rxjs'
 import { SelectItem } from 'primeng/api'
 import { first, catchError } from 'rxjs/operators'
@@ -79,8 +77,13 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
         this.userPremiumPlan = myPlan['data'][myPlan['data'].length - 1]
-        this.chosenPlan = this.userPremiumPlan
-        // this.form.value['storagePlan'] = this.userPremiumPlan
+        if (plans['success']) {
+          plans['plans'].forEach((plan: any) => {
+            if (plan.id == this.userPremiumPlan.planId) {
+              this.chosenPlan = plan
+            }
+          })
+        }
       } else {
         this.userHavePremium = false
         this.userPremiumPlan = {}
@@ -130,6 +133,10 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
+  getTubePayId () {
+    return this.chosenPlan.tubePayId
+  }
+
   havePremiumStorage () {
     return this.havePremium
   }
@@ -144,7 +151,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     if (chosenPlanId > -1) {
       this.storagePlans.forEach((plan: any) => {
         console.log('ICEICE chacking plan: ', plan)
-        if (plan.id === chosenPlanId) {
+        if (plan.id == chosenPlanId) {
           this.chosenPlan = plan
         }
       })
@@ -190,12 +197,14 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     let confirmedData = true
     let chosenPlanDuration: any
     let chosenPlanPrice: any
+    let chosenPlanTubePayId: any
 
     // console.log('Chosen plan is: ', chosenPlanId)
     this.storagePlans.forEach((plan: any) => {
       if (plan.id === chosenPlanId) {
         chosenPlanDuration = plan.duration
         chosenPlanPrice = plan.priceTube
+        chosenPlanTubePayId = plan.tubePayId
       }
     })
     /* Check if user wants to extend more than a year (not allowed) */
@@ -215,7 +224,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       const postBody = {
         planId: chosenPlanId,
         duration: chosenPlanDuration,
-        priceTube: chosenPlanPrice
+        priceTube: chosenPlanPrice,
+        tubePayId: chosenPlanTubePayId
       }
       const postResponse = this.paymentPost(postBody)
         .subscribe(
@@ -227,6 +237,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
           err => this.notifier.error(err.message)
         )
+      console.log('ICEICE postResponse is: ', postResponse)
     }
   }
 

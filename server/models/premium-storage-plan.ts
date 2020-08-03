@@ -32,24 +32,35 @@ export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
   duration!: number;
 
+  @Column({ type: DataType.DECIMAL(32), allowNull: false })
+  expiration!: number;
+
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   active!: boolean;
 
+  @Column({ type: DataType.STRING(15), allowNull: false, unique: true })
+  tubePayId!: string;
+
+  @Column({ type: DataType.STRING, allowNull: false, unique: true })
+  tubePaySecret!: string;
+
+  @Column({ type: DataType.STRING, allowNull: false })
+  tubePayOwnerContentName!: string;
+
   static async getPlans () {
     return await PremiumStoragePlanModel.findAll({
-      order: [ [ 'quota', "ASC" ], [ 'duration', "ASC" ] ]
+      order: [ [ 'quota', "ASC" ], [ 'duration', "ASC" ], [ 'expiration', "ASC" ] ]
     })
   }
 
-  static async addPlan (name: string, quota: number, dailyQuota: number, duration: number, priceTube: number, active: boolean) {
+  static async addPlan (name: string, quota: number, dailyQuota: number, duration: number, expiration: number, priceTube: number, active: boolean, tubePayId: string, tubePaySecret: string, tubePayOwnerContentName: string) {
     return await PremiumStoragePlanModel.create(
-      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube, active: active })
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, expiration: expiration, priceTube: priceTube, active: active, tubePayId: tubePayId, tubePaySecret: tubePaySecret, tubePayOwnerContentName: tubePayOwnerContentName })
   }
 
-  // eslint-disable-next-line max-len
-  static async updatePlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, priceTube: number, active: boolean) {
+  static async updatePlan (id: number, name: string, quota: number, dailyQuota: number, duration: number, expiration: number, priceTube: number, active: boolean) {
     return await PremiumStoragePlanModel.update(
-      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, priceTube: priceTube, active: active },
+      { name: name, quota: quota, dailyQuota: dailyQuota, duration: duration, expiration: expiration, priceTube: priceTube, active: active },
       { where: { id: id } })
   }
 

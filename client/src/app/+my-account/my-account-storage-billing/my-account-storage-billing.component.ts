@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
+import { Notifier, RestPagination, RestExtractor } from '@app/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
-import { RestPagination, RestTable, RestExtractor, Notifier } from '@app/core'
 import { SortMeta } from 'primeng/api'
 import { environment } from '../../../environments/environment'
 import { forkJoin, Observable, Subject, Subscription } from 'rxjs'

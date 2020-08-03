@@ -5,5 +5,7 @@ export interface interfacePremiumStoragePlan {
   dailyQuota: number
   priceTube: number
   duration: number
+  expiration: number
   active: boolean
+  tubePayId: string
 }

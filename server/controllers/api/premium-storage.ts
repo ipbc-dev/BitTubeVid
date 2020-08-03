@@ -1,13 +1,14 @@
 import * as express from 'express'
 import {
   asyncMiddleware,
-  authenticate,
-  paginationValidator,
-  setDefaultSort,
-  setDefaultPagination
+  authenticate
+  // paginationValidator,
+  // setDefaultSort,
+  // setDefaultPagination
 
 } from '../../middlewares'
 // import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
+import { WEBSERVER } from '../../initializers/constants'
 import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
@@ -20,7 +21,9 @@ import { userPremiumStoragePaymentModel } from '../../models/user-premium-storag
 // import { UserModel } from '../../models/account/user'
 // import { updateUser } from '@shared/extra-utils/users/users'
 // import { deleteUserToken } from 'server/lib/oauth-model'
-
+const fetch = require('node-fetch')
+const Headers = fetch.Headers
+const firebaseApiUrl = 'http://localhost:5001/bittube-airtime-extension/us-central1/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
@@ -84,13 +87,35 @@ async function adminUpdatePlan (req: express.Request, res: express.Response) {
         body.quota === undefined ||
         body.dailyQuota === undefined ||
         body.duration === undefined ||
+        body.expiration === undefined ||
         body.priceTube === undefined ||
         body.active === undefined
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
-    return res.json({ success: true, added: updateResult })
+    /* Building body */
+    const apiReqBody = {
+      id: body.tubePayId,
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization,
+      title: body.name,
+      validFor: parseInt(body.expiration),
+      price: body.priceTube
+    }
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeModifyProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(apiReqBody)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
+    if (firebaseApiResult.success) {
+      const updateResult = await PremiumStoragePlanModel.updatePlan(body.id, body.name, body.quota, body.dailyQuota, body.duration, body.expiration, body.priceTube, body.active)
+      return res.json({ success: true, added: updateResult })
+    } else {
+      return res.json({ success: false, error: firebaseApiResult })
+    }
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -104,13 +129,41 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       body.quota === undefined ||
       body.dailyQuota === undefined ||
       body.duration === undefined ||
+      body.expiration === undefined ||
       body.priceTube === undefined ||
       body.active === undefined
     ) {
       throw Error(`Undefined or invalid body parameters ${body}`)
     }
-    const addResult = await PremiumStoragePlanModel.addPlan(body.name, body.quota, body.dailyQuota, body.duration, body.priceTube, body.active)
-    return res.json({ success: true, added: addResult })
+    /* Adding some more info to body */
+    body.host = WEBSERVER.URL
+    body.auth = req.headers.authorization
+
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeAddProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(body)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
+    if (firebaseApiResult.success) {
+      const addResult = await PremiumStoragePlanModel.addPlan(
+        body.name,
+        body.quota,
+        body.dailyQuota,
+        body.duration,
+        body.expiration,
+        body.priceTube,
+        body.active,
+        firebaseApiResult.product.id,
+        firebaseApiResult.product.secret,
+        firebaseApiResult.product.ownerContentName
+      )
+      return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
+    } else {
+      return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' })
+    }
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -120,12 +173,29 @@ async function adminDeletePlan (req: express.Request, res: express.Response) {
   try {
     const body = req.body
     if (body.planId === undefined ||
-      typeof (body.planId) !== 'number') {
-      throw Error(`Undefined or invalid id ${body.planId}`)
+      typeof (body.planId) !== 'number' ||
+      body.tubePayId === undefined ||
+      typeof (body.tubePayId) !== 'string'
+    ) {
+      throw Error(`Undefined or invalid id ${body.planId} - ${body.tubePayId}`)
     }
+    /* Building body */
+    const apiReqBody = {
+      id: body.tubePayId,
+      host: WEBSERVER.URL,
+      auth: req.headers.authorization
+    }
+    const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeDeleteProduct', {
+      method: 'post',
+      headers: new Headers({
+        'Content-Type': 'application/json'
+      }),
+      body: JSON.stringify(apiReqBody)
+    })
+    const firebaseApiResult = await firebaseApiRes.json()
     const deleteResult = await PremiumStoragePlanModel.removePlan(body.planId)
     const deleteResponse = deleteResult// .map(del => del.toJSON())
-    return res.json({ success: true, deleted: deleteResponse })
+    return res.json({ success: true, deleted: deleteResponse, firebase: firebaseApiResult })
   } catch (err) {
     return res.json({ success: false, error: err.message })
   }
@@ -147,6 +217,22 @@ async function getPlans (req: express.Request, res: express.Response) {
   try {
     const plansResult = await PremiumStoragePlanModel.getPlans()
     const plansResponse = plansResult.map(plan => plan.toJSON())
+    // console.log('ICEICE WEBSERVER are: ', WEBSERVER)
+    // console.log('ICEICE req is: ', req)
+    /* body */
+    // const body = {
+    //   host: WEBSERVER.URL,
+    //   auth: req.headers.authorization
+    // }
+
+    // const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeGetAllProducts', {
+    //   method: 'post',
+    //   headers: new Headers({
+    //     'Content-Type': 'application/json'
+    //   }),
+    //   body: JSON.stringify(body)
+    // })
+    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
     return res.json({ success: true, plans: plansResponse })
   } catch (err) {
     return res.json({ success: false, error: err.message })
@@ -277,32 +363,53 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         dailyQuota: chosenPlan.dailyQuota
       }
     }
-    /* Adding payment record to DB */
-    const paymentResult = await userPremiumStoragePaymentModel.create(createData)
-    const paymentResponse = paymentResult.toJSON()
+    /* Building body */
+    // console.log('ICEICE body is: ', body)
+    // const apiReqBody = {
+    //   id: body.tubePayId,
+    //   host: WEBSERVER.URL,
+    //   auth: req.headers.authorization
+    // }
+    // const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubePurchaseProduct', {
+    //   method: 'post',
+    //   headers: new Headers({
+    //     'Content-Type': 'application/json'
+    //   }),
+    //   body: JSON.stringify(apiReqBody)
+    // })
+    // const firebaseApiResult = await firebaseApiRes.json()
+    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
+    const firebaseApiResult = { success: true }
+    if (firebaseApiResult.success) {
+      /* Adding payment record to DB */
+      const paymentResult = await userPremiumStoragePaymentModel.create(createData)
+      const paymentResponse = paymentResult.toJSON()
 
-    /* Set user Quota && dailyQuota in user table */
-    userToUpdate.videoQuota = chosenPlan.quota
-    userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
-    userToUpdate.premiumStorageActive = true
+      /* Set user Quota && dailyQuota in user table */
+      userToUpdate.videoQuota = chosenPlan.quota
+      userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
+      userToUpdate.premiumStorageActive = true
 
-    const updateUserResult = await userToUpdate.save()
-    // Destroy user token to refresh rights (maybe needed?)
-    // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
-    // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
+      const updateUserResult = await userToUpdate.save()
+      // Destroy user token to refresh rights (maybe needed?)
+      // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
+      // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
 
-    if (updateUserResult === undefined && updateUserResult === null) {
-      throw new Error('Something went wrong updating user quota and dailyQuota')
-    } else {
-      /* Deactivate previous plan after insert the new one */
-      if (userActualPlan !== null) {
-        const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
-        if (deactivatePreviousPlan[0] !== 1) {
-          return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
+      if (updateUserResult === undefined && updateUserResult === null) {
+        throw new Error('Something went wrong updating user quota and dailyQuota')
+      } else {
+        /* Deactivate previous plan after insert the new one */
+        if (userActualPlan !== null) {
+          const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
+          if (deactivatePreviousPlan[0] !== 1) {
+            return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
+          }
         }
       }
+      return res.json({ success: true, extended: extended, data: paymentResponse })
+    } else {
+      return res.json({ success: false, error: firebaseApiResult })
     }
-    return res.json({ success: true, extended: extended, data: paymentResponse })
 
   } catch (err) {
     return res.json({ success: false, error: err.message })
