@@ -17,7 +17,7 @@
             <span class="text-muted">{{ videoAbuse.reporterAccount.nameWithHost }}</span>
           </div>
         </a>
-        <a [routerLink]="[ '/admin/moderation/video-abuses/list' ]" [queryParams]="{ 'search': 'reportee:&quot;' + videoAbuse.reporterAccount.displayName + '&quot;' }" class="ml-auto text-muted video-details-links" i18n>
+        <a [routerLink]="[ '/admin/moderation/video-abuses/list' ]" [queryParams]="{ 'search': 'reporter:&quot;' + videoAbuse.reporterAccount.displayName + '&quot;' }" class="ml-auto text-muted video-details-links" i18n>
           {videoAbuse.countReportsForReporter, plural, =1 {1 report} other {{{ videoAbuse.countReportsForReporter }} reports}}<span class="ml-1 glyphicon glyphicon-flag"></span>
         </a>
       </span>
@@ -57,6 +57,22 @@
       <span class="col-9 moderation-expanded-text" [innerHTML]="videoAbuse.reasonHtml"></span>
     </div>
 
+    <div *ngIf="getPredefinedReasons()" class="mt-2 d-flex">
+      <span class="col-3"></span>
+      <span class="col-9">
+        <a [routerLink]="[ '/admin/moderation/video-abuses/list' ]" [queryParams]="{ 'search': 'tag:' + reason.id  }" class="chip rectangular bg-secondary text-light" *ngFor="let reason of getPredefinedReasons()">
+          <div>{{ reason.label }}</div>
+        </a>
+      </span>
+    </div>
+
+    <div *ngIf="videoAbuse.startAt" class="mt-2 d-flex">
+      <span class="col-3 moderation-expanded-label" i18n>Reported part</span>
+      <span class="col-9">
+        {{ startAt }}<ng-container *ngIf="videoAbuse.endAt"> - {{ endAt }}</ng-container>
+      </span>
+    </div>
+
     <div class="mt-3 d-flex" *ngIf="videoAbuse.moderationComment">
       <span class="col-3 moderation-expanded-label" i18n>Note</span>
       <span class="col-9 moderation-expanded-text" [innerHTML]="videoAbuse.moderationCommentHtml"></span>
@@ -69,7 +85,7 @@
     <div class="screenratio">
       <div *ngIf="videoAbuse.video.deleted || videoAbuse.video.blacklisted">
         <span i18n *ngIf="videoAbuse.video.deleted">The video was deleted</span>
-        <span i18n *ngIf="!videoAbuse.video.deleted">The video was blacklisted</span>
+        <span i18n *ngIf="!videoAbuse.video.deleted">The video was blocked</span>
       </div>
       <div *ngIf="!videoAbuse.video.deleted && !videoAbuse.video.blacklisted" [innerHTML]="videoAbuse.embedHtml"></div>
     </div>

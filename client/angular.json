@@ -13,6 +13,10 @@
           "baseHref": "/client/en-US/"
         },
         "locales": {
+          "ar": {
+            "translation": "src/locale/angular.ar.xlf",
+            "baseHref": "/client/ar/"
+          },
           "hu": {
             "translation": "src/locale/angular.hu-HU.xlf",
             "baseHref": "/client/hu-HU/"
@@ -40,6 +44,10 @@
           "es": {
             "translation": "src/locale/angular.es-ES.xlf",
             "baseHref": "/client/es-ES/"
+          },
+          "oc": {
+            "translation": "src/locale/angular.oc.xlf",
+            "baseHref": "/client/oc/"
           },
           "pt": {
             "translation": "src/locale/angular.pt-BR.xlf",
@@ -100,6 +108,14 @@
           "it": {
             "translation": "src/locale/angular.it-IT.xlf",
             "baseHref": "/client/it-IT/"
+          },
+          "vi": {
+            "translation": "src/locale/angular.vi-VN.xlf",
+            "baseHref": "/client/vi-VN/"
+          },
+          "kab": {
+            "translation": "src/locale/angular.kab.xlf",
+            "baseHref": "/client/kab/"
           }
         }
       },
@@ -187,6 +203,9 @@
                 }
               ]
             },
+            "ar": {
+              "localize": [ "ar" ]
+            },
             "hu-HU": {
               "localize": [ "hu" ]
             },
@@ -207,6 +226,9 @@
             },
             "es-ES": {
               "localize":  [ "es" ]
+            },
+            "oc": {
+              "localize":  [ "oc" ]
             },
             "pt-BR": {
               "localize":  [ "pt" ]
@@ -252,6 +274,12 @@
             },
             "it-IT": {
               "localize":  [ "it" ]
+            },
+            "vi-VN": {
+              "localize":  [ "vi" ]
+            },
+            "kab": {
+              "localize":  [ "kab" ]
             }
           }
         },
@@ -320,7 +348,7 @@
               "i18nBaseFile": "angular",
               "defaultLanguage": "en-US",
               "languages": [
-                "ar-001",
+                "ar",
                 "ca-ES",
                 "cs-CZ",
                 "da-DK",
@@ -340,6 +368,7 @@
                 "it-IT",
                 "ja-JP",
                 "jbo",
+                "kab",
                 "ko-KR",
                 "lt-LT",
                 "nb-NO",

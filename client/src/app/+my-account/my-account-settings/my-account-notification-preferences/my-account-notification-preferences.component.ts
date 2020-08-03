@@ -1,11 +1,10 @@
-import { Component, Input, OnInit } from '@angular/core'
-import { User } from '@app/shared'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { Subject } from 'rxjs'
-import { UserNotificationSetting, UserNotificationSettingValue, UserRight } from '../../../../../../shared'
-import { Notifier, ServerService } from '@app/core'
 import { debounce } from 'lodash-es'
-import { UserNotificationService } from '@app/shared/users/user-notification.service'
+import { Subject } from 'rxjs'
+import { Component, Input, OnInit } from '@angular/core'
+import { Notifier, ServerService, User } from '@app/core'
+import { UserNotificationService } from '@app/shared/shared-main'
+import { I18n } from '@ngx-translate/i18n-polyfill'
+import { UserNotificationSetting, UserNotificationSettingValue, UserRight } from '@shared/models'
 
 @Component({
   selector: 'my-account-notification-preferences',
@@ -35,8 +34,8 @@ export class MyAccountNotificationPreferencesComponent implements OnInit {
       newVideoFromSubscription: this.i18n('New video from your subscriptions'),
       newCommentOnMyVideo: this.i18n('New comment on your video'),
       videoAbuseAsModerator: this.i18n('New video abuse'),
-      videoAutoBlacklistAsModerator: this.i18n('Video auto-blacklisted waiting review'),
-      blacklistOnMyVideo: this.i18n('One of your video is blacklisted/unblacklisted'),
+      videoAutoBlacklistAsModerator: this.i18n('Video blocked automatically waiting review'),
+      blacklistOnMyVideo: this.i18n('One of your video is blocked/unblocked'),
       myVideoPublished: this.i18n('Video published (after transcoding/scheduled update)'),
       myVideoImportFinished: this.i18n('Video import finished'),
       newUserRegistration: this.i18n('A new user registered on your instance'),

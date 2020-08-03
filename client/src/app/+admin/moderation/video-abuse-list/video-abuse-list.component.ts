@@ -1,23 +1,16 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core'
-import { Account } from '@app/shared/account/account.model'
-import { Notifier } from '@app/core'
 import { SortMeta } from 'primeng/api'
-import { VideoAbuse, VideoAbuseState } from '../../../../../../shared'
-import { RestPagination, RestTable, VideoAbuseService, VideoBlacklistService } from '../../../shared'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { DropdownAction } from '../../../shared/buttons/action-dropdown.component'
-import { ConfirmService } from '../../../core/index'
-import { ModerationCommentModalComponent } from './moderation-comment-modal.component'
-import { Video } from '../../../shared/video/video.model'
-import { MarkdownService } from '@app/shared/renderer'
-import { Actor } from '@app/shared/actor/actor.model'
-import { buildVideoLink, buildVideoEmbed } from 'src/assets/player/utils'
-import { getAbsoluteAPIUrl } from '@app/shared/misc/utils'
-import { DomSanitizer } from '@angular/platform-browser'
-import { BlocklistService } from '@app/shared/blocklist'
-import { VideoService } from '@app/shared/video/video.service'
-import { ActivatedRoute, Params, Router } from '@angular/router'
 import { filter } from 'rxjs/operators'
+import { buildVideoEmbed, buildVideoLink } from 'src/assets/player/utils'
+import { environment } from 'src/environments/environment'
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core'
+import { DomSanitizer } from '@angular/platform-browser'
+import { ActivatedRoute, Params, Router } from '@angular/router'
+import { ConfirmService, MarkdownService, Notifier, RestPagination, RestTable } from '@app/core'
+import { Account, Actor, DropdownAction, Video, VideoService } from '@app/shared/shared-main'
+import { BlocklistService, VideoAbuseService, VideoBlockService } from '@app/shared/shared-moderation'
+import { I18n } from '@ngx-translate/i18n-polyfill'
+import { VideoAbuse, VideoAbuseState } from '@shared/models'
+import { ModerationCommentModalComponent } from './moderation-comment-modal.component'
 
 export type ProcessedVideoAbuse = VideoAbuse & {
   moderationCommentHtml?: string,
@@ -53,7 +46,7 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
     private videoAbuseService: VideoAbuseService,
     private blocklistService: BlocklistService,
     private videoService: VideoService,
-    private videoBlacklistService: VideoBlacklistService,
+    private videoBlocklistService: VideoBlockService,
     private confirmService: ConfirmService,
     private i18n: I18n,
     private markdownRenderer: MarkdownService,
@@ -101,13 +94,13 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
           isDisplayed: videoAbuse => !videoAbuse.video.deleted
         },
         {
-          label: this.i18n('Blacklist video'),
+          label: this.i18n('Block video'),
           isDisplayed: videoAbuse => !videoAbuse.video.deleted && !videoAbuse.video.blacklisted,
           handler: videoAbuse => {
-            this.videoBlacklistService.blacklistVideo(videoAbuse.video.id, undefined, true)
+            this.videoBlocklistService.blockVideo(videoAbuse.video.id, undefined, true)
               .subscribe(
                 () => {
-                  this.notifier.success(this.i18n('Video blacklisted.'))
+                  this.notifier.success(this.i18n('Video blocked.'))
 
                   this.updateVideoAbuseState(videoAbuse, VideoAbuseState.ACCEPTED)
                 },
@@ -117,13 +110,13 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
           }
         },
         {
-          label: this.i18n('Unblacklist video'),
+          label: this.i18n('Unblock video'),
           isDisplayed: videoAbuse => !videoAbuse.video.deleted && videoAbuse.video.blacklisted,
           handler: videoAbuse => {
-            this.videoBlacklistService.removeVideoFromBlacklist(videoAbuse.video.id)
+            this.videoBlocklistService.unblockVideo(videoAbuse.video.id)
               .subscribe(
                 () => {
-                  this.notifier.success(this.i18n('Video unblacklisted.'))
+                  this.notifier.success(this.i18n('Video unblocked.'))
 
                   this.updateVideoAbuseState(videoAbuse, VideoAbuseState.ACCEPTED)
                 },
@@ -203,10 +196,10 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
     this.initialize()
 
     this.route.queryParams
-      .pipe(filter(params => params.search !== undefined && params.search !== null))
       .subscribe(params => {
-        this.search = params.search
-        this.setTableFilter(params.search)
+        this.search = params.search || ''
+
+        this.setTableFilter(this.search)
         this.loadData()
       })
   }
@@ -236,6 +229,7 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
   setQueryParams (search: string) {
     const queryParams: Params = {}
     if (search) Object.assign(queryParams, { search })
+
     this.router.navigate([ '/admin/moderation/video-abuses/list' ], { queryParams })
   }
 
@@ -259,12 +253,15 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
   }
 
   getVideoEmbed (videoAbuse: VideoAbuse) {
-    const absoluteAPIUrl = getAbsoluteAPIUrl()
-    const embedUrl = buildVideoLink({
-      baseUrl: absoluteAPIUrl + '/videos/embed/' + videoAbuse.video.uuid,
-      warningTitle: false
-    })
-    return buildVideoEmbed(embedUrl)
+    return buildVideoEmbed(
+      buildVideoLink({
+        baseUrl: `${environment.embedUrl}/videos/embed/${videoAbuse.video.uuid}`,
+        title: false,
+        warningTitle: false,
+        startTime: videoAbuse.startAt,
+        stopTime: videoAbuse.endAt
+      })
+    )
   }
 
   switchToDefaultAvatar ($event: Event) {
@@ -292,7 +289,6 @@ export class VideoAbuseListComponent extends RestTable implements OnInit, AfterV
 
         err => this.notifier.error(err.message)
       )
-
   }
 
   protected loadData () {

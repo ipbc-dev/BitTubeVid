@@ -1,11 +1,10 @@
 import { Routes } from '@angular/router'
-import { UserRight } from '../../../../../shared'
-import { UserRightGuard } from '@app/core'
-import { VideoAbuseListComponent } from '@app/+admin/moderation/video-abuse-list'
-import { VideoBlacklistListComponent } from '@app/+admin/moderation/video-blacklist-list'
-import { VideoAutoBlacklistListComponent } from '@app/+admin/moderation/video-auto-blacklist-list'
-import { ModerationComponent } from '@app/+admin/moderation/moderation.component'
 import { InstanceAccountBlocklistComponent, InstanceServerBlocklistComponent } from '@app/+admin/moderation/instance-blocklist'
+import { ModerationComponent } from '@app/+admin/moderation/moderation.component'
+import { VideoAbuseListComponent } from '@app/+admin/moderation/video-abuse-list'
+import { VideoBlockListComponent } from '@app/+admin/moderation/video-block-list'
+import { UserRightGuard } from '@app/core'
+import { UserRight } from '@shared/models'
 
 export const ModerationRoutes: Routes = [
   {
@@ -23,45 +22,44 @@ export const ModerationRoutes: Routes = [
         pathMatch: 'full'
       },
       {
-        path: 'video-blacklist',
-        redirectTo: 'video-blacklist/list',
-        pathMatch: 'full'
-      },
-      {
-        path: 'video-auto-blacklist',
-        redirectTo: 'video-auto-blacklist/list',
-        pathMatch: 'full'
-      },
-      {
         path: 'video-abuses/list',
         component: VideoAbuseListComponent,
         canActivate: [ UserRightGuard ],
         data: {
           userRight: UserRight.MANAGE_VIDEO_ABUSES,
           meta: {
-            title: 'Video abuses list'
+            title: 'Video reports'
           }
         }
+      },
+      {
+        path: 'video-blacklist',
+        redirectTo: 'video-blocks/list',
+        pathMatch: 'full'
+      },
+      {
+        path: 'video-auto-blacklist',
+        redirectTo: 'video-blocks/list',
+        pathMatch: 'full'
       },
       {
         path: 'video-auto-blacklist/list',
-        component: VideoAutoBlacklistListComponent,
-        canActivate: [ UserRightGuard ],
-        data: {
-          userRight: UserRight.MANAGE_VIDEO_BLACKLIST,
-          meta: {
-            title: 'Auto-blacklisted videos'
-          }
-        }
+        redirectTo: 'video-blocks/list',
+        pathMatch: 'full'
       },
       {
-        path: 'video-blacklist/list',
-        component: VideoBlacklistListComponent,
+        path: 'video-blacklist',
+        redirectTo: 'video-blocks/list',
+        pathMatch: 'full'
+      },
+      {
+        path: 'video-blocks/list',
+        component: VideoBlockListComponent,
         canActivate: [ UserRightGuard ],
         data: {
           userRight: UserRight.MANAGE_VIDEO_BLACKLIST,
           meta: {
-            title: 'Blacklisted videos'
+            title: 'Videos blocked'
           }
         }
       },

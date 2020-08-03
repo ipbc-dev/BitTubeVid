@@ -87,6 +87,11 @@ function checkInitialConfig (server: ServerInfo, data: CustomConfig) {
   expect(data.followings.instance.autoFollowBack.enabled).to.be.false
   expect(data.followings.instance.autoFollowIndex.enabled).to.be.false
   expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('')
+
+  expect(data.broadcastMessage.enabled).to.be.false
+  expect(data.broadcastMessage.level).to.equal('info')
+  expect(data.broadcastMessage.message).to.equal('')
+  expect(data.broadcastMessage.dismissable).to.be.false
 }
 
 function checkUpdatedConfig (data: CustomConfig) {
@@ -155,6 +160,11 @@ function checkUpdatedConfig (data: CustomConfig) {
   expect(data.followings.instance.autoFollowBack.enabled).to.be.true
   expect(data.followings.instance.autoFollowIndex.enabled).to.be.true
   expect(data.followings.instance.autoFollowIndex.indexUrl).to.equal('https://updated.example.com')
+
+  expect(data.broadcastMessage.enabled).to.be.true
+  expect(data.broadcastMessage.level).to.equal('error')
+  expect(data.broadcastMessage.message).to.equal('super bad message')
+  expect(data.broadcastMessage.dismissable).to.be.true
 }
 
 describe('Test config', function () {
@@ -327,6 +337,24 @@ describe('Test config', function () {
       },
       premium_storage: {
         enabled: false
+      },
+      broadcastMessage: {
+        enabled: true,
+        level: 'error',
+        message: 'super bad message',
+        dismissable: true
+      },
+      search: {
+        remoteUri: {
+          anonymous: true,
+          users: true
+        },
+        searchIndex: {
+          enabled: true,
+          url: 'https://search.joinpeertube.org',
+          disableLocalSearch: true,
+          isDefaultSearch: true
+        }
       }
     }
     await updateCustomConfig(server.url, server.accessToken, newCustomConfig)

@@ -3,10 +3,8 @@ import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { ServerService } from '@app/core/server/server.service'
 import { Notifier } from '@app/core'
 import { ConfirmService } from '@app/core/confirm'
-import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
 import { interfacePremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { RestExtractor } from '../../../shared'
+import { RestExtractor } from '@app/core/rest'
 import { ServerConfig } from '@shared/models'
 import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
 import { I18n } from '@ngx-translate/i18n-polyfill'
@@ -14,6 +12,7 @@ import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
 import { catchError } from 'rxjs/operators'
 import { ViewportScroller } from '@angular/common'
+import { CustomConfigValidatorsService, FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
 import { HttpClient } from '@angular/common/http'
 import { environment } from '../../../../environments/environment'
@@ -236,6 +235,24 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       },
       premium_storage: {
         enabled: null
+      },
+      broadcastMessage: {
+        enabled: null,
+        level: null,
+        dismissable: null,
+        message: null
+      },
+      search: {
+        remoteUri: {
+          users: null,
+          anonymous: null
+        },
+        searchIndex: {
+          enabled: null,
+          url: this.customConfigValidatorsService.SEARCH_INDEX_URL,
+          disableLocalSearch: null,
+          isDefaultSearch: null
+        }
       }
     }
 
@@ -449,6 +466,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   isSignupEnabled () {
     return this.form.value['signup']['enabled'] === true
+  }
+
+  isSearchIndexEnabled () {
+    return this.form.value['search']['searchIndex']['enabled'] === true
   }
 
   isAutoFollowIndexEnabled () {

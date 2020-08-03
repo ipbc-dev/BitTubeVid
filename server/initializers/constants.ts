@@ -1,4 +1,5 @@
 import { join } from 'path'
+import { randomBytes } from 'crypto'
 import { JobType, VideoRateType, VideoResolution, VideoState } from '../../shared/models'
 import { ActivityPubActorType } from '../../shared/models/activitypub'
 import { FollowState } from '../../shared/models/actors'
@@ -14,7 +15,7 @@ import { CONFIG, registerConfigChangedHandler } from './config'
 
 // ---------------------------------------------------------------------------
 
-const LAST_MIGRATION_VERSION = 510
+const LAST_MIGRATION_VERSION = 515
 
 // ---------------------------------------------------------------------------
 
@@ -61,6 +62,7 @@ const SORTABLE_COLUMNS = {
 
   VIDEOS: [ 'name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending' ],
 
+  // Don't forget to update peertube-search-index with the same values
   VIDEOS_SEARCH: [ 'name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match' ],
   VIDEO_CHANNELS_SEARCH: [ 'match', 'displayName', 'createdAt' ],
 
@@ -632,7 +634,8 @@ const AUDIT_LOG_FILENAME = 'peertube-audit.log'
 const TRACKER_RATE_LIMITS = {
   INTERVAL: 60000 * 5, // 5 minutes
   ANNOUNCES_PER_IP_PER_INFOHASH: 15, // maximum announces per torrent in the interval
-  ANNOUNCES_PER_IP: 30 // maximum announces for all our torrents in the interval
+  ANNOUNCES_PER_IP: 30, // maximum announces for all our torrents in the interval
+  BLOCK_IP_LIFETIME: 60000 * 10 // 10 minutes
 }
 
 const P2P_MEDIA_LOADER_PEER_VERSION = 2
@@ -646,6 +649,15 @@ let PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 1000 * 60 * 5 // 5 minutes
 
 const DEFAULT_THEME_NAME = 'instance-default'
 const DEFAULT_USER_THEME_NAME = 'instance-default'
+
+// ---------------------------------------------------------------------------
+
+const SEARCH_INDEX = {
+  ROUTES: {
+    VIDEOS: '/api/v1/search/videos',
+    VIDEO_CHANNELS: '/api/v1/search/video-channels'
+  }
+}
 
 // ---------------------------------------------------------------------------
 
@@ -699,11 +711,20 @@ registerConfigChangedHandler(() => {
 
 // ---------------------------------------------------------------------------
 
+const FILES_CONTENT_HASH = {
+  MANIFEST: generateContentHash(),
+  FAVICON: generateContentHash(),
+  LOGO: generateContentHash()
+}
+
+// ---------------------------------------------------------------------------
+
 export {
   WEBSERVER,
   API_VERSION,
   PEERTUBE_VERSION,
   LAZY_STATIC_PATHS,
+  SEARCH_INDEX,
   HLS_REDUNDANCY_DIRECTORY,
   P2P_MEDIA_LOADER_PEER_VERSION,
   AVATARS_SIZE,
@@ -780,8 +801,10 @@ export {
   VIDEO_PLAYLIST_PRIVACIES,
   PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME,
   ASSETS_PATH,
+  FILES_CONTENT_HASH,
   loadLanguages,
-  buildLanguages
+  buildLanguages,
+  generateContentHash
 }
 
 // ---------------------------------------------------------------------------
@@ -882,4 +905,8 @@ function buildLanguages () {
   languages['el'] = 'Greek'
 
   return languages
+}
+
+function generateContentHash () {
+  return randomBytes(20).toString('hex')
 }

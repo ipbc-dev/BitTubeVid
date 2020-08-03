@@ -41,6 +41,12 @@ post_build_hook
 if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
     if [ ! -z ${1+x} ] && [ "$1" == "--light-hu" ]; then
         languages=(["hu"]="hu-HU")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-ar" ]; then
+        languages=(["ar"]="ar")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-vi" ]; then
+        languages=(["vi"]="vi-VN")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-kab" ]; then
+        languages=(["kab"]="kab")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-th" ]; then
         languages=(["th"]="th-TH")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-fi" ]; then
@@ -53,6 +59,8 @@ if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
         languages=(["el"]="el-GR")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-es" ]; then
         languages=(["es"]="es-ES")
+    elif [ ! -z ${1+x} ] && [ "$1" == "--light-oc" ]; then
+        languages=(["oc"]="oc")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-pt" ]; then
         languages=(["pt"]="pt-BR")
     elif [ ! -z ${1+x} ] && [ "$1" == "--light-pt-PT" ]; then
@@ -86,6 +94,8 @@ if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
     else
         # Supported languages
         languages=(
+            ["ar"]="ar"
+            ["vi"]="vi-VN"
             ["hu"]="hu-HU"
             ["th"]="th-TH"
             ["fi"]="fi-FI"
@@ -93,6 +103,7 @@ if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
             ["gd"]="gd"
             ["el"]="el-GR"
             ["es"]="es-ES"
+            ["oc"]="oc"
             ["pt"]="pt-BR"
             ["pt-PT"]="pt-PT"
             ["sv"]="sv-SE"
@@ -108,6 +119,7 @@ if [ -z ${1+x} ] || [ "$1" != "--light" ]; then
             ["eo"]="eo"
             ["de"]="de-DE"
             ["it"]="it-IT"
+            ["kab"]="kab"
         )
     fi
 

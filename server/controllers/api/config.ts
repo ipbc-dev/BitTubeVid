@@ -77,6 +77,12 @@ async function getConfig (req: express.Request, res: express.Response) {
       remoteUri: {
         users: CONFIG.SEARCH.REMOTE_URI.USERS,
         anonymous: CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+      },
+      searchIndex: {
+        enabled: CONFIG.SEARCH.SEARCH_INDEX.ENABLED,
+        url: CONFIG.SEARCH.SEARCH_INDEX.URL,
+        disableLocalSearch: CONFIG.SEARCH.SEARCH_INDEX.DISABLE_LOCAL_SEARCH,
+        isDefaultSearch: CONFIG.SEARCH.SEARCH_INDEX.IS_DEFAULT_SEARCH
       }
     },
     plugin: {
@@ -177,6 +183,12 @@ async function getConfig (req: express.Request, res: express.Response) {
 
     premium_storage: {
       enabled: CONFIG.PREMIUM_STORAGE.ENABLED
+    },
+    broadcastMessage: {
+      enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,
+      message: CONFIG.BROADCAST_MESSAGE.MESSAGE,
+      level: CONFIG.BROADCAST_MESSAGE.LEVEL,
+      dismissable: CONFIG.BROADCAST_MESSAGE.DISMISSABLE
     }
   }
 
@@ -443,6 +455,24 @@ function customConfig (): CustomConfig {
     },
     premium_storage: {
       enabled: CONFIG.PREMIUM_STORAGE.ENABLED
+    },
+    broadcastMessage: {
+      enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,
+      message: CONFIG.BROADCAST_MESSAGE.MESSAGE,
+      level: CONFIG.BROADCAST_MESSAGE.LEVEL,
+      dismissable: CONFIG.BROADCAST_MESSAGE.DISMISSABLE
+    },
+    search: {
+      remoteUri: {
+        users: CONFIG.SEARCH.REMOTE_URI.USERS,
+        anonymous: CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+      },
+      searchIndex: {
+        enabled: CONFIG.SEARCH.SEARCH_INDEX.ENABLED,
+        url: CONFIG.SEARCH.SEARCH_INDEX.URL,
+        disableLocalSearch: CONFIG.SEARCH.SEARCH_INDEX.DISABLE_LOCAL_SEARCH,
+        isDefaultSearch: CONFIG.SEARCH.SEARCH_INDEX.IS_DEFAULT_SEARCH
+      }
     }
   }
 }

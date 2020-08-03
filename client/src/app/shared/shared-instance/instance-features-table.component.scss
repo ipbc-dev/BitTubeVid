@@ -1,0 +1,40 @@
+@import '_variables';
+@import '_mixins';
+
+table {
+  font-size: 14px;
+  color: pvar(--mainForegroundColor);
+
+  .label,
+  .sub-label {
+    min-width: 330px;
+
+    &.label {
+      font-weight: $font-semibold;
+    }
+
+    &.sub-label {
+      font-weight: $font-regular;
+      padding-left: 30px;
+    }
+
+    .more-info {
+      font-style: italic;
+      font-weight: initial;
+      font-size: 14px
+    }
+  }
+
+  td {
+    vertical-align: middle;
+  }
+
+  caption {
+    caption-side: top;
+    font-size: 15px;
+    font-weight: $font-semibold;
+    color: pvar(--mainForegroundColor);
+  }
+}
+
+
