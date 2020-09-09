@@ -82,7 +82,7 @@
         </tr>
       </table>
       <div *ngFor="let plan of storagePlans" >
-        <div *ngIf="plan.tubePayId == chosenPlan.tubePayId" [attr.data-tubepay-product]="plan.tubePayId"  data-tubepay-type="html"  data-tubepay-source="http://ice.tunnel.bittube.app/my-account/premium-storage/billing" class="button-tubePay">
+        <div *ngIf="plan.tubePayId == chosenPlan.tubePayId" [attr.data-tubepay-product]="plan.tubePayId"  data-tubepay-type="peertube-premium-storage" class="button-tubePay">
           <!-- <input type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()"> -->
         </div>
       </div>

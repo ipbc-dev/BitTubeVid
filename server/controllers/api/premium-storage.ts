@@ -23,7 +23,7 @@ import { userPremiumStoragePaymentModel } from '../../models/user-premium-storag
 // import { deleteUserToken } from 'server/lib/oauth-model'
 const fetch = require('node-fetch')
 const Headers = fetch.Headers
-const firebaseApiUrl = 'http://localhost:5001/bittube-airtime-extension/us-central1/'
+const firebaseApiUrl = 'http://localhost:5000/bittube-airtime-extension-dev/us-central1/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
@@ -146,6 +146,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       }),
       body: JSON.stringify(body)
     })
+    console.log('ICEICE firebaseApiRes is: ', firebaseApiRes)
     const firebaseApiResult = await firebaseApiRes.json()
     if (firebaseApiResult.success) {
       const addResult = await PremiumStoragePlanModel.addPlan(
