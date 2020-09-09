@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PeerTube
-  version: 2.3.0
+  version: 2.4.0
   contact:
     name: PeerTube Community
     url: 'https://joinpeertube.org'
@@ -106,9 +106,9 @@ tags:
       Managing plugins installed from a local path or from NPM, or search for new ones.
     externalDocs:
       url: https://docs.joinpeertube.org/#/api-plugins
-  - name: Video Abuses
+  - name: Abuses
     description: |
-      Video abuses deal with reports of local or remote videos alike.
+      Abuses deal with reports of local or remote videos/comments/accounts alike.
   - name: Video
     description: |
       Operations dealing with listing, uploading, fetching or modifying videos.
@@ -166,7 +166,7 @@ x-tagGroups:
       - Search
   - name: Moderation
     tags:
-      - Video Abuses
+      - Abuses
       - Video Blocks
       - Account Blocks
       - Server Blocks
@@ -233,8 +233,8 @@ paths:
             })
         - lang: Shell
           source: |
-            # pip install httpie
-            http -b GET https://peertube2.cpy.re/api/v1/accounts/{name}/videos
+            ## DEPENDENCIES: jq
+            curl -s https://peertube2.cpy.re/api/v1/accounts/{name}/videos | jq
         - lang: Ruby
           source: |
             require 'net/http'
@@ -893,7 +893,7 @@ paths:
                   $ref: '#/components/schemas/NotificationSettingValue'
                 newCommentOnMyVideo:
                   $ref: '#/components/schemas/NotificationSettingValue'
-                videoAbuseAsModerator:
+                abuseAsModerator:
                   $ref: '#/components/schemas/NotificationSettingValue'
                 videoAutoBlacklistAsModerator:
                   $ref: '#/components/schemas/NotificationSettingValue'
@@ -1351,8 +1351,7 @@ paths:
       x-code-samples:
         - lang: Shell
           source: |
-            ## DEPENDENCIES: httpie, jq
-            # pip install httpie
+            ## DEPENDENCIES: jq
             USERNAME="<your_username>"
             PASSWORD="<your_password>"
             FILE_PATH="<your_file_path>"
@@ -1361,19 +1360,23 @@ paths:
 
             API_PATH="https://peertube2.cpy.re/api/v1"
             ## AUTH
-            client_id=$(http -b GET "$API_PATH/oauth-clients/local" | jq -r ".client_id")
-            client_secret=$(http -b GET "$API_PATH/oauth-clients/local" | jq -r ".client_secret")
-            token=$(http -b --form POST "$API_PATH/users/token" \
-              client_id="$client_id" client_secret="$client_secret" grant_type=password response_type=code \
-              username=$USERNAME \
-              password=$PASSWORD \
+            client_id=$(curl -s "$API_PATH/oauth-clients/local" | jq -r ".client_id")
+            client_secret=$(curl -s "$API_PATH/oauth-clients/local" | jq -r ".client_secret")
+            token=$(curl -s "$API_PATH/users/token" \
+              --data client_id="$client_id" \
+              --data client_secret="$client_secret" \
+              --data grant_type=password \
+              --data response_type=code \
+              --data username="$USERNAME" \
+              --data password="$PASSWORD" \
               | jq -r ".access_token")
             ## VIDEO UPLOAD
-            http -b --form POST "$API_PATH/videos/upload" \
-              videofile@$FILE_PATH \
-              channelId=$CHANNEL_ID \
-              name=$NAME \
-              "Authorization:Bearer $token"
+            curl -s "$API_PATH/videos/upload" \
+              -H "Authorization: Bearer $token" \
+              --max-time 600 \
+              --form videofile=@"$FILE_PATH" \
+              --form channelId=$CHANNEL_ID \
+              --form name="$NAME"
   /videos/imports:
     post:
       summary: Import a video
@@ -1471,16 +1474,47 @@ paths:
           description: HTTP or Torrent/magnetURI import not enabled
         '400':
           description: '`magnetUri` or `targetUrl` or a torrent file missing'
-  /videos/abuse:
+
+  /users/me/abuses:
     get:
-      deprecated: true
-      summary: List video abuses
+      summary: List my abuses
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+        - My User
+      parameters:
+        - name: id
+          in: query
+          description: only list the report with this id
+          schema:
+            type: integer
+        - name: state
+          in: query
+          schema:
+            $ref: '#/components/schemas/AbuseStateSet'
+        - $ref: '#/components/parameters/start'
+        - $ref: '#/components/parameters/count'
+        - $ref: '#/components/parameters/abusesSort'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Abuse'
+
+  /abuses:
+    get:
+      summary: List abuses
       security:
         - OAuth2:
           - admin
           - moderator
       tags:
-        - Video Abuses
+        - Abuses
       parameters:
         - name: id
           in: query
@@ -1491,16 +1525,7 @@ paths:
           in: query
           description: predefined reason the listed reports should contain
           schema:
-            type: string
-            enum:
-              - violentOrAbusive
-              - hatefulOrAbusive
-              - spamOrMisleading
-              - privacy
-              - rights
-              - serverRules
-              - thumbnails
-              - captions
+            $ref: '#/components/schemas/PredefinedAbuseReasons'
         - name: search
           in: query
           description: plain search that will match with video titles, reporter names and more
@@ -1508,13 +1533,8 @@ paths:
             type: string
         - name: state
           in: query
-          description: 'The video playlist privacy (Pending = `1`, Rejected = `2`, Accepted = `3`)'
           schema:
-            type: integer
-            enum:
-              - 1
-              - 2
-              - 3
+            $ref: '#/components/schemas/AbuseStateSet'
         - name: searchReporter
           in: query
           description: only list reports of a specific reporter
@@ -1535,6 +1555,23 @@ paths:
           description: only list reports of a specific video channel
           schema:
             type: string
+        - name: videoIs
+          in: query
+          description: only list blacklisted or deleted videos
+          schema:
+            type: string
+            enum:
+            - 'deleted'
+            - 'blacklisted'
+        - name: filter
+          in: query
+          description: only list account, comment or video reports
+          schema:
+            type: string
+            enum:
+            - 'video'
+            - 'comment'
+            - 'account'
         - $ref: '#/components/parameters/start'
         - $ref: '#/components/parameters/count'
         - $ref: '#/components/parameters/abusesSort'
@@ -1546,18 +1583,14 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/VideoAbuse'
-  '/videos/{id}/abuse':
+                  $ref: '#/components/schemas/Abuse'
+
     post:
-      deprecated: true
       summary: Report an abuse
       security:
         - OAuth2: []
       tags:
-        - Video Abuses
-        - Videos
-      parameters:
-        - $ref: '#/components/parameters/idOrUUID'
+        - Abuses
       requestBody:
         required: true
         content:
@@ -1570,27 +1603,34 @@ paths:
                   type: string
                   minLength: 4
                 predefinedReasons:
-                  description: Reason categories that help triage reports
-                  type: array
-                  items:
-                    type: string
-                    enum:
-                    - violentOrAbusive
-                    - hatefulOrAbusive
-                    - spamOrMisleading
-                    - privacy
-                    - rights
-                    - serverRules
-                    - thumbnails
-                    - captions
-                startAt:
-                  type: integer
-                  description: Timestamp in the video that marks the beginning of the report
-                  minimum: 0
-                endAt:
-                  type: integer
-                  description: Timestamp in the video that marks the ending of the report
-                  minimum: 0
+                  $ref: '#/components/schemas/PredefinedAbuseReasons'
+
+                video:
+                  type: object
+                  properties:
+                    id:
+                      description: Video id to report
+                      type: number
+                    startAt:
+                      type: integer
+                      description: Timestamp in the video that marks the beginning of the report
+                      minimum: 0
+                    endAt:
+                      type: integer
+                      description: Timestamp in the video that marks the ending of the report
+                      minimum: 0
+                comment:
+                  type: object
+                  properties:
+                    id:
+                      description: Comment id to report
+                      type: number
+                account:
+                  type: object
+                  properties:
+                    id:
+                      description: Account id to report
+                      type: number
               required:
                 - reason
       responses:
@@ -1598,18 +1638,16 @@ paths:
           description: successful operation
         '400':
           description: incorrect request parameters
-  '/videos/{id}/abuse/{abuseId}':
+  '/abuses/{abuseId}':
     put:
-      deprecated: true
       summary: Update an abuse
       security:
         - OAuth2:
           - admin
           - moderator
       tags:
-        - Video Abuses
+        - Abuses
       parameters:
-        - $ref: '#/components/parameters/idOrUUID'
         - $ref: '#/components/parameters/abuseId'
       requestBody:
         content:
@@ -1618,7 +1656,7 @@ paths:
               type: object
               properties:
                 state:
-                  $ref: '#/components/schemas/VideoAbuseStateSet'
+                  $ref: '#/components/schemas/AbuseStateSet'
                 moderationComment:
                   type: string
                   description: Update the report comment visible only to the moderation team
@@ -1626,24 +1664,79 @@ paths:
         '204':
           description: successful operation
         '404':
-          description: video abuse not found
+          description: abuse not found
     delete:
-      deprecated: true
       tags:
-        - Video Abuses
+        - Abuses
       summary: Delete an abuse
       security:
         - OAuth2:
             - admin
             - moderator
       parameters:
-        - $ref: '#/components/parameters/idOrUUID'
         - $ref: '#/components/parameters/abuseId'
       responses:
         '204':
           description: successful operation
         '404':
           description: block not found
+  '/abuses/{abuseId}/messages':
+    get:
+      summary: List messages of an abuse
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AbuseMessage'
+
+    post:
+      summary: Add message to an abuse
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  description: Message to send
+                  type: string
+              required:
+                - message
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: incorrect request parameters
+  '/abuses/{abuseId}/messages/{abuseMessageId}':
+    delete:
+      summary: Delete an abuse message
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+        - $ref: '#/components/parameters/abuseMessageId'
+      responses:
+        '204':
+          description: successful operation
 
   '/videos/{id}/blacklist':
     post:
@@ -3320,7 +3413,14 @@ components:
       name: abuseId
       in: path
       required: true
-      description: Video abuse id
+      description: Abuse id
+      schema:
+        type: integer
+    abuseMessageId:
+      name: abuseMessageId
+      in: path
+      required: true
+      description: Abuse message id
       schema:
         type: integer
     captionLanguage:
@@ -3584,20 +3684,20 @@ components:
         label:
           type: string
 
-    VideoAbuseStateSet:
+    AbuseStateSet:
       type: integer
       enum:
         - 1
         - 2
         - 3
-      description: 'The video playlist privacy (Pending = `1`, Rejected = `2`, Accepted = `3`)'
-    VideoAbuseStateConstant:
+      description: 'The abuse state (Pending = `1`, Rejected = `2`, Accepted = `3`)'
+    AbuseStateConstant:
       properties:
         id:
-          $ref: '#/components/schemas/VideoAbuseStateSet'
+          $ref: '#/components/schemas/AbuseStateSet'
         label:
           type: string
-    VideoAbusePredefinedReasons:
+    AbusePredefinedReasons:
       type: array
       items:
         type: string
@@ -3722,6 +3822,7 @@ components:
           format: url
         files:
           type: array
+          description: 'Video files associated to this playlist. The difference with the root "files" property is that these files are fragmented, so they can be used in this streaming playlist (HLS etc)'
           items:
             $ref: '#/components/schemas/VideoFile'
         redundancies:
@@ -3786,7 +3887,7 @@ components:
           example: /static/thumbnails/a65bc12f-9383-462e-81ae-8207e8b434ee.jpg
         previewPath:
           type: string
-          example: /static/previews/a65bc12f-9383-462e-81ae-8207e8b434ee.jpg
+          example: /lazy-static/previews/a65bc12f-9383-462e-81ae-8207e8b434ee.jpg
         embedPath:
           type: string
           example: /videos/embed/a65bc12f-9383-462e-81ae-8207e8b434ee
@@ -3848,6 +3949,7 @@ components:
               example: [flowers, gardening]
             files:
               type: array
+              description: 'WebTorrent/raw video files. Can be empty if WebTorrent is disabled on the server. In this case, video files will be in the "streamingPlaylists[].files" property'
               items:
                 $ref: '#/components/schemas/VideoFile'
             commentsEnabled:
@@ -3951,7 +4053,7 @@ components:
           format: date-time
         video:
           $ref: '#/components/schemas/Video'
-    VideoAbuse:
+    Abuse:
       properties:
         id:
           type: integer
@@ -3960,11 +4062,11 @@ components:
           type: string
           example: The video is a spam
         predefinedReasons:
-          $ref: '#/components/schemas/VideoAbusePredefinedReasons'
+          $ref: '#/components/schemas/AbusePredefinedReasons'
         reporterAccount:
           $ref: '#/components/schemas/Account'
         state:
-          $ref: '#/components/schemas/VideoAbuseStateConstant'
+          $ref: '#/components/schemas/AbuseStateConstant'
         moderationComment:
           type: string
           example: Decided to ban the server since it spams us regularly
@@ -3982,6 +4084,19 @@ components:
         createdAt:
           type: string
           format: date-time
+    AbuseMessage:
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        byModerator:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        account:
+          $ref: '#/components/schemas/AccountSummary'
     VideoBlacklist:
       properties:
         id:
@@ -4553,6 +4668,22 @@ components:
         updatedAt:
           type: string
           format: date-time
+
+    PredefinedAbuseReasons:
+      description: Reason categories that help triage reports
+      type: array
+      items:
+        type: string
+        enum:
+        - violentOrAbusive
+        - hatefulOrAbusive
+        - spamOrMisleading
+        - privacy
+        - rights
+        - serverRules
+        - thumbnails
+        - captions
+
     Job:
       properties:
         id:
@@ -4690,11 +4821,11 @@ components:
           description: The user daily video quota
         videosCount:
           type: integer
-        videoAbusesCount:
+        abusesCount:
           type: integer
-        videoAbusesAcceptedCount:
+        abusesAcceptedCount:
           type: integer
-        videoAbusesCreatedCount:
+        abusesCreatedCount:
           type: integer
         videoCommentsCount:
           type: integer
@@ -5098,7 +5229,7 @@ components:
 
             - `2` NEW_COMMENT_ON_MY_VIDEO
 
-            - `3` NEW_VIDEO_ABUSE_FOR_MODERATORS
+            - `3` NEW_ABUSE_FOR_MODERATORS
 
             - `4` BLACKLIST_ON_MY_VIDEO
 
@@ -5284,7 +5415,7 @@ components:
             $ref: '#/components/schemas/Plugin'
   callbacks:
     searchIndex:
-      '{%CONFIG.SEARCH.SEARCH_INDEX.URL%}/api/v1/search/videos/':
+      'https://search.example.org/api/v1/search/videos':
         post:
           summary: third-party search index MAY be used instead of the local index, if enabled by the instance admin. see `searchTarget`
           responses:

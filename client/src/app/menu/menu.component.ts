@@ -1,21 +1,25 @@
 import { HotkeysService } from 'angular2-hotkeys'
+import * as debug from 'debug'
+import { switchMap } from 'rxjs/operators'
 import { Component, OnInit, ViewChild } from '@angular/core'
-import { AuthService, AuthStatus, RedirectService, ScreenService, ServerService, User, UserService } from '@app/core'
+import { Router } from '@angular/router'
+import { AuthService, AuthStatus, AuthUser, MenuService, RedirectService, ScreenService, ServerService, UserService } from '@app/core'
 import { LanguageChooserComponent } from '@app/menu/language-chooser.component'
 import { QuickSettingsModalComponent } from '@app/modal/quick-settings-modal.component'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ServerConfig, UserRight, VideoConstant } from '@shared/models'
+
+const logger = debug('peertube:menu:MenuComponent')
 
 @Component({
   selector: 'my-menu',
   templateUrl: './menu.component.html',
-  styleUrls: [ './menu.component.scss' ]
+  styleUrls: ['./menu.component.scss']
 })
 export class MenuComponent implements OnInit {
   @ViewChild('languageChooserModal', { static: true }) languageChooserModal: LanguageChooserComponent
   @ViewChild('quickSettingsModal', { static: true }) quickSettingsModal: QuickSettingsModalComponent
 
-  user: User
+  user: AuthUser
   isLoggedIn: boolean
 
   userHasAdminAccess = false
@@ -25,10 +29,10 @@ export class MenuComponent implements OnInit {
 
   private languages: VideoConstant<string>[] = []
   private serverConfig: ServerConfig
-  private routesPerRight: { [ role in UserRight ]?: string } = {
+  private routesPerRight: { [role in UserRight]?: string } = {
     [UserRight.MANAGE_USERS]: '/admin/users',
     [UserRight.MANAGE_SERVER_FOLLOW]: '/admin/friends',
-    [UserRight.MANAGE_VIDEO_ABUSES]: '/admin/moderation/video-abuses',
+    [UserRight.MANAGE_ABUSES]: '/admin/moderation/abuses',
     [UserRight.MANAGE_VIDEO_BLACKLIST]: '/admin/moderation/video-blocks',
     [UserRight.MANAGE_JOBS]: '/admin/jobs',
     [UserRight.MANAGE_CONFIGURATION]: '/admin/config'
@@ -41,7 +45,8 @@ export class MenuComponent implements OnInit {
     private redirectService: RedirectService,
     private hotkeysService: HotkeysService,
     private screenService: ScreenService,
-    private i18n: I18n
+    private menuService: MenuService,
+    private router: Router
   ) { }
 
   get isInMobileView () {
@@ -62,21 +67,30 @@ export class MenuComponent implements OnInit {
       .subscribe(config => this.serverConfig = config)
 
     this.isLoggedIn = this.authService.isLoggedIn()
-    if (this.isLoggedIn === true) this.user = this.authService.getUser()
-    this.computeIsUserHasAdminAccess()
+    if (this.isLoggedIn === true) {
+      this.user = this.authService.getUser()
+      this.computeVideosLink()
+    }
+
+    this.computeAdminAccess()
 
     this.authService.loginChangedSource.subscribe(
       status => {
         if (status === AuthStatus.LoggedIn) {
           this.isLoggedIn = true
           this.user = this.authService.getUser()
-          this.computeIsUserHasAdminAccess()
-          console.log('Logged in.')
+
+          this.computeAdminAccess()
+          this.computeVideosLink()
+
+          logger('Logged in.')
         } else if (status === AuthStatus.LoggedOut) {
           this.isLoggedIn = false
           this.user = undefined
-          this.computeIsUserHasAdminAccess()
-          console.log('Logged out.')
+
+          this.computeAdminAccess()
+
+          logger('Logged out.')
         } else {
           console.error('Unknown auth status: ' + status)
         }
@@ -84,15 +98,15 @@ export class MenuComponent implements OnInit {
     )
 
     this.hotkeysService.cheatSheetToggle
-        .subscribe(isOpen => this.helpVisible = isOpen)
+      .subscribe(isOpen => this.helpVisible = isOpen)
 
     this.serverService.getVideoLanguages()
-        .subscribe(languages => {
-          this.languages = languages
+      .subscribe(languages => {
+        this.languages = languages
 
-          this.authService.userInformationLoaded
-              .subscribe(() => this.buildUserLanguages())
-        })
+        this.authService.userInformationLoaded
+          .subscribe(() => this.buildUserLanguages())
+      })
   }
 
   get language () {
@@ -104,19 +118,19 @@ export class MenuComponent implements OnInit {
 
     switch (this.user.nsfwPolicy) {
       case 'do_not_list':
-        return this.i18n('hide')
+        return $localize`hide`
 
       case 'blur':
-        return this.i18n('blur')
+        return $localize`blur`
 
       case 'display':
-        return this.i18n('display')
+        return $localize`display`
     }
   }
 
   isRegistrationAllowed () {
     return this.serverConfig.signup.allowed &&
-           this.serverConfig.signup.allowedForCurrentIP
+      this.serverConfig.signup.allowedForCurrentIP
   }
 
   getFirstAdminRightAvailable () {
@@ -126,7 +140,7 @@ export class MenuComponent implements OnInit {
     const adminRights = [
       UserRight.MANAGE_USERS,
       UserRight.MANAGE_SERVER_FOLLOW,
-      UserRight.MANAGE_VIDEO_ABUSES,
+      UserRight.MANAGE_ABUSES,
       UserRight.MANAGE_VIDEO_BLACKLIST,
       UserRight.MANAGE_JOBS,
       UserRight.MANAGE_CONFIGURATION
@@ -172,13 +186,37 @@ export class MenuComponent implements OnInit {
     this.user.webTorrentEnabled = !this.user.webTorrentEnabled
 
     this.userService.updateMyProfile({ webTorrentEnabled: this.user.webTorrentEnabled })
-        .subscribe(() => this.authService.refreshUserInformation())
+      .subscribe(() => this.authService.refreshUserInformation())
   }
 
   langForLocale (localeId: string) {
-    if (localeId === '_unknown') return this.i18n('Unknown')
+    if (localeId === '_unknown') return $localize`Unknown`
 
     return this.languages.find(lang => lang.id === localeId).label
+  }
+
+  onSameUrlRestoreScrollPosition (link: HTMLAnchorElement) {
+    const linkURL = link.getAttribute('href')
+    const linkHash = link.getAttribute('fragment')
+
+    // On same url without fragment restore top scroll position
+    if (!linkHash && this.router.url.includes(linkURL)) {
+      window.scrollTo({
+        left: 0,
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+
+    // On same url with fragment restore anchor scroll position
+    if (linkHash && this.router.url === linkURL) {
+      const anchor = document.getElementById(link.getAttribute('fragment'))
+      anchor.scrollIntoView({ behavior: 'smooth', inline: 'nearest' })
+    }
+
+    if (this.screenService.isInSmallView()) {
+      this.menuService.toggleMenu()
+    }
   }
 
   private buildUserLanguages () {
@@ -188,18 +226,28 @@ export class MenuComponent implements OnInit {
     }
 
     if (!this.user.videoLanguages) {
-      this.videoLanguages = [ this.i18n('any language') ]
+      this.videoLanguages = [$localize`any language`]
       return
     }
 
     this.videoLanguages = this.user.videoLanguages
-                              .map(locale => this.langForLocale(locale))
-                              .map(value => value === undefined ? '?' : value)
+      .map(locale => this.langForLocale(locale))
+      .map(value => value === undefined ? '?' : value)
   }
 
-  private computeIsUserHasAdminAccess () {
+  private computeAdminAccess () {
     const right = this.getFirstAdminRightAvailable()
 
     this.userHasAdminAccess = right !== undefined
+  }
+
+  private computeVideosLink () {
+    this.authService.userInformationLoaded
+      .pipe(
+        switchMap(() => this.user.computeCanSeeVideosLink(this.userService.getMyVideoQuotaUsed()))
+      ).subscribe(res => {
+        if (res === true) logger('User can see videos link.')
+        else logger('User cannot see videos link.')
+      })
   }
 }

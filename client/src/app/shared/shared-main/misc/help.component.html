@@ -26,15 +26,15 @@
   role="button"
   class="help-tooltip-button"
   container="body"
-  title="Get help"
-  i18n-title
+  [title]="title"
+  tabindex=0
   popoverClass="help-popover"
   [attr.aria-pressed]="isPopoverOpened"
   [ngbPopover]="tooltipTemplate"
   [placement]="tooltipPlacement"
-  autoClose="outside"
+  [autoClose]="autoClose"
   (onHidden)="onPopoverHidden()"
   (onShown)="onPopoverShown()"
 >
-  <my-global-icon iconName="help"></my-global-icon>
+  <my-global-icon [iconName]="iconName"></my-global-icon>
 </span>

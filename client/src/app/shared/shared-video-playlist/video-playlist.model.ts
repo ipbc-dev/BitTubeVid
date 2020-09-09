@@ -1,8 +1,8 @@
-import { getAbsoluteAPIUrl } from '@app/helpers'
+import { getAbsoluteAPIUrl, getAbsoluteEmbedUrl } from '@app/helpers'
 import { Actor } from '@app/shared/shared-main'
+import { peertubeTranslate } from '@shared/core-utils/i18n'
 import {
   AccountSummary,
-  peertubeTranslate,
   VideoChannelSummary,
   VideoConstant,
   VideoPlaylist as ServerVideoPlaylist,
@@ -33,6 +33,9 @@ export class VideoPlaylist implements ServerVideoPlaylist {
 
   thumbnailUrl: string
 
+  embedPath: string
+  embedUrl: string
+
   ownerBy: string
   ownerAvatarUrl: string
 
@@ -62,6 +65,9 @@ export class VideoPlaylist implements ServerVideoPlaylist {
     } else {
       this.thumbnailUrl = window.location.origin + '/client/assets/images/default-playlist.jpg'
     }
+
+    this.embedPath = hash.embedPath
+    this.embedUrl = getAbsoluteEmbedUrl() + hash.embedPath
 
     this.videosLength = hash.videosLength
 

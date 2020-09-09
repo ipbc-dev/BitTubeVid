@@ -1,7 +1,7 @@
 import * as debug from 'debug'
 import { uniq } from 'lodash-es'
 import { asyncScheduler, merge, Observable, of, ReplaySubject, Subject } from 'rxjs'
-import { bufferTime, catchError, filter, map, observeOn, share, switchMap, tap } from 'rxjs/operators'
+import { bufferTime, catchError, filter, map, observeOn, share, switchMap, tap, distinctUntilChanged } from 'rxjs/operators'
 import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable, NgZone } from '@angular/core'
 import { AuthUser, ComponentPaginationLight, RestExtractor, RestService, ServerService } from '@app/core'
@@ -53,6 +53,7 @@ export class VideoPlaylistService {
   ) {
     this.videoExistsInPlaylistObservable = merge(
       this.videoExistsInPlaylistNotifier.pipe(
+        distinctUntilChanged(),
         // We leave Angular zone so Protractor does not get stuck
         bufferTime(500, leaveZone(this.ngZone, asyncScheduler)),
         filter(videoIds => videoIds.length !== 0),
@@ -215,10 +216,13 @@ export class VideoPlaylistService {
                  map(this.restExtractor.extractDataBool),
                  tap(() => {
                    const existsResult = this.videoExistsCache[videoId]
-                   const elem = existsResult.find(e => e.playlistElementId === playlistElementId)
 
-                   elem.startTimestamp = body.startTimestamp
-                   elem.stopTimestamp = body.stopTimestamp
+                   if (existsResult) {
+                     const elem = existsResult.find(e => e.playlistElementId === playlistElementId)
+
+                     elem.startTimestamp = body.startTimestamp
+                     elem.stopTimestamp = body.stopTimestamp
+                   }
 
                    this.runPlaylistCheck(videoId)
                  }),
@@ -233,7 +237,11 @@ export class VideoPlaylistService {
                  tap(() => {
                    if (!videoId) return
 
-                   this.videoExistsCache[videoId] = this.videoExistsCache[videoId].filter(e => e.playlistElementId !== playlistElementId)
+                   if (this.videoExistsCache[videoId]) {
+                     this.videoExistsCache[videoId] = this.videoExistsCache[videoId]
+                       .filter(e => e.playlistElementId !== playlistElementId)
+                   }
+
                    this.runPlaylistCheck(videoId)
                  }),
                  catchError(err => this.restExtractor.handleError(err))

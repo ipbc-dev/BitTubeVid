@@ -1,5 +1,5 @@
 import { Subscription } from 'rxjs'
-import { filter, take } from 'rxjs/operators'
+import { filter } from 'rxjs/operators'
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core'
 import { NavigationEnd, Router } from '@angular/router'
 import { MenuService, ScreenService } from '@app/core'
@@ -9,12 +9,14 @@ import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap'
 export type TopMenuDropdownParam = {
   label: string
   routerLink?: string
+  isDisplayed?: () => boolean // Default: () => true
 
   children?: {
     label: string
     routerLink: string
-
     iconName?: GlobalIconName
+
+    isDisplayed?: () => boolean // Default: () => true
   }[]
 }
 
@@ -33,7 +35,6 @@ export class TopMenuDropdownComponent implements OnInit, OnDestroy {
   isModalOpened = false
   currentMenuEntryIndex: number
 
-  private openedOnHover = false
   private routeSub: Subscription
 
   constructor (
@@ -52,6 +53,10 @@ export class TopMenuDropdownComponent implements OnInit, OnDestroy {
     return this.screen.isInSmallView(marginLeft)
   }
 
+  get isBroadcastMessageDisplayed () {
+    return this.screen.isBroadcastMessageDisplayed
+  }
+
   ngOnInit () {
     this.updateChildLabels(window.location.pathname)
 
@@ -68,30 +73,8 @@ export class TopMenuDropdownComponent implements OnInit, OnDestroy {
     if (this.routeSub) this.routeSub.unsubscribe()
   }
 
-  openDropdownOnHover (dropdown: NgbDropdown) {
-    this.openedOnHover = true
-    dropdown.open()
-
-    // Menu was closed
-    dropdown.openChange
-            .pipe(take(1))
-            .subscribe(() => this.openedOnHover = false)
-  }
-
   dropdownAnchorClicked (dropdown: NgbDropdown) {
-    if (this.openedOnHover) {
-      this.openedOnHover = false
-      return
-    }
-
     return dropdown.toggle()
-  }
-
-  closeDropdownIfHovered (dropdown: NgbDropdown) {
-    if (this.openedOnHover === false) return
-
-    dropdown.close()
-    this.openedOnHover = false
   }
 
   openModal (index: number) {
@@ -111,8 +94,24 @@ export class TopMenuDropdownComponent implements OnInit, OnDestroy {
     this.isModalOpened = false
   }
 
+  onActiveLinkScrollToTop (link: HTMLAnchorElement) {
+    if (!this.isBroadcastMessageDisplayed && this.router.url.includes(link.getAttribute('href'))) {
+      window.scrollTo({
+        left: 0,
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+  }
+
   dismissOtherModals () {
     this.modalService.dismissAll()
+  }
+
+  isDisplayed (obj: { isDisplayed?: () => boolean }) {
+    if (typeof obj.isDisplayed !== 'function') return true
+
+    return obj.isDisplayed()
   }
 
   private updateChildLabels (path: string) {

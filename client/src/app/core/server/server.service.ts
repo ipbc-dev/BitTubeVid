@@ -2,16 +2,10 @@ import { Observable, of, Subject } from 'rxjs'
 import { first, map, share, shareReplay, switchMap, tap } from 'rxjs/operators'
 import { HttpClient } from '@angular/common/http'
 import { Inject, Injectable, LOCALE_ID } from '@angular/core'
-import { getDevLocale, isOnDevLocale, peertubeLocalStorage, sortBy } from '@app/helpers'
-import {
-  getCompleteLocale,
-  isDefaultLocale,
-  peertubeTranslate,
-  SearchTargetType,
-  ServerConfig,
-  ServerStats,
-  VideoConstant
-} from '@shared/models'
+import { getDevLocale, isOnDevLocale, sortBy } from '@app/helpers'
+import { peertubeLocalStorage } from '@root-helpers/peertube-web-storage'
+import { getCompleteLocale, isDefaultLocale, peertubeTranslate } from '@shared/core-utils/i18n'
+import { SearchTargetType, ServerConfig, ServerStats, VideoConstant } from '@shared/models'
 import { environment } from '../../../environments/environment'
 
 @Injectable()

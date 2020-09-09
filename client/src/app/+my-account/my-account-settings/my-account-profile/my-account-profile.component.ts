@@ -1,8 +1,8 @@
 import { Subject } from 'rxjs'
 import { Component, Input, OnInit } from '@angular/core'
 import { Notifier, User, UserService } from '@app/core'
-import { FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { USER_DESCRIPTION_VALIDATOR, USER_DISPLAY_NAME_REQUIRED_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 
 @Component({
   selector: 'my-account-profile',
@@ -17,18 +17,16 @@ export class MyAccountProfileComponent extends FormReactive implements OnInit {
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
-    private userService: UserService,
-    private i18n: I18n
+    private userService: UserService
   ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      'display-name': this.userValidatorsService.USER_DISPLAY_NAME_REQUIRED,
-      description: this.userValidatorsService.USER_DESCRIPTION
+      'display-name': USER_DISPLAY_NAME_REQUIRED_VALIDATOR,
+      description: USER_DESCRIPTION_VALIDATOR
     })
 
     this.userInformationLoaded.subscribe(() => {
@@ -50,7 +48,7 @@ export class MyAccountProfileComponent extends FormReactive implements OnInit {
         this.user.account.displayName = displayName
         this.user.account.description = description
 
-        this.notifier.success(this.i18n('Profile updated.'))
+        this.notifier.success($localize`Profile updated.`)
       },
 
       err => this.error = err.message

@@ -1,4 +1,4 @@
-<div class="root-comment">
+<div *ngIf="isNotDeletedOrDeletedWithReplies()" class="root-comment">
   <div class="left">
     <a *ngIf="!comment.isDeleted" [href]="comment.account.url" target="_blank" rel="noopener noreferrer">
       <img
@@ -41,10 +41,10 @@
         ></div>
 
         <div class="comment-actions">
-          <div *ngIf="isUserLoggedIn()" (click)="onWantToReply()" class="comment-action-reply" i18n>Reply</div>
-          <div *ngIf="isRemovableByUser()" (click)="onWantToDelete()" class="comment-action-delete" i18n>Delete</div>
+          <div *ngIf="isUserLoggedIn()" tabindex=0 (click)="onWantToReply()" class="comment-action-reply" i18n>Reply</div>
 
           <my-user-moderation-dropdown
+            [prependActions]="prependModerationActions" tabindex=0
             buttonSize="small" [account]="commentAccount" [user]="commentUser" i18n-label label="Options" placement="bottom-left auto"
           ></my-user-moderation-dropdown>
         </div>
@@ -57,7 +57,7 @@
              class="comment-date">{{ comment.createdAt | myFromNow }}</a>
         </div>
 
-        <div *ngIf="comment.isDeleted" class="comment-html comment-html-deleted">
+        <div class="comment-html comment-html-deleted">
           <i i18n>This comment has been deleted</i>
         </div>
       </ng-container>
@@ -71,6 +71,7 @@
         [focusOnInit]="true"
         (commentCreated)="onCommentReplyCreated($event)"
         (cancel)="onResetReply()"
+        [textValue]="redraftValue"
       ></my-video-comment-add>
 
       <div *ngIf="commentTree" class="children">
@@ -83,8 +84,10 @@
             [parentComments]="newParentComments"
             (wantedToReply)="onWantToReply($event)"
             (wantedToDelete)="onWantToDelete($event)"
+            (wantedToRedraft)="onWantToRedraft($event)"
             (resetReply)="onResetReply()"
             (timestampClicked)="handleTimestampClicked($event)"
+            [redraftValue]="redraftValue"
           ></my-video-comment>
         </div>
       </div>
@@ -93,3 +96,7 @@
     </div>
   </div>
 </div>
+
+<ng-container *ngIf="prependModerationActions">
+  <my-comment-report #commentReportModal [comment]="comment"></my-comment-report>
+</ng-container>

@@ -1,9 +1,9 @@
 import { AuthUser } from '@app/core'
 import { User } from '@app/core/users/user.model'
 import { durationToString, getAbsoluteAPIUrl, getAbsoluteEmbedUrl } from '@app/helpers'
+import { peertubeTranslate } from '@shared/core-utils/i18n'
 import {
   Avatar,
-  peertubeTranslate,
   ServerConfig,
   UserRight,
   Video as VideoServerModel,
@@ -84,6 +84,8 @@ export class Video implements VideoServerModel {
     currentTime: number
   }
 
+  pluginData?: any
+
   static buildClientUrl (videoUUID: string) {
     return '/videos/watch/' + videoUUID
   }
@@ -152,6 +154,8 @@ export class Video implements VideoServerModel {
 
     this.originInstanceHost = this.account.host
     this.originInstanceUrl = 'https://' + this.originInstanceHost
+
+    this.pluginData = hash.pluginData
   }
 
   isVideoNSFWForUser (user: User, serverConfig: ServerConfig) {

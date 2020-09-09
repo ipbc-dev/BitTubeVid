@@ -1,9 +1,9 @@
-import { BytesPipe } from 'ngx-pipes'
 import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core'
 import { Notifier, ServerService } from '@app/core'
-import { Account, VideoChannel } from '@app/shared/shared-main'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { getBytes } from '@root-helpers/bytes'
 import { ServerConfig } from '@shared/models'
+import { VideoChannel } from '../video-channel/video-channel.model'
+import { Account } from '../account/account.model'
 
 @Component({
   selector: 'my-actor-avatar-info',
@@ -20,15 +20,12 @@ export class ActorAvatarInfoComponent implements OnInit {
   maxSizeText: string
 
   private serverConfig: ServerConfig
-  private bytesPipe: BytesPipe
 
   constructor (
     private serverService: ServerService,
-    private notifier: Notifier,
-    private i18n: I18n
+    private notifier: Notifier
   ) {
-    this.bytesPipe = new BytesPipe()
-    this.maxSizeText = this.i18n('max size')
+    this.maxSizeText = $localize`max size`
   }
 
   ngOnInit (): void {
@@ -55,7 +52,7 @@ export class ActorAvatarInfoComponent implements OnInit {
   }
 
   get maxAvatarSizeInBytes () {
-    return this.bytesPipe.transform(this.maxAvatarSize)
+    return getBytes(this.maxAvatarSize)
   }
 
   get avatarExtensions () {

@@ -2,10 +2,9 @@ import { map, switchMap } from 'rxjs/operators'
 import { Component, HostListener, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Notifier } from '@app/core'
-import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { FormReactive, FormValidatorService, SelectChannelItem } from '@app/shared/shared-forms'
 import { VideoCaptionEdit, VideoCaptionService, VideoDetails, VideoEdit, VideoService } from '@app/shared/shared-main'
 import { LoadingBarService } from '@ngx-loading-bar/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoPrivacy } from '@shared/models'
 
 @Component({
@@ -17,7 +16,7 @@ export class VideoUpdateComponent extends FormReactive implements OnInit {
   video: VideoEdit
 
   isUpdatingVideo = false
-  userVideoChannels: { id: number, label: string, support: string }[] = []
+  userVideoChannels: SelectChannelItem[] = []
   schedulePublicationPossible = false
   videoCaptions: VideoCaptionEdit[] = []
   waitTranscodingEnabled = true
@@ -31,9 +30,8 @@ export class VideoUpdateComponent extends FormReactive implements OnInit {
     private notifier: Notifier,
     private videoService: VideoService,
     private loadingBar: LoadingBarService,
-    private videoCaptionService: VideoCaptionService,
-    private i18n: I18n
-  ) {
+    private videoCaptionService: VideoCaptionService
+    ) {
     super()
   }
 
@@ -78,7 +76,7 @@ export class VideoUpdateComponent extends FormReactive implements OnInit {
   canDeactivate (): { canDeactivate: boolean, text?: string } {
     if (this.updateDone === true) return { canDeactivate: true }
 
-    const text = this.i18n('You have unsaved changes! If you leave, your changes will be lost.')
+    const text = $localize`You have unsaved changes! If you leave, your changes will be lost.`
 
     for (const caption of this.videoCaptions) {
       if (caption.action) return { canDeactivate: false, text }
@@ -101,7 +99,7 @@ export class VideoUpdateComponent extends FormReactive implements OnInit {
 
     this.video.patch(this.form.value)
 
-    this.loadingBar.start()
+    this.loadingBar.useRef().start()
     this.isUpdatingVideo = true
 
     // Update the video
@@ -114,18 +112,26 @@ export class VideoUpdateComponent extends FormReactive implements OnInit {
           () => {
             this.updateDone = true
             this.isUpdatingVideo = false
-            this.loadingBar.complete()
-            this.notifier.success(this.i18n('Video updated.'))
+            this.loadingBar.useRef().complete()
+            this.notifier.success($localize`Video updated.`)
             this.router.navigate([ '/videos/watch', this.video.uuid ])
           },
 
           err => {
-            this.loadingBar.complete()
+            this.loadingBar.useRef().complete()
             this.isUpdatingVideo = false
             this.notifier.error(err.message)
             console.error(err)
           }
         )
+  }
+
+  hydratePluginFieldsFromVideo () {
+    if (!this.video.pluginData) return
+
+    this.form.patchValue({
+      pluginData: this.video.pluginData
+    })
   }
 
   private hydrateFormFromVideo () {

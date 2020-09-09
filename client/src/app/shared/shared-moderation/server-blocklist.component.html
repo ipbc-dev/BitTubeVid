@@ -1,3 +1,8 @@
+<h1>
+  <my-global-icon iconName="peertube-x" aria-hidden="true"></my-global-icon>
+  <ng-container i18n>Muted servers</ng-container>
+</h1>
+
 <p-table
   [value]="blockedServers" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage" [rowsPerPageOptions]="rowsPerPageOptions"
   [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)" (onPage)="onPage($event)"
@@ -23,14 +28,17 @@
 
   <ng-template pTemplate="header">
     <tr>
+      <th style="width: 150px;">Action</th> <!-- column for action buttons -->
       <th style="width: 100%;" i18n>Instance</th>
       <th style="width: 150px;" i18n pSortableColumn="createdAt">Muted at <p-sortIcon field="createdAt"></p-sortIcon></th>
-      <th style="width: 150px;"></th> <!-- column for action buttons -->
     </tr>
   </ng-template>
 
   <ng-template pTemplate="body" let-serverBlock>
     <tr>
+      <td class="action-cell">
+        <button class="unblock-button" (click)="unblockServer(serverBlock)" i18n>Unmute</button>
+      </td>
       <td>
         <a [href]="'https://' + serverBlock.blockedServer.host" i18n-title title="Open instance in a new tab" target="_blank" rel="noopener noreferrer">
           {{ serverBlock.blockedServer.host }}
@@ -38,9 +46,6 @@
         </a>
       </td>
       <td>{{ serverBlock.createdAt | date: 'short' }}</td>
-      <td class="action-cell">
-        <button class="unblock-button" (click)="unblockServer(serverBlock)" i18n>Unmute</button>
-      </td>
     </tr>
   </ng-template>
 

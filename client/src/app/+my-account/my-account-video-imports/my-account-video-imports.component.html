@@ -1,4 +1,8 @@
-<h1 class="sr-only" i18n>Imports</h1>
+<h1>
+  <my-global-icon iconName="cloud-download" aria-hidden="true"></my-global-icon>
+  <ng-container i18n>My imports</ng-container>
+</h1>
+
 <p-table
   [value]="videoImports" [lazy]="true" [paginator]="totalRecords > 0" [totalRecords]="totalRecords" [rows]="rowsPerPage" [rowsPerPageOptions]="rowsPerPageOptions"
   [sortField]="sort.field" [sortOrder]="sort.order" (onLazyLoad)="loadLazy($event)" dataKey="id"
@@ -9,11 +13,11 @@
   <ng-template pTemplate="header">
     <tr>
       <th style="width: 40px;"></th>
+      <th style="width: 70px">Action</th>
       <th style="width: 45%" i18n>Target</th>
       <th style="width: 55%" i18n>Video</th>
       <th style="width: 150px" i18n>State</th>
       <th style="width: 150px" i18n pSortableColumn="createdAt">Created <p-sortIcon field="createdAt"></p-sortIcon></th>
-      <th style="width: 70px"></th>
     </tr>
   </ng-template>
 
@@ -23,6 +27,11 @@
         <span *ngIf="videoImport.error" class="expander" [pRowToggler]="videoImport" i18n-ngbTooltip ngbTooltip="See the error">
           <i [ngClass]="expanded ? 'glyphicon glyphicon-menu-down' : 'glyphicon glyphicon-menu-right'"></i>
         </span>
+      </td>
+
+      <td class="action-cell">
+        <my-edit-button *ngIf="isVideoImportSuccess(videoImport) && videoImport.video"
+          [routerLink]="getEditVideoUrl(videoImport.video)"></my-edit-button>
       </td>
 
       <td>
@@ -41,12 +50,13 @@
         <ng-container *ngIf="isVideoImportFailed(videoImport)"></ng-container>
       </td>
 
-      <td>{{ videoImport.state.label }}</td>
-      <td>{{ videoImport.createdAt | date: 'short' }}</td>
-
-      <td class="action-cell">
-        <my-edit-button label=" " *ngIf="isVideoImportSuccess(videoImport) && videoImport.video" [routerLink]="getEditVideoUrl(videoImport.video)"></my-edit-button>
+      <td>
+        <span class="badge" [ngClass]="getVideoImportStateClass(videoImport.state)">
+          {{ videoImport.state.label }}
+        </span>
       </td>
+
+      <td>{{ videoImport.createdAt | date: 'short' }}</td>
     </tr>
   </ng-template>
 

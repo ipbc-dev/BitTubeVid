@@ -1,20 +1,22 @@
 import { SortMeta } from 'primeng/api'
 import { filter, switchMap } from 'rxjs/operators'
+import { buildVideoLink, buildVideoOrPlaylistEmbed } from 'src/assets/player/utils'
+import { environment } from 'src/environments/environment'
 import { AfterViewInit, Component, OnInit } from '@angular/core'
+import { DomSanitizer } from '@angular/platform-browser'
 import { ActivatedRoute, Params, Router } from '@angular/router'
 import { ConfirmService, MarkdownService, Notifier, RestPagination, RestTable, ServerService } from '@app/core'
 import { DropdownAction, Video, VideoService } from '@app/shared/shared-main'
 import { VideoBlockService } from '@app/shared/shared-moderation'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoBlacklist, VideoBlacklistType } from '@shared/models'
 
 @Component({
   selector: 'my-video-block-list',
   templateUrl: './video-block-list.component.html',
-  styleUrls: [ '../moderation.component.scss', './video-block-list.component.scss' ]
+  styleUrls: [ '../../../shared/shared-moderation/moderation.scss', './video-block-list.component.scss' ]
 })
 export class VideoBlockListComponent extends RestTable implements OnInit, AfterViewInit {
-  blocklist: (VideoBlacklist & { reasonHtml?: string })[] = []
+  blocklist: (VideoBlacklist & { reasonHtml?: string, embedHtml?: string })[] = []
   totalRecords = 0
   sort: SortMeta = { field: 'createdAt', order: -1 }
   pagination: RestPagination = { count: this.rowsPerPage, start: 0 }
@@ -28,28 +30,28 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
     private confirmService: ConfirmService,
     private videoBlocklistService: VideoBlockService,
     private markdownRenderer: MarkdownService,
+    private sanitizer: DomSanitizer,
     private videoService: VideoService,
     private route: ActivatedRoute,
-    private router: Router,
-    private i18n: I18n
-  ) {
+    private router: Router
+    ) {
     super()
 
     this.videoBlocklistActions = [
       [
         {
-          label: this.i18n('Internal actions'),
+          label: $localize`Internal actions`,
           isHeader: true,
           isDisplayed: videoBlock => videoBlock.type === VideoBlacklistType.AUTO_BEFORE_PUBLISHED
         },
         {
-          label: this.i18n('Switch video block to manual'),
+          label: $localize`Switch video block to manual`,
           handler: videoBlock => {
             this.videoBlocklistService.unblockVideo(videoBlock.video.id).pipe(
               switchMap(_ => this.videoBlocklistService.blockVideo(videoBlock.video.id, undefined, true))
             ).subscribe(
               () => {
-                this.notifier.success(this.i18n('Video {{name}} switched to manual block.', { name: videoBlock.video.name }))
+                this.notifier.success($localize`Video ${videoBlock.video.name} switched to manual block.`)
                 this.loadData()
               },
 
@@ -61,27 +63,27 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
       ],
       [
         {
-          label: this.i18n('Actions for the video'),
+          label: $localize`Actions for the video`,
           isHeader: true
         },
         {
-          label: this.i18n('Unblock'),
+          label: $localize`Unblock`,
           handler: videoBlock => this.unblockVideo(videoBlock)
         },
 
         {
-          label: this.i18n('Delete'),
+          label: $localize`Delete`,
           handler: async videoBlock => {
             const res = await this.confirmService.confirm(
-              this.i18n('Do you really want to delete this video?'),
-              this.i18n('Delete')
+              $localize`Do you really want to delete this video?`,
+              $localize`Delete`
             )
             if (res === false) return
 
             this.videoService.removeVideo(videoBlock.video.id)
               .subscribe(
                 () => {
-                  this.notifier.success(this.i18n('Video deleted.'))
+                  this.notifier.success($localize`Video deleted.`)
                 },
 
                 err => this.notifier.error(err.message)
@@ -144,9 +146,9 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
   }
 
   booleanToText (value: boolean) {
-    if (value === true) return this.i18n('yes')
+    if (value === true) return $localize`yes`
 
-    return this.i18n('no')
+    return $localize`no`
   }
 
   toHtml (text: string) {
@@ -154,20 +156,28 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
   }
 
   async unblockVideo (entry: VideoBlacklist) {
-    const confirmMessage = this.i18n(
-      'Do you really want to unblock this video? It will be available again in the videos list.'
-    )
+    const confirmMessage = $localize`Do you really want to unblock this video? It will be available again in the videos list.`
 
-    const res = await this.confirmService.confirm(confirmMessage, this.i18n('Unblock'))
+    const res = await this.confirmService.confirm(confirmMessage, $localize`Unblock`)
     if (res === false) return
 
     this.videoBlocklistService.unblockVideo(entry.video.id).subscribe(
       () => {
-        this.notifier.success(this.i18n('Video {{name}} unblocked.', { name: entry.video.name }))
+        this.notifier.success($localize`Video ${entry.video.name} unblocked.`)
         this.loadData()
       },
 
       err => this.notifier.error(err.message)
+    )
+  }
+
+  getVideoEmbed (entry: VideoBlacklist) {
+    return buildVideoOrPlaylistEmbed(
+      buildVideoLink({
+        baseUrl: `${environment.embedUrl}/videos/embed/${entry.video.uuid}`,
+        title: false,
+        warningTitle: false
+      })
     )
   }
 
@@ -184,7 +194,10 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
           this.blocklist = resultList.data
 
           for (const element of this.blocklist) {
-            Object.assign(element, { reasonHtml: await this.toHtml(element.reason) })
+            Object.assign(element, {
+              reasonHtml: await this.toHtml(element.reason),
+              embedHtml: this.sanitizer.bypassSecurityTrustHtml(this.getVideoEmbed(element))
+            })
           }
         },
 

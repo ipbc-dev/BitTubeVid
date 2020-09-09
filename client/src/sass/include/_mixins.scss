@@ -304,6 +304,17 @@
   z-index: 100;
 }
 
+
+@mixin ng-select ($width) {
+  ::ng-deep ng-select {
+    width: $width;
+
+    @media screen and (max-width: $width) {
+      width: 100%;
+    }
+  }
+}
+
 @mixin peertube-select-container ($width) {
   padding: 0;
   margin: 0;
@@ -332,9 +343,7 @@
 
   select {
     padding: 0 35px 0 12px;
-    width: calc(100% + 2px);
     position: relative;
-    left: 1px;
     border: 1px solid #C6C6C6;
     background: transparent none;
     appearance: none;
@@ -354,6 +363,17 @@
 
     option {
       color: #000;
+    }
+  }
+
+  &.peertube-select-button {
+    @include grey-button;
+
+    select,
+    option {
+      font-weight: $font-semibold;
+      color: pvar(--greyForegroundColor);
+      border: none;
     }
   }
 }
@@ -454,6 +474,49 @@
   }
 }
 
+@mixin table-badge {
+  border-radius: 2px;
+  padding: 1/4em 1/2em;
+  text-transform: uppercase;
+  font-weight: $font-bold;
+  font-size: 12px;
+  letter-spacing: 1/3px;
+
+  &.badge-banned,
+  &.badge-red {
+    background-color: #ffcdd2;
+    color: #c63737;
+  }
+
+  &.badge-banned {
+    text-decoration: line-through;
+  }
+
+  &.badge-yellow {
+    background-color: #feedaf;
+    color: #8a5340;
+  }
+
+  &.badge-brown {
+    background-color: #ffd8b2;
+    color: #805b36;
+  }
+
+  &.badge-green {
+    background-color: #c8e6c9;
+    color: #256029;
+  }
+
+  &.badge-blue {
+    background-color: #b3e5fc;
+    color: #23547b;
+  }
+
+  &.badge-purple {
+    background-color: #eccfff;
+    color: #694382;
+  }
+}
 
 @mixin avatar ($size) {
   object-fit: cover;
@@ -524,6 +587,8 @@
 }
 
 @mixin sub-menu-with-actor {
+  position: initial;
+  z-index: unset;
   height: max-content;
   display: flex;
   flex-direction: column;
@@ -629,13 +694,29 @@
   }
 }
 
-@mixin progressbar {
+@mixin progressbar($small: false) {
   background-color: $grey-background-color;
   display: flex;
   height: 1rem;
   overflow: hidden;
   font-size: 0.75rem;
   border-radius: 0.25rem;
+  position: relative;
+
+  span {
+    position: absolute;
+    color: $grey-foreground-color;
+    @if $small {
+      top: -1px;
+    }
+
+    &:nth-of-type(1) {
+      left: .2rem;
+    }
+    &:nth-of-type(2) {
+      right: .2rem;
+    }
+  }
 
   .progress-bar {
     color: pvar(--mainBackgroundColor);
@@ -734,75 +815,6 @@
     font-size: 90%;
     color: pvar(--inputPlaceholderColor);
     text-align: center;
-  }
-}
-
-@mixin ng2-tags {
-  ::ng-deep {
-    .ng2-tag-input {
-      border: none !important;
-    }
-
-    .ng2-tags-container {
-      display: flex;
-      align-items: center;
-      border: 1px solid #C6C6C6;
-      border-radius: 3px;
-      padding: 5px !important;
-      height: max-content;
-
-      &:focus-within {
-        box-shadow: #{$focus-box-shadow-form} pvar(--mainColorLightest);
-      }
-    }
-
-    tag-input-form {
-      input {
-        height: 30px !important;
-        font-size: 12px !important;
-
-        background-color: pvar(--mainBackgroundColor) !important;
-        color: pvar(--mainForegroundColor) !important;
-      }
-    }
-
-    tag {
-      background-color: $grey-background-color !important;
-      color: #000 !important;
-      border-radius: 3px !important;
-      font-size: 12px !important;
-      height: 30px !important;
-      line-height: 30px !important;
-      margin: 0 5px 0 0 !important;
-      cursor: default !important;
-      padding: 0 8px 0 10px !important;
-
-      div {
-        height: 100% !important;
-      }
-    }
-
-    delete-icon {
-      cursor: pointer !important;
-      height: auto !important;
-      vertical-align: middle !important;
-      padding-left: 6px !important;
-
-      svg {
-        position: relative;
-        top: -1px;
-        height: auto !important;
-        vertical-align: middle !important;
-
-        path  {
-          fill: pvar(--greyForegroundColor) !important;
-        }
-      }
-
-      &:hover {
-        transform: none !important;
-      }
-    }
   }
 }
 
@@ -928,4 +940,39 @@
     top: 0;
     @content;
   }
+}
+
+@mixin sub-menu-h1 {
+  ::ng-deep h1 {
+    font-size: 1.3rem;
+    border-bottom: 2px solid $grey-background-color;
+    padding-bottom: 15px;
+    margin-bottom: $sub-menu-margin-bottom;
+
+    my-global-icon {
+      margin-right: 10px;
+      vertical-align: bottom;
+      width: 24px;
+      height: 24px;
+    }
+
+    .badge {
+      margin-left: 7px;
+    }
+  }
+}
+
+@mixin play-icon ($width, $height) {
+  width: 0;
+  height: 0;
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+
+  border-top: ($height / 2) solid transparent;
+  border-bottom: ($height / 2) solid transparent;
+
+  border-left: $width solid rgba(255, 255, 255, 0.95);
 }

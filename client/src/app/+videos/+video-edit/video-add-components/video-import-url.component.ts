@@ -5,10 +5,9 @@ import { AuthService, CanComponentDeactivate, Notifier, ServerService } from '@a
 import { getAbsoluteAPIUrl, scrollToTop } from '@app/helpers'
 import { FormValidatorService } from '@app/shared/shared-forms'
 import { VideoCaptionService, VideoEdit, VideoImportService, VideoService } from '@app/shared/shared-main'
-import { VideoSend } from './video-send'
 import { LoadingBarService } from '@ngx-loading-bar/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoPrivacy, VideoUpdate } from '@shared/models'
+import { VideoSend } from './video-send'
 
 @Component({
   selector: 'my-video-import-url',
@@ -42,9 +41,8 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
     protected videoService: VideoService,
     protected videoCaptionService: VideoCaptionService,
     private router: Router,
-    private videoImportService: VideoImportService,
-    private i18n: I18n
-  ) {
+    private videoImportService: VideoImportService
+    ) {
     super()
   }
 
@@ -71,7 +69,7 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
       channelId: this.firstStepChannelId
     }
 
-    this.loadingBar.start()
+    this.loadingBar.useRef().start()
 
     this.videoImportService
         .importVideoUrl(this.targetUrl, videoUpdate)
@@ -86,7 +84,7 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
         )
         .subscribe(
           ({ video, videoCaptions }) => {
-            this.loadingBar.complete()
+            this.loadingBar.useRef().complete()
             this.firstStepDone.emit(video.name)
             this.isImportingVideo = false
             this.hasImportedVideo = true
@@ -115,7 +113,7 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
           },
 
           err => {
-            this.loadingBar.complete()
+            this.loadingBar.useRef().complete()
             this.isImportingVideo = false
             this.firstStepError.emit()
             this.notifier.error(err.message)
@@ -137,7 +135,7 @@ export class VideoImportUrlComponent extends VideoSend implements OnInit, CanCom
         .subscribe(
           () => {
             this.isUpdatingVideo = false
-            this.notifier.success(this.i18n('Video to import updated.'))
+            this.notifier.success($localize`Video to import updated.`)
 
             this.router.navigate([ '/my-account', 'video-imports' ])
           },

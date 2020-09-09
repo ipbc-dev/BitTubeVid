@@ -1,10 +1,20 @@
 import * as express from 'express'
 import * as RateLimit from 'express-rate-limit'
+import { tokensRouter } from '@server/controllers/api/users/token'
+import { Hooks } from '@server/lib/plugins/hooks'
+import { MUser, MUserAccountDefault } from '@server/types/models'
 import { UserCreate, UserRight, UserRole, UserUpdate } from '../../../../shared'
+import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
+import { UserRegister } from '../../../../shared/models/users/user-register.model'
+import { auditLoggerFactory, getAuditIdFromRes, UserAuditView } from '../../../helpers/audit-logger'
 import { logger } from '../../../helpers/logger'
 import { generateRandomString, getFormattedObjects } from '../../../helpers/utils'
+import { CONFIG } from '../../../initializers/config'
 import { WEBSERVER } from '../../../initializers/constants'
+import { sequelizeTypescript } from '../../../initializers/database'
 import { Emailer } from '../../../lib/emailer'
+import { Notifier } from '../../../lib/notifier'
+import { deleteUserToken } from '../../../lib/oauth-model'
 import { Redis } from '../../../lib/redis'
 import { createUserAccountAndChannelAndPlaylist, sendVerifyUserEmail } from '../../../lib/user'
 import {
@@ -18,9 +28,9 @@ import {
   setDefaultPagination,
   setDefaultSort,
   userAutocompleteValidator,
-  usersListValidator,
   usersAddValidator,
   usersGetValidator,
+  usersListValidator,
   usersRegisterValidator,
   usersRemoveValidator,
   usersSortValidator,
@@ -35,23 +45,14 @@ import {
   usersVerifyEmailValidator
 } from '../../../middlewares/validators'
 import { UserModel } from '../../../models/account/user'
-import { auditLoggerFactory, getAuditIdFromRes, UserAuditView } from '../../../helpers/audit-logger'
 import { meRouter } from './me'
 import { firebaseRouter } from './firebase'
-import { deleteUserToken } from '../../../lib/oauth-model'
+import { myAbusesRouter } from './my-abuses'
 import { myBlocklistRouter } from './my-blocklist'
-import { myVideoPlaylistsRouter } from './my-video-playlists'
 import { myVideosHistoryRouter } from './my-history'
 import { myNotificationsRouter } from './my-notifications'
-import { Notifier } from '../../../lib/notifier'
 import { mySubscriptionsRouter } from './my-subscriptions'
-import { CONFIG } from '../../../initializers/config'
-import { sequelizeTypescript } from '../../../initializers/database'
-import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
-import { UserRegister } from '../../../../shared/models/users/user-register.model'
-import { MUser, MUserAccountDefault } from '@server/types/models'
-import { Hooks } from '@server/lib/plugins/hooks'
-import { tokensRouter } from '@server/controllers/api/users/token'
+import { myVideoPlaylistsRouter } from './my-video-playlists'
 
 const auditLogger = auditLoggerFactory('users')
 
@@ -73,6 +74,7 @@ usersRouter.use('/', mySubscriptionsRouter)
 usersRouter.use('/', myBlocklistRouter)
 usersRouter.use('/', myVideosHistoryRouter)
 usersRouter.use('/', myVideoPlaylistsRouter)
+usersRouter.use('/', myAbusesRouter)
 usersRouter.use('/', meRouter)
 usersRouter.use('/', firebaseRouter)
 
@@ -176,6 +178,7 @@ export {
 
 async function createUser (req: express.Request, res: express.Response) {
   const body: UserCreate = req.body
+
   const userToCreate = new UserModel({
     username: body.username,
     password: body.password,
@@ -194,7 +197,10 @@ async function createUser (req: express.Request, res: express.Response) {
     userToCreate.password = await generateRandomString(20)
   }
 
-  const { user, account, videoChannel } = await createUserAccountAndChannelAndPlaylist({ userToCreate: userToCreate })
+  const { user, account, videoChannel } = await createUserAccountAndChannelAndPlaylist({
+    userToCreate,
+    channelNames: body.channelName && { name: body.channelName, displayName: body.channelName }
+  })
 
   auditLogger.create(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
   logger.info('User %s with its channel and account created.', body.username)
@@ -352,6 +358,7 @@ async function resetUserPassword (req: express.Request, res: express.Response) {
   user.password = req.body.password
 
   await user.save()
+  await Redis.Instance.removePasswordVerificationString(user.id)
 
   return res.status(204).end()
 }

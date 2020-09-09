@@ -42,6 +42,7 @@ export enum ScopeNames {
 }
 
 export type SummaryOptions = {
+  actorRequired?: boolean // Default: true
   whereActor?: WhereOptions
   withAccountBlockerIds?: number[]
 }
@@ -65,12 +66,12 @@ export type SummaryOptions = {
     }
 
     const query: FindOptions = {
-      attributes: [ 'id', 'name' ],
+      attributes: [ 'id', 'name', 'actorId' ],
       include: [
         {
           attributes: [ 'id', 'preferredUsername', 'url', 'serverId', 'avatarId' ],
           model: ActorModel.unscoped(),
-          required: true,
+          required: options.actorRequired ?? true,
           where: whereActor,
           include: [
             serverInclude,
@@ -386,6 +387,10 @@ export class AccountModel extends Model<AccountModel> {
     return AccountModel
       .unscoped()
       .findAll(query)
+  }
+
+  getClientUrl () {
+    return WEBSERVER.URL + '/accounts/' + this.Actor.getIdentifier()
   }
 
   toFormattedJSON (this: MAccountFormattable): Account {

@@ -53,8 +53,8 @@ Be part of a network of multiple small federated, interoperable video hosting pr
 
   <br />
 
-  <a href="https://travis-ci.com/github/Chocobozzz/PeerTube">
-    <img alt="pipeline status" src="https://travis-ci.com/Chocobozzz/PeerTube.svg?branch=develop" />
+  <a href="https://github.com/Chocobozzz/PeerTube/actions?query=workflow%3A%22Test+Suite%22+branch%3Adevelop">
+    <img alt="test suite status" src="https://github.com/Chocobozzz/PeerTube/workflows/Test%20Suite/badge.svg" />
   </a>
 
   <a href="https://david-dm.org/Chocobozzz/PeerTube">
@@ -169,7 +169,7 @@ Feel free to reach out if you have any questions or ideas! :speech_balloon:
   * **Redis >= 2.8.18**
   * **NodeJS >= 10.x**
   * **yarn >= 1.x**
-  * **FFmpeg >= 3.x**
+  * **FFmpeg >= 4.1**
 
 See the [production guide](https://github.com/ipbc-dev/BitTubeVid/blob/tube/support/doc/production.md), which is the recommended way to install or upgrade BitTube. For hardware requirements, see [Should I have a big server to run BitTube?](https://github.com/ipbc-dev/BitTubeVid/blob/tube/FAQ.md#should-i-have-a-big-server-to-run-peertube) in the FAQ.
 

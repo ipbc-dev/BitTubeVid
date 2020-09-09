@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 
 @Component({
   selector: 'my-delete-button',
@@ -9,12 +8,21 @@ import { I18n } from '@ngx-translate/i18n-polyfill'
 
 export class DeleteButtonComponent implements OnInit {
   @Input() label: string
-
-  title: string
-
-  constructor (private i18n: I18n) { }
+  @Input() title: string
 
   ngOnInit () {
-    this.title = this.label || this.i18n('Delete')
+    // <my-delete-button /> No label
+    if (this.label === undefined && !this.title) {
+      this.title = $localize`Delete`
+    }
+
+    // <my-delete-button label /> Use default label
+    if (this.label === '') {
+      this.label = $localize`Delete`
+
+      if (!this.title) {
+        this.title = this.label
+      }
+    }
   }
 }

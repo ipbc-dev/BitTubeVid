@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common'
+import { SelectChannelItem } from '@app/shared/shared-forms'
 import { environment } from '../../environments/environment'
 import { AuthService } from '../core/auth'
 
@@ -16,7 +17,10 @@ function getParameterByName (name: string, url: string) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-function populateAsyncUserVideoChannels (authService: AuthService, channel: { id: number, label: string, support?: string }[]) {
+function populateAsyncUserVideoChannels (
+  authService: AuthService,
+  channel: SelectChannelItem[]
+) {
   return new Promise(res => {
     authService.userInformationLoaded
       .subscribe(
@@ -27,7 +31,12 @@ function populateAsyncUserVideoChannels (authService: AuthService, channel: { id
           const videoChannels = user.videoChannels
           if (Array.isArray(videoChannels) === false) return
 
-          videoChannels.forEach(c => channel.push({ id: c.id, label: c.displayName, support: c.support }))
+          videoChannels.forEach(c => channel.push({
+            id: c.id,
+            label: c.displayName,
+            support: c.support,
+            avatarPath: c.avatar?.path
+          }))
 
           return res()
         }
@@ -36,7 +45,10 @@ function populateAsyncUserVideoChannels (authService: AuthService, channel: { id
 }
 
 function getAbsoluteAPIUrl () {
-  let absoluteAPIUrl = environment.apiUrl
+  let absoluteAPIUrl = environment.hmr === true
+    ? 'http://localhost:9000'
+    : environment.apiUrl
+
   if (!absoluteAPIUrl) {
     // The API is on the same domain
     absoluteAPIUrl = window.location.origin
@@ -76,15 +88,6 @@ function durationToString (duration: number) {
 
 function immutableAssign <A, B> (target: A, source: B) {
   return Object.assign({}, target, source)
-}
-
-function objectToUrlEncoded (obj: any) {
-  const str: string[] = []
-  for (const key of Object.keys(obj)) {
-    str.push(encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
-  }
-
-  return str.join('&')
 }
 
 // Thanks: https://gist.github.com/ghinda/8442a57f22099bdb2e34
@@ -145,41 +148,6 @@ function scrollToTop () {
   window.scroll(0, 0)
 }
 
-// Thanks: https://github.com/uupaa/dynamic-import-polyfill
-function importModule (path: string) {
-  return new Promise((resolve, reject) => {
-    const vector = '$importModule$' + Math.random().toString(32).slice(2)
-    const script = document.createElement('script')
-
-    const destructor = () => {
-      delete window[ vector ]
-      script.onerror = null
-      script.onload = null
-      script.remove()
-      URL.revokeObjectURL(script.src)
-      script.src = ''
-    }
-
-    script.defer = true
-    script.type = 'module'
-
-    script.onerror = () => {
-      reject(new Error(`Failed to import: ${path}`))
-      destructor()
-    }
-    script.onload = () => {
-      resolve(window[ vector ])
-      destructor()
-    }
-    const absURL = (environment.apiUrl || window.location.origin) + path
-    const loader = `import * as m from "${absURL}"; window.${vector} = m;` // export Module
-    const blob = new Blob([ loader ], { type: 'text/javascript' })
-    script.src = URL.createObjectURL(blob)
-
-    document.head.appendChild(script)
-  })
-}
-
 function isInViewport (el: HTMLElement) {
   const bounding = el.getBoundingClientRect()
   return (
@@ -204,7 +172,6 @@ export {
   sortBy,
   durationToString,
   lineFeedToHtml,
-  objectToUrlEncoded,
   getParameterByName,
   populateAsyncUserVideoChannels,
   getAbsoluteAPIUrl,
@@ -214,7 +181,6 @@ export {
   getAbsoluteEmbedUrl,
   objectLineFeedToHtml,
   removeElementFromArray,
-  importModule,
   scrollToTop,
   isInViewport,
   isXPercentInViewport

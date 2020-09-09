@@ -1,10 +1,11 @@
 import { catchError, map, tap } from 'rxjs/operators'
 import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core'
-import { ComponentPaginationLight, RestExtractor, RestService, User, UserNotificationSocket } from '@app/core'
+import { ComponentPaginationLight, RestExtractor, RestService, User, UserNotificationSocket, AuthService } from '@app/core'
 import { ResultList, UserNotification as UserNotificationServer, UserNotificationSetting } from '@shared/models'
 import { environment } from '../../../../environments/environment'
 import { UserNotification } from './user-notification.model'
+import { SortMeta } from 'primeng/api'
 
 @Injectable()
 export class UserNotificationService {
@@ -13,14 +14,22 @@ export class UserNotificationService {
 
   constructor (
     private authHttp: HttpClient,
+    private auth: AuthService,
     private restExtractor: RestExtractor,
     private restService: RestService,
     private userNotificationSocket: UserNotificationSocket
   ) {}
 
-  listMyNotifications (pagination: ComponentPaginationLight, unread?: boolean, ignoreLoadingBar = false) {
+  listMyNotifications (parameters: {
+    pagination: ComponentPaginationLight
+    ignoreLoadingBar?: boolean
+    unread?: boolean,
+    sort?: SortMeta
+  }) {
+    const { pagination, ignoreLoadingBar, unread, sort } = parameters
+
     let params = new HttpParams()
-    params = this.restService.addRestGetParams(params, this.restService.componentPaginationToRestPagination(pagination))
+    params = this.restService.addRestGetParams(params, this.restService.componentPaginationToRestPagination(pagination), sort)
 
     if (unread) params = params.append('unread', `${unread}`)
 
@@ -35,7 +44,7 @@ export class UserNotificationService {
   }
 
   countUnreadNotifications () {
-    return this.listMyNotifications({ currentPage: 1, itemsPerPage: 0 }, true)
+    return this.listMyNotifications({ pagination: { currentPage: 1, itemsPerPage: 0 }, ignoreLoadingBar: true, unread: true })
       .pipe(map(n => n.total))
   }
 
@@ -76,6 +85,6 @@ export class UserNotificationService {
   }
 
   private formatNotification (notification: UserNotificationServer) {
-    return new UserNotification(notification)
+    return new UserNotification(notification, this.auth.getUser())
   }
 }

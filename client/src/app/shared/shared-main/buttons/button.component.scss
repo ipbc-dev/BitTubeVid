@@ -1,12 +1,17 @@
 @import '_variables';
 @import '_mixins';
 
+:host {
+  outline: none;
+}
+
 my-small-loader ::ng-deep .root {
   display: inline-block;
   margin: 0 3px 0 0;
   width: 20px;
 }
 
+a[class$=-button],
 span[class$=-button] {
   > span {
     margin-left: 5px;
