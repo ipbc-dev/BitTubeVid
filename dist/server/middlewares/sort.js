@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setBlacklistSort = exports.setDefaultVideoRedundanciesSort = exports.setDefaultSearchSort = exports.setDefaultSort = void 0;
+exports.setBlacklistSort = exports.setDefaultVideoRedundanciesSort = exports.setDefaultVideosSort = exports.setDefaultSearchSort = exports.setDefaultSort = void 0;
 const setDefaultSort = setDefaultSortFactory('-createdAt');
 exports.setDefaultSort = setDefaultSort;
+const setDefaultVideosSort = setDefaultSortFactory('-publishedAt');
+exports.setDefaultVideosSort = setDefaultVideosSort;
 const setDefaultVideoRedundanciesSort = setDefaultSortFactory('name');
 exports.setDefaultVideoRedundanciesSort = setDefaultVideoRedundanciesSort;
 const setDefaultSearchSort = setDefaultSortFactory('-match');

@@ -6,7 +6,6 @@ const utils_1 = require("../utils");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const express_validator_1 = require("express-validator");
 const constants_1 = require("../../../initializers/constants");
-const shared_1 = require("../../../../shared");
 const logger_1 = require("../../../helpers/logger");
 const video_captions_1 = require("../../../helpers/custom-validators/video-captions");
 const express_utils_1 = require("../../../helpers/express-utils");
@@ -26,7 +25,7 @@ const addVideoCaptionValidator = [
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
             return express_utils_1.cleanUpReqFiles(req);
         const user = res.locals.oauth.token.User;
-        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, shared_1.UserRight.UPDATE_ANY_VIDEO, res))
+        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, 16, res))
             return express_utils_1.cleanUpReqFiles(req);
         return next();
     })
@@ -44,7 +43,7 @@ const deleteVideoCaptionValidator = [
         if (!(yield middlewares_1.doesVideoCaptionExist(res.locals.videoAll, req.params.captionLanguage, res)))
             return;
         const user = res.locals.oauth.token.User;
-        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, shared_1.UserRight.UPDATE_ANY_VIDEO, res))
+        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, 16, res))
             return;
         return next();
     })

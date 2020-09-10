@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
+exports.getGoodVideoUrl = exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
 const requests_1 = require("../requests/requests");
 function getYoutubeVideoUrl() {
     return 'http://www.youtube.com/watch?v=msX3jv1XdvM';
@@ -14,6 +14,10 @@ function getBadVideoUrl() {
     return 'https://download.cpy.re/peertube/bad_video.mp4';
 }
 exports.getBadVideoUrl = getBadVideoUrl;
+function getGoodVideoUrl() {
+    return 'https://download.cpy.re/peertube/good_video.mp4';
+}
+exports.getGoodVideoUrl = getGoodVideoUrl;
 function importVideo(url, token, attributes, statusCodeExpected = 200) {
     const path = '/api/v1/videos/imports';
     let attaches = {};

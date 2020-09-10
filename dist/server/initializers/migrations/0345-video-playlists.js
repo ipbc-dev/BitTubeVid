@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.down = exports.up = void 0;
 const tslib_1 = require("tslib");
 const Sequelize = require("sequelize");
-const videos_1 = require("../../../shared/models/videos");
 const uuid_1 = require("uuid");
 const constants_1 = require("../constants");
 function up(utils) {
@@ -58,8 +57,8 @@ CREATE TABLE IF NOT EXISTS "videoPlaylistElement"
  SELECT '${baseUrl}' AS "url",
          '${uuid}' AS "uuid",
          'Watch later' AS "name",
-         ${videos_1.VideoPlaylistPrivacy.PRIVATE} AS "privacy",
-         ${videos_1.VideoPlaylistType.WATCH_LATER} AS "type",
+         ${3} AS "privacy",
+         ${2} AS "type",
          "account"."id" AS "ownerAccountId",
          NOW() as "createdAt",
          NOW() as "updatedAt"

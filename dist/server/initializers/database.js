@@ -1,52 +1,56 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sequelizeTypescript = exports.initDatabaseModels = void 0;
+exports.sequelizeTypescript = exports.checkDatabaseConnectionOrDie = exports.initDatabaseModels = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const abuse_1 = require("@server/models/abuse/abuse");
+const abuse_message_1 = require("@server/models/abuse/abuse-message");
+const video_abuse_1 = require("@server/models/abuse/video-abuse");
+const video_comment_abuse_1 = require("@server/models/abuse/video-comment-abuse");
 const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
 const account_1 = require("../models/account/account");
+const account_blocklist_1 = require("../models/account/account-blocklist");
 const account_video_rate_1 = require("../models/account/account-video-rate");
 const user_1 = require("../models/account/user");
+const user_notification_1 = require("../models/account/user-notification");
+const user_notification_setting_1 = require("../models/account/user-notification-setting");
+const user_video_history_1 = require("../models/account/user-video-history");
 const actor_1 = require("../models/activitypub/actor");
 const actor_follow_1 = require("../models/activitypub/actor-follow");
 const application_1 = require("../models/application/application");
 const avatar_1 = require("../models/avatar/avatar");
 const oauth_client_1 = require("../models/oauth/oauth-client");
 const oauth_token_1 = require("../models/oauth/oauth-token");
+const video_redundancy_1 = require("../models/redundancy/video-redundancy");
+const plugin_1 = require("../models/server/plugin");
 const server_1 = require("../models/server/server");
+const server_blocklist_1 = require("../models/server/server-blocklist");
+const schedule_video_update_1 = require("../models/video/schedule-video-update");
 const tag_1 = require("../models/video/tag");
+const thumbnail_1 = require("../models/video/thumbnail");
 const video_1 = require("../models/video/video");
-const video_abuse_1 = require("../models/video/video-abuse");
 const video_blacklist_1 = require("../models/video/video-blacklist");
+const video_caption_1 = require("../models/video/video-caption");
+const video_change_ownership_1 = require("../models/video/video-change-ownership");
 const video_channel_1 = require("../models/video/video-channel");
 const video_comment_1 = require("../models/video/video-comment");
 const video_file_1 = require("../models/video/video-file");
-const video_share_1 = require("../models/video/video-share");
-const video_tag_1 = require("../models/video/video-tag");
-const config_1 = require("./config");
-const schedule_video_update_1 = require("../models/video/schedule-video-update");
-const video_caption_1 = require("../models/video/video-caption");
 const video_import_1 = require("../models/video/video-import");
-const video_view_1 = require("../models/video/video-view");
-const video_change_ownership_1 = require("../models/video/video-change-ownership");
-const video_redundancy_1 = require("../models/redundancy/video-redundancy");
-const user_video_history_1 = require("../models/account/user-video-history");
-const account_blocklist_1 = require("../models/account/account-blocklist");
-const server_blocklist_1 = require("../models/server/server-blocklist");
-const user_notification_1 = require("../models/account/user-notification");
-const user_notification_setting_1 = require("../models/account/user-notification-setting");
-const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
 const video_playlist_1 = require("../models/video/video-playlist");
 const video_playlist_element_1 = require("../models/video/video-playlist-element");
-const thumbnail_1 = require("../models/video/thumbnail");
-const plugin_1 = require("../models/server/plugin");
-const sequelize_1 = require("sequelize");
+const video_share_1 = require("../models/video/video-share");
+const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
+const video_tag_1 = require("../models/video/video-tag");
+const video_view_1 = require("../models/video/video-view");
+const config_1 = require("./config");
 require('pg').defaults.parseInt8 = true;
 const dbname = config_1.CONFIG.DATABASE.DBNAME;
 const username = config_1.CONFIG.DATABASE.USERNAME;
 const password = config_1.CONFIG.DATABASE.PASSWORD;
 const host = config_1.CONFIG.DATABASE.HOSTNAME;
+const ssl = config_1.CONFIG.DATABASE.SSL;
 const port = config_1.CONFIG.DATABASE.PORT;
 const poolMax = config_1.CONFIG.DATABASE.POOL.MAX;
 const sequelizeTypescript = new sequelize_typescript_1.Sequelize({
@@ -56,6 +60,7 @@ const sequelizeTypescript = new sequelize_typescript_1.Sequelize({
     port,
     username,
     password,
+    ssl,
     pool: {
         max: poolMax
     },
@@ -72,6 +77,15 @@ const sequelizeTypescript = new sequelize_typescript_1.Sequelize({
     }
 });
 exports.sequelizeTypescript = sequelizeTypescript;
+function checkDatabaseConnectionOrDie() {
+    sequelizeTypescript.authenticate()
+        .then(() => logger_1.logger.debug('Connection to PostgreSQL has been established successfully.'))
+        .catch(err => {
+        logger_1.logger.error('Unable to connect to PostgreSQL database.', { err });
+        process.exit(-1);
+    });
+}
+exports.checkDatabaseConnectionOrDie = checkDatabaseConnectionOrDie;
 function initDatabaseModels(silent) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         sequelizeTypescript.addModels([
@@ -86,6 +100,9 @@ function initDatabaseModels(silent) {
             tag_1.TagModel,
             account_video_rate_1.AccountVideoRateModel,
             user_1.UserModel,
+            abuse_message_1.AbuseMessageModel,
+            abuse_1.AbuseModel,
+            video_comment_abuse_1.VideoCommentAbuseModel,
             video_abuse_1.VideoAbuseModel,
             video_1.VideoModel,
             video_change_ownership_1.VideoChangeOwnershipModel,

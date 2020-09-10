@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.doVideosInPlaylistExistValidator = exports.commonVideoPlaylistFiltersValidator = exports.videoPlaylistElementAPGetValidator = exports.videoPlaylistsReorderVideosValidator = exports.videoPlaylistsUpdateOrRemoveVideoValidator = exports.videoPlaylistsAddVideoValidator = exports.videoPlaylistsSearchValidator = exports.videoPlaylistsGetValidator = exports.videoPlaylistsDeleteValidator = exports.videoPlaylistsUpdateValidator = exports.videoPlaylistsAddValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
-const shared_1 = require("../../../../shared");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../utils");
 const videos_1 = require("../../../helpers/custom-validators/videos");
@@ -13,8 +12,6 @@ const video_playlists_1 = require("../../../helpers/custom-validators/video-play
 const express_utils_1 = require("../../../helpers/express-utils");
 const video_playlist_element_1 = require("../../../models/video/video-playlist-element");
 const oauth_1 = require("../../oauth");
-const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
-const video_playlist_type_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-type.model");
 const middlewares_1 = require("../../../helpers/middlewares");
 const videoPlaylistsAddValidator = getCommonPlaylistEditAttributes().concat([
     express_validator_1.body('displayName')
@@ -26,7 +23,7 @@ const videoPlaylistsAddValidator = getCommonPlaylistEditAttributes().concat([
         const body = req.body;
         if (body.videoChannelId && !(yield middlewares_1.doesVideoChannelIdExist(body.videoChannelId, res)))
             return express_utils_1.cleanUpReqFiles(req);
-        if (body.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC && !body.videoChannelId) {
+        if (body.privacy === 1 && !body.videoChannelId) {
             express_utils_1.cleanUpReqFiles(req);
             return res.status(400)
                 .json({ error: 'Cannot set "public" a playlist that is not assigned to a channel.' });
@@ -48,19 +45,19 @@ const videoPlaylistsUpdateValidator = getCommonPlaylistEditAttributes().concat([
         if (!(yield middlewares_1.doesVideoPlaylistExist(req.params.playlistId, res, 'all')))
             return express_utils_1.cleanUpReqFiles(req);
         const videoPlaylist = getPlaylist(res);
-        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, shared_1.UserRight.REMOVE_ANY_VIDEO_PLAYLIST, res)) {
+        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, 14, res)) {
             return express_utils_1.cleanUpReqFiles(req);
         }
         const body = req.body;
         const newPrivacy = body.privacy || videoPlaylist.privacy;
-        if (newPrivacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC &&
+        if (newPrivacy === 1 &&
             ((!videoPlaylist.videoChannelId && !body.videoChannelId) ||
                 body.videoChannelId === null)) {
             express_utils_1.cleanUpReqFiles(req);
             return res.status(400)
                 .json({ error: 'Cannot set "public" a playlist that is not assigned to a channel.' });
         }
-        if (videoPlaylist.type === video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER) {
+        if (videoPlaylist.type === 2) {
             express_utils_1.cleanUpReqFiles(req);
             return res.status(400)
                 .json({ error: 'Cannot update a watch later playlist.' });
@@ -81,11 +78,11 @@ const videoPlaylistsDeleteValidator = [
         if (!(yield middlewares_1.doesVideoPlaylistExist(req.params.playlistId, res)))
             return;
         const videoPlaylist = getPlaylist(res);
-        if (videoPlaylist.type === video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER) {
+        if (videoPlaylist.type === 2) {
             return res.status(400)
                 .json({ error: 'Cannot delete a watch later playlist.' });
         }
-        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, shared_1.UserRight.REMOVE_ANY_VIDEO_PLAYLIST, res)) {
+        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, 14, res)) {
             return;
         }
         return next();
@@ -103,16 +100,16 @@ const videoPlaylistsGetValidator = (fetchType) => {
             if (!(yield middlewares_1.doesVideoPlaylistExist(req.params.playlistId, res, fetchType)))
                 return;
             const videoPlaylist = res.locals.videoPlaylistFull || res.locals.videoPlaylistSummary;
-            if (videoPlaylist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED) {
+            if (videoPlaylist.privacy === 2) {
                 if (misc_1.isUUIDValid(req.params.playlistId))
                     return next();
                 return res.status(404).end();
             }
-            if (videoPlaylist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE) {
+            if (videoPlaylist.privacy === 3) {
                 yield oauth_1.authenticatePromiseIfNeeded(req, res);
                 const user = res.locals.oauth ? res.locals.oauth.token.User : null;
                 if (!user ||
-                    (videoPlaylist.OwnerAccount.id !== user.Account.id && !user.hasRight(shared_1.UserRight.UPDATE_ANY_VIDEO_PLAYLIST))) {
+                    (videoPlaylist.OwnerAccount.id !== user.Account.id && !user.hasRight(17))) {
                     return res.status(403)
                         .json({ error: 'Cannot get this private video playlist.' });
                 }
@@ -153,15 +150,7 @@ const videoPlaylistsAddVideoValidator = [
         if (!(yield middlewares_1.doesVideoExist(req.body.videoId, res, 'only-video')))
             return;
         const videoPlaylist = getPlaylist(res);
-        const video = res.locals.onlyVideo;
-        const videoPlaylistElement = yield video_playlist_element_1.VideoPlaylistElementModel.loadByPlaylistAndVideo(videoPlaylist.id, video.id);
-        if (videoPlaylistElement) {
-            res.status(409)
-                .json({ error: 'This video in this playlist already exists' })
-                .end();
-            return;
-        }
-        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, shared_1.UserRight.UPDATE_ANY_VIDEO_PLAYLIST, res)) {
+        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, 17, res)) {
             return;
         }
         return next();
@@ -194,7 +183,7 @@ const videoPlaylistsUpdateOrRemoveVideoValidator = [
             return;
         }
         res.locals.videoPlaylistElement = videoPlaylistElement;
-        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, shared_1.UserRight.UPDATE_ANY_VIDEO_PLAYLIST, res))
+        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, 17, res))
             return;
         return next();
     })
@@ -203,20 +192,22 @@ exports.videoPlaylistsUpdateOrRemoveVideoValidator = videoPlaylistsUpdateOrRemov
 const videoPlaylistElementAPGetValidator = [
     express_validator_1.param('playlistId')
         .custom(misc_1.isIdOrUUIDValid).withMessage('Should have a valid playlist id/uuid'),
-    express_validator_1.param('videoId')
-        .custom(misc_1.isIdOrUUIDValid).withMessage('Should have an video id/uuid'),
+    express_validator_1.param('playlistElementId')
+        .custom(misc_1.isIdValid).withMessage('Should have an playlist element id'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking videoPlaylistElementAPGetValidator parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
             return;
-        const videoPlaylistElement = yield video_playlist_element_1.VideoPlaylistElementModel.loadByPlaylistAndVideoForAP(req.params.playlistId, req.params.videoId);
+        const playlistElementId = parseInt(req.params.playlistElementId + '', 10);
+        const playlistId = req.params.playlistId;
+        const videoPlaylistElement = yield video_playlist_element_1.VideoPlaylistElementModel.loadByPlaylistAndElementIdForAP(playlistId, playlistElementId);
         if (!videoPlaylistElement) {
             res.status(404)
                 .json({ error: 'Video playlist element not found' })
                 .end();
             return;
         }
-        if (videoPlaylistElement.VideoPlaylist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE) {
+        if (videoPlaylistElement.VideoPlaylist.privacy === 3) {
             return res.status(403).end();
         }
         res.locals.videoPlaylistElementAP = videoPlaylistElement;
@@ -241,7 +232,7 @@ const videoPlaylistsReorderVideosValidator = [
         if (!(yield middlewares_1.doesVideoPlaylistExist(req.params.playlistId, res, 'all')))
             return;
         const videoPlaylist = getPlaylist(res);
-        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, shared_1.UserRight.UPDATE_ANY_VIDEO_PLAYLIST, res))
+        if (!checkUserCanManageVideoPlaylist(res.locals.oauth.token.User, videoPlaylist, 17, res))
             return;
         const nextPosition = yield video_playlist_element_1.VideoPlaylistElementModel.getNextPositionOf(videoPlaylist.id);
         const startPosition = req.body.startPosition;

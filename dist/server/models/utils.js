@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchAttribute = exports.createSafeIn = exports.buildDirectionAndField = exports.getFollowsSort = exports.parseAggregateResult = exports.isOutdated = exports.buildWhereIdOrUUID = exports.buildTrigramSearchIndex = exports.buildServerIdsFollowedBy = exports.throwIfNotValid = exports.createSimilarityAttribute = exports.getBlacklistSort = exports.getVideoSort = exports.getCommentSort = exports.getSort = exports.buildLocalAccountIdsIn = exports.buildLocalActorIdsIn = exports.buildBlockedAccountSQL = void 0;
+exports.searchAttribute = exports.createSafeIn = exports.buildDirectionAndField = exports.getFollowsSort = exports.parseAggregateResult = exports.isOutdated = exports.buildWhereIdOrUUID = exports.buildTrigramSearchIndex = exports.buildServerIdsFollowedBy = exports.throwIfNotValid = exports.createSimilarityAttribute = exports.getBlacklistSort = exports.getVideoSort = exports.getCommentSort = exports.getSort = exports.buildLocalAccountIdsIn = exports.buildLocalActorIdsIn = exports.buildBlockedAccountSQLOptimized = exports.buildBlockedAccountSQL = void 0;
 const sequelize_typescript_1 = require("sequelize-typescript");
 const validator_1 = require("validator");
 const sequelize_1 = require("sequelize");
@@ -107,6 +107,24 @@ function buildBlockedAccountSQL(blockerIds) {
         'WHERE "serverBlocklist"."accountId" IN (' + blockerIdsString + ')';
 }
 exports.buildBlockedAccountSQL = buildBlockedAccountSQL;
+function buildBlockedAccountSQLOptimized(columnNameJoin, blockerIds) {
+    const blockerIdsString = blockerIds.join(', ');
+    return [
+        sequelize_1.literal(`NOT EXISTS (` +
+            `  SELECT 1 FROM "accountBlocklist" ` +
+            `  WHERE "targetAccountId" = ${columnNameJoin} ` +
+            `  AND "accountId" IN (${blockerIdsString})` +
+            `)`),
+        sequelize_1.literal(`NOT EXISTS (` +
+            `  SELECT 1 FROM "account" ` +
+            `  INNER JOIN "actor" ON account."actorId" = actor.id ` +
+            `  INNER JOIN "serverBlocklist" ON "actor"."serverId" = "serverBlocklist"."targetServerId" ` +
+            `  WHERE "account"."id" = ${columnNameJoin} ` +
+            `  AND "serverBlocklist"."accountId" IN (${blockerIdsString})` +
+            `)`)
+    ];
+}
+exports.buildBlockedAccountSQLOptimized = buildBlockedAccountSQLOptimized;
 function buildServerIdsFollowedBy(actorId) {
     const actorIdNumber = parseInt(actorId + '', 10);
     return '(' +

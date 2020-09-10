@@ -10,7 +10,6 @@ const request = require("supertest");
 const uuid_1 = require("uuid");
 const validator_1 = require("validator");
 const constants_1 = require("../../../server/initializers/constants");
-const videos_1 = require("../../models/videos");
 const miscs_1 = require("../miscs/miscs");
 const requests_1 = require("../requests/requests");
 const jobs_1 = require("../server/jobs");
@@ -281,7 +280,7 @@ function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) 
             description: 'my super description',
             support: 'my super support text',
             tags: ['tag'],
-            privacy: videos_1.VideoPrivacy.PUBLIC,
+            privacy: 1,
             commentsEnabled: true,
             downloadEnabled: true,
             fixture: 'video_short.webm'

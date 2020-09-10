@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isVideoFilterValid = exports.isVideoSupportValid = exports.isVideoImage = exports.isVideoFileSizeValid = exports.isVideoFileResolutionValid = exports.isVideoPrivacyValid = exports.isVideoTagValid = exports.isVideoDurationValid = exports.isVideoFileExtnameValid = exports.isVideoRatingTypeValid = exports.isVideoViewsValid = exports.isVideoStateValid = exports.isVideoMagnetUriValid = exports.isVideoFile = exports.isVideoOriginallyPublishedAtValid = exports.isScheduleVideoUpdatePrivacyValid = exports.isVideoFPSResolutionValid = exports.isVideoTagsValid = exports.isVideoNameValid = exports.isVideoFileInfoHashValid = exports.isVideoDescriptionValid = exports.isVideoTruncatedDescriptionValid = exports.isVideoLanguageValid = exports.isVideoLicenceValid = exports.isVideoCategoryValid = void 0;
 const lodash_1 = require("lodash");
 const validator_1 = require("validator");
-const shared_1 = require("../../../shared");
 const constants_1 = require("../../initializers/constants");
 const misc_1 = require("./misc");
 const magnetUtil = require("magnet-uri");
@@ -72,10 +71,7 @@ function isVideoFileExtnameValid(value) {
 }
 exports.isVideoFileExtnameValid = isVideoFileExtnameValid;
 function isVideoFile(files) {
-    const videoFileTypesRegex = Object.keys(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT)
-        .map(m => `(${m})`)
-        .join('|');
-    return misc_1.isFileValid(files, videoFileTypesRegex, 'videofile', null);
+    return misc_1.isFileValid(files, constants_1.MIMETYPES.VIDEO.MIMETYPES_REGEX, 'videofile', null);
 }
 exports.isVideoFile = isVideoFile;
 const videoImageTypes = constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME
@@ -91,7 +87,7 @@ function isVideoPrivacyValid(value) {
 }
 exports.isVideoPrivacyValid = isVideoPrivacyValid;
 function isScheduleVideoUpdatePrivacyValid(value) {
-    return value === shared_1.VideoPrivacy.UNLISTED || value === shared_1.VideoPrivacy.PUBLIC || value === shared_1.VideoPrivacy.INTERNAL;
+    return value === 2 || value === 1 || value === 4;
 }
 exports.isScheduleVideoUpdatePrivacyValid = isScheduleVideoUpdatePrivacyValid;
 function isVideoOriginallyPublishedAtValid(value) {

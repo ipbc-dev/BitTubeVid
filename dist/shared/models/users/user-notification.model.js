@@ -5,7 +5,7 @@ var UserNotificationType;
 (function (UserNotificationType) {
     UserNotificationType[UserNotificationType["NEW_VIDEO_FROM_SUBSCRIPTION"] = 1] = "NEW_VIDEO_FROM_SUBSCRIPTION";
     UserNotificationType[UserNotificationType["NEW_COMMENT_ON_MY_VIDEO"] = 2] = "NEW_COMMENT_ON_MY_VIDEO";
-    UserNotificationType[UserNotificationType["NEW_VIDEO_ABUSE_FOR_MODERATORS"] = 3] = "NEW_VIDEO_ABUSE_FOR_MODERATORS";
+    UserNotificationType[UserNotificationType["NEW_ABUSE_FOR_MODERATORS"] = 3] = "NEW_ABUSE_FOR_MODERATORS";
     UserNotificationType[UserNotificationType["BLACKLIST_ON_MY_VIDEO"] = 4] = "BLACKLIST_ON_MY_VIDEO";
     UserNotificationType[UserNotificationType["UNBLACKLIST_ON_MY_VIDEO"] = 5] = "UNBLACKLIST_ON_MY_VIDEO";
     UserNotificationType[UserNotificationType["MY_VIDEO_PUBLISHED"] = 6] = "MY_VIDEO_PUBLISHED";
@@ -17,4 +17,6 @@ var UserNotificationType;
     UserNotificationType[UserNotificationType["VIDEO_AUTO_BLACKLIST_FOR_MODERATORS"] = 12] = "VIDEO_AUTO_BLACKLIST_FOR_MODERATORS";
     UserNotificationType[UserNotificationType["NEW_INSTANCE_FOLLOWER"] = 13] = "NEW_INSTANCE_FOLLOWER";
     UserNotificationType[UserNotificationType["AUTO_INSTANCE_FOLLOWING"] = 14] = "AUTO_INSTANCE_FOLLOWING";
+    UserNotificationType[UserNotificationType["ABUSE_STATE_CHANGE"] = 15] = "ABUSE_STATE_CHANGE";
+    UserNotificationType[UserNotificationType["ABUSE_NEW_MESSAGE"] = 16] = "ABUSE_NEW_MESSAGE";
 })(UserNotificationType = exports.UserNotificationType || (exports.UserNotificationType = {}));

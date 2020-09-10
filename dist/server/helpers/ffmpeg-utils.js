@@ -58,20 +58,20 @@ var audio;
     })(bitrate = audio.bitrate || (audio.bitrate = {}));
 })(audio || (audio = {}));
 exports.audio = audio;
-function computeResolutionsToTranscode(videoFileHeight) {
+function computeResolutionsToTranscode(videoFileResolution) {
     const resolutionsEnabled = [];
     const configResolutions = config_1.CONFIG.TRANSCODING.RESOLUTIONS;
     const resolutions = [
-        videos_1.VideoResolution.H_NOVIDEO,
-        videos_1.VideoResolution.H_480P,
-        videos_1.VideoResolution.H_360P,
-        videos_1.VideoResolution.H_720P,
-        videos_1.VideoResolution.H_240P,
-        videos_1.VideoResolution.H_1080P,
-        videos_1.VideoResolution.H_4K
+        0,
+        480,
+        360,
+        720,
+        240,
+        1080,
+        2160
     ];
     for (const resolution of resolutions) {
-        if (configResolutions[resolution + 'p'] === true && videoFileHeight > resolution) {
+        if (configResolutions[resolution + 'p'] === true && videoFileResolution > resolution) {
             resolutionsEnabled.push(resolution);
         }
     }
@@ -348,7 +348,7 @@ function buildHLSCommand(command, options) {
         const videoPath = getHLSVideoPath(options);
         if (options.copyCodecs)
             command = presetCopy(command);
-        else if (options.resolution === videos_1.VideoResolution.H_NOVIDEO)
+        else if (options.resolution === 0)
             command = presetOnlyAudio(command);
         else
             command = yield buildx264Command(command, options);

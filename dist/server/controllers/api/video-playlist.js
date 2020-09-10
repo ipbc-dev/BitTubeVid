@@ -12,7 +12,6 @@ const logger_1 = require("../../helpers/logger");
 const database_utils_1 = require("../../helpers/database-utils");
 const video_playlist_1 = require("../../models/video/video-playlist");
 const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
-const video_playlist_privacy_model_1 = require("../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const path_1 = require("path");
 const send_1 = require("../../lib/activitypub/send");
 const url_1 = require("../../lib/activitypub/url");
@@ -67,7 +66,7 @@ function addVideoPlaylist(req, res) {
         const videoPlaylist = new video_playlist_1.VideoPlaylistModel({
             name: videoPlaylistInfo.displayName,
             description: videoPlaylistInfo.description,
-            privacy: videoPlaylistInfo.privacy || video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE,
+            privacy: videoPlaylistInfo.privacy || 3,
             ownerAccountId: user.Account.id
         });
         videoPlaylist.url = url_1.getVideoPlaylistActivityPubUrl(videoPlaylist);
@@ -104,8 +103,8 @@ function updateVideoPlaylist(req, res) {
         const videoPlaylistInstance = res.locals.videoPlaylistFull;
         const videoPlaylistFieldsSave = videoPlaylistInstance.toJSON();
         const videoPlaylistInfoToUpdate = req.body;
-        const wasPrivatePlaylist = videoPlaylistInstance.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE;
-        const wasNotPrivatePlaylist = videoPlaylistInstance.privacy !== video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE;
+        const wasPrivatePlaylist = videoPlaylistInstance.privacy === 3;
+        const wasNotPrivatePlaylist = videoPlaylistInstance.privacy !== 3;
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
             ? yield thumbnail_1.createPlaylistMiniatureFromExisting(thumbnailField[0].path, videoPlaylistInstance, false)
@@ -131,7 +130,7 @@ function updateVideoPlaylist(req, res) {
                     videoPlaylistInstance.description = videoPlaylistInfoToUpdate.description;
                 if (videoPlaylistInfoToUpdate.privacy !== undefined) {
                     videoPlaylistInstance.privacy = parseInt(videoPlaylistInfoToUpdate.privacy.toString(), 10);
-                    if (wasNotPrivatePlaylist === true && videoPlaylistInstance.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE) {
+                    if (wasNotPrivatePlaylist === true && videoPlaylistInstance.privacy === 3) {
                         yield send_1.sendDeleteVideoPlaylist(videoPlaylistInstance, t);
                     }
                 }
@@ -140,7 +139,7 @@ function updateVideoPlaylist(req, res) {
                     thumbnailModel.automaticallyGenerated = false;
                     yield playlistUpdated.setAndSaveThumbnail(thumbnailModel, t);
                 }
-                const isNewPlaylist = wasPrivatePlaylist && playlistUpdated.privacy !== video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE;
+                const isNewPlaylist = wasPrivatePlaylist && playlistUpdated.privacy !== 3;
                 if (isNewPlaylist) {
                     yield send_1.sendCreateVideoPlaylist(playlistUpdated, t);
                 }
@@ -178,13 +177,14 @@ function addVideoInPlaylist(req, res) {
         const playlistElement = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const position = yield video_playlist_element_1.VideoPlaylistElementModel.getNextPositionOf(videoPlaylist.id, t);
             const playlistElement = yield video_playlist_element_1.VideoPlaylistElementModel.create({
-                url: url_1.getVideoPlaylistElementActivityPubUrl(videoPlaylist, video),
                 position,
                 startTimestamp: body.startTimestamp || null,
                 stopTimestamp: body.stopTimestamp || null,
                 videoPlaylistId: videoPlaylist.id,
                 videoId: video.id
             }, { transaction: t });
+            playlistElement.url = url_1.getVideoPlaylistElementActivityPubUrl(videoPlaylist, playlistElement);
+            yield playlistElement.save({ transaction: t });
             videoPlaylist.changed('updatedAt', true);
             yield videoPlaylist.save({ transaction: t });
             return playlistElement;

@@ -14,7 +14,6 @@ const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
 const config_1 = require("../initializers/config");
 const lazy_static_1 = require("./lazy-static");
-const video_streaming_playlist_type_1 = require("@shared/models/videos/video-streaming-playlist.type");
 const video_paths_1 = require("@server/lib/video-paths");
 const theme_utils_1 = require("../lib/plugins/theme-utils");
 const config_2 = require("@server/controllers/api/config");
@@ -250,7 +249,7 @@ function getVideoFile(req, files) {
     return files.find(f => f.resolution === resolution);
 }
 function getHLSPlaylist(video) {
-    const playlist = video.VideoStreamingPlaylists.find(p => p.type === video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS);
+    const playlist = video.VideoStreamingPlaylists.find(p => p.type === 1);
     if (!playlist)
         return undefined;
     return Object.assign(playlist, { Video: video });

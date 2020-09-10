@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.wrapForAPIResults = exports.buildListQuery = void 0;
-const models_1 = require("@shared/models");
 const utils_1 = require("@server/models/utils");
 const validator_1 = require("validator");
 const misc_1 = require("@server/helpers/custom-validators/misc");
@@ -33,13 +32,13 @@ function buildListQuery(model, options) {
             ')');
     }
     if (!options.filter || options.filter !== 'all-local') {
-        and.push(`("video"."state" = ${models_1.VideoState.PUBLISHED} OR ` +
-            `("video"."state" = ${models_1.VideoState.TO_TRANSCODE} AND "video"."waitTranscoding" IS false))`);
+        and.push(`("video"."state" = ${1} OR ` +
+            `("video"."state" = ${2} AND "video"."waitTranscoding" IS false))`);
         if (options.user) {
-            and.push(`("video"."privacy" = ${models_1.VideoPrivacy.PUBLIC} OR "video"."privacy" = ${models_1.VideoPrivacy.INTERNAL})`);
+            and.push(`("video"."privacy" = ${1} OR "video"."privacy" = ${4})`);
         }
         else {
-            and.push(`"video"."privacy" = ${models_1.VideoPrivacy.PUBLIC}`);
+            and.push(`"video"."privacy" = ${1}`);
         }
     }
     if (options.videoPlaylistId) {
@@ -80,7 +79,14 @@ function buildListQuery(model, options) {
         replacements.followerActorId = options.followerActorId;
     }
     if (options.withFiles === true) {
-        and.push('EXISTS (SELECT 1 FROM "videoFile" WHERE "videoFile"."videoId" = "video"."id")');
+        and.push('(' +
+            '  EXISTS (SELECT 1 FROM "videoFile" WHERE "videoFile"."videoId" = "video"."id") ' +
+            '  OR EXISTS (' +
+            '    SELECT 1 FROM "videoStreamingPlaylist" ' +
+            '    INNER JOIN "videoFile" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist"."id" ' +
+            '    WHERE "videoStreamingPlaylist"."videoId" = "video"."id"' +
+            '  )' +
+            ')');
     }
     if (options.tagsOneOf) {
         const tagsOneOfLower = options.tagsOneOf.map(t => t.toLowerCase());
@@ -208,7 +214,7 @@ function buildListQuery(model, options) {
             if (options.sort === '-originallyPublishedAt' || options.sort === 'originallyPublishedAt') {
                 attributes.push('COALESCE("video"."originallyPublishedAt", "video"."publishedAt") AS "publishedAtForOrder"');
             }
-            order = buildOrder(model, options.sort);
+            order = buildOrder(options.sort);
             suffix += `${order} `;
         }
         if (misc_1.exists(options.count)) {
@@ -233,7 +239,7 @@ function buildListQuery(model, options) {
     return { query, replacements, order };
 }
 exports.buildListQuery = buildListQuery;
-function buildOrder(model, value) {
+function buildOrder(value) {
     const { direction, field } = utils_1.buildDirectionAndField(value);
     if (field.match(/^[a-zA-Z."]+$/) === null)
         throw new Error('Invalid sort column ' + field);
@@ -311,7 +317,10 @@ function wrapForAPIResults(baseQuery, replacements, options, order) {
         'LEFT OUTER JOIN "thumbnail" AS "Thumbnails" ON "video"."id" = "Thumbnails"."videoId"'
     ];
     if (options.withFiles) {
-        joins.push('INNER JOIN "videoFile" AS "VideoFiles" ON "VideoFiles"."videoId" = "video"."id"');
+        joins.push('LEFT JOIN "videoFile" AS "VideoFiles" ON "VideoFiles"."videoId" = "video"."id"');
+        joins.push('LEFT JOIN "videoStreamingPlaylist" AS "VideoStreamingPlaylists" ON "VideoStreamingPlaylists"."videoId" = "video"."id"');
+        joins.push('LEFT JOIN "videoFile" AS "VideoStreamingPlaylists->VideoFiles" ' +
+            'ON "VideoStreamingPlaylists->VideoFiles"."videoStreamingPlaylistId" = "VideoStreamingPlaylists"."id"');
         Object.assign(attributes, {
             '"VideoFiles"."id"': '"VideoFiles.id"',
             '"VideoFiles"."createdAt"': '"VideoFiles.createdAt"',
@@ -321,7 +330,17 @@ function wrapForAPIResults(baseQuery, replacements, options, order) {
             '"VideoFiles"."extname"': '"VideoFiles.extname"',
             '"VideoFiles"."infoHash"': '"VideoFiles.infoHash"',
             '"VideoFiles"."fps"': '"VideoFiles.fps"',
-            '"VideoFiles"."videoId"': '"VideoFiles.videoId"'
+            '"VideoFiles"."videoId"': '"VideoFiles.videoId"',
+            '"VideoStreamingPlaylists"."id"': '"VideoStreamingPlaylists.id"',
+            '"VideoStreamingPlaylists->VideoFiles"."id"': '"VideoStreamingPlaylists.VideoFiles.id"',
+            '"VideoStreamingPlaylists->VideoFiles"."createdAt"': '"VideoStreamingPlaylists.VideoFiles.createdAt"',
+            '"VideoStreamingPlaylists->VideoFiles"."updatedAt"': '"VideoStreamingPlaylists.VideoFiles.updatedAt"',
+            '"VideoStreamingPlaylists->VideoFiles"."resolution"': '"VideoStreamingPlaylists.VideoFiles.resolution"',
+            '"VideoStreamingPlaylists->VideoFiles"."size"': '"VideoStreamingPlaylists.VideoFiles.size"',
+            '"VideoStreamingPlaylists->VideoFiles"."extname"': '"VideoStreamingPlaylists.VideoFiles.extname"',
+            '"VideoStreamingPlaylists->VideoFiles"."infoHash"': '"VideoStreamingPlaylists.VideoFiles.infoHash"',
+            '"VideoStreamingPlaylists->VideoFiles"."fps"': '"VideoStreamingPlaylists.VideoFiles.fps"',
+            '"VideoStreamingPlaylists->VideoFiles"."videoId"': '"VideoStreamingPlaylists.VideoFiles.videoId"'
         });
     }
     if (options.user) {

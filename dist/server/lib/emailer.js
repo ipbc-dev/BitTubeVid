@@ -2,16 +2,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Emailer = void 0;
 const tslib_1 = require("tslib");
+const fs_extra_1 = require("fs-extra");
+const lodash_1 = require("lodash");
 const nodemailer_1 = require("nodemailer");
+const path_1 = require("path");
+const video_channel_1 = require("@server/models/video/video-channel");
 const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
 const config_1 = require("../initializers/config");
-const job_queue_1 = require("./job-queue");
-const fs_extra_1 = require("fs-extra");
 const constants_1 = require("../initializers/constants");
-const path_1 = require("path");
-const lodash_1 = require("lodash");
-const video_channel_1 = require("@server/models/video/video-channel");
+const job_queue_1 = require("./job-queue");
 const Email = require('email-templates');
 class Emailer {
     constructor() {
@@ -243,24 +243,113 @@ class Emailer {
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
-    addVideoAbuseModeratorsNotification(to, parameters) {
-        const videoAbuseUrl = constants_1.WEBSERVER.URL + '/admin/moderation/video-abuses/list?search=%23' + parameters.videoAbuse.id;
-        const videoUrl = constants_1.WEBSERVER.URL + parameters.videoAbuseInstance.Video.getWatchStaticPath();
-        const emailPayload = {
-            template: 'video-abuse-new',
-            to,
-            subject: `New video abuse report from ${parameters.reporter}`,
-            locals: {
-                videoUrl,
-                videoAbuseUrl,
-                videoCreatedAt: new Date(parameters.videoAbuseInstance.Video.createdAt).toLocaleString(),
-                videoPublishedAt: new Date(parameters.videoAbuseInstance.Video.publishedAt).toLocaleString(),
-                videoAbuse: parameters.videoAbuse,
-                reporter: parameters.reporter,
-                action: {
-                    text: 'View report #' + parameters.videoAbuse.id,
-                    url: videoAbuseUrl
+    addAbuseModeratorsNotification(to, parameters) {
+        const { abuse, abuseInstance, reporter } = parameters;
+        const action = {
+            text: 'View report #' + abuse.id,
+            url: constants_1.WEBSERVER.URL + '/admin/moderation/abuses/list?search=%23' + abuse.id
+        };
+        let emailPayload;
+        if (abuseInstance.VideoAbuse) {
+            const video = abuseInstance.VideoAbuse.Video;
+            const videoUrl = constants_1.WEBSERVER.URL + video.getWatchStaticPath();
+            emailPayload = {
+                template: 'video-abuse-new',
+                to,
+                subject: `New video abuse report from ${reporter}`,
+                locals: {
+                    videoUrl,
+                    isLocal: video.remote === false,
+                    videoCreatedAt: new Date(video.createdAt).toLocaleString(),
+                    videoPublishedAt: new Date(video.publishedAt).toLocaleString(),
+                    videoName: video.name,
+                    reason: abuse.reason,
+                    videoChannel: abuse.video.channel,
+                    reporter,
+                    action
                 }
+            };
+        }
+        else if (abuseInstance.VideoCommentAbuse) {
+            const comment = abuseInstance.VideoCommentAbuse.VideoComment;
+            const commentUrl = constants_1.WEBSERVER.URL + comment.Video.getWatchStaticPath() + ';threadId=' + comment.getThreadId();
+            emailPayload = {
+                template: 'video-comment-abuse-new',
+                to,
+                subject: `New comment abuse report from ${reporter}`,
+                locals: {
+                    commentUrl,
+                    videoName: comment.Video.name,
+                    isLocal: comment.isOwned(),
+                    commentCreatedAt: new Date(comment.createdAt).toLocaleString(),
+                    reason: abuse.reason,
+                    flaggedAccount: abuseInstance.FlaggedAccount.getDisplayName(),
+                    reporter,
+                    action
+                }
+            };
+        }
+        else {
+            const account = abuseInstance.FlaggedAccount;
+            const accountUrl = account.getClientUrl();
+            emailPayload = {
+                template: 'account-abuse-new',
+                to,
+                subject: `New account abuse report from ${reporter}`,
+                locals: {
+                    accountUrl,
+                    accountDisplayName: account.getDisplayName(),
+                    isLocal: account.isOwned(),
+                    reason: abuse.reason,
+                    reporter,
+                    action
+                }
+            };
+        }
+        return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+    }
+    addAbuseStateChangeNotification(to, abuse) {
+        const text = abuse.state === 3
+            ? 'Report #' + abuse.id + ' has been accepted'
+            : 'Report #' + abuse.id + ' has been rejected';
+        const abuseUrl = constants_1.WEBSERVER.URL + '/my-account/abuses?search=%23' + abuse.id;
+        const action = {
+            text,
+            url: abuseUrl
+        };
+        const emailPayload = {
+            template: 'abuse-state-change',
+            to,
+            subject: text,
+            locals: {
+                action,
+                abuseId: abuse.id,
+                abuseUrl,
+                isAccepted: abuse.state === 3
+            }
+        };
+        return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+    }
+    addAbuseNewMessageNotification(to, options) {
+        const { abuse, target, message, accountMessage } = options;
+        const text = 'New message on report #' + abuse.id;
+        const abuseUrl = target === 'moderator'
+            ? constants_1.WEBSERVER.URL + '/admin/moderation/abuses/list?search=%23' + abuse.id
+            : constants_1.WEBSERVER.URL + '/my-account/abuses?search=%23' + abuse.id;
+        const action = {
+            text,
+            url: abuseUrl
+        };
+        const emailPayload = {
+            template: 'abuse-new-message',
+            to,
+            subject: text,
+            locals: {
+                abuseId: abuse.id,
+                abuseUrl: action.url,
+                messageAccountName: accountMessage.getDisplayName(),
+                messageText: message.message,
+                action
             }
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });

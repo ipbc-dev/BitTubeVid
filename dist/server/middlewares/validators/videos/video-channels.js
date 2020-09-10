@@ -4,7 +4,6 @@ exports.videoChannelStatsValidator = exports.localVideoChannelValidator = export
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const constants_1 = require("@server/initializers/constants");
-const shared_1 = require("../../../../shared");
 const actor_1 = require("../../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const video_channels_1 = require("../../../helpers/custom-validators/video-channels");
@@ -133,7 +132,7 @@ function checkUserCanDeleteVideoChannel(user, videoChannel, res) {
             .end();
         return false;
     }
-    if (user.hasRight(shared_1.UserRight.REMOVE_ANY_VIDEO_CHANNEL) === false && videoChannel.Account.userId !== user.id) {
+    if (user.hasRight(13) === false && videoChannel.Account.userId !== user.id) {
         res.status(403)
             .json({ error: 'Cannot remove video channel of another user' })
             .end();

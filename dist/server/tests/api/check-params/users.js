@@ -1,18 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const lodash_1 = require("lodash");
 require("mocha");
+const chai_1 = require("chai");
+const lodash_1 = require("lodash");
 const path_1 = require("path");
 const shared_1 = require("../../../../shared");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
-const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
-const videos_1 = require("../../../../shared/models/videos");
-const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
-const chai_1 = require("chai");
-const user_flag_model_1 = require("../../../../shared/models/users/user-flag.model");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
+const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
 describe('Test users API validators', function () {
     const path = '/api/v1/users/';
     let userId;
@@ -152,7 +150,7 @@ describe('Test users API validators', function () {
             videoQuota: -1,
             videoQuotaDaily: -1,
             role: shared_1.UserRole.USER,
-            adminFlags: user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST
+            adminFlags: 1
         };
         it('Should fail with a too small username', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -1023,9 +1021,9 @@ describe('Test users API validators', function () {
                 this.timeout(120000);
                 const baseAttributes = {
                     channelId: 1,
-                    privacy: videos_1.VideoPrivacy.PUBLIC
+                    privacy: 1
                 };
-                yield video_imports_1.importVideo(server.url, server.accessToken, extra_utils_1.immutableAssign(baseAttributes, { targetUrl: video_imports_1.getYoutubeVideoUrl() }));
+                yield video_imports_1.importVideo(server.url, server.accessToken, extra_utils_1.immutableAssign(baseAttributes, { targetUrl: video_imports_1.getGoodVideoUrl() }));
                 yield video_imports_1.importVideo(server.url, server.accessToken, extra_utils_1.immutableAssign(baseAttributes, { magnetUri: video_imports_1.getMagnetURI() }));
                 yield video_imports_1.importVideo(server.url, server.accessToken, extra_utils_1.immutableAssign(baseAttributes, { torrentfile: 'video-720p.torrent' }));
                 yield jobs_1.waitJobs([server]);
@@ -1034,7 +1032,7 @@ describe('Test users API validators', function () {
                 const videoImports = res.body.data;
                 chai_1.expect(videoImports).to.have.lengthOf(3);
                 for (const videoImport of videoImports) {
-                    chai_1.expect(videoImport.state.id).to.equal(shared_1.VideoImportState.FAILED);
+                    chai_1.expect(videoImport.state.id).to.equal(3);
                     chai_1.expect(videoImport.error).not.to.be.undefined;
                     chai_1.expect(videoImport.error).to.contain('user video quota is exceeded');
                 }

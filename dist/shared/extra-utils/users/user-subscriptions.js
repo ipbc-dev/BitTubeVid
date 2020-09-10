@@ -13,14 +13,18 @@ function addUserSubscription(url, token, targetUri, statusCodeExpected = 204) {
     });
 }
 exports.addUserSubscription = addUserSubscription;
-function listUserSubscriptions(url, token, sort = '-createdAt', statusCodeExpected = 200) {
+function listUserSubscriptions(parameters) {
+    const { url, token, sort = '-createdAt', search, statusCodeExpected = 200 } = parameters;
     const path = '/api/v1/users/me/subscriptions';
     return requests_1.makeGetRequest({
         url,
         path,
         token,
         statusCodeExpected,
-        query: { sort }
+        query: {
+            sort,
+            search
+        }
     });
 }
 exports.listUserSubscriptions = listUserSubscriptions;

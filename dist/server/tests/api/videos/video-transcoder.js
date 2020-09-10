@@ -180,7 +180,7 @@ describe('Test video transcoding', function () {
     });
     it('Should wait for transcoding before publishing the video', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(80000);
+            this.timeout(160000);
             {
                 const videoAttributes = {
                     name: 'waiting video',
@@ -191,13 +191,13 @@ describe('Test video transcoding', function () {
                 const videoId = resVideo.body.video.uuid;
                 const { body } = yield extra_utils_1.getVideo(servers[1].url, videoId);
                 expect(body.name).to.equal('waiting video');
-                expect(body.state.id).to.equal(videos_1.VideoState.TO_TRANSCODE);
+                expect(body.state.id).to.equal(2);
                 expect(body.state.label).to.equal('To transcode');
                 expect(body.waitTranscoding).to.be.true;
                 const resMyVideos = yield extra_utils_1.getMyVideos(servers[1].url, servers[1].accessToken, 0, 10);
                 const videoToFindInMine = resMyVideos.body.data.find(v => v.name === videoAttributes.name);
                 expect(videoToFindInMine).not.to.be.undefined;
-                expect(videoToFindInMine.state.id).to.equal(videos_1.VideoState.TO_TRANSCODE);
+                expect(videoToFindInMine.state.id).to.equal(2);
                 expect(videoToFindInMine.state.label).to.equal('To transcode');
                 expect(videoToFindInMine.waitTranscoding).to.be.true;
                 const resVideos = yield extra_utils_1.getVideosList(servers[1].url);
@@ -212,7 +212,7 @@ describe('Test video transcoding', function () {
                 expect(videoToFind).not.to.be.undefined;
                 const res2 = yield extra_utils_1.getVideo(server.url, videoToFind.id);
                 const videoDetails = res2.body;
-                expect(videoDetails.state.id).to.equal(videos_1.VideoState.PUBLISHED);
+                expect(videoDetails.state.id).to.equal(1);
                 expect(videoDetails.state.label).to.equal('Published');
                 expect(videoDetails.waitTranscoding).to.be.true;
             }
@@ -225,7 +225,7 @@ describe('Test video transcoding', function () {
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
                 const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
-                expect(bitrate).to.be.above(videos_1.getMaxBitrate(videos_1.VideoResolution.H_1080P, 25, constants_1.VIDEO_TRANSCODING_FPS));
+                expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             const videoAttributes = {
                 name: 'high bitrate video',
@@ -255,7 +255,7 @@ describe('Test video transcoding', function () {
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
                 const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
-                expect(bitrate).to.be.above(videos_1.getMaxBitrate(videos_1.VideoResolution.H_1080P, 25, constants_1.VIDEO_TRANSCODING_FPS));
+                expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             for (const fixture of ['video_short.mkv', 'video_short.avi']) {
                 const videoAttributes = {

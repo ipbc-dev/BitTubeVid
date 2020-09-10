@@ -12,7 +12,7 @@ describe('Test videos search', function () {
     let videoUUID;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(30000);
+            this.timeout(60000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
             {

@@ -22,6 +22,7 @@ tslib_1.__exportStar(require("./plugin-video-privacy-manager.model"), exports);
 tslib_1.__exportStar(require("./plugin.type"), exports);
 tslib_1.__exportStar(require("./public-server.setting"), exports);
 tslib_1.__exportStar(require("./register-client-hook.model"), exports);
+tslib_1.__exportStar(require("./register-client-form-field.model"), exports);
 tslib_1.__exportStar(require("./register-server-hook.model"), exports);
 tslib_1.__exportStar(require("./register-server-setting.model"), exports);
 tslib_1.__exportStar(require("./server-hook.model"), exports);

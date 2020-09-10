@@ -6,7 +6,6 @@ const core_utils_1 = require("../helpers/core-utils");
 const path_1 = require("path");
 const miscs_1 = require("../../shared/extra-utils/miscs/miscs");
 const video_channels_1 = require("../../shared/extra-utils/videos/video-channels");
-const videos_1 = require("../../shared/models/videos");
 const winston_1 = require("winston");
 const users_1 = require("@shared/extra-utils/users/users");
 const models_1 = require("@shared/models");
@@ -138,7 +137,7 @@ function buildVideoAttributesFromCommander(url, command, defaultAttributes = {})
             category: command['category'] || defaultAttributes.category || undefined,
             licence: command['licence'] || defaultAttributes.licence || undefined,
             language: command['language'] || defaultAttributes.language || undefined,
-            privacy: command['privacy'] || defaultAttributes.privacy || videos_1.VideoPrivacy.PUBLIC,
+            privacy: command['privacy'] || defaultAttributes.privacy || 1,
             support: command['support'] || defaultAttributes.support || undefined,
             description: command['videoDescription'] || defaultAttributes.description || undefined,
             tags: command['tags'] || defaultAttributes.tags || undefined

@@ -1,12 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1596108789343,
+  "timestamp": 1599723021114,
   "index": "/client/th-TH/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [
         "/client/th-TH/index.html",
         "/client/th-TH/manifest.webmanifest"
@@ -17,13 +20,16 @@
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/th-TH/index.html": "84728820fc2ff0fa9c983674626faa998382df70",
+    "/client/th-TH/index.html": "db6495208182911a60ffd67fbddadd766a5fea0f",
     "/client/th-TH/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

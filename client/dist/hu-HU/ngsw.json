@@ -1,12 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1596108183372,
+  "timestamp": 1599723021103,
   "index": "/client/hu-HU/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [
         "/client/hu-HU/index.html",
         "/client/hu-HU/manifest.webmanifest"
@@ -17,13 +20,16 @@
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/hu-HU/index.html": "3eed81b3f918fe3a6daef74cab9eb4983005f699",
+    "/client/hu-HU/index.html": "2fdf8d9469f6ced522b057990bc1976eeafeb0b2",
     "/client/hu-HU/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

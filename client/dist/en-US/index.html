@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,8 +19,7 @@
     </style>
 
     <!-- base url -->
-    <base href="/">
-
+    <base href="/client/en-US/">
     <!-- /!\ The following comment is used by the server to prerender some tags /!\ -->
 
     <!-- title tag -->
@@ -29,7 +28,7 @@
     <!-- meta tags -->
 
     <!-- /!\ Do not remove it /!\ -->
-  <link rel="stylesheet" href="/client/en-US/styles.ef9a7809bf9d73c61a2e.css"></head>
+  <link rel="stylesheet" href="styles.7342350cfd83d59a05b4.css"></head>
 
   <!-- 3. Display the application -->
   <body id="custom-css">
@@ -49,16 +48,24 @@
     </div>
 
     <script type="text/javascript">
-      window.onerror = function () {
+      function displayIncompatibleBrowser () {
         var elem = document.getElementById('incompatible-browser')
         if (elem.className.indexOf('browser-ok') === -1) {
           elem.style.display = 'block'
         }
+      }
+
+      window.onerror = function () {
+        displayIncompatibleBrowser()
+      }
+
+      if (/MSIE|Trident/.test(window.navigator.userAgent) ) {
+        displayIncompatibleBrowser()
       }
     </script>
 
     <my-app>
     </my-app>
 
-  <script src="/client/en-US/runtime-es2015.e93d808c0a39784c5f99.js" type="module"></script><script src="/client/en-US/runtime-es5.e93d808c0a39784c5f99.js" nomodule defer></script><script src="/client/en-US/polyfills-es5.cdc8d9bd522290c445a0.js" nomodule defer></script><script src="/client/en-US/polyfills-es2015.0757034ed7723bc6779e.js" type="module"></script><script src="/client/en-US/main-es2015.32814e87a42168ca0633.js" type="module"></script><script src="/client/en-US/main-es5.32814e87a42168ca0633.js" nomodule defer></script></body>
+  <script src="runtime-es2015.0c637e8d3a345fff9548.js" type="module"></script><script src="runtime-es5.0c637e8d3a345fff9548.js" nomodule defer></script><script src="polyfills-es5.21f8d72b1fee10868ed2.js" nomodule defer></script><script src="polyfills-es2015.3f29be0bf3ea2f06df9a.js" type="module"></script><script src="main-es2015.3d5290ef9632a0012dfd.js" type="module"></script><script src="main-es5.3d5290ef9632a0012dfd.js" nomodule defer></script></body>
 </html>

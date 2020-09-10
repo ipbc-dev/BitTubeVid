@@ -4,31 +4,31 @@ exports.usersRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
 const RateLimit = require("express-rate-limit");
+const token_1 = require("@server/controllers/api/users/token");
+const hooks_1 = require("@server/lib/plugins/hooks");
 const shared_1 = require("../../../../shared");
+const audit_logger_1 = require("../../../helpers/audit-logger");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
+const config_1 = require("../../../initializers/config");
 const constants_1 = require("../../../initializers/constants");
+const database_1 = require("../../../initializers/database");
 const emailer_1 = require("../../../lib/emailer");
+const notifier_1 = require("../../../lib/notifier");
+const oauth_model_1 = require("../../../lib/oauth-model");
 const redis_1 = require("../../../lib/redis");
 const user_1 = require("../../../lib/user");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
 const user_2 = require("../../../models/account/user");
-const audit_logger_1 = require("../../../helpers/audit-logger");
 const me_1 = require("./me");
 const firebase_1 = require("./firebase");
-const oauth_model_1 = require("../../../lib/oauth-model");
+const my_abuses_1 = require("./my-abuses");
 const my_blocklist_1 = require("./my-blocklist");
-const my_video_playlists_1 = require("./my-video-playlists");
 const my_history_1 = require("./my-history");
 const my_notifications_1 = require("./my-notifications");
-const notifier_1 = require("../../../lib/notifier");
 const my_subscriptions_1 = require("./my-subscriptions");
-const config_1 = require("../../../initializers/config");
-const database_1 = require("../../../initializers/database");
-const user_flag_model_1 = require("../../../../shared/models/users/user-flag.model");
-const hooks_1 = require("@server/lib/plugins/hooks");
-const token_1 = require("@server/controllers/api/users/token");
+const my_video_playlists_1 = require("./my-video-playlists");
 const auditLogger = audit_logger_1.auditLoggerFactory('users');
 const signupRateLimiter = RateLimit({
     windowMs: config_1.CONFIG.RATES_LIMIT.SIGNUP.WINDOW_MS,
@@ -47,17 +47,18 @@ usersRouter.use('/', my_subscriptions_1.mySubscriptionsRouter);
 usersRouter.use('/', my_blocklist_1.myBlocklistRouter);
 usersRouter.use('/', my_history_1.myVideosHistoryRouter);
 usersRouter.use('/', my_video_playlists_1.myVideoPlaylistsRouter);
+usersRouter.use('/', my_abuses_1.myAbusesRouter);
 usersRouter.use('/', me_1.meRouter);
 usersRouter.use('/', firebase_1.firebaseRouter);
 usersRouter.get('/autocomplete', middlewares_1.userAutocompleteValidator, middlewares_1.asyncMiddleware(autocompleteUsers));
-usersRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.paginationValidator, middlewares_1.usersSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.usersListValidator, middlewares_1.asyncMiddleware(listUsers));
-usersRouter.post('/:id/block', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(blockUser));
-usersRouter.post('/:id/unblock', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(unblockUser));
-usersRouter.get('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(middlewares_1.usersGetValidator), getUser);
-usersRouter.post('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(middlewares_1.usersAddValidator), middlewares_1.asyncRetryTransactionMiddleware(createUser));
+usersRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.paginationValidator, middlewares_1.usersSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.usersListValidator, middlewares_1.asyncMiddleware(listUsers));
+usersRouter.post('/:id/block', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(blockUser));
+usersRouter.post('/:id/unblock', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(validators_1.usersBlockingValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(unblockUser));
+usersRouter.get('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(middlewares_1.usersGetValidator), getUser);
+usersRouter.post('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(middlewares_1.usersAddValidator), middlewares_1.asyncRetryTransactionMiddleware(createUser));
 usersRouter.post('/register', signupRateLimiter, middlewares_1.asyncMiddleware(middlewares_1.ensureUserRegistrationAllowed), middlewares_1.ensureUserRegistrationAllowedForIP, middlewares_1.asyncMiddleware(middlewares_1.usersRegisterValidator), middlewares_1.asyncRetryTransactionMiddleware(registerUser));
-usersRouter.put('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(middlewares_1.usersUpdateValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(updateUser));
-usersRouter.delete('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_USERS), middlewares_1.asyncMiddleware(middlewares_1.usersRemoveValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(removeUser));
+usersRouter.put('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(middlewares_1.usersUpdateValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(updateUser));
+usersRouter.delete('/:id', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(1), middlewares_1.asyncMiddleware(middlewares_1.usersRemoveValidator), validators_1.ensureCanManageUser, middlewares_1.asyncMiddleware(removeUser));
 usersRouter.post('/ask-reset-password', middlewares_1.asyncMiddleware(validators_1.usersAskResetPasswordValidator), middlewares_1.asyncMiddleware(askResetUserPassword));
 usersRouter.post('/:id/reset-password', middlewares_1.asyncMiddleware(validators_1.usersResetPasswordValidator), middlewares_1.asyncMiddleware(resetUserPassword));
 usersRouter.post('/ask-send-verify-email', askSendEmailLimiter, middlewares_1.asyncMiddleware(validators_1.usersAskSendVerifyEmailValidator), middlewares_1.asyncMiddleware(reSendVerifyUserEmail));
@@ -74,13 +75,16 @@ function createUser(req, res) {
             role: body.role,
             videoQuota: body.videoQuota,
             videoQuotaDaily: body.videoQuotaDaily,
-            adminFlags: body.adminFlags || user_flag_model_1.UserAdminFlag.NONE
+            adminFlags: body.adminFlags || 0
         });
         const createPassword = userToCreate.password === '';
         if (createPassword) {
             userToCreate.password = yield utils_1.generateRandomString(20);
         }
-        const { user, account, videoChannel } = yield user_1.createUserAccountAndChannelAndPlaylist({ userToCreate: userToCreate });
+        const { user, account, videoChannel } = yield user_1.createUserAccountAndChannelAndPlaylist({
+            userToCreate,
+            channelNames: body.channelName && { name: body.channelName, displayName: body.channelName }
+        });
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
         logger_1.logger.info('User %s with its channel and account created.', body.username);
         if (createPassword) {
@@ -218,6 +222,7 @@ function resetUserPassword(req, res) {
         const user = res.locals.user;
         user.password = req.body.password;
         yield user.save();
+        yield redis_1.Redis.Instance.removePasswordVerificationString(user.id);
         return res.status(204).end();
     });
 }

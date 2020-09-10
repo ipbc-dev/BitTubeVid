@@ -11,6 +11,7 @@ require("./handle-down");
 require("./jobs");
 require("./logs");
 require("./reverse-proxy");
+require("./services");
 require("./stats");
 require("./tracker");
 require("./no-client");

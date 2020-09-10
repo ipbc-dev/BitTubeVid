@@ -21,7 +21,7 @@ const video_channel_1 = require("../../models/video/video-channel");
 const searchRouter = express.Router();
 exports.searchRouter = searchRouter;
 searchRouter.get('/videos', middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.videosSearchSortValidator, middlewares_1.setDefaultSearchSort, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.videosSearchValidator, middlewares_1.asyncMiddleware(searchVideos));
-searchRouter.get('/video-channels', middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.videoChannelsSearchSortValidator, middlewares_1.setDefaultSearchSort, middlewares_1.optionalAuthenticate, middlewares_1.videoChannelsSearchValidator, middlewares_1.asyncMiddleware(searchVideoChannels));
+searchRouter.get('/video-channels', middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.videoChannelsSearchSortValidator, middlewares_1.setDefaultSearchSort, middlewares_1.optionalAuthenticate, middlewares_1.videoChannelsListSearchValidator, middlewares_1.asyncMiddleware(searchVideoChannels));
 function searchVideoChannels(req, res) {
     const query = req.query;
     const search = query.search;

@@ -14,13 +14,12 @@ const Bluebird = require("bluebird");
 const videos_1 = require("./videos");
 const playlist_1 = require("../../helpers/custom-validators/activitypub/playlist");
 const video_playlist_element_1 = require("../../models/video/video-playlist-element");
-const video_playlist_privacy_model_1 = require("../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const database_1 = require("../../initializers/database");
 const thumbnail_1 = require("../thumbnail");
 function playlistObjectToDBAttributes(playlistObject, byAccount, to) {
     const privacy = to.includes(constants_1.ACTIVITY_PUB.PUBLIC)
-        ? video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
-        : video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED;
+        ? 1
+        : 2;
     return {
         name: playlistObject.name,
         description: playlistObject.content,

@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
-const videos_1 = require("../../../../shared/models/videos");
 const chai_1 = require("chai");
 describe('Test video blacklist API validators', function () {
     let servers;
@@ -229,7 +228,7 @@ describe('Test video blacklist API validators', function () {
         });
         it('Should succeed with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, type: videos_1.VideoBlacklistType.MANUAL });
+                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, type: 1 });
             });
         });
     });

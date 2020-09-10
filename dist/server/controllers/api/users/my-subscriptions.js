@@ -2,22 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mySubscriptionsRouter = void 0;
 const tslib_1 = require("tslib");
-const express = require("express");
 require("multer");
+const express = require("express");
+const express_utils_1 = require("../../../helpers/express-utils");
 const utils_1 = require("../../../helpers/utils");
 const constants_1 = require("../../../initializers/constants");
+const database_1 = require("../../../initializers/database");
+const job_queue_1 = require("../../../lib/job-queue");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
-const video_1 = require("../../../models/video/video");
-const express_utils_1 = require("../../../helpers/express-utils");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
-const job_queue_1 = require("../../../lib/job-queue");
-const database_1 = require("../../../initializers/database");
+const video_1 = require("../../../models/video/video");
 const mySubscriptionsRouter = express.Router();
 exports.mySubscriptionsRouter = mySubscriptionsRouter;
-mySubscriptionsRouter.get('/me/subscriptions/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(getUserSubscriptionVideos));
+mySubscriptionsRouter.get('/me/subscriptions/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultVideosSort, middlewares_1.setDefaultPagination, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(getUserSubscriptionVideos));
 mySubscriptionsRouter.get('/me/subscriptions/exist', middlewares_1.authenticate, validators_1.areSubscriptionsExistValidator, middlewares_1.asyncMiddleware(areSubscriptionsExist));
-mySubscriptionsRouter.get('/me/subscriptions', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.userSubscriptionsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(getUserSubscriptions));
+mySubscriptionsRouter.get('/me/subscriptions', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.userSubscriptionsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, validators_1.userSubscriptionListValidator, middlewares_1.asyncMiddleware(getUserSubscriptions));
 mySubscriptionsRouter.post('/me/subscriptions', middlewares_1.authenticate, middlewares_1.userSubscriptionAddValidator, addUserSubscription);
 mySubscriptionsRouter.get('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, getUserSubscription);
 mySubscriptionsRouter.delete('/me/subscriptions/:uri', middlewares_1.authenticate, middlewares_1.userSubscriptionGetValidator, middlewares_1.asyncRetryTransactionMiddleware(deleteUserSubscription));
@@ -74,7 +74,13 @@ function getUserSubscriptions(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         const actorId = user.Account.Actor.id;
-        const resultList = yield actor_follow_1.ActorFollowModel.listSubscriptionsForApi(actorId, req.query.start, req.query.count, req.query.sort);
+        const resultList = yield actor_follow_1.ActorFollowModel.listSubscriptionsForApi({
+            actorId,
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search
+        });
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

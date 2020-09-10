@@ -3,25 +3,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videosOverviewValidator = exports.commonVideosFiltersValidator = exports.getCommonVideoEditAttributes = exports.videosAcceptChangeOwnershipValidator = exports.videosTerminateChangeOwnershipValidator = exports.videosChangeOwnershipValidator = exports.videosRemoveValidator = exports.videosCustomGetValidator = exports.checkVideoFollowConstraints = exports.videosDownloadValidator = exports.videoFileMetadataGetValidator = exports.videosGetValidator = exports.videosUpdateValidator = exports.videosAddValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
-const shared_1 = require("../../../../shared");
+const application_1 = require("@server/models/application/application");
 const misc_1 = require("../../../helpers/custom-validators/misc");
+const search_1 = require("../../../helpers/custom-validators/search");
+const video_ownership_1 = require("../../../helpers/custom-validators/video-ownership");
 const videos_1 = require("../../../helpers/custom-validators/videos");
+const express_utils_1 = require("../../../helpers/express-utils");
 const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
 const logger_1 = require("../../../helpers/logger");
-const constants_1 = require("../../../initializers/constants");
-const oauth_1 = require("../../oauth");
-const utils_1 = require("../utils");
-const express_utils_1 = require("../../../helpers/express-utils");
-const video_1 = require("../../../models/video/video");
-const video_ownership_1 = require("../../../helpers/custom-validators/video-ownership");
-const account_1 = require("../../../models/account/account");
-const search_1 = require("../../../helpers/custom-validators/search");
+const middlewares_1 = require("../../../helpers/middlewares");
+const video_1 = require("../../../helpers/video");
 const config_1 = require("../../../initializers/config");
+const constants_1 = require("../../../initializers/constants");
 const moderation_1 = require("../../../lib/moderation");
 const hooks_1 = require("../../../lib/plugins/hooks");
-const middlewares_1 = require("../../../helpers/middlewares");
-const video_2 = require("../../../helpers/video");
-const application_1 = require("@server/models/application/application");
+const account_1 = require("../../../models/account/account");
+const video_2 = require("../../../models/video/video");
+const oauth_1 = require("../../oauth");
+const utils_1 = require("../utils");
 const videosAddValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.body('videofile')
         .custom((value, { req }) => videos_1.isVideoFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type: ' +
@@ -80,7 +79,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
         if (!(yield middlewares_1.doesVideoExist(req.params.id, res)))
             return express_utils_1.cleanUpReqFiles(req);
         const user = res.locals.oauth.token.User;
-        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, shared_1.UserRight.UPDATE_ANY_VIDEO, res))
+        if (!middlewares_1.checkUserCanManageVideo(user, res.locals.videoAll, 16, res))
             return express_utils_1.cleanUpReqFiles(req);
         if (req.body.channelId && !(yield middlewares_1.doesVideoChannelOfAccountExist(req.body.channelId, user, res)))
             return express_utils_1.cleanUpReqFiles(req);
@@ -90,7 +89,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
 exports.videosUpdateValidator = videosUpdateValidator;
 function checkVideoFollowConstraints(req, res, next) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const video = video_2.getVideoWithAttributes(res);
+        const video = video_1.getVideoWithAttributes(res);
         if (video.isOwned() === true)
             return next();
         if (res.locals.oauth) {
@@ -100,11 +99,13 @@ function checkVideoFollowConstraints(req, res, next) {
         if (config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS === true)
             return next();
         const serverActor = yield application_1.getServerActor();
-        if ((yield video_1.VideoModel.checkVideoHasInstanceFollow(video.id, serverActor.id)) === true)
+        if ((yield video_2.VideoModel.checkVideoHasInstanceFollow(video.id, serverActor.id)) === true)
             return next();
         return res.status(403)
             .json({
-            error: 'Cannot get this video regarding follow constraints.'
+            errorCode: 1,
+            error: 'Cannot get this video regarding follow constraints.',
+            originUrl: video.url
         });
     });
 }
@@ -120,7 +121,7 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
                 return;
             if (fetchType === 'only-immutable-attributes')
                 return next();
-            const video = video_2.getVideoWithAttributes(res);
+            const video = video_1.getVideoWithAttributes(res);
             const videoAll = video;
             if (videoAll.requiresAuth()) {
                 yield oauth_1.authenticatePromiseIfNeeded(req, res, authenticateInQuery);
@@ -131,9 +132,9 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
                 }
                 return next();
             }
-            if (video.privacy === shared_1.VideoPrivacy.PUBLIC)
+            if (video.privacy === 1)
                 return next();
-            if (video.privacy === shared_1.VideoPrivacy.UNLISTED) {
+            if (video.privacy === 2) {
                 if (misc_1.isUUIDValid(req.params.id))
                     return next();
                 return res.status(404).end();
@@ -167,7 +168,7 @@ const videosRemoveValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.id, res)))
             return;
-        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, shared_1.UserRight.REMOVE_ANY_VIDEO, res))
+        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, 12, res))
             return;
         return next();
     })
@@ -181,7 +182,7 @@ const videosChangeOwnershipValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
             return;
-        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, shared_1.UserRight.CHANGE_VIDEO_OWNERSHIP, res))
+        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, 19, res))
             return;
         const nextOwner = yield account_1.AccountModel.loadLocalByName(req.body.username);
         if (!nextOwner) {
@@ -205,7 +206,7 @@ const videosTerminateChangeOwnershipValidator = [
         if (!video_ownership_1.checkUserCanTerminateOwnershipChange(res.locals.oauth.token.User, res.locals.videoChangeOwnership, res))
             return;
         const videoChangeOwnership = res.locals.videoChangeOwnership;
-        if (videoChangeOwnership.status !== shared_1.VideoChangeOwnershipStatus.WAITING) {
+        if (videoChangeOwnership.status !== "WAITING") {
             res.status(403)
                 .json({ error: 'Ownership already accepted or refused' });
             return;
@@ -348,7 +349,7 @@ const commonVideosFiltersValidator = [
         if (utils_1.areValidationErrors(req, res))
             return;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
-        if (req.query.filter === 'all-local' && (!user || user.hasRight(shared_1.UserRight.SEE_ALL_VIDEOS) === false)) {
+        if (req.query.filter === 'all-local' && (!user || user.hasRight(18) === false)) {
             res.status(401)
                 .json({ error: 'You are not allowed to see all local videos.' });
             return;

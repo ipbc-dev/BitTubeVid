@@ -1,12 +1,15 @@
 {
   "configVersion": 1,
-  "timestamp": 1596106575970,
+  "timestamp": 1599723021174,
   "index": "/client/pt-BR/index.html",
   "assetGroups": [
     {
       "name": "app",
       "installMode": "prefetch",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [
         "/client/pt-BR/index.html",
         "/client/pt-BR/manifest.webmanifest"
@@ -17,13 +20,16 @@
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
       "urls": [],
       "patterns": []
     }
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/pt-BR/index.html": "5be3bace245edea8720495c7118ccd1f185e64a9",
+    "/client/pt-BR/index.html": "34ffc796cba47ebae9327869652728884c61230a",
     "/client/pt-BR/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

@@ -18,16 +18,14 @@ const baseDirectives = Object.assign({}, {
     manifestSrc: ['\'self\''],
     frameSrc: ['\'self\''],
     workerSrc: ['\'self\'', 'blob:']
-}, config_1.CONFIG.CSP.REPORT_URI ? { reportUri: config_1.CONFIG.CSP.REPORT_URI } : {}, config_1.CONFIG.WEBSERVER.SCHEME === 'https' ? { upgradeInsecureRequests: true } : {});
+}, config_1.CONFIG.CSP.REPORT_URI ? { reportUri: config_1.CONFIG.CSP.REPORT_URI } : {}, config_1.CONFIG.WEBSERVER.SCHEME === 'https' ? { upgradeInsecureRequests: [] } : {});
 const baseCSP = helmet.contentSecurityPolicy({
     directives: baseDirectives,
-    browserSniff: false,
     reportOnly: config_1.CONFIG.CSP.REPORT_ONLY
 });
 exports.baseCSP = baseCSP;
 const embedCSP = helmet.contentSecurityPolicy({
     directives: Object.assign({}, baseDirectives, { frameAncestors: ['*'] }),
-    browserSniff: false,
     reportOnly: config_1.CONFIG.CSP.REPORT_ONLY
 });
 exports.embedCSP = embedCSP;

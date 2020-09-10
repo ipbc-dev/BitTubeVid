@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.extractVideo = exports.addOptimizeOrMergeAudioJob = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
-const video_1 = require("../models/video/video");
-const models_1 = require("@server/types/models");
+exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.getExtFromMimetype = exports.extractVideo = exports.addOptimizeOrMergeAudioJob = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
+const config_1 = require("@server/initializers/config");
 const constants_1 = require("@server/initializers/constants");
 const job_queue_1 = require("@server/lib/job-queue");
-const models_2 = require("@shared/models");
-const config_1 = require("@server/initializers/config");
+const models_1 = require("@server/types/models");
+const video_1 = require("../models/video/video");
 function fetchVideo(id, fetchType, userId) {
     if (fetchType === 'all')
         return video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(id, undefined, userId);
@@ -61,13 +60,20 @@ function extractVideo(videoOrPlaylist) {
 exports.extractVideo = extractVideo;
 function isPrivacyForFederation(privacy) {
     const castedPrivacy = parseInt(privacy + '', 10);
-    return castedPrivacy === models_2.VideoPrivacy.PUBLIC ||
-        (config_1.CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true && castedPrivacy === models_2.VideoPrivacy.UNLISTED);
+    return castedPrivacy === 1 ||
+        (config_1.CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true && castedPrivacy === 2);
 }
 exports.isPrivacyForFederation = isPrivacyForFederation;
 function getPrivaciesForFederation() {
     return (config_1.CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true)
-        ? [{ privacy: models_2.VideoPrivacy.PUBLIC }, { privacy: models_2.VideoPrivacy.UNLISTED }]
-        : [{ privacy: models_2.VideoPrivacy.PUBLIC }];
+        ? [{ privacy: 1 }, { privacy: 2 }]
+        : [{ privacy: 1 }];
 }
 exports.getPrivaciesForFederation = getPrivaciesForFederation;
+function getExtFromMimetype(mimeTypes, mimeType) {
+    const value = mimeTypes[mimeType];
+    if (Array.isArray(value))
+        return value[0];
+    return value;
+}
+exports.getExtFromMimetype = getExtFromMimetype;

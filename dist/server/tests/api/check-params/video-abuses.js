@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
-const videos_1 = require("../../../../shared/models/videos");
 describe('Test video abuses API validators', function () {
     let server;
     let userAccessToken = '';
@@ -120,7 +119,7 @@ describe('Test video abuses API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { reason: 'my super reason' };
                 const res = yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 200 });
-                videoAbuseId = res.body.videoAbuse.id;
+                videoAbuseId = res.body.abuse.id;
             });
         });
         it('Should fail with a wrong predefined reason', function () {
@@ -132,12 +131,6 @@ describe('Test video abuses API validators', function () {
         it('Should fail with negative timestamps', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { reason: 'my super reason', startAt: -1 };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
-            });
-        });
-        it('Should fail mith misordered startAt/endAt', function () {
-            return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const fields = { reason: 'my super reason', startAt: 5, endAt: 1 };
                 yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields });
             });
         });
@@ -179,7 +172,7 @@ describe('Test video abuses API validators', function () {
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const body = { state: videos_1.VideoAbuseState.ACCEPTED };
+                const body = { state: 3 };
                 yield extra_utils_1.updateVideoAbuse(server.url, server.accessToken, server.video.uuid, videoAbuseId, body);
             });
         });

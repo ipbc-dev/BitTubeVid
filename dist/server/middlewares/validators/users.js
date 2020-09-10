@@ -35,6 +35,7 @@ const usersAddValidator = [
     express_validator_1.body('username').custom(users_1.isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
     express_validator_1.body('password').custom(users_1.isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
     express_validator_1.body('email').isEmail().withMessage('Should have a valid email'),
+    express_validator_1.body('channelName').optional().custom(actor_2.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
     express_validator_1.body('videoQuota').custom(users_1.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
     express_validator_1.body('videoQuotaDaily').custom(users_1.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
     express_validator_1.body('role')
@@ -51,6 +52,17 @@ const usersAddValidator = [
         if (authUser.role !== users_2.UserRole.ADMINISTRATOR && req.body.role !== users_2.UserRole.USER) {
             return res.status(403)
                 .json({ error: 'You can only create users (and not administrators or moderators)' });
+        }
+        if (req.body.channelName) {
+            if (req.body.channelName === req.body.username) {
+                return res.status(400)
+                    .json({ error: 'Channel name cannot be the same as user username.' });
+            }
+            const existing = yield actor_1.ActorModel.loadLocalByName(req.body.channelName);
+            if (existing) {
+                return res.status(409)
+                    .json({ error: `Channel with name ${req.body.channelName} already exists.` });
+            }
         }
         return next();
     })

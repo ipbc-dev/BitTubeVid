@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./action-hooks");
+require("./html-injection");
 require("./id-and-pass-auth");
 require("./external-auth");
 require("./filter-hooks");

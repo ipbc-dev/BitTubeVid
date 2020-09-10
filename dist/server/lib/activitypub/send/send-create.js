@@ -2,12 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendCreateCacheFile = exports.sendCreateVideoPlaylist = exports.sendCreateVideoComment = exports.buildCreateActivity = exports.sendCreateVideo = void 0;
 const tslib_1 = require("tslib");
-const videos_1 = require("../../../../shared/models/videos");
 const video_comment_1 = require("../../../models/video/video-comment");
 const utils_1 = require("./utils");
 const audience_1 = require("../audience");
 const logger_1 = require("../../../helpers/logger");
-const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const application_1 = require("@server/models/application/application");
 function sendCreateVideo(video, t) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -16,7 +14,7 @@ function sendCreateVideo(video, t) {
         logger_1.logger.info('Creating job to send video creation of %s.', video.url);
         const byActor = video.VideoChannel.Account.Actor;
         const videoObject = video.toActivityPubObject();
-        const audience = audience_1.getAudience(byActor, video.privacy === videos_1.VideoPrivacy.PUBLIC);
+        const audience = audience_1.getAudience(byActor, video.privacy === 1);
         const createActivity = buildCreateActivity(video.url, byActor, videoObject, audience);
         return utils_1.broadcastToFollowers(createActivity, byActor, [byActor], t);
     });
@@ -37,11 +35,11 @@ function sendCreateCacheFile(byActor, video, fileRedundancy) {
 exports.sendCreateCacheFile = sendCreateCacheFile;
 function sendCreateVideoPlaylist(playlist, t) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (playlist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE)
+        if (playlist.privacy === 3)
             return undefined;
         logger_1.logger.info('Creating job to send create video playlist of %s.', playlist.url);
         const byActor = playlist.OwnerAccount.Actor;
-        const audience = audience_1.getAudience(byActor, playlist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC);
+        const audience = audience_1.getAudience(byActor, playlist.privacy === 1);
         const object = yield playlist.toActivityPubObject(null, t);
         const createActivity = buildCreateActivity(playlist.url, byActor, object, audience);
         const serverActor = yield application_1.getServerActor();

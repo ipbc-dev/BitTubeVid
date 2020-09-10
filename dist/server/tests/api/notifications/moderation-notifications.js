@@ -9,7 +9,6 @@ const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const user_notifications_1 = require("../../../../shared/extra-utils/users/user-notifications");
 const user_subscriptions_1 = require("../../../../shared/extra-utils/users/user-subscriptions");
-const videos_1 = require("../../../../shared/models/videos");
 describe('Test moderation notifications', function () {
     let servers = [];
     let userAccessToken;
@@ -29,7 +28,7 @@ describe('Test moderation notifications', function () {
             adminNotificationsServer2 = res.adminNotificationsServer2;
         });
     });
-    describe('Video abuse for moderators notification', function () {
+    describe('Abuse for moderators notification', function () {
         let baseParams;
         before(() => {
             baseParams = {
@@ -41,25 +40,182 @@ describe('Test moderation notifications', function () {
         });
         it('Should send a notification to moderators on local video abuse', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
-                const uuid = resVideo.body.video.uuid;
-                yield extra_utils_1.reportVideoAbuse(servers[0].url, servers[0].accessToken, uuid, 'super reason');
+                const video = resVideo.body.video;
+                yield extra_utils_1.reportAbuse({ url: servers[0].url, token: servers[0].accessToken, videoId: video.id, reason: 'super reason' });
                 yield jobs_1.waitJobs(servers);
-                yield user_notifications_1.checkNewVideoAbuseForModerators(baseParams, uuid, name, 'presence');
+                yield user_notifications_1.checkNewVideoAbuseForModerators(baseParams, video.uuid, name, 'presence');
             });
         });
         it('Should send a notification to moderators on remote video abuse', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const name = 'video for abuse ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
-                const uuid = resVideo.body.video.uuid;
+                const video = resVideo.body.video;
                 yield jobs_1.waitJobs(servers);
-                yield extra_utils_1.reportVideoAbuse(servers[1].url, servers[1].accessToken, uuid, 'super reason');
+                const videoId = yield extra_utils_1.getVideoIdFromUUID(servers[1].url, video.uuid);
+                yield extra_utils_1.reportAbuse({ url: servers[1].url, token: servers[1].accessToken, videoId, reason: 'super reason' });
                 yield jobs_1.waitJobs(servers);
-                yield user_notifications_1.checkNewVideoAbuseForModerators(baseParams, uuid, name, 'presence');
+                yield user_notifications_1.checkNewVideoAbuseForModerators(baseParams, video.uuid, name, 'presence');
+            });
+        });
+        it('Should send a notification to moderators on local comment abuse', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                const name = 'video for abuse ' + uuid_1.v4();
+                const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
+                const video = resVideo.body.video;
+                const resComment = yield extra_utils_1.addVideoCommentThread(servers[0].url, userAccessToken, video.id, 'comment abuse ' + uuid_1.v4());
+                const comment = resComment.body.comment;
+                yield extra_utils_1.reportAbuse({ url: servers[0].url, token: servers[0].accessToken, commentId: comment.id, reason: 'super reason' });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewCommentAbuseForModerators(baseParams, video.uuid, name, 'presence');
+            });
+        });
+        it('Should send a notification to moderators on remote comment abuse', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                const name = 'video for abuse ' + uuid_1.v4();
+                const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
+                const video = resVideo.body.video;
+                yield extra_utils_1.addVideoCommentThread(servers[0].url, userAccessToken, video.id, 'comment abuse ' + uuid_1.v4());
+                yield jobs_1.waitJobs(servers);
+                const resComments = yield extra_utils_1.getVideoCommentThreads(servers[1].url, video.uuid, 0, 5);
+                const commentId = resComments.body.data[0].id;
+                yield extra_utils_1.reportAbuse({ url: servers[1].url, token: servers[1].accessToken, commentId, reason: 'super reason' });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewCommentAbuseForModerators(baseParams, video.uuid, name, 'presence');
+            });
+        });
+        it('Should send a notification to moderators on local account abuse', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                const username = 'user' + new Date().getTime();
+                const resUser = yield extra_utils_1.createUser({ url: servers[0].url, accessToken: servers[0].accessToken, username, password: 'donald' });
+                const accountId = resUser.body.user.account.id;
+                yield extra_utils_1.reportAbuse({ url: servers[0].url, token: servers[0].accessToken, accountId, reason: 'super reason' });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAccountAbuseForModerators(baseParams, username, 'presence');
+            });
+        });
+        it('Should send a notification to moderators on remote account abuse', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                const username = 'user' + new Date().getTime();
+                const tmpToken = yield extra_utils_1.generateUserAccessToken(servers[0], username);
+                yield index_1.uploadVideo(servers[0].url, tmpToken, { name: 'super video' });
+                yield jobs_1.waitJobs(servers);
+                const resAccount = yield extra_utils_1.getAccount(servers[1].url, username + '@' + servers[0].host);
+                yield extra_utils_1.reportAbuse({ url: servers[1].url, token: servers[1].accessToken, accountId: resAccount.body.id, reason: 'super reason' });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAccountAbuseForModerators(baseParams, username, 'presence');
+            });
+        });
+    });
+    describe('Abuse state change notification', function () {
+        let baseParams;
+        let abuseId;
+        before(function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                baseParams = {
+                    server: servers[0],
+                    emails,
+                    socketNotifications: userNotifications,
+                    token: userAccessToken
+                };
+                const name = 'abuse ' + uuid_1.v4();
+                const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
+                const video = resVideo.body.video;
+                const res = yield extra_utils_1.reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason' });
+                abuseId = res.body.abuse.id;
+            });
+        });
+        it('Should send a notification to reporter if the abuse has been accepted', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                yield extra_utils_1.updateAbuse(servers[0].url, servers[0].accessToken, abuseId, { state: 3 });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkAbuseStateChange(baseParams, abuseId, 3, 'presence');
+            });
+        });
+        it('Should send a notification to reporter if the abuse has been rejected', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                yield extra_utils_1.updateAbuse(servers[0].url, servers[0].accessToken, abuseId, { state: 2 });
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkAbuseStateChange(baseParams, abuseId, 2, 'presence');
+            });
+        });
+    });
+    describe('New abuse message notification', function () {
+        let baseParamsUser;
+        let baseParamsAdmin;
+        let abuseId;
+        let abuseId2;
+        before(function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                baseParamsUser = {
+                    server: servers[0],
+                    emails,
+                    socketNotifications: userNotifications,
+                    token: userAccessToken
+                };
+                baseParamsAdmin = {
+                    server: servers[0],
+                    emails,
+                    socketNotifications: adminNotifications,
+                    token: servers[0].accessToken
+                };
+                const name = 'abuse ' + uuid_1.v4();
+                const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name });
+                const video = resVideo.body.video;
+                {
+                    const res = yield extra_utils_1.reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason' });
+                    abuseId = res.body.abuse.id;
+                }
+                {
+                    const res = yield extra_utils_1.reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason 2' });
+                    abuseId2 = res.body.abuse.id;
+                }
+            });
+        });
+        it('Should send a notification to reporter on new message', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const message = 'my super message to users';
+                yield extra_utils_1.addAbuseMessage(servers[0].url, servers[0].accessToken, abuseId, message);
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAbuseMessage(baseParamsUser, abuseId, message, 'user_1@example.com', 'presence');
+            });
+        });
+        it('Should not send a notification to the admin if sent by the admin', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const message = 'my super message that should not be sent to the admin';
+                yield extra_utils_1.addAbuseMessage(servers[0].url, servers[0].accessToken, abuseId, message);
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAbuseMessage(baseParamsAdmin, abuseId, message, 'admin' + servers[0].internalServerNumber + '@example.com', 'absence');
+            });
+        });
+        it('Should send a notification to moderators', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const message = 'my super message to moderators';
+                yield extra_utils_1.addAbuseMessage(servers[0].url, userAccessToken, abuseId2, message);
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAbuseMessage(baseParamsAdmin, abuseId2, message, 'admin' + servers[0].internalServerNumber + '@example.com', 'presence');
+            });
+        });
+        it('Should not send a notification to reporter if sent by the reporter', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const message = 'my super message that should not be sent to reporter';
+                yield extra_utils_1.addAbuseMessage(servers[0].url, userAccessToken, abuseId2, message);
+                yield jobs_1.waitJobs(servers);
+                yield user_notifications_1.checkNewAbuseMessage(baseParamsUser, abuseId2, message, 'user_1@example.com', 'absence');
             });
         });
     });
@@ -286,10 +442,10 @@ describe('Test moderation notifications', function () {
                 const name = 'video with auto-blacklist and future schedule ' + uuid_1.v4();
                 const data = {
                     name,
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, data);
@@ -308,10 +464,10 @@ describe('Test moderation notifications', function () {
                 const name = 'video with schedule done and still auto-blacklisted ' + uuid_1.v4();
                 const data = {
                     name,
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, data);

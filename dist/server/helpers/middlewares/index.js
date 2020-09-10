@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./abuses"), exports);
 tslib_1.__exportStar(require("./accounts"), exports);
-tslib_1.__exportStar(require("./video-abuses"), exports);
 tslib_1.__exportStar(require("./video-blacklists"), exports);
 tslib_1.__exportStar(require("./video-captions"), exports);
 tslib_1.__exportStar(require("./video-channels"), exports);

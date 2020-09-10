@@ -176,6 +176,9 @@ let AccountModel = AccountModel_1 = class AccountModel extends sequelize_typescr
             .unscoped()
             .findAll(query);
     }
+    getClientUrl() {
+        return constants_1.WEBSERVER.URL + '/accounts/' + this.Actor.getIdentifier();
+    }
     toFormattedJSON() {
         const actor = this.Actor.toFormattedJSON();
         const account = {
@@ -338,6 +341,7 @@ AccountModel = AccountModel_1 = tslib_1.__decorate([
     })),
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.SUMMARY]: (options = {}) => {
+            var _a;
             const whereActor = options.whereActor || undefined;
             const serverInclude = {
                 attributes: ['host'],
@@ -345,12 +349,12 @@ AccountModel = AccountModel_1 = tslib_1.__decorate([
                 required: false
             };
             const query = {
-                attributes: ['id', 'name'],
+                attributes: ['id', 'name', 'actorId'],
                 include: [
                     {
                         attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
                         model: actor_1.ActorModel.unscoped(),
-                        required: true,
+                        required: (_a = options.actorRequired) !== null && _a !== void 0 ? _a : true,
                         where: whereActor,
                         include: [
                             serverInclude,

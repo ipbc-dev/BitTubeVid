@@ -4,7 +4,7 @@ exports.getEnvCli = exports.execCLI = void 0;
 const tslib_1 = require("tslib");
 const child_process_1 = require("child_process");
 function getEnvCli(server) {
-    return `NODE_ENV=test NODE_APP_INSTANCE=${server.serverNumber}`;
+    return `NODE_ENV=test NODE_APP_INSTANCE=${server.internalServerNumber}`;
 }
 exports.getEnvCli = getEnvCli;
 function execCLI(command) {

@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const accounts_1 = require("../../../../shared/extra-utils/users/accounts");
-const videos_1 = require("../../../../shared/models/videos");
 describe('Test AP refresher', function () {
     let servers = [];
     let videoUUID1;
@@ -30,12 +29,12 @@ describe('Test AP refresher', function () {
                 yield extra_utils_1.uploadVideo(servers[1].url, a2, { name: 'video5' });
             }
             {
-                const playlistAttrs = { displayName: 'playlist1', privacy: videos_1.VideoPlaylistPrivacy.PUBLIC, videoChannelId: servers[1].videoChannel.id };
+                const playlistAttrs = { displayName: 'playlist1', privacy: 1, videoChannelId: servers[1].videoChannel.id };
                 const res = yield extra_utils_1.createVideoPlaylist({ url: servers[1].url, token: servers[1].accessToken, playlistAttrs });
                 playlistUUID1 = res.body.videoPlaylist.uuid;
             }
             {
-                const playlistAttrs = { displayName: 'playlist2', privacy: videos_1.VideoPlaylistPrivacy.PUBLIC, videoChannelId: servers[1].videoChannel.id };
+                const playlistAttrs = { displayName: 'playlist2', privacy: 1, videoChannelId: servers[1].videoChannel.id };
                 const res = yield extra_utils_1.createVideoPlaylist({ url: servers[1].url, token: servers[1].accessToken, playlistAttrs });
                 playlistUUID2 = res.body.videoPlaylist.uuid;
             }

@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CustomConfigAuditView = exports.VideoAbuseAuditView = exports.VideoAuditView = exports.UserAuditView = exports.CommentAuditView = exports.VideoChannelAuditView = exports.VideoImportAuditView = exports.auditLoggerFactory = exports.getAuditIdFromRes = void 0;
-const path = require("path");
+exports.CustomConfigAuditView = exports.AbuseAuditView = exports.VideoAuditView = exports.UserAuditView = exports.CommentAuditView = exports.VideoChannelAuditView = exports.VideoImportAuditView = exports.auditLoggerFactory = exports.getAuditIdFromRes = void 0;
 const deep_object_diff_1 = require("deep-object-diff");
-const lodash_1 = require("lodash");
 const flatten = require("flat");
+const lodash_1 = require("lodash");
+const path = require("path");
 const winston = require("winston");
-const logger_1 = require("./logger");
-const config_1 = require("../initializers/config");
 const constants_1 = require("@server/initializers/constants");
+const config_1 = require("../initializers/config");
+const logger_1 = require("./logger");
 function getAuditIdFromRes(res) {
     return res.locals.oauth.token.User.username;
 }
@@ -206,22 +206,19 @@ class VideoChannelAuditView extends EntityAuditView {
     }
 }
 exports.VideoChannelAuditView = VideoChannelAuditView;
-const videoAbuseKeysToKeep = [
+const abuseKeysToKeep = [
     'id',
     'reason',
     'reporterAccount',
-    'video-id',
-    'video-name',
-    'video-uuid',
     'createdAt'
 ];
-class VideoAbuseAuditView extends EntityAuditView {
-    constructor(videoAbuse) {
-        super(videoAbuseKeysToKeep, 'abuse', videoAbuse);
-        this.videoAbuse = videoAbuse;
+class AbuseAuditView extends EntityAuditView {
+    constructor(abuse) {
+        super(abuseKeysToKeep, 'abuse', abuse);
+        this.abuse = abuse;
     }
 }
-exports.VideoAbuseAuditView = VideoAbuseAuditView;
+exports.AbuseAuditView = AbuseAuditView;
 const customConfigKeysToKeep = [
     'instance-name',
     'instance-shortDescription',

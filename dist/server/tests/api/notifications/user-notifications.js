@@ -11,7 +11,6 @@ const user_notifications_1 = require("../../../../shared/extra-utils/users/user-
 const user_subscriptions_1 = require("../../../../shared/extra-utils/users/user-subscriptions");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
 const users_1 = require("../../../../shared/models/users");
-const videos_1 = require("../../../../shared/models/videos");
 const expect = chai.expect;
 describe('Test user notifications', function () {
     let servers = [];
@@ -46,7 +45,7 @@ describe('Test user notifications', function () {
         });
         it('Should not send notifications if the user does not follow the video publisher', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(30000);
                 yield extra_utils_1.uploadRandomVideoOnServers(servers, 1);
                 const notification = yield user_notifications_1.getLastNotification(servers[0].url, userAccessToken);
                 expect(notification).to.be.undefined;
@@ -74,13 +73,13 @@ describe('Test user notifications', function () {
         });
         it('Should send a new video notification on a scheduled publication', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1, data);
@@ -93,10 +92,10 @@ describe('Test user notifications', function () {
                 this.timeout(50000);
                 const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2, data);
@@ -107,13 +106,13 @@ describe('Test user notifications', function () {
         });
         it('Should not send a notification before the video is published', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 const updateAt = new Date(new Date().getTime() + 1000000);
                 const data = {
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1, data);
@@ -123,41 +122,41 @@ describe('Test user notifications', function () {
         });
         it('Should send a new video notification when a video becomes public', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
-                const data = { privacy: videos_1.VideoPrivacy.PRIVATE };
+                this.timeout(30000);
+                const data = { privacy: 3 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1, data);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'absence');
-                yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, uuid, { privacy: videos_1.VideoPrivacy.PUBLIC });
+                yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, uuid, { privacy: 1 });
                 yield extra_utils_1.wait(500);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'presence');
             });
         });
         it('Should send a new video notification when a remote video becomes public', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
-                const data = { privacy: videos_1.VideoPrivacy.PRIVATE };
+                this.timeout(30000);
+                const data = { privacy: 3 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2, data);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'absence');
-                yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, uuid, { privacy: videos_1.VideoPrivacy.PUBLIC });
+                yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, uuid, { privacy: 1 });
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'presence');
             });
         });
         it('Should not send a new video notification when a video becomes unlisted', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
-                const data = { privacy: videos_1.VideoPrivacy.PRIVATE };
+                this.timeout(30000);
+                const data = { privacy: 3 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1, data);
-                yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, uuid, { privacy: videos_1.VideoPrivacy.UNLISTED });
+                yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, uuid, { privacy: 2 });
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'absence');
             });
         });
         it('Should not send a new video notification when a remote video becomes unlisted', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
-                const data = { privacy: videos_1.VideoPrivacy.PRIVATE };
+                this.timeout(30000);
+                const data = { privacy: 3 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2, data);
-                yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, uuid, { privacy: videos_1.VideoPrivacy.UNLISTED });
+                yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, uuid, { privacy: 2 });
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'absence');
             });
@@ -169,8 +168,8 @@ describe('Test user notifications', function () {
                 const attributes = {
                     name,
                     channelId,
-                    privacy: videos_1.VideoPrivacy.PUBLIC,
-                    targetUrl: video_imports_1.getYoutubeVideoUrl()
+                    privacy: 1,
+                    targetUrl: video_imports_1.getGoodVideoUrl()
                 };
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
                 const uuid = res.body.video.uuid;
@@ -191,7 +190,7 @@ describe('Test user notifications', function () {
         });
         it('Should not send a notification if transcoding is not enabled', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(30000);
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1);
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkVideoIsPublished(baseParams, name, uuid, 'absence');
@@ -231,8 +230,8 @@ describe('Test user notifications', function () {
                 const attributes = {
                     name,
                     channelId,
-                    privacy: videos_1.VideoPrivacy.PUBLIC,
-                    targetUrl: video_imports_1.getYoutubeVideoUrl(),
+                    privacy: 1,
+                    targetUrl: video_imports_1.getGoodVideoUrl(),
                     waitTranscoding: true
                 };
                 const res = yield video_imports_1.importVideo(servers[1].url, servers[1].accessToken, attributes);
@@ -246,10 +245,10 @@ describe('Test user notifications', function () {
                 this.timeout(70000);
                 const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2, data);
@@ -262,10 +261,10 @@ describe('Test user notifications', function () {
                 this.timeout(40000);
                 const updateAt = new Date(new Date().getTime() + 1000000);
                 const data = {
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     scheduleUpdate: {
                         updateAt: updateAt.toISOString(),
-                        privacy: videos_1.VideoPrivacy.PUBLIC
+                        privacy: 1
                     }
                 };
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2, data);
@@ -291,7 +290,7 @@ describe('Test user notifications', function () {
                 const attributes = {
                     name,
                     channelId,
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
+                    privacy: 3,
                     targetUrl: video_imports_1.getBadVideoUrl()
                 };
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
@@ -307,13 +306,13 @@ describe('Test user notifications', function () {
                 const attributes = {
                     name,
                     channelId,
-                    privacy: videos_1.VideoPrivacy.PRIVATE,
-                    targetUrl: video_imports_1.getYoutubeVideoUrl()
+                    privacy: 3,
+                    targetUrl: video_imports_1.getGoodVideoUrl()
                 };
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
                 const uuid = res.body.video.uuid;
                 yield jobs_1.waitJobs(servers);
-                yield user_notifications_1.checkMyVideoImportIsFinished(baseParams, name, uuid, video_imports_1.getYoutubeVideoUrl(), true, 'presence');
+                yield user_notifications_1.checkMyVideoImportIsFinished(baseParams, name, uuid, video_imports_1.getGoodVideoUrl(), true, 'presence');
             });
         });
     });
@@ -347,7 +346,7 @@ describe('Test user notifications', function () {
         }));
         it('Should notify when a local channel is following one of our channel', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(30000);
                 yield user_subscriptions_1.addUserSubscription(servers[0].url, servers[0].accessToken, 'user_1_channel@localhost:' + servers[0].port);
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewActorFollow(baseParams, 'channel', 'root', 'super root name', myChannelName, 'presence');
@@ -356,7 +355,7 @@ describe('Test user notifications', function () {
         });
         it('Should notify when a remote channel is following one of our channel', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(30000);
                 yield user_subscriptions_1.addUserSubscription(servers[1].url, servers[1].accessToken, 'user_1_channel@localhost:' + servers[0].port);
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewActorFollow(baseParams, 'channel', 'root', 'super root 2 name', myChannelName, 'presence');

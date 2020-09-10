@@ -3,47 +3,45 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videosRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
-const shared_1 = require("../../../../shared");
+const toInt_1 = require("validator/lib/toInt");
+const video_1 = require("@server/helpers/video");
+const webtorrent_1 = require("@server/helpers/webtorrent");
+const share_1 = require("@server/lib/activitypub/share");
+const url_1 = require("@server/lib/activitypub/url");
+const video_paths_1 = require("@server/lib/video-paths");
+const application_1 = require("@server/models/application/application");
+const audit_logger_1 = require("../../../helpers/audit-logger");
+const database_utils_1 = require("../../../helpers/database-utils");
+const express_utils_1 = require("../../../helpers/express-utils");
 const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
 const logger_1 = require("../../../helpers/logger");
-const audit_logger_1 = require("../../../helpers/audit-logger");
 const utils_1 = require("../../../helpers/utils");
-const video_blacklist_1 = require("../../../lib/video-blacklist");
+const config_1 = require("../../../initializers/config");
 const constants_1 = require("../../../initializers/constants");
+const database_1 = require("../../../initializers/database");
+const send_view_1 = require("../../../lib/activitypub/send/send-view");
 const videos_1 = require("../../../lib/activitypub/videos");
 const job_queue_1 = require("../../../lib/job-queue");
+const notifier_1 = require("../../../lib/notifier");
+const hooks_1 = require("../../../lib/plugins/hooks");
 const redis_1 = require("../../../lib/redis");
+const thumbnail_1 = require("../../../lib/thumbnail");
+const video_blacklist_1 = require("../../../lib/video-blacklist");
 const middlewares_1 = require("../../../middlewares");
+const schedule_video_update_1 = require("../../../models/video/schedule-video-update");
 const tag_1 = require("../../../models/video/tag");
-const video_1 = require("../../../models/video/video");
+const video_2 = require("../../../models/video/video");
 const video_file_1 = require("../../../models/video/video-file");
 const abuse_1 = require("./abuse");
 const blacklist_1 = require("./blacklist");
-const comment_1 = require("./comment");
-const rate_1 = require("./rate");
-const ownership_1 = require("./ownership");
-const express_utils_1 = require("../../../helpers/express-utils");
-const schedule_video_update_1 = require("../../../models/video/schedule-video-update");
 const captions_1 = require("./captions");
+const comment_1 = require("./comment");
 const import_1 = require("./import");
-const database_utils_1 = require("../../../helpers/database-utils");
-const fs_extra_1 = require("fs-extra");
+const ownership_1 = require("./ownership");
+const rate_1 = require("./rate");
 const watching_1 = require("./watching");
-const notifier_1 = require("../../../lib/notifier");
-const send_view_1 = require("../../../lib/activitypub/send/send-view");
-const config_1 = require("../../../initializers/config");
-const database_1 = require("../../../initializers/database");
-const thumbnail_1 = require("../../../lib/thumbnail");
-const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.type");
-const hooks_1 = require("../../../lib/plugins/hooks");
-const webtorrent_1 = require("@server/helpers/webtorrent");
-const video_paths_1 = require("@server/lib/video-paths");
-const toInt_1 = require("validator/lib/toInt");
-const video_2 = require("@server/helpers/video");
-const application_1 = require("@server/models/application/application");
-const share_1 = require("@server/lib/activitypub/share");
-const url_1 = require("@server/lib/activitypub/url");
 const auditLogger = audit_logger_1.auditLoggerFactory('videos');
 const videosRouter = express.Router();
 exports.videosRouter = videosRouter;
@@ -68,7 +66,7 @@ videosRouter.get('/categories', listVideoCategories);
 videosRouter.get('/licences', listVideoLicences);
 videosRouter.get('/languages', listVideoLanguages);
 videosRouter.get('/privacies', listVideoPrivacies);
-videosRouter.get('/', middlewares_1.paginationValidator, middlewares_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(listVideos));
+videosRouter.get('/', middlewares_1.paginationValidator, middlewares_1.videosSortValidator, middlewares_1.setDefaultVideosSort, middlewares_1.setDefaultPagination, middlewares_1.optionalAuthenticate, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(listVideos));
 videosRouter.put('/:id', middlewares_1.authenticate, reqVideoFileUpdate, middlewares_1.asyncMiddleware(middlewares_1.videosUpdateValidator), middlewares_1.asyncRetryTransactionMiddleware(updateVideo));
 videosRouter.post('/upload', middlewares_1.authenticate, reqVideoFileAdd, middlewares_1.asyncMiddleware(middlewares_1.videosAddValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideo));
 videosRouter.get('/:id/description', middlewares_1.asyncMiddleware(middlewares_1.videosGetValidator), middlewares_1.asyncMiddleware(getVideoDescription));
@@ -105,16 +103,16 @@ function addVideo(req, res) {
             commentsEnabled: videoInfo.commentsEnabled !== false,
             downloadEnabled: videoInfo.downloadEnabled !== false,
             waitTranscoding: videoInfo.waitTranscoding || false,
-            state: config_1.CONFIG.TRANSCODING.ENABLED ? shared_1.VideoState.TO_TRANSCODE : shared_1.VideoState.PUBLISHED,
+            state: config_1.CONFIG.TRANSCODING.ENABLED ? 2 : 1,
             nsfw: videoInfo.nsfw || false,
             description: videoInfo.description,
             support: videoInfo.support,
-            privacy: videoInfo.privacy || shared_1.VideoPrivacy.PRIVATE,
+            privacy: videoInfo.privacy || 3,
             duration: videoPhysicalFile['duration'],
             channelId: res.locals.videoChannel.id,
             originallyPublishedAt: videoInfo.originallyPublishedAt
         };
-        const video = new video_1.VideoModel(videoData);
+        const video = new video_2.VideoModel(videoData);
         video.url = url_1.getVideoActivityPubUrl(video);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
@@ -135,12 +133,12 @@ function addVideo(req, res) {
         videoPhysicalFile.path = destination;
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
-            ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false)
-            : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.MINIATURE);
+            ? yield thumbnail_1.createVideoMiniatureFromExisting(thumbnailField[0].path, video, 1, false)
+            : yield thumbnail_1.generateVideoMiniature(video, videoFile, 1);
         const previewField = req.files['previewfile'];
         const previewModel = previewField
-            ? yield thumbnail_1.createVideoMiniatureFromExisting(previewField[0].path, video, thumbnail_type_1.ThumbnailType.PREVIEW, false)
-            : yield thumbnail_1.generateVideoMiniature(video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
+            ? yield thumbnail_1.createVideoMiniatureFromExisting(previewField[0].path, video, 2, false)
+            : yield thumbnail_1.generateVideoMiniature(video, videoFile, 2);
         yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile);
         const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
@@ -176,8 +174,8 @@ function addVideo(req, res) {
             return { videoCreated };
         }));
         notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
-        if (video.state === shared_1.VideoState.TO_TRANSCODE) {
-            yield video_2.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
+        if (video.state === 2) {
+            yield video_1.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
         }
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
         return res.json({
@@ -197,9 +195,9 @@ function updateVideo(req, res) {
         const videoInfoToUpdate = req.body;
         const wasConfidentialVideo = videoInstance.isConfidential();
         const hadPrivacyForFederation = videoInstance.hasPrivacyForFederation();
-        const thumbnailModel = ((_a = req.files) === null || _a === void 0 ? void 0 : _a['thumbnailfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['thumbnailfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.MINIATURE, false)
+        const thumbnailModel = ((_a = req.files) === null || _a === void 0 ? void 0 : _a['thumbnailfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['thumbnailfile'][0].path, videoInstance, 1, false)
             : undefined;
-        const previewModel = ((_b = req.files) === null || _b === void 0 ? void 0 : _b['previewfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['previewfile'][0].path, videoInstance, thumbnail_type_1.ThumbnailType.PREVIEW, false)
+        const previewModel = ((_b = req.files) === null || _b === void 0 ? void 0 : _b['previewfile']) ? yield thumbnail_1.createVideoMiniatureFromExisting(req.files['previewfile'][0].path, videoInstance, 2, false)
             : undefined;
         try {
             const videoInstanceUpdated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -234,7 +232,7 @@ function updateVideo(req, res) {
                     const newPrivacy = parseInt(videoInfoToUpdate.privacy.toString(), 10);
                     videoInstance.setPrivacy(newPrivacy);
                     if (hadPrivacyForFederation && !videoInstance.hasPrivacyForFederation()) {
-                        yield video_1.VideoModel.sendDelete(videoInstance, { transaction: t });
+                        yield video_2.VideoModel.sendDelete(videoInstance, { transaction: t });
                     }
                 }
                 const videoInstanceUpdated = yield videoInstance.save(sequelizeOptions);
@@ -278,7 +276,7 @@ function updateVideo(req, res) {
             if (wasConfidentialVideo) {
                 notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoInstanceUpdated);
             }
-            hooks_1.Hooks.runAction('action:api.video.updated', { video: videoInstanceUpdated });
+            hooks_1.Hooks.runAction('action:api.video.updated', { video: videoInstanceUpdated, body: req.body });
         }
         catch (err) {
             database_utils_1.resetSequelizeInstance(videoInstance, videoFieldsSave);
@@ -290,7 +288,7 @@ function updateVideo(req, res) {
 function getVideo(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : null;
-        const video = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
+        const video = yield hooks_1.Hooks.wrapPromiseFun(video_2.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
         if (video.isOutdated()) {
             job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: video.url } });
         }
@@ -354,7 +352,7 @@ function listVideos(req, res) {
             user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
             countVideos
         }, 'filter:api.videos.list.params');
-        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.listForApi, apiOptions, 'filter:api.videos.list.result');
+        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_2.VideoModel.listForApi, apiOptions, 'filter:api.videos.list.result');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

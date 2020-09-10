@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
-const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const expect = chai.expect;
@@ -28,10 +27,10 @@ describe('Test video update scheduler', function () {
             this.timeout(10000);
             const videoAttributes = {
                 name: 'video 1',
-                privacy: videos_1.VideoPrivacy.PRIVATE,
+                privacy: 3,
                 scheduleUpdate: {
                     updateAt: in10Seconds().toISOString(),
-                    privacy: videos_1.VideoPrivacy.PUBLIC
+                    privacy: 1
                 }
             };
             yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes);
@@ -55,9 +54,9 @@ describe('Test video update scheduler', function () {
             const videoFromGet = res2.body;
             for (const video of [videoFromList, videoFromGet]) {
                 expect(video.name).to.equal('video 1');
-                expect(video.privacy.id).to.equal(videos_1.VideoPrivacy.PRIVATE);
+                expect(video.privacy.id).to.equal(3);
                 expect(new Date(video.scheduledUpdate.updateAt)).to.be.above(new Date());
-                expect(video.scheduledUpdate.privacy).to.equal(videos_1.VideoPrivacy.PUBLIC);
+                expect(video.scheduledUpdate.privacy).to.equal(1);
             }
         });
     });
@@ -78,7 +77,7 @@ describe('Test video update scheduler', function () {
             this.timeout(10000);
             const videoAttributes = {
                 name: 'video 2',
-                privacy: videos_1.VideoPrivacy.PRIVATE
+                privacy: 3
             };
             const res = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes);
             video2UUID = res.body.video.uuid;
@@ -92,7 +91,7 @@ describe('Test video update scheduler', function () {
                 name: 'video 2 updated',
                 scheduleUpdate: {
                     updateAt: in10Seconds().toISOString(),
-                    privacy: videos_1.VideoPrivacy.PUBLIC
+                    privacy: 1
                 }
             };
             yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, video2UUID, videoAttributes);
@@ -114,9 +113,9 @@ describe('Test video update scheduler', function () {
             const video = res.body.data.find(v => v.uuid === video2UUID);
             expect(video).not.to.be.undefined;
             expect(video.name).to.equal('video 2 updated');
-            expect(video.privacy.id).to.equal(videos_1.VideoPrivacy.PRIVATE);
+            expect(video.privacy.id).to.equal(3);
             expect(new Date(video.scheduledUpdate.updateAt)).to.be.above(new Date());
-            expect(video.scheduledUpdate.privacy).to.equal(videos_1.VideoPrivacy.PUBLIC);
+            expect(video.scheduledUpdate.privacy).to.equal(1);
         });
     });
     it('Should wait some seconds and have the updated video in public privacy', function () {

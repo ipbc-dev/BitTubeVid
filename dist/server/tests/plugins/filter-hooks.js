@@ -6,7 +6,6 @@ const chai = require("chai");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const video_imports_1 = require("../../../shared/extra-utils/videos/video-imports");
-const videos_1 = require("../../../shared/models/videos");
 const expect = chai.expect;
 describe('Test plugin filter hooks', function () {
     let servers;
@@ -63,9 +62,9 @@ describe('Test plugin filter hooks', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const baseAttributes = {
                 name: 'normal title',
-                privacy: videos_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 channelId: servers[0].videoChannel.id,
-                targetUrl: video_imports_1.getYoutubeVideoUrl() + 'bad'
+                targetUrl: video_imports_1.getGoodVideoUrl() + 'bad'
             };
             yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403);
         });
@@ -74,7 +73,7 @@ describe('Test plugin filter hooks', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const baseAttributes = {
                 name: 'bad torrent',
-                privacy: videos_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 channelId: servers[0].videoChannel.id,
                 torrentfile: 'video-720p.torrent'
             };
@@ -88,9 +87,9 @@ describe('Test plugin filter hooks', function () {
             {
                 const baseAttributes = {
                     name: 'title with bad word',
-                    privacy: videos_1.VideoPrivacy.PUBLIC,
+                    privacy: 1,
                     channelId: servers[0].videoChannel.id,
-                    targetUrl: video_imports_1.getYoutubeVideoUrl()
+                    targetUrl: video_imports_1.getGoodVideoUrl()
                 };
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes);
                 videoImportId = res.body.id;
@@ -100,7 +99,7 @@ describe('Test plugin filter hooks', function () {
                 const res = yield video_imports_1.getMyVideoImports(servers[0].url, servers[0].accessToken);
                 const videoImports = res.body.data;
                 const videoImport = videoImports.find(i => i.id === videoImportId);
-                expect(videoImport.state.id).to.equal(videos_1.VideoImportState.REJECTED);
+                expect(videoImport.state.id).to.equal(4);
                 expect(videoImport.state.label).to.equal('Rejected');
             }
         });
@@ -112,7 +111,7 @@ describe('Test plugin filter hooks', function () {
             {
                 const baseAttributes = {
                     name: 'title with bad word',
-                    privacy: videos_1.VideoPrivacy.PUBLIC,
+                    privacy: 1,
                     channelId: servers[0].videoChannel.id,
                     torrentfile: 'video-720p.torrent'
                 };
@@ -124,7 +123,7 @@ describe('Test plugin filter hooks', function () {
                 const res = yield video_imports_1.getMyVideoImports(servers[0].url, servers[0].accessToken);
                 const videoImports = res.body.data;
                 const videoImport = videoImports.find(i => i.id === videoImportId);
-                expect(videoImport.state.id).to.equal(videos_1.VideoImportState.REJECTED);
+                expect(videoImport.state.id).to.equal(4);
                 expect(videoImport.state.label).to.equal('Rejected');
             }
         });
@@ -182,7 +181,7 @@ describe('Test plugin filter hooks', function () {
                 this.timeout(15000);
                 const attributes = {
                     name: 'video please blacklist me',
-                    targetUrl: video_imports_1.getYoutubeVideoUrl(),
+                    targetUrl: video_imports_1.getGoodVideoUrl(),
                     channelId: servers[0].videoChannel.id
                 };
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);

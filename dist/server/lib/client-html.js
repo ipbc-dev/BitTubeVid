@@ -2,13 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ClientHtml = void 0;
 const tslib_1 = require("tslib");
-const i18n_1 = require("../../shared/models/i18n/i18n");
+const i18n_1 = require("../../shared/core-utils/i18n/i18n");
 const constants_1 = require("../initializers/constants");
 const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
 const video_1 = require("../models/video/video");
+const video_playlist_1 = require("../models/video/video-playlist");
 const validator_1 = require("validator");
-const videos_1 = require("../../shared/models/videos");
 const fs_extra_1 = require("fs-extra");
 const video_format_utils_1 = require("../models/video/video-format-utils");
 const account_1 = require("../models/account/account");
@@ -40,13 +40,66 @@ class ClientHtml {
                 ClientHtml.getIndexHTML(req, res),
                 video_1.VideoModel.loadWithBlacklist(videoId)
             ]);
-            if (!video || video.privacy === videos_1.VideoPrivacy.PRIVATE || video.privacy === videos_1.VideoPrivacy.INTERNAL || video.VideoBlacklist) {
+            if (!video || video.privacy === 3 || video.privacy === 4 || video.VideoBlacklist) {
                 res.status(404);
                 return html;
             }
             let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(video.name));
             customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(video.description));
-            customHtml = ClientHtml.addVideoOpenGraphAndOEmbedTags(customHtml, video);
+            const url = constants_1.WEBSERVER.URL + video.getWatchStaticPath();
+            const title = core_utils_1.escapeHTML(video.name);
+            const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
+            const description = core_utils_1.escapeHTML(video.description);
+            const image = {
+                url: constants_1.WEBSERVER.URL + video.getPreviewStaticPath()
+            };
+            const embed = {
+                url: constants_1.WEBSERVER.URL + video.getEmbedStaticPath(),
+                createdAt: video.createdAt.toISOString(),
+                duration: video_format_utils_1.getActivityStreamDuration(video.duration),
+                views: video.views
+            };
+            const ogType = 'video';
+            const twitterCard = config_1.CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary_large_image';
+            const schemaType = 'VideoObject';
+            customHtml = ClientHtml.addTags(customHtml, { url, siteName, title, description, image, embed, ogType, twitterCard, schemaType });
+            return customHtml;
+        });
+    }
+    static getWatchPlaylistHTMLPage(videoPlaylistId, req, res) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (!validator_1.default.isInt(videoPlaylistId) && !validator_1.default.isUUID(videoPlaylistId, 4)) {
+                res.status(404);
+                return ClientHtml.getIndexHTML(req, res);
+            }
+            const [html, videoPlaylist] = yield Promise.all([
+                ClientHtml.getIndexHTML(req, res),
+                video_playlist_1.VideoPlaylistModel.loadWithAccountAndChannel(videoPlaylistId, null)
+            ]);
+            if (!videoPlaylist || videoPlaylist.privacy === 3) {
+                res.status(404);
+                return html;
+            }
+            let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(videoPlaylist.name));
+            customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(videoPlaylist.description));
+            const url = videoPlaylist.getWatchUrl();
+            const title = core_utils_1.escapeHTML(videoPlaylist.name);
+            const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
+            const description = core_utils_1.escapeHTML(videoPlaylist.description);
+            const image = {
+                url: videoPlaylist.getThumbnailUrl()
+            };
+            const embed = {
+                url: constants_1.WEBSERVER.URL + videoPlaylist.getEmbedStaticPath(),
+                createdAt: videoPlaylist.createdAt.toISOString()
+            };
+            const list = {
+                numberOfItems: videoPlaylist.get('videosLength')
+            };
+            const ogType = 'video';
+            const twitterCard = config_1.CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary';
+            const schemaType = 'ItemList';
+            customHtml = ClientHtml.addTags(customHtml, { url, siteName, embed, title, description, image, list, ogType, twitterCard, schemaType });
             return customHtml;
         });
     }
@@ -58,6 +111,18 @@ class ClientHtml {
     static getVideoChannelHTMLPage(nameWithHost, req, res) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return this.getAccountOrChannelHTMLPage(() => video_channel_1.VideoChannelModel.loadByNameWithHostAndPopulateAccount(nameWithHost), req, res);
+        });
+    }
+    static getEmbedHTML() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const path = ClientHtml.getEmbedPath();
+            if (ClientHtml.htmlCache[path])
+                return ClientHtml.htmlCache[path];
+            const buffer = yield fs_extra_1.readFile(path);
+            let html = buffer.toString();
+            html = yield ClientHtml.addAsyncPluginCSS(html);
+            ClientHtml.htmlCache[path] = html;
+            return html;
         });
     }
     static getAccountOrChannelHTMLPage(loader, req, res) {
@@ -72,7 +137,19 @@ class ClientHtml {
             }
             let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(entity.getDisplayName()));
             customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(entity.description));
-            customHtml = ClientHtml.addAccountOrChannelMetaTags(customHtml, entity);
+            const url = entity.Actor.url;
+            const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
+            const title = core_utils_1.escapeHTML(entity.getDisplayName());
+            const description = core_utils_1.escapeHTML(entity.description);
+            const image = {
+                url: entity.Actor.getAvatarUrl(),
+                width: constants_1.AVATARS_SIZE.width,
+                height: constants_1.AVATARS_SIZE.height
+            };
+            const ogType = 'website';
+            const twitterCard = 'summary';
+            const schemaType = 'ProfilePage';
+            customHtml = ClientHtml.addTags(customHtml, { url, title, siteName, description, image, ogType, twitterCard, schemaType });
             return customHtml;
         });
     }
@@ -112,6 +189,9 @@ class ClientHtml {
         }
         return path_1.join(__dirname, '../../../client/dist/' + i18n_1.buildFileLocale(lang) + '/index.html');
     }
+    static getEmbedPath() {
+        return path_1.join(__dirname, '../../../client/dist/standalone/videos/embed.html');
+    }
     static addHtmlLang(htmlStringPage, paramLang) {
         return htmlStringPage.replace('<html>', `<html lang="${paramLang}">`);
     }
@@ -150,72 +230,114 @@ class ClientHtml {
             return htmlStringPage.replace('</head>', linkTag + '</head>');
         });
     }
-    static addVideoOpenGraphAndOEmbedTags(htmlStringPage, video) {
-        const previewUrl = constants_1.WEBSERVER.URL + video.getPreviewStaticPath();
-        const videoUrl = constants_1.WEBSERVER.URL + video.getWatchStaticPath();
-        const videoNameEscaped = core_utils_1.escapeHTML(video.name);
-        const videoDescriptionEscaped = core_utils_1.escapeHTML(video.description);
-        const embedUrl = constants_1.WEBSERVER.URL + video.getEmbedStaticPath();
-        const openGraphMetaTags = {
-            'og:type': 'video',
-            'og:title': videoNameEscaped,
-            'og:image': previewUrl,
-            'og:url': videoUrl,
-            'og:description': videoDescriptionEscaped,
-            'og:video:url': embedUrl,
-            'og:video:secure_url': embedUrl,
-            'og:video:type': 'text/html',
-            'og:video:width': constants_1.EMBED_SIZE.width,
-            'og:video:height': constants_1.EMBED_SIZE.height,
-            'name': videoNameEscaped,
-            'description': videoDescriptionEscaped,
-            'image': previewUrl,
-            'twitter:card': config_1.CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary_large_image',
+    static generateOpenGraphMetaTags(tags) {
+        const metaTags = {
+            'og:type': tags.ogType,
+            'og:site_name': tags.siteName,
+            'og:title': tags.title,
+            'og:image': tags.image.url
+        };
+        if (tags.image.width && tags.image.height) {
+            metaTags['og:image:width'] = tags.image.width;
+            metaTags['og:image:height'] = tags.image.height;
+        }
+        metaTags['og:url'] = tags.url;
+        metaTags['og:description'] = tags.description;
+        if (tags.embed) {
+            metaTags['og:video:url'] = tags.embed.url;
+            metaTags['og:video:secure_url'] = tags.embed.url;
+            metaTags['og:video:type'] = 'text/html';
+            metaTags['og:video:width'] = constants_1.EMBED_SIZE.width;
+            metaTags['og:video:height'] = constants_1.EMBED_SIZE.height;
+        }
+        return metaTags;
+    }
+    static generateStandardMetaTags(tags) {
+        return {
+            name: tags.title,
+            description: tags.description,
+            image: tags.image.url
+        };
+    }
+    static generateTwitterCardMetaTags(tags) {
+        const metaTags = {
+            'twitter:card': tags.twitterCard,
             'twitter:site': config_1.CONFIG.SERVICES.TWITTER.USERNAME,
-            'twitter:title': videoNameEscaped,
-            'twitter:description': videoDescriptionEscaped,
-            'twitter:image': previewUrl,
-            'twitter:player': embedUrl,
-            'twitter:player:width': constants_1.EMBED_SIZE.width,
-            'twitter:player:height': constants_1.EMBED_SIZE.height
+            'twitter:title': tags.title,
+            'twitter:description': tags.description,
+            'twitter:image': tags.image.url
         };
-        const oembedLinkTags = [
-            {
-                type: 'application/json+oembed',
-                href: constants_1.WEBSERVER.URL + '/services/oembed?url=' + encodeURIComponent(videoUrl),
-                title: videoNameEscaped
-            }
-        ];
-        const schemaTags = {
+        if (tags.image.width && tags.image.height) {
+            metaTags['twitter:image:width'] = tags.image.width;
+            metaTags['twitter:image:height'] = tags.image.height;
+        }
+        if (tags.twitterCard === 'player') {
+            metaTags['twitter:player'] = tags.embed.url;
+            metaTags['twitter:player:width'] = constants_1.EMBED_SIZE.width;
+            metaTags['twitter:player:height'] = constants_1.EMBED_SIZE.height;
+        }
+        return metaTags;
+    }
+    static generateSchemaTags(tags) {
+        const schema = {
             '@context': 'http://schema.org',
-            '@type': 'VideoObject',
-            'name': videoNameEscaped,
-            'description': videoDescriptionEscaped,
-            'thumbnailUrl': previewUrl,
-            'uploadDate': video.createdAt.toISOString(),
-            'duration': video_format_utils_1.getActivityStreamDuration(video.duration),
-            'contentUrl': videoUrl,
-            'embedUrl': embedUrl,
-            'interactionCount': video.views
+            '@type': tags.schemaType,
+            'name': tags.title,
+            'description': tags.description,
+            'image': tags.image.url,
+            'url': tags.url
         };
+        if (tags.list) {
+            schema['numberOfItems'] = tags.list.numberOfItems;
+            schema['thumbnailUrl'] = tags.image.url;
+        }
+        if (tags.embed) {
+            schema['embedUrl'] = tags.embed.url;
+            schema['uploadDate'] = tags.embed.createdAt;
+            if (tags.embed.duration)
+                schema['duration'] = tags.embed.duration;
+            if (tags.embed.views)
+                schema['iterationCount'] = tags.embed.views;
+            schema['thumbnailUrl'] = tags.image.url;
+            schema['contentUrl'] = tags.url;
+        }
+        return schema;
+    }
+    static addTags(htmlStringPage, tagsValues) {
+        const openGraphMetaTags = this.generateOpenGraphMetaTags(tagsValues);
+        const standardMetaTags = this.generateStandardMetaTags(tagsValues);
+        const twitterCardMetaTags = this.generateTwitterCardMetaTags(tagsValues);
+        const schemaTags = this.generateSchemaTags(tagsValues);
+        const { url, title, embed } = tagsValues;
+        const oembedLinkTags = [];
+        if (embed) {
+            oembedLinkTags.push({
+                type: 'application/json+oembed',
+                href: constants_1.WEBSERVER.URL + '/services/oembed?url=' + encodeURIComponent(url),
+                title
+            });
+        }
         let tagsString = '';
         Object.keys(openGraphMetaTags).forEach(tagName => {
             const tagValue = openGraphMetaTags[tagName];
             tagsString += `<meta property="${tagName}" content="${tagValue}" />`;
         });
+        Object.keys(standardMetaTags).forEach(tagName => {
+            const tagValue = standardMetaTags[tagName];
+            tagsString += `<meta property="${tagName}" content="${tagValue}" />`;
+        });
+        Object.keys(twitterCardMetaTags).forEach(tagName => {
+            const tagValue = twitterCardMetaTags[tagName];
+            tagsString += `<meta property="${tagName}" content="${tagValue}" />`;
+        });
         for (const oembedLinkTag of oembedLinkTags) {
             tagsString += `<link rel="alternate" type="${oembedLinkTag.type}" href="${oembedLinkTag.href}" title="${oembedLinkTag.title}" />`;
         }
-        tagsString += `<script type="application/ld+json">${JSON.stringify(schemaTags)}</script>`;
-        tagsString += `<link rel="canonical" href="${video.url}" />`;
-        return this.addOpenGraphAndOEmbedTags(htmlStringPage, tagsString);
-    }
-    static addAccountOrChannelMetaTags(htmlStringPage, entity) {
-        const metaTags = `<link rel="canonical" href="${entity.Actor.url}" />`;
-        return this.addOpenGraphAndOEmbedTags(htmlStringPage, metaTags);
-    }
-    static addOpenGraphAndOEmbedTags(htmlStringPage, metaTags) {
-        return htmlStringPage.replace(constants_1.CUSTOM_HTML_TAG_COMMENTS.META_TAGS, metaTags);
+        if (schemaTags) {
+            tagsString += `<script type="application/ld+json">${JSON.stringify(schemaTags)}</script>`;
+        }
+        tagsString += `<link rel="canonical" href="${url}" />`;
+        return htmlStringPage.replace(constants_1.CUSTOM_HTML_TAG_COMMENTS.META_TAGS, tagsString);
     }
 }
 exports.ClientHtml = ClientHtml;

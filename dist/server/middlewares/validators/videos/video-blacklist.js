@@ -4,10 +4,10 @@ exports.videosBlacklistFiltersValidator = exports.videosBlacklistUpdateValidator
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const misc_1 = require("../../../helpers/custom-validators/misc");
-const logger_1 = require("../../../helpers/logger");
-const utils_1 = require("../utils");
 const video_blacklist_1 = require("../../../helpers/custom-validators/video-blacklist");
+const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
+const utils_1 = require("../utils");
 const videosBlacklistRemoveValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -68,6 +68,7 @@ exports.videosBlacklistUpdateValidator = videosBlacklistUpdateValidator;
 const videosBlacklistFiltersValidator = [
     express_validator_1.query('type')
         .optional()
+        .customSanitizer(misc_1.toIntOrNull)
         .custom(video_blacklist_1.isVideoBlacklistTypeValid).withMessage('Should have a valid video blacklist type attribute'),
     express_validator_1.query('search')
         .optional()

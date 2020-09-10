@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const videos_1 = require("../../../../shared/models/videos");
 const users_1 = require("../../../../shared/models/users");
 const expect = chai.expect;
 function getVideosNames(server, token, filter, statusCodeExpected = 200) {
@@ -53,11 +52,11 @@ describe('Test videos filter validator', function () {
                 server['moderatorAccessToken'] = yield extra_utils_1.userLogin(server, moderator);
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'public ' + server.serverNumber });
                 {
-                    const attributes = { name: 'unlisted ' + server.serverNumber, privacy: videos_1.VideoPrivacy.UNLISTED };
+                    const attributes = { name: 'unlisted ' + server.serverNumber, privacy: 2 };
                     yield extra_utils_1.uploadVideo(server.url, server.accessToken, attributes);
                 }
                 {
-                    const attributes = { name: 'private ' + server.serverNumber, privacy: videos_1.VideoPrivacy.PRIVATE };
+                    const attributes = { name: 'private ' + server.serverNumber, privacy: 3 };
                     yield extra_utils_1.uploadVideo(server.url, server.accessToken, attributes);
                 }
             }

@@ -11,7 +11,6 @@ const constants_1 = require("../../initializers/constants");
 const video_file_1 = require("../video/video-file");
 const video_1 = require("../video/video");
 const logger_1 = require("../../helpers/logger");
-const shared_1 = require("../../../shared");
 const video_channel_1 = require("../video/video-channel");
 const server_1 = require("../server/server");
 const lodash_1 = require("lodash");
@@ -134,7 +133,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-views'),
                 where: {
-                    privacy: shared_1.VideoPrivacy.PUBLIC
+                    privacy: 1
                 },
                 include: [
                     yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
@@ -153,7 +152,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-trending'),
                 where: {
-                    privacy: shared_1.VideoPrivacy.PUBLIC
+                    privacy: 1
                 },
                 include: [
                     yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
@@ -171,7 +170,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-publishedAt'),
                 where: {
-                    privacy: shared_1.VideoPrivacy.PUBLIC,
+                    privacy: 1,
                     views: {
                         [sequelize_1.Op.gte]: minViews
                     }

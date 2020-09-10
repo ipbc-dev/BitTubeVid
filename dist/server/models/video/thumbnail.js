@@ -11,7 +11,6 @@ const fs_extra_1 = require("fs-extra");
 const config_1 = require("../../initializers/config");
 const video_1 = require("./video");
 const video_playlist_1 = require("./video-playlist");
-const thumbnail_type_1 = require("../../../shared/models/videos/thumbnail.type");
 const activitypub_1 = require("@server/helpers/activitypub");
 let ThumbnailModel = ThumbnailModel_1 = class ThumbnailModel extends sequelize_typescript_1.Model {
     static removeFiles(instance) {
@@ -47,12 +46,12 @@ let ThumbnailModel = ThumbnailModel_1 = class ThumbnailModel extends sequelize_t
     }
 };
 ThumbnailModel.types = {
-    [thumbnail_type_1.ThumbnailType.MINIATURE]: {
+    [1]: {
         label: 'miniature',
         directory: config_1.CONFIG.STORAGE.THUMBNAILS_DIR,
         staticPath: constants_1.STATIC_PATHS.THUMBNAILS
     },
-    [thumbnail_type_1.ThumbnailType.PREVIEW]: {
+    [2]: {
         label: 'preview',
         directory: config_1.CONFIG.STORAGE.PREVIEWS_DIR,
         staticPath: constants_1.LAZY_STATIC_PATHS.PREVIEWS

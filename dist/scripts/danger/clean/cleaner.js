@@ -13,7 +13,7 @@ database_1.initDatabaseModels(true)
     .then(() => {
     console.info('Tables of %s deleted.', config_1.CONFIG.DATABASE.DBNAME);
     const STORAGE = config_1.CONFIG.STORAGE;
-    Promise.mapSeries(Object.keys(STORAGE), storage => {
+    return Promise.mapSeries(Object.keys(STORAGE), storage => {
         const storageDir = STORAGE[storage];
         return new Promise((res, rej) => {
             rimraf(storageDir, err => {
@@ -25,4 +25,8 @@ database_1.initDatabaseModels(true)
         });
     })
         .then(() => process.exit(0));
+})
+    .catch(err => {
+    console.error(err);
+    process.exit(-1);
 });

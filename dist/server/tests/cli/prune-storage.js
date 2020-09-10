@@ -5,7 +5,6 @@ require("mocha");
 const chai = require("chai");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
 const extra_utils_1 = require("../../../shared/extra-utils");
-const models_1 = require("../../../shared/models");
 const fs_extra_1 = require("fs-extra");
 const uuid_1 = require("uuid");
 const path_1 = require("path");
@@ -58,7 +57,7 @@ describe('Test prune storage scripts', function () {
                     token: server.accessToken,
                     playlistAttrs: {
                         displayName: 'playlist',
-                        privacy: models_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: server.videoChannel.id,
                         thumbnailfile: 'thumbnail.jpg'
                     }

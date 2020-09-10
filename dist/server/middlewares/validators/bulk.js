@@ -5,7 +5,6 @@ const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const bulk_1 = require("@server/helpers/custom-validators/bulk");
 const middlewares_1 = require("@server/helpers/middlewares");
-const models_1 = require("@shared/models");
 const logger_1 = require("../../helpers/logger");
 const utils_1 = require("./utils");
 const bulkRemoveCommentsOfValidator = [
@@ -20,7 +19,7 @@ const bulkRemoveCommentsOfValidator = [
             return;
         const user = res.locals.oauth.token.User;
         const body = req.body;
-        if (body.scope === 'instance' && user.hasRight(models_1.UserRight.REMOVE_ANY_VIDEO_COMMENT) !== true) {
+        if (body.scope === 'instance' && user.hasRight(15) !== true) {
             return res.status(403)
                 .json({
                 error: 'User cannot remove any comments of this instance.'

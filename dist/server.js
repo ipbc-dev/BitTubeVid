@@ -50,6 +50,7 @@ if (config_1.CONFIG.CSP.ENABLED) {
     }));
 }
 const database_1 = require("./server/initializers/database");
+database_1.checkDatabaseConnectionOrDie();
 const migrator_1 = require("./server/initializers/migrator");
 migrator_1.migrate()
     .then(() => database_1.initDatabaseModels(false))

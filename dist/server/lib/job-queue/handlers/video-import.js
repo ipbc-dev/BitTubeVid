@@ -8,9 +8,6 @@ const video_1 = require("@server/helpers/video");
 const moderation_1 = require("@server/lib/moderation");
 const hooks_1 = require("@server/lib/plugins/hooks");
 const video_paths_1 = require("@server/lib/video-paths");
-const shared_1 = require("../../../../shared");
-const videos_1 = require("../../../../shared/models/videos");
-const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.type");
 const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
@@ -22,7 +19,7 @@ const database_1 = require("../../../initializers/database");
 const video_2 = require("../../../models/video/video");
 const video_file_1 = require("../../../models/video/video-file");
 const video_import_1 = require("../../../models/video/video-import");
-const videos_2 = require("../../activitypub/videos");
+const videos_1 = require("../../activitypub/videos");
 const notifier_1 = require("../../notifier");
 const thumbnail_1 = require("../../thumbnail");
 function processVideoImport(job) {
@@ -110,7 +107,7 @@ function processFile(downloader, videoImport, options) {
             const acceptedResult = yield hooks_1.Hooks.wrapFun(moderation_1.isPostImportVideoAccepted, acceptParameters, hookName);
             if (acceptedResult.accepted !== true) {
                 logger_1.logger.info('Refused imported video.', { acceptedResult, acceptParameters });
-                videoImport.state = videos_1.VideoImportState.REJECTED;
+                videoImport.state = 4;
                 yield videoImport.save();
                 throw new Error(acceptedResult.errorMessage);
             }
@@ -121,11 +118,11 @@ function processFile(downloader, videoImport, options) {
             tempVideoPath = null;
             let thumbnailModel;
             if (options.generateThumbnail) {
-                thumbnailModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, thumbnail_type_1.ThumbnailType.MINIATURE);
+                thumbnailModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, 1);
             }
             let previewModel;
             if (options.generatePreview) {
-                previewModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, thumbnail_type_1.ThumbnailType.PREVIEW);
+                previewModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, 2);
             }
             yield webtorrent_1.createTorrentAndSetInfoHash(videoImportWithFiles.Video, videoFile);
             const { videoImportUpdated, video } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -136,15 +133,15 @@ function processFile(downloader, videoImport, options) {
                 const videoFileCreated = yield videoFile.save({ transaction: t });
                 videoImportToUpdate.Video = Object.assign(video, { VideoFiles: [videoFileCreated] });
                 video.duration = duration;
-                video.state = config_1.CONFIG.TRANSCODING.ENABLED ? shared_1.VideoState.TO_TRANSCODE : shared_1.VideoState.PUBLISHED;
+                video.state = config_1.CONFIG.TRANSCODING.ENABLED ? 2 : 1;
                 yield video.save({ transaction: t });
                 if (thumbnailModel)
                     yield video.addAndSaveThumbnail(thumbnailModel, t);
                 if (previewModel)
                     yield video.addAndSaveThumbnail(previewModel, t);
                 const videoForFederation = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
-                yield videos_2.federateVideoIfNeeded(videoForFederation, true, t);
-                videoImportToUpdate.state = videos_1.VideoImportState.SUCCESS;
+                yield videos_1.federateVideoIfNeeded(videoForFederation, true, t);
+                videoImportToUpdate.state = 2;
                 const videoImportUpdated = yield videoImportToUpdate.save({ transaction: t });
                 videoImportUpdated.Video = video;
                 logger_1.logger.info('Video %s imported.', video.uuid);
@@ -158,7 +155,7 @@ function processFile(downloader, videoImport, options) {
             else {
                 notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
             }
-            if (video.state === shared_1.VideoState.TO_TRANSCODE) {
+            if (video.state === 2) {
                 yield video_1.addOptimizeOrMergeAudioJob(videoImportUpdated.Video, videoFile);
             }
         }
@@ -171,8 +168,8 @@ function processFile(downloader, videoImport, options) {
                 logger_1.logger.warn('Cannot cleanup files after a video import error.', { err: errUnlink });
             }
             videoImport.error = err.message;
-            if (videoImport.state !== videos_1.VideoImportState.REJECTED) {
-                videoImport.state = videos_1.VideoImportState.FAILED;
+            if (videoImport.state !== 4) {
+                videoImport.state = 3;
             }
             yield videoImport.save();
             notifier_1.Notifier.Instance.notifyOnFinishedVideoImport(videoImport, false);

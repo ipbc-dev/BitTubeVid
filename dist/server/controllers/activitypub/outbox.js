@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.outboxRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const videos_1 = require("../../../shared/models/videos");
 const activitypub_1 = require("../../helpers/activitypub");
 const logger_1 = require("../../helpers/logger");
 const send_1 = require("../../lib/activitypub/send");
@@ -33,7 +32,7 @@ function buildActivities(actor, start, count) {
         const activities = [];
         for (const video of data.data) {
             const byActor = video.VideoChannel.Account.Actor;
-            const createActivityAudience = audience_1.buildAudience([byActor.followersUrl], video.privacy === videos_1.VideoPrivacy.PUBLIC);
+            const createActivityAudience = audience_1.buildAudience([byActor.followersUrl], video.privacy === 1);
             if (video.VideoShares !== undefined && video.VideoShares.length !== 0) {
                 const videoShare = video.VideoShares[0];
                 const announceActivity = send_1.buildAnnounceActivity(videoShare.url, actor, video.url, createActivityAudience);

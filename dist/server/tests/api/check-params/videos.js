@@ -5,7 +5,6 @@ const chai = require("chai");
 const lodash_1 = require("lodash");
 require("mocha");
 const path_1 = require("path");
-const video_privacy_enum_1 = require("../../../../shared/models/videos/video-privacy.enum");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const expect = chai.expect;
@@ -189,7 +188,7 @@ describe('Test videos API validator', function () {
                 description: 'my super description',
                 support: 'my super support text',
                 tags: ['tag1', 'tag2'],
-                privacy: video_privacy_enum_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 channelId: channelId,
                 originallyPublishedAt: new Date().toISOString()
             };
@@ -302,7 +301,7 @@ describe('Test videos API validator', function () {
         });
         it('Should fail with a bad schedule update (miss updateAt)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { 'scheduleUpdate[privacy]': video_privacy_enum_1.VideoPrivacy.PUBLIC });
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { 'scheduleUpdate[privacy]': 1 });
                 const attaches = baseCorrectAttaches;
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
             });
@@ -310,7 +309,7 @@ describe('Test videos API validator', function () {
         it('Should fail with a bad schedule update (wrong updateAt)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, {
-                    'scheduleUpdate[privacy]': video_privacy_enum_1.VideoPrivacy.PUBLIC,
+                    'scheduleUpdate[privacy]': 1,
                     'scheduleUpdate[updateAt]': 'toto'
                 });
                 const attaches = baseCorrectAttaches;
@@ -438,7 +437,7 @@ describe('Test videos API validator', function () {
             commentsEnabled: false,
             downloadEnabled: false,
             description: 'my super description',
-            privacy: video_privacy_enum_1.VideoPrivacy.PUBLIC,
+            privacy: 1,
             tags: ['tag1', 'tag2']
         };
         before(function () {
@@ -533,13 +532,13 @@ describe('Test videos API validator', function () {
         });
         it('Should fail with a bad schedule update (miss updateAt)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { scheduleUpdate: { privacy: video_privacy_enum_1.VideoPrivacy.PUBLIC } });
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { scheduleUpdate: { privacy: 1 } });
                 yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + videoId, token: server.accessToken, fields });
             });
         });
         it('Should fail with a bad schedule update (wrong updateAt)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { scheduleUpdate: { updateAt: 'toto', privacy: video_privacy_enum_1.VideoPrivacy.PUBLIC } });
+                const fields = extra_utils_1.immutableAssign(baseCorrectParams, { scheduleUpdate: { updateAt: 'toto', privacy: 1 } });
                 yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + videoId, token: server.accessToken, fields });
             });
         });

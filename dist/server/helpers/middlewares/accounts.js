@@ -4,7 +4,7 @@ exports.doesAccountExist = exports.doesAccountNameWithHostExist = exports.doesLo
 const tslib_1 = require("tslib");
 const account_1 = require("../../models/account/account");
 function doesAccountIdExist(id, res, sendNotFound = true) {
-    const promise = account_1.AccountModel.load(id);
+    const promise = account_1.AccountModel.load(parseInt(id + '', 10));
     return doesAccountExist(promise, res, sendNotFound);
 }
 exports.doesAccountIdExist = doesAccountIdExist;

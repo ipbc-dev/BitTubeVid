@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const expect = chai.expect;
 describe('Playlist thumbnail', function () {
     let servers = [];
@@ -48,7 +47,7 @@ describe('Playlist thumbnail', function () {
                 token: servers[1].accessToken,
                 playlistAttrs: {
                     displayName: 'playlist without thumbnail',
-                    privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                    privacy: 1,
                     videoChannelId: servers[1].videoChannel.id
                 }
             });
@@ -75,7 +74,7 @@ describe('Playlist thumbnail', function () {
                 token: servers[1].accessToken,
                 playlistAttrs: {
                     displayName: 'playlist with thumbnail',
-                    privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                    privacy: 1,
                     videoChannelId: servers[1].videoChannel.id,
                     thumbnailfile: 'thumbnail.jpg'
                 }

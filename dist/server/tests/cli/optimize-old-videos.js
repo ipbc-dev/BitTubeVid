@@ -22,7 +22,7 @@ describe('Test optimize old videos', function () {
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
                 const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
-                expect(bitrate).to.be.above(videos_1.getMaxBitrate(videos_1.VideoResolution.H_1080P, 25, constants_1.VIDEO_TRANSCODING_FPS));
+                expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video1', fixture: tempFixturePath });
             yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video2', fixture: tempFixturePath });

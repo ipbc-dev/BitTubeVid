@@ -1,17 +1,17 @@
 "use strict";
 var VideoCommentModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.VideoCommentModel = void 0;
+exports.VideoCommentModel = exports.ScopeNames = void 0;
 const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const application_1 = require("@server/models/application/application");
-const models_1 = require("@shared/models");
 const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const regexp_1 = require("../../helpers/regexp");
 const constants_1 = require("../../initializers/constants");
+const video_comment_abuse_1 = require("../abuse/video-comment-abuse");
 const account_1 = require("../account/account");
 const actor_2 = require("../activitypub/actor");
 const utils_1 = require("../utils");
@@ -24,7 +24,7 @@ var ScopeNames;
     ScopeNames["WITH_IN_REPLY_TO"] = "WITH_IN_REPLY_TO";
     ScopeNames["WITH_VIDEO"] = "WITH_VIDEO";
     ScopeNames["ATTRIBUTES_FOR_API"] = "ATTRIBUTES_FOR_API";
-})(ScopeNames || (ScopeNames = {}));
+})(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends sequelize_typescript_1.Model {
     static loadById(id, t) {
         const query = {
@@ -198,14 +198,15 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const serverActor = yield application_1.getServerActor();
             const { start, count, videoId, accountId, videoChannelId } = parameters;
-            const accountExclusion = {
-                [sequelize_1.Op.notIn]: sequelize_1.Sequelize.literal('(' + utils_1.buildBlockedAccountSQL([serverActor.Account.id, '"Video->VideoChannel"."accountId"']) + ')')
+            const whereAnd = utils_1.buildBlockedAccountSQLOptimized('"VideoCommentModel"."accountId"', [serverActor.Account.id, '"Video->VideoChannel"."accountId"']);
+            if (accountId) {
+                whereAnd.push({
+                    [sequelize_1.Op.eq]: accountId
+                });
+            }
+            const accountWhere = {
+                [sequelize_1.Op.and]: whereAnd
             };
-            const accountWhere = accountId
-                ? {
-                    [sequelize_1.Op.and]: Object.assign(Object.assign({}, accountExclusion), { [sequelize_1.Op.eq]: accountId })
-                }
-                : accountExclusion;
             const videoChannelWhere = videoChannelId ? { id: videoChannelId } : undefined;
             const query = {
                 order: [['createdAt', 'DESC']],
@@ -221,7 +222,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
                         model: video_1.VideoModel.unscoped(),
                         required: true,
                         where: {
-                            privacy: models_1.VideoPrivacy.PUBLIC
+                            privacy: 1
                         },
                         include: [
                             {
@@ -357,7 +358,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
             id: this.id,
             url: this.url,
             text: this.text,
-            threadId: this.originCommentId || this.id,
+            threadId: this.getThreadId(),
             inReplyToCommentId: this.inReplyToCommentId || null,
             videoId: this.videoId,
             createdAt: this.createdAt,
@@ -510,6 +511,16 @@ tslib_1.__decorate([
     }),
     tslib_1.__metadata("design:type", account_1.AccountModel)
 ], VideoCommentModel.prototype, "Account", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.HasMany(() => video_comment_abuse_1.VideoCommentAbuseModel, {
+        foreignKey: {
+            name: 'videoCommentId',
+            allowNull: true
+        },
+        onDelete: 'set null'
+    }),
+    tslib_1.__metadata("design:type", Array)
+], VideoCommentModel.prototype, "CommentAbuses", void 0);
 VideoCommentModel = VideoCommentModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Scopes(() => ({
         [ScopeNames.ATTRIBUTES_FOR_API]: (blockerAccountIds) => {

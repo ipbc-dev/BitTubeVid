@@ -6,6 +6,7 @@ const express = require("express");
 const RateLimit = require("express-rate-limit");
 const express_utils_1 = require("../../helpers/express-utils");
 const config_1 = require("../../initializers/config");
+const abuse_1 = require("./abuse");
 const accounts_1 = require("./accounts");
 const bulk_1 = require("./bulk");
 const config_2 = require("./config");
@@ -32,6 +33,7 @@ const apiRateLimiter = RateLimit({
 });
 apiRouter.use(apiRateLimiter);
 apiRouter.use('/server', server_1.serverRouter);
+apiRouter.use('/abuses', abuse_1.abuseRouter);
 apiRouter.use('/bulk', bulk_1.bulkRouter);
 apiRouter.use('/oauth-clients', oauth_clients_1.oauthClientsRouter);
 apiRouter.use('/config', config_2.configRouter);

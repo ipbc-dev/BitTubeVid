@@ -1,18 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
-const videos_1 = require("../../../../shared/models/videos");
+const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const miscs_1 = require("../../../../shared/extra-utils/miscs/miscs");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
-const miscs_1 = require("../../../../shared/extra-utils/miscs/miscs");
 const expect = chai.expect;
 describe('Test video imports', function () {
     let servers = [];
     let channelIdServer1;
     let channelIdServer2;
+    if (miscs_1.areHttpImportTestsDisabled())
+        return;
     function checkVideosServer1(url, idHttp, idMagnet, idTorrent) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const resHttp = yield extra_utils_1.getVideo(url, idHttp);
@@ -83,14 +84,14 @@ describe('Test video imports', function () {
             this.timeout(60000);
             const baseAttributes = {
                 channelId: channelIdServer1,
-                privacy: videos_1.VideoPrivacy.PUBLIC
+                privacy: 1
             };
             {
                 const attributes = extra_utils_1.immutableAssign(baseAttributes, { targetUrl: video_imports_1.getYoutubeVideoUrl() });
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
                 expect(res.body.video.name).to.equal('small video - youtube');
                 expect(res.body.video.thumbnailPath).to.equal(`/static/thumbnails/${res.body.video.uuid}.jpg`);
-                expect(res.body.video.previewPath).to.equal(`/static/previews/${res.body.video.uuid}.jpg`);
+                expect(res.body.video.previewPath).to.equal(`/lazy-static/previews/${res.body.video.uuid}.jpg`);
                 yield miscs_1.testImage(servers[0].url, 'video_import_thumbnail', res.body.video.thumbnailPath);
                 yield miscs_1.testImage(servers[0].url, 'video_import_preview', res.body.video.previewPath);
                 const resCaptions = yield extra_utils_1.listVideoCaptions(servers[0].url, res.body.video.id);
@@ -99,7 +100,7 @@ describe('Test video imports', function () {
                 const enCaption = videoCaptions.find(caption => caption.language.id === 'en');
                 expect(enCaption).to.exist;
                 expect(enCaption.language.label).to.equal('English');
-                expect(enCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-en.vtt`);
+                expect(enCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-en.vtt`);
                 yield extra_utils_1.testCaptionFile(servers[0].url, enCaption.captionPath, `WEBVTT
 Kind: captions
 Language: en
@@ -115,7 +116,7 @@ Adding subtitles is very easy to do`);
                 const frCaption = videoCaptions.find(caption => caption.language.id === 'fr');
                 expect(frCaption).to.exist;
                 expect(frCaption.language.label).to.equal('French');
-                expect(frCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-fr.vtt`);
+                expect(frCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-fr.vtt`);
                 yield extra_utils_1.testCaptionFile(servers[0].url, frCaption.captionPath, `WEBVTT
 Kind: captions
 Language: fr
@@ -199,7 +200,7 @@ Ajouter un sous-titre est vraiment facile`);
             const attributes = {
                 targetUrl: video_imports_1.getYoutubeVideoUrl(),
                 channelId: channelIdServer2,
-                privacy: videos_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 category: 10,
                 licence: 7,
                 language: 'en',
@@ -232,7 +233,7 @@ Ajouter un sous-titre est vraiment facile`);
                 name: 'transcoded video',
                 magnetUri: video_imports_1.getMagnetURI(),
                 channelId: channelIdServer2,
-                privacy: videos_1.VideoPrivacy.PUBLIC
+                privacy: 1
             };
             const res = yield video_imports_1.importVideo(servers[1].url, servers[1].accessToken, attributes);
             const videoUUID = res.body.video.uuid;

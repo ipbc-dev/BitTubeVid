@@ -2,10 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Notifier = void 0;
 const tslib_1 = require("tslib");
+const account_1 = require("@server/models/account/account");
 const application_1 = require("@server/models/application/application");
 const server_blocklist_1 = require("@server/models/server/server-blocklist");
 const users_1 = require("../../shared/models/users");
-const videos_1 = require("../../shared/models/videos");
 const logger_1 = require("../helpers/logger");
 const config_1 = require("../initializers/config");
 const account_blocklist_1 = require("../models/account/account-blocklist");
@@ -18,7 +18,7 @@ class Notifier {
     constructor() {
     }
     notifyOnNewVideoIfNeeded(video) {
-        if (video.privacy !== videos_1.VideoPrivacy.PUBLIC || video.state !== videos_1.VideoState.PUBLISHED || video.isBlacklisted())
+        if (video.privacy !== 1 || video.state !== 1 || video.isBlacklisted())
             return;
         this.notifySubscribersOfNewVideo(video)
             .catch(err => logger_1.logger.error('Cannot notify subscribers of new video %s.', video.url, { err }));
@@ -30,13 +30,13 @@ class Notifier {
             .catch(err => logger_1.logger.error('Cannot notify owner that its video %s has been published after transcoding.', video.url, { err }));
     }
     notifyOnVideoPublishedAfterScheduledUpdate(video) {
-        if (video.VideoBlacklist || (video.waitTranscoding && video.state !== videos_1.VideoState.PUBLISHED))
+        if (video.VideoBlacklist || (video.waitTranscoding && video.state !== 1))
             return;
         this.notifyOwnedVideoHasBeenPublished(video)
             .catch(err => logger_1.logger.error('Cannot notify owner that its video %s has been published after scheduled update.', video.url, { err }));
     }
     notifyOnVideoPublishedAfterRemovedFromAutoBlacklist(video) {
-        if (video.ScheduleVideoUpdate || (video.waitTranscoding && video.state !== videos_1.VideoState.PUBLISHED))
+        if (video.ScheduleVideoUpdate || (video.waitTranscoding && video.state !== 1))
             return;
         this.notifyOwnedVideoHasBeenPublished(video)
             .catch(err => {
@@ -49,9 +49,9 @@ class Notifier {
         this.notifyOfCommentMention(comment)
             .catch(err => logger_1.logger.error('Cannot notify mentions of comment %s.', comment.url, { err }));
     }
-    notifyOnNewVideoAbuse(parameters) {
-        this.notifyModeratorsOfNewVideoAbuse(parameters)
-            .catch(err => logger_1.logger.error('Cannot notify of new video abuse of video %s.', parameters.videoAbuseInstance.Video.url, { err }));
+    notifyOnNewAbuse(parameters) {
+        this.notifyModeratorsOfNewAbuse(parameters)
+            .catch(err => logger_1.logger.error('Cannot notify of new abuse %d.', parameters.abuseInstance.id, { err }));
     }
     notifyOnVideoAutoBlacklist(videoBlacklist) {
         this.notifyModeratorsOfVideoAutoBlacklist(videoBlacklist)
@@ -89,6 +89,18 @@ class Notifier {
         this.notifyAdminsOfAutoInstanceFollowing(actorFollow)
             .catch(err => {
             logger_1.logger.error('Cannot notify administrators of auto instance following %s.', actorFollow.ActorFollowing.url, { err });
+        });
+    }
+    notifyOnAbuseStateChange(abuse) {
+        this.notifyReporterOfAbuseStateChange(abuse)
+            .catch(err => {
+            logger_1.logger.error('Cannot notify reporter of abuse %d state change.', abuse.id, { err });
+        });
+    }
+    notifyOnAbuseMessage(abuse, message) {
+        this.notifyOfNewAbuseMessage(abuse, message)
+            .catch(err => {
+            logger_1.logger.error('Cannot notify on new abuse %d message.', abuse.id, { err });
         });
     }
     notifySubscribersOfNewVideo(video) {
@@ -166,7 +178,7 @@ class Notifier {
                 const accountId = user.Account.id;
                 if (accountMutedHash[accountId] === true || instanceMutedHash[accountId] === true ||
                     accountMutedHash[serverAccountId] === true || instanceMutedHash[serverAccountId] === true) {
-                    return users_1.UserNotificationSettingValue.NONE;
+                    return 0;
                 }
                 return user.NotificationSetting.commentMention;
             }
@@ -226,7 +238,7 @@ class Notifier {
     }
     notifyAdminsOfNewInstanceFollow(actorFollow) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const admins = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_SERVER_FOLLOW);
+            const admins = yield user_1.UserModel.listWithRight(2);
             const follower = Object.assign(actorFollow.ActorFollower.Account, { Actor: actorFollow.ActorFollower });
             if (yield this.isBlockedByServerOrUser(follower))
                 return;
@@ -253,7 +265,7 @@ class Notifier {
     }
     notifyAdminsOfAutoInstanceFollowing(actorFollow) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const admins = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_SERVER_FOLLOW);
+            const admins = yield user_1.UserModel.listWithRight(2);
             logger_1.logger.info('Notifying %d administrators of auto instance following: %s.', admins.length, actorFollow.ActorFollowing.url);
             function settingGetter(user) {
                 return user.NotificationSetting.autoInstanceFollowing;
@@ -275,35 +287,118 @@ class Notifier {
             return this.notify({ users: admins, settingGetter, notificationCreator, emailSender });
         });
     }
-    notifyModeratorsOfNewVideoAbuse(parameters) {
+    notifyModeratorsOfNewAbuse(parameters) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_VIDEO_ABUSES);
+            const { abuse, abuseInstance } = parameters;
+            const moderators = yield user_1.UserModel.listWithRight(6);
             if (moderators.length === 0)
                 return;
-            logger_1.logger.info('Notifying %s user/moderators of new video abuse %s.', moderators.length, parameters.videoAbuseInstance.Video.url);
+            const url = this.getAbuseUrl(abuseInstance);
+            logger_1.logger.info('Notifying %s user/moderators of new abuse %s.', moderators.length, url);
             function settingGetter(user) {
-                return user.NotificationSetting.videoAbuseAsModerator;
+                return user.NotificationSetting.abuseAsModerator;
             }
             function notificationCreator(user) {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     const notification = yield user_notification_1.UserNotificationModel.create({
-                        type: users_1.UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS,
+                        type: users_1.UserNotificationType.NEW_ABUSE_FOR_MODERATORS,
                         userId: user.id,
-                        videoAbuseId: parameters.videoAbuse.id
+                        abuseId: abuse.id
                     });
-                    notification.VideoAbuse = parameters.videoAbuseInstance;
+                    notification.Abuse = abuseInstance;
                     return notification;
                 });
             }
             function emailSender(emails) {
-                return emailer_1.Emailer.Instance.addVideoAbuseModeratorsNotification(emails, parameters);
+                return emailer_1.Emailer.Instance.addAbuseModeratorsNotification(emails, parameters);
             }
             return this.notify({ users: moderators, settingGetter, notificationCreator, emailSender });
         });
     }
+    notifyReporterOfAbuseStateChange(abuse) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (abuse.ReporterAccount.isOwned() !== true)
+                return;
+            const url = this.getAbuseUrl(abuse);
+            logger_1.logger.info('Notifying reporter of abuse % of state change.', url);
+            const reporter = yield user_1.UserModel.loadByAccountActorId(abuse.ReporterAccount.actorId);
+            function settingGetter(user) {
+                return user.NotificationSetting.abuseStateChange;
+            }
+            function notificationCreator(user) {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    const notification = yield user_notification_1.UserNotificationModel.create({
+                        type: users_1.UserNotificationType.ABUSE_STATE_CHANGE,
+                        userId: user.id,
+                        abuseId: abuse.id
+                    });
+                    notification.Abuse = abuse;
+                    return notification;
+                });
+            }
+            function emailSender(emails) {
+                return emailer_1.Emailer.Instance.addAbuseStateChangeNotification(emails, abuse);
+            }
+            return this.notify({ users: [reporter], settingGetter, notificationCreator, emailSender });
+        });
+    }
+    notifyOfNewAbuseMessage(abuse, message) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const url = this.getAbuseUrl(abuse);
+            logger_1.logger.info('Notifying reporter and moderators of new abuse message on %s.', url);
+            const accountMessage = yield account_1.AccountModel.load(message.accountId);
+            function settingGetter(user) {
+                return user.NotificationSetting.abuseNewMessage;
+            }
+            function notificationCreator(user) {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    const notification = yield user_notification_1.UserNotificationModel.create({
+                        type: users_1.UserNotificationType.ABUSE_NEW_MESSAGE,
+                        userId: user.id,
+                        abuseId: abuse.id
+                    });
+                    notification.Abuse = abuse;
+                    return notification;
+                });
+            }
+            function emailSenderReporter(emails) {
+                return emailer_1.Emailer.Instance.addAbuseNewMessageNotification(emails, { target: 'reporter', abuse, message, accountMessage });
+            }
+            function emailSenderModerators(emails) {
+                return emailer_1.Emailer.Instance.addAbuseNewMessageNotification(emails, { target: 'moderator', abuse, message, accountMessage });
+            }
+            function buildReporterOptions() {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    if (abuse.ReporterAccount.isOwned() !== true)
+                        return;
+                    const reporter = yield user_1.UserModel.loadByAccountActorId(abuse.ReporterAccount.actorId);
+                    if (reporter.Account.id === message.accountId)
+                        return;
+                    return { users: [reporter], settingGetter, notificationCreator, emailSender: emailSenderReporter };
+                });
+            }
+            function buildModeratorsOptions() {
+                return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    let moderators = yield user_1.UserModel.listWithRight(6);
+                    moderators = moderators.filter(m => m.Account.id !== message.accountId);
+                    if (moderators.length === 0)
+                        return;
+                    return { users: moderators, settingGetter, notificationCreator, emailSender: emailSenderModerators };
+                });
+            }
+            const [reporterOptions, moderatorsOptions] = yield Promise.all([
+                buildReporterOptions(),
+                buildModeratorsOptions()
+            ]);
+            return Promise.all([
+                this.notify(reporterOptions),
+                this.notify(moderatorsOptions)
+            ]);
+        });
+    }
     notifyModeratorsOfVideoAutoBlacklist(videoBlacklist) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_VIDEO_BLACKLIST);
+            const moderators = yield user_1.UserModel.listWithRight(11);
             if (moderators.length === 0)
                 return;
             logger_1.logger.info('Notifying %s moderators of video auto-blacklist %s.', moderators.length, videoBlacklist.Video.url);
@@ -435,7 +530,7 @@ class Notifier {
     }
     notifyModeratorsOfNewUserRegistration(registeredUser) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const moderators = yield user_1.UserModel.listWithRight(users_1.UserRight.MANAGE_USERS);
+            const moderators = yield user_1.UserModel.listWithRight(1);
             if (moderators.length === 0)
                 return;
             logger_1.logger.info('Notifying %s moderators of new user registration of %s.', moderators.length, registeredUser.username);
@@ -479,13 +574,18 @@ class Notifier {
     isEmailEnabled(user, value) {
         if (config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION === true && user.emailVerified === false)
             return false;
-        return value & users_1.UserNotificationSettingValue.EMAIL;
+        return value & 2;
     }
     isWebNotificationEnabled(value) {
-        return value & users_1.UserNotificationSettingValue.WEB;
+        return value & 1;
     }
     isBlockedByServerOrUser(targetAccount, user) {
         return blocklist_1.isBlockedByServerOrAccount(targetAccount, user === null || user === void 0 ? void 0 : user.Account);
+    }
+    getAbuseUrl(abuse) {
+        var _a, _b, _c, _d;
+        return ((_b = (_a = abuse.VideoAbuse) === null || _a === void 0 ? void 0 : _a.Video) === null || _b === void 0 ? void 0 : _b.url) || ((_d = (_c = abuse.VideoCommentAbuse) === null || _c === void 0 ? void 0 : _c.VideoComment) === null || _d === void 0 ? void 0 : _d.url) ||
+            abuse.FlaggedAccount.Actor.url;
     }
     static get Instance() {
         return this.instance || (this.instance = new this());

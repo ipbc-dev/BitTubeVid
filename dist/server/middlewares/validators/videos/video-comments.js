@@ -3,14 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeVideoCommentValidator = exports.videoCommentGetValidator = exports.addVideoCommentReplyValidator = exports.addVideoCommentThreadValidator = exports.listVideoThreadCommentsValidator = exports.listVideoCommentThreadsValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
-const shared_1 = require("../../../../shared");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const video_comments_1 = require("../../../helpers/custom-validators/video-comments");
 const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
 const moderation_1 = require("../../../lib/moderation");
 const hooks_1 = require("../../../lib/plugins/hooks");
-const video_comment_1 = require("../../../models/video/video-comment");
 const utils_1 = require("../utils");
 const listVideoCommentThreadsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
@@ -33,7 +31,7 @@ const listVideoThreadCommentsValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res, 'only-video')))
             return;
-        if (!(yield doesVideoCommentThreadExist(req.params.threadId, res.locals.onlyVideo, res)))
+        if (!(yield video_comments_1.doesVideoCommentThreadExist(req.params.threadId, res.locals.onlyVideo, res)))
             return;
         return next();
     })
@@ -68,7 +66,7 @@ const addVideoCommentReplyValidator = [
             return;
         if (!isVideoCommentsEnabled(res.locals.videoAll, res))
             return;
-        if (!(yield doesVideoCommentExist(req.params.commentId, res.locals.videoAll, res)))
+        if (!(yield video_comments_1.doesVideoCommentExist(req.params.commentId, res.locals.videoAll, res)))
             return;
         if (!(yield isVideoCommentAccepted(req, res, res.locals.videoAll, true)))
             return;
@@ -85,7 +83,7 @@ const videoCommentGetValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res, 'id')))
             return;
-        if (!(yield doesVideoCommentExist(req.params.commentId, res.locals.videoId, res)))
+        if (!(yield video_comments_1.doesVideoCommentExist(req.params.commentId, res.locals.videoId, res)))
             return;
         return next();
     })
@@ -100,7 +98,7 @@ const removeVideoCommentValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
             return;
-        if (!(yield doesVideoCommentExist(req.params.commentId, res.locals.videoAll, res)))
+        if (!(yield video_comments_1.doesVideoCommentExist(req.params.commentId, res.locals.videoAll, res)))
             return;
         if (!checkUserCanDeleteVideoComment(res.locals.oauth.token.User, res.locals.videoCommentFull, res))
             return;
@@ -108,57 +106,10 @@ const removeVideoCommentValidator = [
     })
 ];
 exports.removeVideoCommentValidator = removeVideoCommentValidator;
-function doesVideoCommentThreadExist(idArg, video, res) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const id = parseInt(idArg + '', 10);
-        const videoComment = yield video_comment_1.VideoCommentModel.loadById(id);
-        if (!videoComment) {
-            res.status(404)
-                .json({ error: 'Video comment thread not found' })
-                .end();
-            return false;
-        }
-        if (videoComment.videoId !== video.id) {
-            res.status(400)
-                .json({ error: 'Video comment is not associated to this video.' })
-                .end();
-            return false;
-        }
-        if (videoComment.inReplyToCommentId !== null) {
-            res.status(400)
-                .json({ error: 'Video comment is not a thread.' })
-                .end();
-            return false;
-        }
-        res.locals.videoCommentThread = videoComment;
-        return true;
-    });
-}
-function doesVideoCommentExist(idArg, video, res) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const id = parseInt(idArg + '', 10);
-        const videoComment = yield video_comment_1.VideoCommentModel.loadByIdAndPopulateVideoAndAccountAndReply(id);
-        if (!videoComment) {
-            res.status(404)
-                .json({ error: 'Video comment thread not found' })
-                .end();
-            return false;
-        }
-        if (videoComment.videoId !== video.id) {
-            res.status(400)
-                .json({ error: 'Video comment is not associated to this video.' })
-                .end();
-            return false;
-        }
-        res.locals.videoCommentFull = videoComment;
-        return true;
-    });
-}
 function isVideoCommentsEnabled(video, res) {
     if (video.commentsEnabled !== true) {
         res.status(409)
-            .json({ error: 'Video comments are disabled for this video.' })
-            .end();
+            .json({ error: 'Video comments are disabled for this video.' });
         return false;
     }
     return true;
@@ -166,12 +117,11 @@ function isVideoCommentsEnabled(video, res) {
 function checkUserCanDeleteVideoComment(user, videoComment, res) {
     if (videoComment.isDeleted()) {
         res.status(409)
-            .json({ error: 'This comment is already deleted' })
-            .end();
+            .json({ error: 'This comment is already deleted' });
         return false;
     }
     const userAccount = user.Account;
-    if (user.hasRight(shared_1.UserRight.REMOVE_ANY_VIDEO_COMMENT) === false &&
+    if (user.hasRight(15) === false &&
         videoComment.accountId !== userAccount.id &&
         videoComment.Video.VideoChannel.accountId !== userAccount.id) {
         res.status(403)

@@ -3,47 +3,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOrCreateVideoChannelFromVideoObject = exports.fetchRemoteVideoDescription = exports.getOrCreateVideoAndAccountAndChannel = exports.fetchRemoteVideo = exports.federateVideoIfNeeded = exports.refreshVideoIfNeeded = exports.updateVideoFromAP = void 0;
 const tslib_1 = require("tslib");
 const Bluebird = require("bluebird");
+const lodash_1 = require("lodash");
 const magnetUtil = require("magnet-uri");
-const index_1 = require("../../../shared/index");
-const videos_1 = require("../../../shared/models/videos");
-const videos_2 = require("../../helpers/custom-validators/activitypub/videos");
-const videos_3 = require("../../helpers/custom-validators/videos");
+const path_1 = require("path");
+const activitypub_1 = require("../../helpers/activitypub");
+const videos_1 = require("../../helpers/custom-validators/activitypub/videos");
+const misc_1 = require("../../helpers/custom-validators/misc");
+const videos_2 = require("../../helpers/custom-validators/videos");
 const database_utils_1 = require("../../helpers/database-utils");
 const logger_1 = require("../../helpers/logger");
 const requests_1 = require("../../helpers/requests");
+const video_1 = require("../../helpers/video");
 const constants_1 = require("../../initializers/constants");
+const database_1 = require("../../initializers/database");
+const account_video_rate_1 = require("../../models/account/account-video-rate");
 const tag_1 = require("../../models/video/tag");
-const video_1 = require("../../models/video/video");
+const video_2 = require("../../models/video/video");
+const video_caption_1 = require("../../models/video/video-caption");
+const video_comment_1 = require("../../models/video/video-comment");
 const video_file_1 = require("../../models/video/video-file");
+const video_share_1 = require("../../models/video/video-share");
+const video_streaming_playlist_1 = require("../../models/video/video-streaming-playlist");
+const files_cache_1 = require("../files-cache");
+const job_queue_1 = require("../job-queue");
+const notifier_1 = require("../notifier");
+const thumbnail_1 = require("../thumbnail");
+const video_blacklist_1 = require("../video-blacklist");
 const actor_1 = require("./actor");
-const video_comments_1 = require("./video-comments");
 const crawl_1 = require("./crawl");
 const send_1 = require("./send");
-const misc_1 = require("../../helpers/custom-validators/misc");
-const video_caption_1 = require("../../models/video/video-caption");
-const job_queue_1 = require("../job-queue");
-const video_rates_1 = require("./video-rates");
 const share_1 = require("./share");
-const video_2 = require("../../helpers/video");
-const activitypub_1 = require("../../helpers/activitypub");
-const notifier_1 = require("../notifier");
-const video_streaming_playlist_1 = require("../../models/video/video-streaming-playlist");
-const video_streaming_playlist_type_1 = require("../../../shared/models/videos/video-streaming-playlist.type");
-const account_video_rate_1 = require("../../models/account/account-video-rate");
-const video_share_1 = require("../../models/video/video-share");
-const video_comment_1 = require("../../models/video/video-comment");
-const database_1 = require("../../initializers/database");
-const thumbnail_1 = require("../thumbnail");
-const thumbnail_type_1 = require("../../../shared/models/videos/thumbnail.type");
-const path_1 = require("path");
-const video_blacklist_1 = require("../video-blacklist");
-const files_cache_1 = require("../files-cache");
-const lodash_1 = require("lodash");
+const video_comments_1 = require("./video-comments");
+const video_rates_1 = require("./video-rates");
 function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
         if ((video.isBlacklisted() === false || (isNewVideo === false && video.VideoBlacklist.unfederated === false)) &&
-            video.hasPrivacyForFederation() && video.state === index_1.VideoState.PUBLISHED) {
+            video.hasPrivacyForFederation() && video.state === 1) {
             if (misc_1.isArray(video.VideoCaptions) === false) {
                 video.VideoCaptions = yield video.$get('VideoCaptions', {
                     attributes: ['language'],
@@ -71,7 +67,7 @@ function fetchRemoteVideo(videoUrl) {
         };
         logger_1.logger.info('Fetching remote video %s.', videoUrl);
         const { response, body } = yield requests_1.doRequest(options);
-        if (videos_2.sanitizeAndCheckVideoTorrentObject(body) === false || activitypub_1.checkUrlsSameHost(body.id, videoUrl) !== true) {
+        if (videos_1.sanitizeAndCheckVideoTorrentObject(body) === false || activitypub_1.checkUrlsSameHost(body.id, videoUrl) !== true) {
             logger_1.logger.debug('Remote video JSON is not valid.', { body });
             return { response, videoObject: undefined };
         }
@@ -151,7 +147,7 @@ function getOrCreateVideoAndAccountAndChannel(options) {
         const fetchType = options.fetchType || 'all';
         const allowRefresh = options.allowRefresh !== false;
         const videoUrl = activitypub_1.getAPId(options.videoObject);
-        let videoFromDatabase = yield video_2.fetchVideoByUrl(videoUrl, fetchType);
+        let videoFromDatabase = yield video_1.fetchVideoByUrl(videoUrl, fetchType);
         if (videoFromDatabase) {
             if (allowRefresh === true && videoFromDatabase.isOutdated()) {
                 const refreshOptions = {
@@ -183,7 +179,7 @@ function getOrCreateVideoAndAccountAndChannel(options) {
         }
         catch (err) {
             if (err.name === 'SequelizeUniqueConstraintError') {
-                const fallbackVideo = yield video_2.fetchVideoByUrl(videoUrl, fetchType);
+                const fallbackVideo = yield video_1.fetchVideoByUrl(videoUrl, fetchType);
                 if (fallbackVideo)
                     return { video: fallbackVideo, created: false };
             }
@@ -197,12 +193,12 @@ function updateVideoFromAP(options) {
         const { video, videoObject, account, channel, overrideTo } = options;
         logger_1.logger.debug('Updating remote video "%s".', options.videoObject.uuid, { account, channel });
         let videoFieldsSave;
-        const wasPrivateVideo = video.privacy === videos_1.VideoPrivacy.PRIVATE;
-        const wasUnlistedVideo = video.privacy === videos_1.VideoPrivacy.UNLISTED;
+        const wasPrivateVideo = video.privacy === 3;
+        const wasUnlistedVideo = video.privacy === 2;
         try {
             let thumbnailModel;
             try {
-                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
+                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, 1);
             }
             catch (err) {
                 logger_1.logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err });
@@ -241,7 +237,7 @@ function updateVideoFromAP(options) {
                     yield videoUpdated.addAndSaveThumbnail(thumbnailModel, t);
                 if (videoUpdated.getPreview()) {
                     const previewUrl = videoUpdated.getPreview().getFileUrl(videoUpdated);
-                    const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
+                    const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, 2, constants_1.PREVIEWS_SIZE);
                     yield videoUpdated.addAndSaveThumbnail(previewModel, t);
                 }
                 {
@@ -318,7 +314,7 @@ function refreshVideoIfNeeded(options) {
             return options.video;
         const video = options.fetchedType === 'all'
             ? options.video
-            : yield video_1.VideoModel.loadByUrlAndPopulateAccount(options.video.url);
+            : yield video_2.VideoModel.loadByUrlAndPopulateAccount(options.video.url);
         try {
             const { response, videoObject } = yield fetchRemoteVideo(video.url);
             if (response.statusCode === 404) {
@@ -353,9 +349,8 @@ function refreshVideoIfNeeded(options) {
 }
 exports.refreshVideoIfNeeded = refreshVideoIfNeeded;
 function isAPVideoUrlObject(url) {
-    const mimeTypes = Object.keys(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT);
     const urlMediaType = url.mediaType;
-    return mimeTypes.includes(urlMediaType) && urlMediaType.startsWith('video/');
+    return constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT[urlMediaType] && urlMediaType.startsWith('video/');
 }
 function isAPStreamingPlaylistUrlObject(url) {
     return url && url.mediaType === 'application/x-mpegURL';
@@ -373,8 +368,8 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.debug('Adding remote video %s.', videoObject.id);
         const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to);
-        const video = video_1.VideoModel.build(videoData);
-        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, thumbnail_type_1.ThumbnailType.MINIATURE)
+        const video = video_2.VideoModel.build(videoData);
+        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, 1)
             .catch(err => {
             logger_1.logger.error('Cannot create miniature from url.', { err });
             return undefined;
@@ -393,7 +388,7 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
             const previewUrl = previewIcon
                 ? previewIcon.url
                 : activitypub_1.buildRemoteVideoBaseUrl(videoCreated, path_1.join(constants_1.STATIC_PATHS.PREVIEWS, video.generatePreviewName()));
-            const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, videoCreated, thumbnail_type_1.ThumbnailType.PREVIEW, constants_1.PREVIEWS_SIZE);
+            const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, videoCreated, 2, constants_1.PREVIEWS_SIZE);
             if (thumbnailModel)
                 yield videoCreated.addAndSaveThumbnail(previewModel, t);
             const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url);
@@ -443,8 +438,8 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
 function videoActivityObjectToDBAttributes(videoChannel, videoObject, to = []) {
     var _a;
     const privacy = to.includes(constants_1.ACTIVITY_PUB.PUBLIC)
-        ? videos_1.VideoPrivacy.PUBLIC
-        : videos_1.VideoPrivacy.UNLISTED;
+        ? 1
+        : 2;
     const duration = videoObject.duration.replace(/[^\d]+/, '');
     const language = (_a = videoObject.language) === null || _a === void 0 ? void 0 : _a.identifier;
     const category = videoObject.category
@@ -495,10 +490,10 @@ function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
         if (!magnet)
             throw new Error('Cannot find associated magnet uri for file ' + fileUrl.href);
         const parsed = magnetUtil.decode(magnet.href);
-        if (!parsed || videos_3.isVideoFileInfoHashValid(parsed.infoHash) === false) {
+        if (!parsed || videos_2.isVideoFileInfoHashValid(parsed.infoHash) === false) {
             throw new Error('Cannot parse magnet URI ' + magnet.href);
         }
-        const metadata = urls.filter(videos_2.isAPVideoFileMetadataObject)
+        const metadata = urls.filter(videos_1.isAPVideoFileMetadataObject)
             .find(u => {
             return u.height === fileUrl.height &&
                 u.fps === fileUrl.fps &&
@@ -506,7 +501,7 @@ function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
         });
         const mediaType = fileUrl.mediaType;
         const attribute = {
-            extname: constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT[mediaType],
+            extname: video_1.getExtFromMimetype(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT, mediaType),
             infoHash: parsed.infoHash,
             resolution: fileUrl.height,
             size: fileUrl.size,
@@ -534,7 +529,7 @@ function streamingPlaylistActivityUrlToDBAttributes(video, videoObject, videoFil
             continue;
         }
         const attribute = {
-            type: video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS,
+            type: 1,
             playlistUrl: playlistUrlObject.href,
             segmentsSha256Url: segmentsSha256UrlObject.href,
             p2pMediaLoaderInfohashes: video_streaming_playlist_1.VideoStreamingPlaylistModel.buildP2PMediaLoaderInfoHashes(playlistUrlObject.href, files),

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 require("./activitypub");
 require("./check-params");
+require("./moderation");
 require("./notifications");
 require("./redundancy");
 require("./search");

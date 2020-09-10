@@ -20,6 +20,7 @@ tslib_1.__exportStar(require("./videos/services"), exports);
 tslib_1.__exportStar(require("./videos/video-playlists"), exports);
 tslib_1.__exportStar(require("./users/users"), exports);
 tslib_1.__exportStar(require("./users/accounts"), exports);
+tslib_1.__exportStar(require("./moderation/abuses"), exports);
 tslib_1.__exportStar(require("./videos/video-abuses"), exports);
 tslib_1.__exportStar(require("./videos/video-blacklist"), exports);
 tslib_1.__exportStar(require("./videos/video-captions"), exports);

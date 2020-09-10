@@ -7,11 +7,9 @@ const path_1 = require("path");
 const ffmpeg_utils_1 = require("../helpers/ffmpeg-utils");
 const fs_extra_1 = require("fs-extra");
 const logger_1 = require("../helpers/logger");
-const videos_1 = require("../../shared/models/videos");
 const video_file_1 = require("../models/video/video-file");
 const hls_1 = require("./hls");
 const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
-const video_streaming_playlist_type_1 = require("../../shared/models/videos/video-streaming-playlist.type");
 const config_1 = require("../initializers/config");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("./video-paths");
@@ -58,7 +56,7 @@ function transcodeNewResolution(video, resolution, isPortrait) {
         });
         const videoOutputPath = video_paths_1.getVideoFilePath(video, newVideoFile);
         const videoTranscodedPath = path_1.join(transcodeDirectory, video_paths_1.getVideoFilename(video, newVideoFile));
-        const transcodeOptions = resolution === videos_1.VideoResolution.H_NOVIDEO
+        const transcodeOptions = resolution === 0
             ? {
                 type: 'only-audio',
                 inputPath: videoInputPath,
@@ -142,7 +140,7 @@ function generateHlsPlaylist(video, resolution, copyCodecs, isPortraitMode) {
             segmentsSha256Url: constants_1.WEBSERVER.URL + video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsSha256SegmentsStaticPath(video.uuid),
             p2pMediaLoaderInfohashes: video_streaming_playlist_1.VideoStreamingPlaylistModel.buildP2PMediaLoaderInfoHashes(playlistUrl, video.VideoFiles),
             p2pMediaLoaderPeerVersion: constants_1.P2P_MEDIA_LOADER_PEER_VERSION,
-            type: video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS
+            type: 1
         }, { returning: true });
         videoStreamingPlaylist.Video = video;
         const newVideoFile = new video_file_1.VideoFileModel({

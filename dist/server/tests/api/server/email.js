@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
@@ -13,6 +13,7 @@ describe('Test emails', function () {
     let userId2;
     let userAccessToken;
     let videoUUID;
+    let videoId;
     let videoUserUUID;
     let verificationString;
     let verificationString2;
@@ -52,6 +53,7 @@ describe('Test emails', function () {
                 };
                 const res = yield extra_utils_1.uploadVideo(server.url, server.accessToken, attributes);
                 videoUUID = res.body.video.uuid;
+                videoId = res.body.video.id;
             }
         });
     });
@@ -85,6 +87,11 @@ describe('Test emails', function () {
         it('Should reset the password', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.resetPassword(server.url, userId, verificationString, 'super_password2');
+            });
+        });
+        it('Should not reset the password with the same verification string', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.resetPassword(server.url, userId, verificationString, 'super_password3', 403);
             });
         });
         it('Should login with this new password', function () {
@@ -140,12 +147,12 @@ describe('Test emails', function () {
             });
         });
     });
-    describe('When creating a video abuse', function () {
+    describe('When creating an abuse', function () {
         it('Should send the notification email', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const reason = 'my super bad reason';
-                yield extra_utils_1.reportVideoAbuse(server.url, server.accessToken, videoUUID, reason);
+                yield extra_utils_1.reportAbuse({ url: server.url, token: server.accessToken, videoId, reason });
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(3);
                 const email = emails[2];

@@ -4,7 +4,6 @@ exports.activityPubClientRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
 const cors = require("cors");
-const videos_1 = require("../../../shared/models/videos");
 const activitypub_1 = require("../../helpers/activitypub");
 const constants_1 = require("../../initializers/constants");
 const send_1 = require("../../lib/activitypub/send");
@@ -26,7 +25,6 @@ const redundancy_1 = require("../../middlewares/validators/redundancy");
 const send_dislike_1 = require("../../lib/activitypub/send/send-dislike");
 const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
 const video_playlist_1 = require("../../models/video/video-playlist");
-const video_playlist_privacy_model_1 = require("../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const application_1 = require("@server/models/application/application");
 const video_rates_1 = require("@server/lib/activitypub/video-rates");
 const activityPubClientRouter = express.Router();
@@ -54,7 +52,7 @@ activityPubClientRouter.get('/video-channels/:name/playlists', middlewares_1.exe
 activityPubClientRouter.get('/redundancy/videos/:videoId/:resolution([0-9]+)(-:fps([0-9]+))?', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(redundancy_1.videoFileRedundancyGetValidator), middlewares_1.asyncMiddleware(videoRedundancyController));
 activityPubClientRouter.get('/redundancy/streaming-playlists/:streamingPlaylistType/:videoId', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(redundancy_1.videoPlaylistRedundancyGetValidator), middlewares_1.asyncMiddleware(videoRedundancyController));
 activityPubClientRouter.get('/video-playlists/:playlistId', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(video_playlists_1.videoPlaylistsGetValidator('all')), middlewares_1.asyncMiddleware(videoPlaylistController));
-activityPubClientRouter.get('/video-playlists/:playlistId/:videoId', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(video_playlists_1.videoPlaylistElementAPGetValidator), videoPlaylistElementController);
+activityPubClientRouter.get('/video-playlists/:playlistId/videos/:playlistElementId', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(video_playlists_1.videoPlaylistElementAPGetValidator), videoPlaylistElementController);
 function accountController(req, res) {
     const account = res.locals.account;
     return utils_1.activityPubResponse(activitypub_1.activityPubContextify(account.toActivityPubObject()), res);
@@ -105,7 +103,7 @@ function videoController(req, res) {
             return res.redirect(video.url);
         const captions = yield video_caption_1.VideoCaptionModel.listVideoCaptions(video.id);
         const videoWithCaptions = Object.assign(video, { VideoCaptions: captions });
-        const audience = audience_1.getAudience(videoWithCaptions.VideoChannel.Account.Actor, videoWithCaptions.privacy === videos_1.VideoPrivacy.PUBLIC);
+        const audience = audience_1.getAudience(videoWithCaptions.VideoChannel.Account.Actor, videoWithCaptions.privacy === 1);
         const videoObject = audience_1.audiencify(videoWithCaptions.toActivityPubObject(), audience);
         if (req.path.endsWith('/activity')) {
             const data = send_create_1.buildCreateActivity(videoWithCaptions.url, video.VideoChannel.Account.Actor, videoObject, audience);
@@ -222,7 +220,7 @@ function videoPlaylistController(req, res) {
         const playlist = res.locals.videoPlaylistFull;
         playlist.OwnerAccount = yield account_1.AccountModel.load(playlist.ownerAccountId);
         const json = yield playlist.toActivityPubObject(req.query.page, null);
-        const audience = audience_1.getAudience(playlist.OwnerAccount.Actor, playlist.privacy === video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC);
+        const audience = audience_1.getAudience(playlist.OwnerAccount.Actor, playlist.privacy === 1);
         const object = audience_1.audiencify(json, audience);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(object), res);
     });

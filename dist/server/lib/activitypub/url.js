@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVideoCacheFileActivityPubUrl = exports.getVideoDislikesActivityPubUrl = exports.getVideoLikesActivityPubUrl = exports.getVideoCommentsActivityPubUrl = exports.getVideoSharesActivityPubUrl = exports.getDeleteActivityPubUrl = exports.getVideoCommentActivityPubUrl = exports.getActorFollowRejectActivityPubUrl = exports.getVideoDislikeActivityPubUrl = exports.getVideoLikeActivityPubUrl = exports.getVideoViewActivityPubUrl = exports.getUndoActivityPubUrl = exports.getUpdateActivityPubUrl = exports.getVideoAnnounceActivityPubUrl = exports.getActorFollowAcceptActivityPubUrl = exports.getActorFollowActivityPubUrl = exports.getVideoAbuseActivityPubUrl = exports.getAccountActivityPubUrl = exports.getVideoChannelActivityPubUrl = exports.getVideoCacheStreamingPlaylistActivityPubUrl = exports.getVideoPlaylistActivityPubUrl = exports.getVideoPlaylistElementActivityPubUrl = exports.getVideoActivityPubUrl = void 0;
+exports.getVideoCacheFileActivityPubUrl = exports.getVideoDislikesActivityPubUrl = exports.getVideoLikesActivityPubUrl = exports.getVideoCommentsActivityPubUrl = exports.getVideoSharesActivityPubUrl = exports.getDeleteActivityPubUrl = exports.getVideoCommentActivityPubUrl = exports.getActorFollowRejectActivityPubUrl = exports.getVideoDislikeActivityPubUrl = exports.getVideoLikeActivityPubUrl = exports.getVideoViewActivityPubUrl = exports.getUndoActivityPubUrl = exports.getUpdateActivityPubUrl = exports.getVideoAnnounceActivityPubUrl = exports.getActorFollowAcceptActivityPubUrl = exports.getActorFollowActivityPubUrl = exports.getAbuseActivityPubUrl = exports.getAccountActivityPubUrl = exports.getVideoChannelActivityPubUrl = exports.getVideoCacheStreamingPlaylistActivityPubUrl = exports.getVideoPlaylistActivityPubUrl = exports.getVideoPlaylistElementActivityPubUrl = exports.getVideoActivityPubUrl = void 0;
 const constants_1 = require("../../initializers/constants");
 function getVideoActivityPubUrl(video) {
     return constants_1.WEBSERVER.URL + '/videos/watch/' + video.uuid;
@@ -10,8 +10,8 @@ function getVideoPlaylistActivityPubUrl(videoPlaylist) {
     return constants_1.WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid;
 }
 exports.getVideoPlaylistActivityPubUrl = getVideoPlaylistActivityPubUrl;
-function getVideoPlaylistElementActivityPubUrl(videoPlaylist, video) {
-    return constants_1.WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid + '/' + video.uuid;
+function getVideoPlaylistElementActivityPubUrl(videoPlaylist, videoPlaylistElement) {
+    return constants_1.WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid + '/videos/' + videoPlaylistElement.id;
 }
 exports.getVideoPlaylistElementActivityPubUrl = getVideoPlaylistElementActivityPubUrl;
 function getVideoCacheFileActivityPubUrl(videoFile) {
@@ -35,10 +35,10 @@ function getAccountActivityPubUrl(accountName) {
     return constants_1.WEBSERVER.URL + '/accounts/' + accountName;
 }
 exports.getAccountActivityPubUrl = getAccountActivityPubUrl;
-function getVideoAbuseActivityPubUrl(videoAbuse) {
-    return constants_1.WEBSERVER.URL + '/admin/video-abuses/' + videoAbuse.id;
+function getAbuseActivityPubUrl(abuse) {
+    return constants_1.WEBSERVER.URL + '/admin/abuses/' + abuse.id;
 }
-exports.getVideoAbuseActivityPubUrl = getVideoAbuseActivityPubUrl;
+exports.getAbuseActivityPubUrl = getAbuseActivityPubUrl;
 function getVideoViewActivityPubUrl(byActor, video) {
     return byActor.url + '/views/videos/' + video.id + '/' + new Date().toISOString();
 }

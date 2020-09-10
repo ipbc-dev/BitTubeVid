@@ -5,7 +5,6 @@ tslib_1.__exportStar(require("./schedule-video-update"), exports);
 tslib_1.__exportStar(require("./tag"), exports);
 tslib_1.__exportStar(require("./thumbnail"), exports);
 tslib_1.__exportStar(require("./video"), exports);
-tslib_1.__exportStar(require("./video-abuse"), exports);
 tslib_1.__exportStar(require("./video-blacklist"), exports);
 tslib_1.__exportStar(require("./video-caption"), exports);
 tslib_1.__exportStar(require("./video-change-ownership"), exports);

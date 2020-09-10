@@ -74,12 +74,6 @@ describe('Test plugins', function () {
             }
         });
     });
-    it('Should have an empty global css', function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const res = yield extra_utils_1.getPluginsCSS(server.url);
-            expect(res.text).to.be.empty;
-        });
-    });
     it('Should install a plugin and a theme', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
@@ -93,12 +87,6 @@ describe('Test plugins', function () {
                 accessToken: server.accessToken,
                 npmName: 'peertube-theme-background-red'
             });
-        });
-    });
-    it('Should have the correct global css', function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const res = yield extra_utils_1.getPluginsCSS(server.url);
-            expect(res.text).to.contain('background-color: red');
         });
     });
     it('Should have the plugin loaded in the configuration', function () {
@@ -308,12 +296,6 @@ describe('Test plugins', function () {
             });
             expect(res.body.total).to.equal(0);
             expect(res.body.data).to.have.lengthOf(0);
-        });
-    });
-    it('Should have an empty global css', function () {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const res = yield extra_utils_1.getPluginsCSS(server.url);
-            expect(res.text).to.be.empty;
         });
     });
     it('Should list uninstalled plugins', function () {

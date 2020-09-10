@@ -3,11 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cacheFileActivityObjectToDBAttributes = exports.updateCacheFile = exports.createCacheFile = exports.createOrUpdateCacheFile = void 0;
 const tslib_1 = require("tslib");
 const video_redundancy_1 = require("../../models/redundancy/video-redundancy");
-const video_streaming_playlist_type_1 = require("../../../shared/models/videos/video-streaming-playlist.type");
 function cacheFileActivityObjectToDBAttributes(cacheFileObject, video, byActor) {
     if (cacheFileObject.url.mediaType === 'application/x-mpegURL') {
         const url = cacheFileObject.url;
-        const playlist = video.VideoStreamingPlaylists.find(t => t.type === video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS);
+        const playlist = video.VideoStreamingPlaylists.find(t => t.type === 1);
         if (!playlist)
             throw new Error('Cannot find HLS playlist of video ' + video.url);
         return {

@@ -7,7 +7,6 @@ const core_utils_1 = require("../../core-utils");
 const misc_1 = require("../misc");
 const videos_1 = require("../videos");
 const misc_2 = require("./misc");
-const videos_2 = require("../../../../shared/models/videos");
 const logger_1 = require("@server/helpers/logger");
 function sanitizeAndCheckVideoTorrentUpdateActivity(activity) {
     return misc_2.isBaseActivityValid(activity, 'Update') &&
@@ -49,7 +48,7 @@ function sanitizeAndCheckVideoTorrentObject(video) {
         return false;
     }
     if (!videos_1.isVideoStateValid(video.state))
-        video.state = videos_2.VideoState.PUBLISHED;
+        video.state = 1;
     if (!misc_1.isBooleanValid(video.waitTranscoding))
         video.waitTranscoding = false;
     if (!misc_1.isBooleanValid(video.downloadEnabled))

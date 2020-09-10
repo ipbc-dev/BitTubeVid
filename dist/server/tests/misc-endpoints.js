@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../shared/extra-utils");
-const videos_1 = require("../../shared/models/videos");
 const expect = chai.expect;
 describe('Test misc endpoints', function () {
     let server;
@@ -109,7 +108,7 @@ describe('Test misc endpoints', function () {
                     statusCodeExpected: 200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/about/instance</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');
             });
         });
         it('Should get the empty cached sitemap', function () {
@@ -120,7 +119,7 @@ describe('Test misc endpoints', function () {
                     statusCodeExpected: 200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/about/instance</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');
             });
         });
         it('Should add videos, channel and accounts and get sitemap', function () {
@@ -128,7 +127,7 @@ describe('Test misc endpoints', function () {
                 this.timeout(35000);
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 1', nsfw: false });
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 2', nsfw: false });
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 3', privacy: videos_1.VideoPrivacy.PRIVATE });
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video 3', privacy: 3 });
                 yield extra_utils_1.addVideoChannel(server.url, server.accessToken, { name: 'channel1', displayName: 'channel 1' });
                 yield extra_utils_1.addVideoChannel(server.url, server.accessToken, { name: 'channel2', displayName: 'channel 2' });
                 yield extra_utils_1.createUser({ url: server.url, accessToken: server.accessToken, username: 'user1', password: 'password' });
@@ -139,14 +138,14 @@ describe('Test misc endpoints', function () {
                     statusCodeExpected: 200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/about/instance</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');
                 expect(res.text).to.contain('<video:title>video 1</video:title>');
                 expect(res.text).to.contain('<video:title>video 2</video:title>');
                 expect(res.text).to.not.contain('<video:title>video 3</video:title>');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/video-channels/channel1</loc></url>');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/video-channels/channel2</loc></url>');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/accounts/user1</loc></url>');
-                expect(res.text).to.contain('<url><loc>http://localhost:9001/accounts/user2</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/video-channels/channel1</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/video-channels/channel2</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/accounts/user1</loc></url>');
+                expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/accounts/user2</loc></url>');
             });
         });
     });

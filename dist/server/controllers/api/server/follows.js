@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.serverFollowsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const users_1 = require("../../../../shared/models/users");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
 const constants_1 = require("../../../initializers/constants");
@@ -19,12 +18,12 @@ const application_1 = require("@server/models/application/application");
 const serverFollowsRouter = express.Router();
 exports.serverFollowsRouter = serverFollowsRouter;
 serverFollowsRouter.get('/following', validators_1.listFollowsValidator, middlewares_1.paginationValidator, validators_1.followingSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listFollowing));
-serverFollowsRouter.post('/following', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), validators_1.followValidator, middlewares_1.setBodyHostsPort, middlewares_1.asyncMiddleware(followInstance));
-serverFollowsRouter.delete('/following/:host', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.removeFollowingValidator), middlewares_1.asyncMiddleware(removeFollowing));
+serverFollowsRouter.post('/following', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), validators_1.followValidator, middlewares_1.setBodyHostsPort, middlewares_1.asyncMiddleware(followInstance));
+serverFollowsRouter.delete('/following/:host', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), middlewares_1.asyncMiddleware(validators_1.removeFollowingValidator), middlewares_1.asyncMiddleware(removeFollowing));
 serverFollowsRouter.get('/followers', validators_1.listFollowsValidator, middlewares_1.paginationValidator, validators_1.followersSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listFollowers));
-serverFollowsRouter.delete('/followers/:nameWithHost', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), middlewares_1.asyncMiddleware(removeOrRejectFollower));
-serverFollowsRouter.post('/followers/:nameWithHost/reject', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(removeOrRejectFollower));
-serverFollowsRouter.post('/followers/:nameWithHost/accept', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_SERVER_FOLLOW), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(acceptFollower));
+serverFollowsRouter.delete('/followers/:nameWithHost', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), middlewares_1.asyncMiddleware(removeOrRejectFollower));
+serverFollowsRouter.post('/followers/:nameWithHost/reject', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(removeOrRejectFollower));
+serverFollowsRouter.post('/followers/:nameWithHost/accept', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), middlewares_1.asyncMiddleware(validators_1.getFollowerValidator), validators_1.acceptOrRejectFollowerValidator, middlewares_1.asyncMiddleware(acceptFollower));
 function listFollowing(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();

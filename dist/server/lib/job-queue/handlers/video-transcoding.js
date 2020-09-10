@@ -66,13 +66,13 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (videoArg === undefined)
             return undefined;
-        const { videoFileResolution } = yield videoArg.getMaxQualityResolution();
+        const { videoFileResolution, isPortraitMode } = yield videoArg.getMaxQualityResolution();
         const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
             if (!videoDatabase)
                 return undefined;
             const resolutionsEnabled = ffmpeg_utils_1.computeResolutionsToTranscode(videoFileResolution);
-            logger_1.logger.info('Resolutions computed for video %s and origin file height of %d.', videoDatabase.uuid, videoFileResolution, { resolutions: resolutionsEnabled });
+            logger_1.logger.info('Resolutions computed for video %s and origin file resolution of %d.', videoDatabase.uuid, videoFileResolution, { resolutions: resolutionsEnabled });
             let videoPublished = false;
             const hlsPayload = Object.assign({}, payload, { resolution: videoDatabase.getMaxQualityFile().resolution });
             yield createHlsJobIfEnabled(hlsPayload);
@@ -83,7 +83,8 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
                         dataInput = {
                             type: 'new-resolution',
                             videoUUID: videoDatabase.uuid,
-                            resolution
+                            resolution,
+                            isPortraitMode
                         };
                     }
                     else if (config_1.CONFIG.TRANSCODING.HLS.ENABLED) {
@@ -91,7 +92,7 @@ function onVideoFileOptimizerSuccess(videoArg, payload) {
                             type: 'hls',
                             videoUUID: videoDatabase.uuid,
                             resolution,
-                            isPortraitMode: false,
+                            isPortraitMode,
                             copyCodecs: false
                         };
                     }

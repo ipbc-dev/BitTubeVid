@@ -50,6 +50,11 @@ class Redis {
             return generatedString;
         });
     }
+    removePasswordVerificationString(userId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return this.removeValue(this.generateResetPasswordKey(userId));
+        });
+    }
     getResetPasswordLink(userId) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return this.getValue(this.generateResetPasswordKey(userId));
@@ -211,6 +216,15 @@ class Redis {
                     return rej(err);
                 if (ok !== 'OK')
                     return rej(new Error('Redis set result is not OK.'));
+                return res();
+            });
+        });
+    }
+    removeValue(key) {
+        return new Promise((res, rej) => {
+            this.client.del(this.prefix + key, err => {
+                if (err)
+                    return rej(err);
                 return res();
             });
         });

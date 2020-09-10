@@ -20,7 +20,7 @@ function getVideoChannelsList(url, start, count, sort, withStats) {
 }
 exports.getVideoChannelsList = getVideoChannelsList;
 function getAccountVideoChannelsList(parameters) {
-    const { url, accountName, start, count, sort = 'createdAt', specialStatus = 200, withStats = false } = parameters;
+    const { url, accountName, start, count, sort = 'createdAt', specialStatus = 200, withStats = false, search } = parameters;
     const path = '/api/v1/accounts/' + accountName + '/video-channels';
     return requests_1.makeGetRequest({
         url,
@@ -29,7 +29,8 @@ function getAccountVideoChannelsList(parameters) {
             start,
             count,
             sort,
-            withStats
+            withStats,
+            search
         },
         statusCodeExpected: specialStatus
     });

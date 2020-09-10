@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoPlaylistModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const video_playlist_privacy_model_1 = require("../../../shared/models/videos/playlist/video-playlist-privacy.model");
 const utils_1 = require("../utils");
 const video_playlists_1 = require("../../helpers/custom-validators/video-playlists");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
@@ -14,7 +13,6 @@ const video_channel_1 = require("./video-channel");
 const path_1 = require("path");
 const video_playlist_element_1 = require("./video-playlist-element");
 const activitypub_1 = require("../../helpers/activitypub");
-const video_playlist_type_model_1 = require("../../../shared/models/videos/playlist/video-playlist-type.model");
 const thumbnail_1 = require("./thumbnail");
 const sequelize_1 = require("sequelize");
 var ScopeNames;
@@ -59,7 +57,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
     }
     static listPublicUrlsOfForAP(options, start, count) {
         const where = {
-            privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
+            privacy: 1
         };
         if (options.account) {
             Object.assign(where, { ownerAccountId: options.account.id });
@@ -151,7 +149,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
             },
             transaction
         };
-        return VideoPlaylistModel_1.update({ privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE, videoChannelId: null }, query);
+        return VideoPlaylistModel_1.update({ privacy: 3, videoChannelId: null }, query);
     }
     setAndSaveThumbnail(thumbnail, t) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -179,6 +177,12 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
             return null;
         return path_1.join(constants_1.STATIC_PATHS.THUMBNAILS, this.Thumbnail.filename);
     }
+    getWatchUrl() {
+        return constants_1.WEBSERVER.URL + '/videos/watch/playlist/' + this.uuid;
+    }
+    getEmbedStaticPath() {
+        return '/video-playlists/embed/' + this.uuid;
+    }
     setAsRefreshed() {
         this.changed('updatedAt', true);
         return this.save();
@@ -203,6 +207,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
                 label: VideoPlaylistModel_1.getPrivacyLabel(this.privacy)
             },
             thumbnailPath: this.getThumbnailStaticPath(),
+            embedPath: this.getEmbedStaticPath(),
             type: {
                 id: this.type,
                 label: VideoPlaylistModel_1.getTypeLabel(this.type)
@@ -286,7 +291,7 @@ tslib_1.__decorate([
 ], VideoPlaylistModel.prototype, "uuid", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Default(video_playlist_type_model_1.VideoPlaylistType.REGULAR),
+    sequelize_typescript_1.Default(1),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
 ], VideoPlaylistModel.prototype, "type", void 0);
@@ -396,7 +401,7 @@ VideoPlaylistModel = VideoPlaylistModel_1 = tslib_1.__decorate([
             const whereAnd = [];
             if (options.listMyPlaylists !== true) {
                 whereAnd.push({
-                    privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC
+                    privacy: 1
                 });
                 const inQueryInstanceFollow = utils_1.buildServerIdsFollowedBy(options.followerActorId);
                 whereActor = {

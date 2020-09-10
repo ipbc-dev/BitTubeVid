@@ -1,33 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMaxBitrate = exports.getTargetBitrate = exports.VideoResolution = void 0;
-var VideoResolution;
-(function (VideoResolution) {
-    VideoResolution[VideoResolution["H_NOVIDEO"] = 0] = "H_NOVIDEO";
-    VideoResolution[VideoResolution["H_240P"] = 240] = "H_240P";
-    VideoResolution[VideoResolution["H_360P"] = 360] = "H_360P";
-    VideoResolution[VideoResolution["H_480P"] = 480] = "H_480P";
-    VideoResolution[VideoResolution["H_720P"] = 720] = "H_720P";
-    VideoResolution[VideoResolution["H_1080P"] = 1080] = "H_1080P";
-    VideoResolution[VideoResolution["H_4K"] = 2160] = "H_4K";
-})(VideoResolution = exports.VideoResolution || (exports.VideoResolution = {}));
+exports.getMaxBitrate = exports.getTargetBitrate = void 0;
 function getBaseBitrate(resolution) {
-    if (resolution === VideoResolution.H_NOVIDEO) {
+    if (resolution === 0) {
         return 64 * 1000;
     }
-    if (resolution <= VideoResolution.H_240P) {
+    if (resolution <= 240) {
         return 320 * 1000;
     }
-    if (resolution <= VideoResolution.H_360P) {
+    if (resolution <= 360) {
         return 780 * 1000;
     }
-    if (resolution <= VideoResolution.H_480P) {
+    if (resolution <= 480) {
         return 1500 * 1000;
     }
-    if (resolution <= VideoResolution.H_720P) {
+    if (resolution <= 720) {
         return 2800 * 1000;
     }
-    if (resolution <= VideoResolution.H_1080P) {
+    if (resolution <= 1080) {
         return 5200 * 1000;
     }
     return 22000 * 1000;

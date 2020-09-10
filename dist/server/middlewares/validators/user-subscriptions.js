@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userSubscriptionGetValidator = exports.userSubscriptionAddValidator = exports.areSubscriptionsExistValidator = void 0;
+exports.userSubscriptionGetValidator = exports.userSubscriptionAddValidator = exports.userSubscriptionListValidator = exports.areSubscriptionsExistValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const logger_1 = require("../../helpers/logger");
@@ -9,6 +9,16 @@ const actor_follow_1 = require("../../models/activitypub/actor-follow");
 const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const constants_1 = require("../../initializers/constants");
+const userSubscriptionListValidator = [
+    express_validator_1.query('search').optional().not().isEmpty().withMessage('Should have a valid search'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking userSubscriptionListValidator parameters', { parameters: req.query });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.userSubscriptionListValidator = userSubscriptionListValidator;
 const userSubscriptionAddValidator = [
     express_validator_1.body('uri').custom(actor_1.isValidActorHandle).withMessage('Should have a valid URI to follow (username@domain)'),
     (req, res, next) => {

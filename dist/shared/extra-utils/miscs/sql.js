@@ -10,7 +10,7 @@ function getSequelize(internalServerNumber) {
     const dbname = 'peertube_test' + internalServerNumber;
     const username = 'peertube';
     const password = 'peertube';
-    const host = process.env.GITLAB_CI ? 'postgres' : 'localhost';
+    const host = 'localhost';
     const port = 5432;
     const seq = new sequelize_1.Sequelize(dbname, username, password, {
         dialect: 'postgres',

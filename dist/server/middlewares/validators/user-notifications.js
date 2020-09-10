@@ -24,8 +24,8 @@ const updateNotificationSettingsValidator = [
         .custom(user_notifications_1.isUserNotificationSettingValid).withMessage('Should have a valid new video from subscription notification setting'),
     express_validator_1.body('newCommentOnMyVideo')
         .custom(user_notifications_1.isUserNotificationSettingValid).withMessage('Should have a valid new comment on my video notification setting'),
-    express_validator_1.body('videoAbuseAsModerator')
-        .custom(user_notifications_1.isUserNotificationSettingValid).withMessage('Should have a valid new video abuse as moderator notification setting'),
+    express_validator_1.body('abuseAsModerator')
+        .custom(user_notifications_1.isUserNotificationSettingValid).withMessage('Should have a valid abuse as moderator notification setting'),
     express_validator_1.body('videoAutoBlacklistAsModerator')
         .custom(user_notifications_1.isUserNotificationSettingValid).withMessage('Should have a valid video auto blacklist notification setting'),
     express_validator_1.body('blacklistOnMyVideo')

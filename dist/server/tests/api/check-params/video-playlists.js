@@ -4,8 +4,6 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
-const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
-const video_playlist_type_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-type.model");
 describe('Test video playlists API validator', function () {
     let server;
     let userAccessToken;
@@ -23,7 +21,7 @@ describe('Test video playlists API validator', function () {
             userAccessToken = yield extra_utils_1.generateUserAccessToken(server, 'user1');
             videoId = (yield extra_utils_1.uploadVideoAndGetId({ server, videoName: 'video 1' })).id;
             {
-                const res = yield extra_utils_1.getAccountPlaylistsListWithToken(server.url, server.accessToken, 'root', 0, 5, video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER);
+                const res = yield extra_utils_1.getAccountPlaylistsListWithToken(server.url, server.accessToken, 'root', 0, 5, 2);
                 watchLaterPlaylistId = res.body.data[0].id;
             }
             {
@@ -32,7 +30,7 @@ describe('Test video playlists API validator', function () {
                     token: server.accessToken,
                     playlistAttrs: {
                         displayName: 'super playlist',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: server.videoChannel.id
                     }
                 });
@@ -44,7 +42,7 @@ describe('Test video playlists API validator', function () {
                     token: server.accessToken,
                     playlistAttrs: {
                         displayName: 'private',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE
+                        privacy: 3
                     }
                 });
                 privatePlaylistUUID = res.body.videoPlaylist.uuid;
@@ -139,7 +137,7 @@ describe('Test video playlists API validator', function () {
                     token: server.accessToken,
                     playlistAttrs: {
                         displayName: 'super playlist',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED
+                        privacy: 2
                     }
                 });
                 const playlist = res.body.videoPlaylist;
@@ -161,7 +159,7 @@ describe('Test video playlists API validator', function () {
                 token: server.accessToken,
                 playlistAttrs: Object.assign({
                     displayName: 'display name',
-                    privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED,
+                    privacy: 2,
                     thumbnailfile: 'thumbnail.jpg',
                     videoChannelId: server.videoChannel.id
                 }, playlistAttrs)
@@ -220,8 +218,8 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail to set "public" a playlist not assigned to a channel', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC, videoChannelId: undefined });
-                const params2 = getBase({ privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC, videoChannelId: 'null' });
+                const params = getBase({ privacy: 1, videoChannelId: undefined });
+                const params2 = getBase({ privacy: 1, videoChannelId: 'null' });
                 const params3 = getBase({ privacy: undefined, videoChannelId: 'null' });
                 yield extra_utils_1.createVideoPlaylist(params);
                 yield extra_utils_1.createVideoPlaylist(params2);
@@ -319,12 +317,6 @@ describe('Test video playlists API validator', function () {
                 const params = getBase({}, { expectedStatus: 200 });
                 const res = yield extra_utils_1.addVideoInPlaylist(params);
                 playlistElementId = res.body.videoPlaylistElement.id;
-            });
-        });
-        it('Should fail if the video was already added in the playlist', function () {
-            return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { expectedStatus: 409 });
-                yield extra_utils_1.addVideoInPlaylist(params);
             });
         });
     });

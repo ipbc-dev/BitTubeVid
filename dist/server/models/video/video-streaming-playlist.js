@@ -8,7 +8,6 @@ const videos_1 = require("../../helpers/custom-validators/videos");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
 const video_redundancy_1 = require("../redundancy/video-redundancy");
-const video_streaming_playlist_type_1 = require("../../../shared/models/videos/video-streaming-playlist.type");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
 const path_1 = require("path");
@@ -78,7 +77,7 @@ let VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = class VideoStr
         return path_1.join(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, videoUUID, VideoStreamingPlaylistModel_1.getHlsSha256SegmentsFilename());
     }
     getStringType() {
-        if (this.type === video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS)
+        if (this.type === 1)
             return 'hls';
         return 'unknown';
     }

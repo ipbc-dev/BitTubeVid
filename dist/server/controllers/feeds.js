@@ -3,14 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.feedsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const constants_1 = require("../initializers/constants");
-const middlewares_1 = require("../middlewares");
-const video_1 = require("../models/video/video");
 const Feed = require("pfeed");
-const cache_1 = require("../middlewares/cache");
-const video_comment_1 = require("../models/video/video-comment");
 const express_utils_1 = require("../helpers/express-utils");
 const config_1 = require("../initializers/config");
+const constants_1 = require("../initializers/constants");
+const middlewares_1 = require("../middlewares");
+const cache_1 = require("../middlewares/cache");
+const video_1 = require("../models/video/video");
+const video_comment_1 = require("../models/video/video-comment");
 const feedsRouter = express.Router();
 exports.feedsRouter = feedsRouter;
 feedsRouter.get('/feeds/video-comments.:format', middlewares_1.feedsFormatValidator, middlewares_1.setFeedFormatContentType, middlewares_1.asyncMiddleware(cache_1.cacheRoute({
@@ -18,7 +18,7 @@ feedsRouter.get('/feeds/video-comments.:format', middlewares_1.feedsFormatValida
         'Content-Type'
     ]
 })(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.asyncMiddleware(middlewares_1.videoFeedsValidator), middlewares_1.asyncMiddleware(middlewares_1.videoCommentsFeedsValidator), middlewares_1.asyncMiddleware(generateVideoCommentsFeed));
-feedsRouter.get('/feeds/videos.:format', middlewares_1.videosSortValidator, middlewares_1.setDefaultSort, middlewares_1.feedsFormatValidator, middlewares_1.setFeedFormatContentType, middlewares_1.asyncMiddleware(cache_1.cacheRoute({
+feedsRouter.get('/feeds/videos.:format', middlewares_1.videosSortValidator, middlewares_1.setDefaultVideosSort, middlewares_1.feedsFormatValidator, middlewares_1.setFeedFormatContentType, middlewares_1.asyncMiddleware(cache_1.cacheRoute({
     headerBlacklist: [
         'Content-Type'
     ]

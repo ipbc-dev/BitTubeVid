@@ -1,16 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIDEO_VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.VIDEO_ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.API_VERSION = exports.WEBSERVER = void 0;
+exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIDEO_VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.API_VERSION = exports.WEBSERVER = void 0;
 const path_1 = require("path");
 const crypto_1 = require("crypto");
-const models_1 = require("../../shared/models");
-const videos_1 = require("../../shared/models/videos");
 const core_utils_1 = require("../helpers/core-utils");
 const lodash_1 = require("lodash");
-const video_playlist_privacy_model_1 = require("../../shared/models/videos/playlist/video-playlist-privacy.model");
-const video_playlist_type_model_1 = require("../../shared/models/videos/playlist/video-playlist-type.model");
 const config_1 = require("./config");
-const LAST_MIGRATION_VERSION = 515;
+const LAST_MIGRATION_VERSION = 530;
 exports.LAST_MIGRATION_VERSION = LAST_MIGRATION_VERSION;
 const API_VERSION = 'v1';
 exports.API_VERSION = API_VERSION;
@@ -40,11 +36,10 @@ const WEBSERVER = {
 };
 exports.WEBSERVER = WEBSERVER;
 const SORTABLE_COLUMNS = {
-    USERS: ['id', 'username', 'videoQuotaUsed', 'createdAt'],
+    USERS: ['id', 'username', 'videoQuotaUsed', 'createdAt', 'lastLoginDate', 'role'],
     USER_SUBSCRIPTIONS: ['id', 'createdAt'],
     ACCOUNTS: ['createdAt'],
     JOBS: ['createdAt'],
-    VIDEO_ABUSES: ['id', 'createdAt', 'state'],
     VIDEO_CHANNELS: ['id', 'name', 'updatedAt', 'createdAt'],
     VIDEO_IMPORTS: ['createdAt'],
     VIDEO_COMMENT_THREADS: ['createdAt', 'totalReplies'],
@@ -55,9 +50,10 @@ const SORTABLE_COLUMNS = {
     VIDEOS: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending'],
     VIDEOS_SEARCH: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match'],
     VIDEO_CHANNELS_SEARCH: ['match', 'displayName', 'createdAt'],
+    ABUSES: ['id', 'createdAt', 'state'],
     ACCOUNTS_BLOCKLIST: ['createdAt'],
     SERVERS_BLOCKLIST: ['createdAt'],
-    USER_NOTIFICATIONS: ['createdAt'],
+    USER_NOTIFICATIONS: ['createdAt', 'read'],
     VIDEO_PLAYLISTS: ['displayName', 'createdAt', 'updatedAt'],
     PLUGINS: ['name', 'createdAt', 'updatedAt'],
     AVAILABLE_PLUGINS: ['npmName', 'popularity'],
@@ -179,9 +175,12 @@ const CONSTRAINTS_FIELDS = {
         VIDEO_LANGUAGES: { max: 500 },
         BLOCKED_REASON: { min: 3, max: 250 }
     },
-    VIDEO_ABUSES: {
+    ABUSES: {
         REASON: { min: 2, max: 3000 },
         MODERATION_COMMENT: { min: 2, max: 3000 }
+    },
+    ABUSE_MESSAGES: {
+        MESSAGE: { min: 2, max: 3000 }
     },
     VIDEO_BLACKLIST: {
         REASON: { min: 2, max: 300 }
@@ -299,7 +298,7 @@ const VIDEO_TRANSCODING_FPS = {
     KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720
 };
 exports.VIDEO_TRANSCODING_FPS = VIDEO_TRANSCODING_FPS;
-const DEFAULT_AUDIO_RESOLUTION = models_1.VideoResolution.H_480P;
+const DEFAULT_AUDIO_RESOLUTION = 480;
 exports.DEFAULT_AUDIO_RESOLUTION = DEFAULT_AUDIO_RESOLUTION;
 const VIDEO_RATE_TYPES = {
     LIKE: 'like',
@@ -345,40 +344,40 @@ exports.VIDEO_LICENCES = VIDEO_LICENCES;
 const VIDEO_LANGUAGES = {};
 exports.VIDEO_LANGUAGES = VIDEO_LANGUAGES;
 const VIDEO_PRIVACIES = {
-    [videos_1.VideoPrivacy.PUBLIC]: 'Public',
-    [videos_1.VideoPrivacy.UNLISTED]: 'Unlisted',
-    [videos_1.VideoPrivacy.PRIVATE]: 'Private',
-    [videos_1.VideoPrivacy.INTERNAL]: 'Internal'
+    [1]: 'Public',
+    [2]: 'Unlisted',
+    [3]: 'Private',
+    [4]: 'Internal'
 };
 exports.VIDEO_PRIVACIES = VIDEO_PRIVACIES;
 const VIDEO_STATES = {
-    [models_1.VideoState.PUBLISHED]: 'Published',
-    [models_1.VideoState.TO_TRANSCODE]: 'To transcode',
-    [models_1.VideoState.TO_IMPORT]: 'To import'
+    [1]: 'Published',
+    [2]: 'To transcode',
+    [3]: 'To import'
 };
 exports.VIDEO_STATES = VIDEO_STATES;
 const VIDEO_IMPORT_STATES = {
-    [videos_1.VideoImportState.FAILED]: 'Failed',
-    [videos_1.VideoImportState.PENDING]: 'Pending',
-    [videos_1.VideoImportState.SUCCESS]: 'Success',
-    [videos_1.VideoImportState.REJECTED]: 'Rejected'
+    [3]: 'Failed',
+    [1]: 'Pending',
+    [2]: 'Success',
+    [4]: 'Rejected'
 };
 exports.VIDEO_IMPORT_STATES = VIDEO_IMPORT_STATES;
-const VIDEO_ABUSE_STATES = {
-    [videos_1.VideoAbuseState.PENDING]: 'Pending',
-    [videos_1.VideoAbuseState.REJECTED]: 'Rejected',
-    [videos_1.VideoAbuseState.ACCEPTED]: 'Accepted'
+const ABUSE_STATES = {
+    [1]: 'Pending',
+    [2]: 'Rejected',
+    [3]: 'Accepted'
 };
-exports.VIDEO_ABUSE_STATES = VIDEO_ABUSE_STATES;
+exports.ABUSE_STATES = ABUSE_STATES;
 const VIDEO_PLAYLIST_PRIVACIES = {
-    [video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC]: 'Public',
-    [video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED]: 'Unlisted',
-    [video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE]: 'Private'
+    [1]: 'Public',
+    [2]: 'Unlisted',
+    [3]: 'Private'
 };
 exports.VIDEO_PLAYLIST_PRIVACIES = VIDEO_PLAYLIST_PRIVACIES;
 const VIDEO_PLAYLIST_TYPES = {
-    [video_playlist_type_model_1.VideoPlaylistType.REGULAR]: 'Regular',
-    [video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER]: 'Watch later'
+    [1]: 'Regular',
+    [2]: 'Watch later'
 };
 exports.VIDEO_PLAYLIST_TYPES = VIDEO_PLAYLIST_TYPES;
 const MIMETYPES = {
@@ -391,12 +390,15 @@ const MIMETYPES = {
             'audio/x-ms-wma': '.wma',
             'audio/wav': '.wav',
             'audio/x-flac': '.flac',
-            'audio/flac': '.flac'
+            'audio/flac': '.flac',
+            '‎audio/aac': '.aac',
+            'audio/ac3': '.ac3'
         },
         EXT_MIMETYPE: null
     },
     VIDEO: {
         MIMETYPE_EXT: null,
+        MIMETYPES_REGEX: null,
         EXT_MIMETYPE: null
     },
     IMAGE: {
@@ -509,8 +511,8 @@ const STATIC_DOWNLOAD_PATHS = {
 exports.STATIC_DOWNLOAD_PATHS = STATIC_DOWNLOAD_PATHS;
 const LAZY_STATIC_PATHS = {
     AVATARS: '/lazy-static/avatars/',
-    PREVIEWS: '/static/previews/',
-    VIDEO_CAPTIONS: '/static/video-captions/'
+    PREVIEWS: '/lazy-static/previews/',
+    VIDEO_CAPTIONS: '/lazy-static/video-captions/'
 };
 exports.LAZY_STATIC_PATHS = LAZY_STATIC_PATHS;
 const STATIC_MAX_AGE = {
@@ -674,20 +676,33 @@ exports.FILES_CONTENT_HASH = FILES_CONTENT_HASH;
 function buildVideoMimetypeExt() {
     const data = {
         'video/webm': '.webm',
-        'video/ogg': '.ogv',
+        'video/ogg': ['.ogv'],
         'video/mp4': '.mp4'
     };
     if (config_1.CONFIG.TRANSCODING.ENABLED) {
         if (config_1.CONFIG.TRANSCODING.ALLOW_ADDITIONAL_EXTENSIONS) {
+            data['video/ogg'].push('.ogg');
             Object.assign(data, {
-                'video/quicktime': '.mov',
-                'video/x-msvideo': '.avi',
-                'video/x-flv': '.flv',
                 'video/x-matroska': '.mkv',
-                'video/avi': '.avi',
+                'video/quicktime': ['.mov', '.qt', '.mqv'],
                 'video/x-m4v': '.m4v',
+                'video/m4v': '.m4v',
+                'video/x-flv': '.flv',
+                'video/x-f4v': '.f4v',
+                'video/x-ms-wmv': '.wmv',
+                'video/x-msvideo': '.avi',
+                'video/avi': '.avi',
+                'video/3gpp': ['.3gp', '.3gpp'],
+                'video/3gpp2': ['.3g2', '.3gpp2'],
+                'application/x-nut': '.nut',
+                'video/mp2t': '.mts',
+                'video/m2ts': '.m2ts',
+                'video/mpv': '.mpv',
+                'video/mpeg2': '.m2v',
+                'video/mpeg': ['.m1v', '.mpg', '.mpe', '.mpeg', '.vob'],
+                'video/dvd': '.vob',
                 'application/octet-stream': null,
-                'video/m4v': '.m4v'
+                'application/mxf': '.mxf'
             });
         }
         if (config_1.CONFIG.TRANSCODING.ALLOW_AUDIO_FILES) {
@@ -706,12 +721,28 @@ function updateWebserverUrls() {
 }
 function updateWebserverConfig() {
     MIMETYPES.VIDEO.MIMETYPE_EXT = buildVideoMimetypeExt();
-    MIMETYPES.VIDEO.EXT_MIMETYPE = lodash_1.invert(MIMETYPES.VIDEO.MIMETYPE_EXT);
+    MIMETYPES.VIDEO.MIMETYPES_REGEX = buildMimetypesRegex(MIMETYPES.VIDEO.MIMETYPE_EXT);
     ACTIVITY_PUB.URL_MIME_TYPES.VIDEO = Object.keys(MIMETYPES.VIDEO.MIMETYPE_EXT);
-    CONSTRAINTS_FIELDS.VIDEOS.EXTNAME = buildVideosExtname();
+    MIMETYPES.VIDEO.EXT_MIMETYPE = buildVideoExtMimetype(MIMETYPES.VIDEO.MIMETYPE_EXT);
+    CONSTRAINTS_FIELDS.VIDEOS.EXTNAME = Object.keys(MIMETYPES.VIDEO.EXT_MIMETYPE);
 }
-function buildVideosExtname() {
-    return Object.keys(MIMETYPES.VIDEO.EXT_MIMETYPE);
+function buildVideoExtMimetype(obj) {
+    const result = {};
+    for (const mimetype of Object.keys(obj)) {
+        const value = obj[mimetype];
+        if (!value)
+            continue;
+        const extensions = Array.isArray(value) ? value : [value];
+        for (const extension of extensions) {
+            result[extension] = mimetype;
+        }
+    }
+    return result;
+}
+function buildMimetypesRegex(obj) {
+    return Object.keys(obj)
+        .map(m => `(${m})`)
+        .join('|');
 }
 function loadLanguages() {
     Object.assign(VIDEO_LANGUAGES, buildLanguages());
@@ -736,6 +767,7 @@ function buildLanguages() {
         sfs: true,
         swl: true,
         rsl: true,
+        kab: true,
         epo: true,
         tlh: true,
         jbo: true,

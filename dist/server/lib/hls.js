@@ -47,9 +47,12 @@ function updateMasterHLSPlaylist(video) {
             let line = `#EXT-X-STREAM-INF:${bandwidth},${resolution}`;
             if (file.fps)
                 line += ',FRAME-RATE=' + file.fps;
-            const audioCodec = yield ffmpeg_utils_1.getAudioStreamCodec(videoFilePath);
             const videoCodec = yield ffmpeg_utils_1.getVideoStreamCodec(videoFilePath);
-            line += `,CODECS="${videoCodec},${audioCodec}"`;
+            line += `,CODECS="${videoCodec}`;
+            const audioCodec = yield ffmpeg_utils_1.getAudioStreamCodec(videoFilePath);
+            if (audioCodec)
+                line += `,${audioCodec}`;
+            line += '"';
             masterPlaylists.push(line);
             masterPlaylists.push(video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsPlaylistFilename(file.resolution));
         }

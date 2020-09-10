@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.prepareNotificationsTest = exports.checkNewInstanceFollower = exports.getLastNotification = exports.markAsReadNotifications = exports.getUserNotifications = exports.checkVideoAutoBlacklistForModerators = exports.checkNewVideoAbuseForModerators = exports.updateMyNotificationSettings = exports.checkCommentMention = exports.checkNewBlacklistOnMyVideo = exports.checkNewCommentOnMyVideo = exports.checkNewActorFollow = exports.checkNewVideoFromSubscription = exports.checkVideoIsPublished = exports.checkAutoInstanceFollowing = exports.checkUserRegistered = exports.checkMyVideoImportIsFinished = exports.markAsReadAllNotifications = exports.checkNotification = exports.getAllNotificationsSettings = void 0;
+exports.checkNewAccountAbuseForModerators = exports.checkNewCommentAbuseForModerators = exports.prepareNotificationsTest = exports.checkNewInstanceFollower = exports.getLastNotification = exports.markAsReadNotifications = exports.getUserNotifications = exports.checkAbuseStateChange = exports.checkNewAbuseMessage = exports.checkVideoAutoBlacklistForModerators = exports.checkNewVideoAbuseForModerators = exports.updateMyNotificationSettings = exports.checkCommentMention = exports.checkNewBlacklistOnMyVideo = exports.checkNewCommentOnMyVideo = exports.checkNewActorFollow = exports.checkNewVideoFromSubscription = exports.checkVideoIsPublished = exports.checkAutoInstanceFollowing = exports.checkUserRegistered = exports.checkMyVideoImportIsFinished = exports.markAsReadAllNotifications = exports.checkNotification = exports.getAllNotificationsSettings = void 0;
 const tslib_1 = require("tslib");
 const chai_1 = require("chai");
 const util_1 = require("util");
@@ -114,14 +114,16 @@ function checkNotification(base, notificationChecker, emailNotificationFinder, c
 }
 exports.checkNotification = checkNotification;
 function checkVideo(video, videoName, videoUUID) {
-    chai_1.expect(video.name).to.be.a('string');
-    chai_1.expect(video.name).to.not.be.empty;
-    if (videoName)
+    if (videoName) {
+        chai_1.expect(video.name).to.be.a('string');
+        chai_1.expect(video.name).to.not.be.empty;
         chai_1.expect(video.name).to.equal(videoName);
-    chai_1.expect(video.uuid).to.be.a('string');
-    chai_1.expect(video.uuid).to.not.be.empty;
-    if (videoUUID)
+    }
+    if (videoUUID) {
+        chai_1.expect(video.uuid).to.be.a('string');
+        chai_1.expect(video.uuid).to.not.be.empty;
         chai_1.expect(video.uuid).to.equal(videoUUID);
+    }
     chai_1.expect(video.id).to.be.a('number');
 }
 function checkActor(actor) {
@@ -365,17 +367,17 @@ function checkNewCommentOnMyVideo(base, uuid, commentId, threadId, type) {
 exports.checkNewCommentOnMyVideo = checkNewCommentOnMyVideo;
 function checkNewVideoAbuseForModerators(base, videoUUID, videoName, type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const notificationType = users_1.UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS;
+        const notificationType = users_1.UserNotificationType.NEW_ABUSE_FOR_MODERATORS;
         function notificationChecker(notification, type) {
             if (type === 'presence') {
                 chai_1.expect(notification).to.not.be.undefined;
                 chai_1.expect(notification.type).to.equal(notificationType);
-                chai_1.expect(notification.videoAbuse.id).to.be.a('number');
-                checkVideo(notification.videoAbuse.video, videoName, videoUUID);
+                chai_1.expect(notification.abuse.id).to.be.a('number');
+                checkVideo(notification.abuse.video, videoName, videoUUID);
             }
             else {
                 chai_1.expect(notification).to.satisfy((n) => {
-                    return n === undefined || n.videoAbuse === undefined || n.videoAbuse.video.uuid !== videoUUID;
+                    return n === undefined || n.abuse === undefined || n.abuse.video.uuid !== videoUUID;
                 });
             }
         }
@@ -387,6 +389,105 @@ function checkNewVideoAbuseForModerators(base, videoUUID, videoName, type) {
     });
 }
 exports.checkNewVideoAbuseForModerators = checkNewVideoAbuseForModerators;
+function checkNewAbuseMessage(base, abuseId, message, toEmail, type) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const notificationType = users_1.UserNotificationType.ABUSE_NEW_MESSAGE;
+        function notificationChecker(notification, type) {
+            if (type === 'presence') {
+                chai_1.expect(notification).to.not.be.undefined;
+                chai_1.expect(notification.type).to.equal(notificationType);
+                chai_1.expect(notification.abuse.id).to.equal(abuseId);
+            }
+            else {
+                chai_1.expect(notification).to.satisfy((n) => {
+                    return n === undefined || n.type !== notificationType || n.abuse === undefined || n.abuse.id !== abuseId;
+                });
+            }
+        }
+        function emailNotificationFinder(email) {
+            const text = email['text'];
+            const to = email['to'].filter(t => t.address === toEmail);
+            return text.indexOf(message) !== -1 && to.length !== 0;
+        }
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
+    });
+}
+exports.checkNewAbuseMessage = checkNewAbuseMessage;
+function checkAbuseStateChange(base, abuseId, state, type) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const notificationType = users_1.UserNotificationType.ABUSE_STATE_CHANGE;
+        function notificationChecker(notification, type) {
+            if (type === 'presence') {
+                chai_1.expect(notification).to.not.be.undefined;
+                chai_1.expect(notification.type).to.equal(notificationType);
+                chai_1.expect(notification.abuse.id).to.equal(abuseId);
+                chai_1.expect(notification.abuse.state).to.equal(state);
+            }
+            else {
+                chai_1.expect(notification).to.satisfy((n) => {
+                    return n === undefined || n.abuse === undefined || n.abuse.id !== abuseId;
+                });
+            }
+        }
+        function emailNotificationFinder(email) {
+            const text = email['text'];
+            const contains = state === 3
+                ? ' accepted'
+                : ' rejected';
+            return text.indexOf(contains) !== -1;
+        }
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
+    });
+}
+exports.checkAbuseStateChange = checkAbuseStateChange;
+function checkNewCommentAbuseForModerators(base, videoUUID, videoName, type) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const notificationType = users_1.UserNotificationType.NEW_ABUSE_FOR_MODERATORS;
+        function notificationChecker(notification, type) {
+            if (type === 'presence') {
+                chai_1.expect(notification).to.not.be.undefined;
+                chai_1.expect(notification.type).to.equal(notificationType);
+                chai_1.expect(notification.abuse.id).to.be.a('number');
+                checkVideo(notification.abuse.comment.video, videoName, videoUUID);
+            }
+            else {
+                chai_1.expect(notification).to.satisfy((n) => {
+                    return n === undefined || n.abuse === undefined || n.abuse.comment.video.uuid !== videoUUID;
+                });
+            }
+        }
+        function emailNotificationFinder(email) {
+            const text = email['text'];
+            return text.indexOf(videoUUID) !== -1 && text.indexOf('abuse') !== -1;
+        }
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
+    });
+}
+exports.checkNewCommentAbuseForModerators = checkNewCommentAbuseForModerators;
+function checkNewAccountAbuseForModerators(base, displayName, type) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const notificationType = users_1.UserNotificationType.NEW_ABUSE_FOR_MODERATORS;
+        function notificationChecker(notification, type) {
+            if (type === 'presence') {
+                chai_1.expect(notification).to.not.be.undefined;
+                chai_1.expect(notification.type).to.equal(notificationType);
+                chai_1.expect(notification.abuse.id).to.be.a('number');
+                chai_1.expect(notification.abuse.account.displayName).to.equal(displayName);
+            }
+            else {
+                chai_1.expect(notification).to.satisfy((n) => {
+                    return n === undefined || n.abuse === undefined || n.abuse.account.displayName !== displayName;
+                });
+            }
+        }
+        function emailNotificationFinder(email) {
+            const text = email['text'];
+            return text.indexOf(displayName) !== -1 && text.indexOf('abuse') !== -1;
+        }
+        yield checkNotification(base, notificationChecker, emailNotificationFinder, type);
+    });
+}
+exports.checkNewAccountAbuseForModerators = checkNewAccountAbuseForModerators;
 function checkVideoAutoBlacklistForModerators(base, videoUUID, videoName, type) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const notificationType = users_1.UserNotificationType.VIDEO_AUTO_BLACKLIST_FOR_MODERATORS;
@@ -432,18 +533,20 @@ function checkNewBlacklistOnMyVideo(base, videoUUID, videoName, blacklistType) {
 exports.checkNewBlacklistOnMyVideo = checkNewBlacklistOnMyVideo;
 function getAllNotificationsSettings() {
     return {
-        newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        newCommentOnMyVideo: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        videoAbuseAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        videoAutoBlacklistAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        blacklistOnMyVideo: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        myVideoImportFinished: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        myVideoPublished: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        commentMention: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        newFollow: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        newUserRegistration: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        newInstanceFollower: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        autoInstanceFollowing: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL
+        newVideoFromSubscription: 1 | 2,
+        newCommentOnMyVideo: 1 | 2,
+        abuseAsModerator: 1 | 2,
+        videoAutoBlacklistAsModerator: 1 | 2,
+        blacklistOnMyVideo: 1 | 2,
+        myVideoImportFinished: 1 | 2,
+        myVideoPublished: 1 | 2,
+        commentMention: 1 | 2,
+        newFollow: 1 | 2,
+        newUserRegistration: 1 | 2,
+        newInstanceFollower: 1 | 2,
+        abuseNewMessage: 1 | 2,
+        abuseStateChange: 1 | 2,
+        autoInstanceFollowing: 1 | 2
     };
 }
 exports.getAllNotificationsSettings = getAllNotificationsSettings;
@@ -458,6 +561,9 @@ function prepareNotificationsTest(serversCount = 3) {
             smtp: {
                 hostname: 'localhost',
                 port
+            },
+            signup: {
+                limit: 20
             }
         };
         const servers = yield servers_1.flushAndRunMultipleServers(serversCount, overrideConfig);

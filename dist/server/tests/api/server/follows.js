@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
-const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const index_1 = require("../../../../shared/extra-utils/index");
 const miscs_1 = require("../../../../shared/extra-utils/miscs/miscs");
@@ -12,7 +11,7 @@ const accounts_1 = require("../../../../shared/extra-utils/users/accounts");
 const login_1 = require("../../../../shared/extra-utils/users/login");
 const users_1 = require("../../../../shared/extra-utils/users/users");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
-const videos_2 = require("../../../../shared/extra-utils/videos/videos");
+const videos_1 = require("../../../../shared/extra-utils/videos/videos");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const video_captions_1 = require("../../../../shared/extra-utils/videos/video-captions");
 const expect = chai.expect;
@@ -295,8 +294,8 @@ describe('Test follows', function () {
                     const resVideos = yield index_1.getVideosList(servers[2].url);
                     video4 = resVideos.body.data.find(v => v.name === 'server3-4');
                     {
-                        yield videos_2.rateVideo(servers[2].url, servers[2].accessToken, video4.id, 'like');
-                        yield videos_2.rateVideo(servers[2].url, userAccessToken, video4.id, 'dislike');
+                        yield videos_1.rateVideo(servers[2].url, servers[2].accessToken, video4.id, 'like');
+                        yield videos_1.rateVideo(servers[2].url, userAccessToken, video4.id, 'dislike');
                     }
                     {
                         {
@@ -380,7 +379,7 @@ describe('Test follows', function () {
                     downloadEnabled: true,
                     duration: 5,
                     tags: ['tag1', 'tag2', 'tag3'],
-                    privacy: videos_1.VideoPrivacy.PUBLIC,
+                    privacy: 1,
                     likes: 1,
                     dislikes: 1,
                     channel: {
@@ -472,7 +471,7 @@ describe('Test follows', function () {
                 const caption1 = res.body.data[0];
                 expect(caption1.language.id).to.equal('ar');
                 expect(caption1.language.label).to.equal('Arabic');
-                expect(caption1.captionPath).to.equal('/static/video-captions/' + video4.uuid + '-ar.vtt');
+                expect(caption1.captionPath).to.equal('/lazy-static/video-captions/' + video4.uuid + '-ar.vtt');
                 yield video_captions_1.testCaptionFile(servers[0].url, caption1.captionPath, 'Subtitle good 2.');
             });
         });

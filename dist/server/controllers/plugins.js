@@ -9,7 +9,7 @@ const plugins_1 = require("../middlewares/validators/plugins");
 const themes_1 = require("../middlewares/validators/themes");
 const plugin_type_1 = require("../../shared/models/plugins/plugin.type");
 const core_utils_1 = require("../helpers/core-utils");
-const i18n_1 = require("../../shared/models/i18n");
+const i18n_1 = require("../../shared/core-utils/i18n");
 const logger_1 = require("@server/helpers/logger");
 const sendFileOptions = {
     maxAge: '30 days',

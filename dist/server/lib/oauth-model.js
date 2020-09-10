@@ -11,7 +11,6 @@ const oauth_token_1 = require("../models/oauth/oauth-token");
 const constants_1 = require("../initializers/constants");
 const config_1 = require("../initializers/config");
 const LRUCache = require("lru-cache");
-const user_flag_model_1 = require("@shared/models/users/user-flag.model");
 const user_2 = require("./user");
 const user_role_1 = require("@shared/models/users/user-role");
 const plugin_manager_1 = require("@server/lib/plugins/plugin-manager");
@@ -257,7 +256,7 @@ function createUserFromExternal(pluginAuth, options) {
             role: options.role,
             videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
             videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY,
-            adminFlags: user_flag_model_1.UserAdminFlag.NONE,
+            adminFlags: 0,
             pluginAuth
         });
         const { user } = yield user_2.createUserAccountAndChannelAndPlaylist({

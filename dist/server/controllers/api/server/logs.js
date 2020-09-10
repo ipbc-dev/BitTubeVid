@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.logsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const users_1 = require("../../../../shared/models/users");
 const middlewares_1 = require("../../../middlewares");
 const logs_1 = require("../../../../shared/core-utils/logs/logs");
 const fs_extra_1 = require("fs-extra");
@@ -14,8 +13,8 @@ const config_1 = require("../../../initializers/config");
 const logger_1 = require("@server/helpers/logger");
 const logsRouter = express.Router();
 exports.logsRouter = logsRouter;
-logsRouter.get('/logs', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_LOGS), logs_2.getLogsValidator, middlewares_1.asyncMiddleware(getLogs));
-logsRouter.get('/audit-logs', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_LOGS), logs_2.getAuditLogsValidator, middlewares_1.asyncMiddleware(getAuditLogs));
+logsRouter.get('/logs', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(3), logs_2.getLogsValidator, middlewares_1.asyncMiddleware(getLogs));
+logsRouter.get('/audit-logs', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(3), logs_2.getAuditLogsValidator, middlewares_1.asyncMiddleware(getAuditLogs));
 const auditLogNameFilter = generateLogNameFilter(constants_1.AUDIT_LOG_FILENAME);
 function getAuditLogs(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {

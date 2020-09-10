@@ -3,12 +3,12 @@ var AccountBlocklistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountBlocklistModel = void 0;
 const tslib_1 = require("tslib");
-const sequelize_typescript_1 = require("sequelize-typescript");
-const account_1 = require("./account");
-const utils_1 = require("../utils");
 const sequelize_1 = require("sequelize");
+const sequelize_typescript_1 = require("sequelize-typescript");
 const actor_1 = require("../activitypub/actor");
 const server_1 = require("../server/server");
+const utils_1 = require("../utils");
+const account_1 = require("./account");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ACCOUNTS"] = "WITH_ACCOUNTS";

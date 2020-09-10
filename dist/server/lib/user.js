@@ -9,7 +9,6 @@ const actor_1 = require("./activitypub/actor");
 const video_channel_1 = require("./video-channel");
 const actor_2 = require("../models/activitypub/actor");
 const user_notification_setting_1 = require("../models/account/user-notification-setting");
-const users_1 = require("../../shared/models/users");
 const video_playlist_1 = require("./video-playlist");
 const database_1 = require("../initializers/database");
 const redis_1 = require("./redis");
@@ -95,18 +94,20 @@ exports.sendVerifyUserEmail = sendVerifyUserEmail;
 function createDefaultUserNotificationSettings(user, t) {
     const values = {
         userId: user.id,
-        newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB,
-        newCommentOnMyVideo: users_1.UserNotificationSettingValue.WEB,
-        myVideoImportFinished: users_1.UserNotificationSettingValue.WEB,
-        myVideoPublished: users_1.UserNotificationSettingValue.WEB,
-        videoAbuseAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        videoAutoBlacklistAsModerator: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        blacklistOnMyVideo: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL,
-        newUserRegistration: users_1.UserNotificationSettingValue.WEB,
-        commentMention: users_1.UserNotificationSettingValue.WEB,
-        newFollow: users_1.UserNotificationSettingValue.WEB,
-        newInstanceFollower: users_1.UserNotificationSettingValue.WEB,
-        autoInstanceFollowing: users_1.UserNotificationSettingValue.WEB
+        newVideoFromSubscription: 1,
+        newCommentOnMyVideo: 1,
+        myVideoImportFinished: 1,
+        myVideoPublished: 1,
+        abuseAsModerator: 1 | 2,
+        videoAutoBlacklistAsModerator: 1 | 2,
+        blacklistOnMyVideo: 1 | 2,
+        newUserRegistration: 1,
+        commentMention: 1,
+        newFollow: 1,
+        newInstanceFollower: 1,
+        abuseNewMessage: 1 | 2,
+        abuseStateChange: 1 | 2,
+        autoInstanceFollowing: 1
     };
     return user_notification_setting_1.UserNotificationSettingModel.create(values, { transaction: t });
 }

@@ -64,6 +64,7 @@ exports.pluginStaticDirectoryValidator = pluginStaticDirectoryValidator;
 const listPluginsValidator = [
     express_validator_1.query('pluginType')
         .optional()
+        .customSanitizer(misc_1.toIntOrNull)
         .custom(plugins_1.isPluginTypeValid).withMessage('Should have a valid plugin type'),
     express_validator_1.query('uninstalled')
         .optional()
@@ -141,6 +142,7 @@ const listAvailablePluginsValidator = [
         .exists().withMessage('Should have a valid search'),
     express_validator_1.query('pluginType')
         .optional()
+        .customSanitizer(misc_1.toIntOrNull)
         .custom(plugins_1.isPluginTypeValid).withMessage('Should have a valid plugin type'),
     express_validator_1.query('currentPeerTubeEngine')
         .optional()

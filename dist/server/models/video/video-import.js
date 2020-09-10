@@ -8,12 +8,11 @@ const constants_1 = require("../../initializers/constants");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
 const video_imports_1 = require("../../helpers/custom-validators/video-imports");
-const shared_1 = require("../../../shared");
 const videos_1 = require("../../helpers/custom-validators/videos");
 const user_1 = require("../account/user");
 let VideoImportModel = VideoImportModel_1 = class VideoImportModel extends sequelize_typescript_1.Model {
     static deleteVideoIfFailed(instance, options) {
-        if (instance.state === shared_1.VideoImportState.FAILED) {
+        if (instance.state === 3) {
             return instance.Video.destroy({ transaction: options.transaction });
         }
         return undefined;

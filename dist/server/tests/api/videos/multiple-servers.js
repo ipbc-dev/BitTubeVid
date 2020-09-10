@@ -5,7 +5,6 @@ const chai = require("chai");
 require("mocha");
 const path_1 = require("path");
 const request = require("supertest");
-const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
@@ -84,7 +83,7 @@ describe('Test multiple servers', function () {
                         publishedAt,
                         duration: 10,
                         tags: ['tag1p1', 'tag2p1'],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         commentsEnabled: true,
                         downloadEnabled: true,
                         channel: {
@@ -154,7 +153,7 @@ describe('Test multiple servers', function () {
                         downloadEnabled: true,
                         duration: 5,
                         tags: ['tag1p2', 'tag2p2', 'tag3p2'],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         channel: {
                             displayName: 'Main user1 channel',
                             name: 'user1_channel',
@@ -253,7 +252,7 @@ describe('Test multiple servers', function () {
                         commentsEnabled: true,
                         downloadEnabled: true,
                         tags: ['tag1p3'],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         channel: {
                             displayName: 'Main root channel',
                             name: 'root_channel',
@@ -286,7 +285,7 @@ describe('Test multiple servers', function () {
                         isLocal,
                         duration: 5,
                         tags: ['tag2p3', 'tag3p3', 'tag4p3'],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         channel: {
                             displayName: 'Main root channel',
                             name: 'root_channel',
@@ -559,7 +558,7 @@ describe('Test multiple servers', function () {
                         commentsEnabled: true,
                         downloadEnabled: true,
                         tags: ['tag_up_1', 'tag_up_2'],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         channel: {
                             displayName: 'Main root channel',
                             name: 'root_channel',
@@ -899,7 +898,7 @@ describe('Test multiple servers', function () {
                         commentsEnabled: true,
                         downloadEnabled: true,
                         tags: [],
-                        privacy: videos_1.VideoPrivacy.PUBLIC,
+                        privacy: 1,
                         channel: {
                             displayName: 'Main root channel',
                             name: 'root_channel',

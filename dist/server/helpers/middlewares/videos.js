@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkUserCanManageVideo = exports.doesVideoFileOfVideoExist = exports.doesVideoExist = exports.doesVideoChannelOfAccountExist = void 0;
 const tslib_1 = require("tslib");
 const video_1 = require("../video");
-const users_1 = require("../../../shared/models/users");
 const video_channel_1 = require("../../models/video/video-channel");
 const video_file_1 = require("@server/models/video/video-file");
 function doesVideoExist(id, res, fetchType = 'all') {
@@ -51,7 +50,7 @@ function doesVideoFileOfVideoExist(id, videoIdOrUUID, res) {
 exports.doesVideoFileOfVideoExist = doesVideoFileOfVideoExist;
 function doesVideoChannelOfAccountExist(channelId, user, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (user.hasRight(users_1.UserRight.UPDATE_ANY_VIDEO) === true) {
+        if (user.hasRight(16) === true) {
             const videoChannel = yield video_channel_1.VideoChannelModel.loadAndPopulateAccount(channelId);
             if (videoChannel === null) {
                 res.status(400)

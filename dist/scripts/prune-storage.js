@@ -134,9 +134,10 @@ function askConfirmation() {
                 }
             };
             prompt.get(schema, function (err, result) {
+                var _a;
                 if (err)
                     return rej(err);
-                return res(result.confirm && result.confirm.match(/y/) !== null);
+                return res(((_a = result.confirm) === null || _a === void 0 ? void 0 : _a.match(/y/)) !== null);
             });
         });
     });

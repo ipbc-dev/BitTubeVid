@@ -5,7 +5,6 @@ require("mocha");
 const io = require("socket.io-client");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
-const users_1 = require("../../../../shared/models/users");
 describe('Test user notifications API validators', function () {
     let server;
     before(function () {
@@ -149,18 +148,20 @@ describe('Test user notifications API validators', function () {
     describe('When updating my notification settings', function () {
         const path = '/api/v1/users/me/notification-settings';
         const correctFields = {
-            newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB,
-            newCommentOnMyVideo: users_1.UserNotificationSettingValue.WEB,
-            videoAbuseAsModerator: users_1.UserNotificationSettingValue.WEB,
-            videoAutoBlacklistAsModerator: users_1.UserNotificationSettingValue.WEB,
-            blacklistOnMyVideo: users_1.UserNotificationSettingValue.WEB,
-            myVideoImportFinished: users_1.UserNotificationSettingValue.WEB,
-            myVideoPublished: users_1.UserNotificationSettingValue.WEB,
-            commentMention: users_1.UserNotificationSettingValue.WEB,
-            newFollow: users_1.UserNotificationSettingValue.WEB,
-            newUserRegistration: users_1.UserNotificationSettingValue.WEB,
-            newInstanceFollower: users_1.UserNotificationSettingValue.WEB,
-            autoInstanceFollowing: users_1.UserNotificationSettingValue.WEB
+            newVideoFromSubscription: 1,
+            newCommentOnMyVideo: 1,
+            abuseAsModerator: 1,
+            videoAutoBlacklistAsModerator: 1,
+            blacklistOnMyVideo: 1,
+            myVideoImportFinished: 1,
+            myVideoPublished: 1,
+            commentMention: 1,
+            newFollow: 1,
+            newUserRegistration: 1,
+            newInstanceFollower: 1,
+            autoInstanceFollowing: 1,
+            abuseNewMessage: 1,
+            abuseStateChange: 1
         };
         it('Should fail with missing fields', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -168,7 +169,7 @@ describe('Test user notifications API validators', function () {
                     url: server.url,
                     path,
                     token: server.accessToken,
-                    fields: { newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB },
+                    fields: { newVideoFromSubscription: 1 },
                     statusCodeExpected: 400
                 });
             });

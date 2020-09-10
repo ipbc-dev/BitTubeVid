@@ -8,7 +8,8 @@ const constants_1 = require("../../initializers/constants");
 const misc_2 = require("./activitypub/misc");
 const PLUGINS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.PLUGINS;
 function isPluginTypeValid(value) {
-    return misc_1.exists(value) && validator_1.default.isInt('' + value) && plugin_type_1.PluginType[value] !== undefined;
+    return misc_1.exists(value) &&
+        (value === plugin_type_1.PluginType.PLUGIN || value === plugin_type_1.PluginType.THEME);
 }
 exports.isPluginTypeValid = isPluginTypeValid;
 function isPluginNameValid(value) {

@@ -4,53 +4,50 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoModel = exports.ScopeNames = void 0;
 const tslib_1 = require("tslib");
 const Bluebird = require("bluebird");
+const fs_extra_1 = require("fs-extra");
 const lodash_1 = require("lodash");
 const path_1 = require("path");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const shared_1 = require("../../../shared");
+const express_utils_1 = require("@server/helpers/express-utils");
+const video_1 = require("@server/helpers/video");
+const video_paths_1 = require("@server/lib/video-paths");
+const application_1 = require("@server/models/application/application");
+const model_cache_1 = require("@server/models/model-cache");
 const core_utils_1 = require("../../helpers/core-utils");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const misc_2 = require("../../helpers/custom-validators/misc");
 const videos_1 = require("../../helpers/custom-validators/videos");
 const ffmpeg_utils_1 = require("../../helpers/ffmpeg-utils");
 const logger_1 = require("../../helpers/logger");
+const config_1 = require("../../initializers/config");
 const constants_1 = require("../../initializers/constants");
 const send_1 = require("../../lib/activitypub/send");
+const video_abuse_1 = require("../abuse/video-abuse");
 const account_1 = require("../account/account");
 const account_video_rate_1 = require("../account/account-video-rate");
+const user_video_history_1 = require("../account/user-video-history");
 const actor_1 = require("../activitypub/actor");
 const avatar_1 = require("../avatar/avatar");
+const video_redundancy_1 = require("../redundancy/video-redundancy");
 const server_1 = require("../server/server");
 const utils_1 = require("../utils");
+const schedule_video_update_1 = require("./schedule-video-update");
 const tag_1 = require("./tag");
-const video_abuse_1 = require("./video-abuse");
+const thumbnail_1 = require("./thumbnail");
+const video_blacklist_1 = require("./video-blacklist");
+const video_caption_1 = require("./video-caption");
 const video_channel_1 = require("./video-channel");
 const video_comment_1 = require("./video-comment");
 const video_file_1 = require("./video-file");
-const video_share_1 = require("./video-share");
-const video_tag_1 = require("./video-tag");
-const schedule_video_update_1 = require("./schedule-video-update");
-const video_caption_1 = require("./video-caption");
-const video_blacklist_1 = require("./video-blacklist");
-const fs_extra_1 = require("fs-extra");
-const video_view_1 = require("./video-view");
-const video_redundancy_1 = require("../redundancy/video-redundancy");
 const video_format_utils_1 = require("./video-format-utils");
-const user_video_history_1 = require("../account/user-video-history");
 const video_import_1 = require("./video-import");
-const video_streaming_playlist_1 = require("./video-streaming-playlist");
 const video_playlist_element_1 = require("./video-playlist-element");
-const config_1 = require("../../initializers/config");
-const thumbnail_1 = require("./thumbnail");
-const thumbnail_type_1 = require("../../../shared/models/videos/thumbnail.type");
-const video_streaming_playlist_type_1 = require("../../../shared/models/videos/video-streaming-playlist.type");
-const video_paths_1 = require("@server/lib/video-paths");
-const model_cache_1 = require("@server/models/model-cache");
 const video_query_builder_1 = require("./video-query-builder");
-const express_utils_1 = require("@server/helpers/express-utils");
-const application_1 = require("@server/models/application/application");
-const video_1 = require("@server/helpers/video");
+const video_share_1 = require("./video-share");
+const video_streaming_playlist_1 = require("./video-streaming-playlist");
+const video_tag_1 = require("./video-tag");
+const video_view_1 = require("./video-view");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["AVAILABLE_FOR_LIST_IDS"] = "AVAILABLE_FOR_LIST_IDS";
@@ -116,12 +113,12 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     static saveEssentialDataToAbuses(instance, options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const tasks = [];
-            logger_1.logger.info('Saving video abuses details of video %s.', instance.url);
             if (!Array.isArray(instance.VideoAbuses)) {
                 instance.VideoAbuses = yield instance.$get('VideoAbuses');
                 if (instance.VideoAbuses.length === 0)
                     return undefined;
             }
+            logger_1.logger.info('Saving video abuses details of video %s.', instance.url);
             const details = instance.toFormattedDetailsJSON();
             for (const abuse of instance.VideoAbuses) {
                 abuse.deletedVideo = details;
@@ -295,7 +292,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     }
     static listForApi(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (options.filter && options.filter === 'all-local' && !options.user.hasRight(shared_1.UserRight.SEE_ALL_VIDEOS)) {
+            if (options.filter && options.filter === 'all-local' && !options.user.hasRight(18)) {
                 throw new Error('Try to filter all-local but no user has not the see all videos right');
             }
             const trendingDays = options.sort.endsWith('trending')
@@ -651,8 +648,9 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         });
     }
     static buildAPIResult(rows) {
-        var _a, _b, _c;
-        const memo = {};
+        var _a, _b, _c, _d, _e, _f, _g;
+        const videosMemo = {};
+        const videoStreamingPlaylistMemo = {};
         const thumbnailsDone = new Set();
         const historyDone = new Set();
         const videoFilesDone = new Set();
@@ -661,6 +659,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         const actorKeys = ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'];
         const serverKeys = ['id', 'host'];
         const videoFileKeys = ['id', 'createdAt', 'updatedAt', 'resolution', 'size', 'extname', 'infoHash', 'fps', 'videoId'];
+        const videoStreamingPlaylistKeys = ['id'];
         const videoKeys = [
             'id',
             'uuid',
@@ -701,7 +700,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             return actorModel;
         }
         for (const row of rows) {
-            if (!memo[row.id]) {
+            if (!videosMemo[row.id]) {
                 const channel = row.VideoChannel;
                 const channelModel = new video_channel_1.VideoChannelModel(lodash_1.pick(channel, ['id', 'name', 'description', 'actorId']));
                 channelModel.Actor = buildActor(channel.Actor);
@@ -714,10 +713,11 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
                 videoModel.UserVideoHistories = [];
                 videoModel.Thumbnails = [];
                 videoModel.VideoFiles = [];
-                memo[row.id] = videoModel;
+                videoModel.VideoStreamingPlaylists = [];
+                videosMemo[row.id] = videoModel;
                 videos.push(videoModel);
             }
-            const videoModel = memo[row.id];
+            const videoModel = videosMemo[row.id];
             if (((_a = row.userVideoHistory) === null || _a === void 0 ? void 0 : _a.id) && !historyDone.has(row.userVideoHistory.id)) {
                 const historyModel = new user_video_history_1.UserVideoHistoryModel(lodash_1.pick(row.userVideoHistory, ['id', 'currentTime']));
                 videoModel.UserVideoHistories.push(historyModel);
@@ -732,6 +732,23 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
                 const videoFileModel = new video_file_1.VideoFileModel(lodash_1.pick(row.VideoFiles, videoFileKeys));
                 videoModel.VideoFiles.push(videoFileModel);
                 videoFilesDone.add(row.VideoFiles.id);
+            }
+            if (((_d = row.VideoFiles) === null || _d === void 0 ? void 0 : _d.id) && !videoFilesDone.has(row.VideoFiles.id)) {
+                const videoFileModel = new video_file_1.VideoFileModel(lodash_1.pick(row.VideoFiles, videoFileKeys));
+                videoModel.VideoFiles.push(videoFileModel);
+                videoFilesDone.add(row.VideoFiles.id);
+            }
+            if (((_e = row.VideoStreamingPlaylists) === null || _e === void 0 ? void 0 : _e.id) && !videoStreamingPlaylistMemo[row.VideoStreamingPlaylists.id]) {
+                const streamingPlaylist = new video_streaming_playlist_1.VideoStreamingPlaylistModel(lodash_1.pick(row.VideoStreamingPlaylists, videoStreamingPlaylistKeys));
+                streamingPlaylist.VideoFiles = [];
+                videoModel.VideoStreamingPlaylists.push(streamingPlaylist);
+                videoStreamingPlaylistMemo[streamingPlaylist.id] = streamingPlaylist;
+            }
+            if (((_g = (_f = row.VideoStreamingPlaylists) === null || _f === void 0 ? void 0 : _f.VideoFiles) === null || _g === void 0 ? void 0 : _g.id) && !videoFilesDone.has(row.VideoStreamingPlaylists.VideoFiles.id)) {
+                const streamingPlaylist = videoStreamingPlaylistMemo[row.VideoStreamingPlaylists.id];
+                const videoFileModel = new video_file_1.VideoFileModel(lodash_1.pick(row.VideoStreamingPlaylists.VideoFiles, videoFileKeys));
+                streamingPlaylist.VideoFiles.push(videoFileModel);
+                videoFilesDone.add(row.VideoStreamingPlaylists.VideoFiles.id);
             }
         }
         return videos;
@@ -801,7 +818,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     getMiniature() {
         if (Array.isArray(this.Thumbnails) === false)
             return undefined;
-        return this.Thumbnails.find(t => t.type === thumbnail_type_1.ThumbnailType.MINIATURE);
+        return this.Thumbnails.find(t => t.type === 1);
     }
     generatePreviewName() {
         return this.uuid + '.jpg';
@@ -812,7 +829,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     getPreview() {
         if (Array.isArray(this.Thumbnails) === false)
             return undefined;
-        return this.Thumbnails.find(t => t.type === thumbnail_type_1.ThumbnailType.PREVIEW);
+        return this.Thumbnails.find(t => t.type === 2);
     }
     isOwned() {
         return this.remote === false;
@@ -843,7 +860,14 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     }
     getFormattedVideoFilesJSON() {
         const { baseUrlHttp, baseUrlWs } = this.getBaseUrls();
-        return video_format_utils_1.videoFilesModelToFormattedJSON(this, baseUrlHttp, baseUrlWs, this.VideoFiles);
+        let files = [];
+        if (Array.isArray(this.VideoFiles)) {
+            files = files.concat(this.VideoFiles);
+        }
+        for (const p of (this.VideoStreamingPlaylists || [])) {
+            files = files.concat(p.VideoFiles || []);
+        }
+        return video_format_utils_1.videoFilesModelToFormattedJSON(this, baseUrlHttp, baseUrlWs, files);
     }
     toActivityPubObject() {
         return video_format_utils_1.videoModelToActivityPubObject(this);
@@ -866,7 +890,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
     getHLSPlaylist() {
         if (!this.VideoStreamingPlaylists)
             return undefined;
-        const playlist = this.VideoStreamingPlaylists.find(p => p.type === video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS);
+        const playlist = this.VideoStreamingPlaylists.find(p => p.type === 1);
         playlist.Video = this;
         return playlist;
     }
@@ -877,7 +901,7 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
             return;
         }
         this.VideoStreamingPlaylists = this.VideoStreamingPlaylists
-            .filter(s => s.type !== video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS)
+            .filter(s => s.type !== 1)
             .concat(toAdd);
     }
     removeFile(videoFile, isRedundancy = false) {
@@ -920,23 +944,23 @@ let VideoModel = VideoModel_1 = class VideoModel extends sequelize_typescript_1.
         return this.save();
     }
     requiresAuth() {
-        return this.privacy === shared_1.VideoPrivacy.PRIVATE || this.privacy === shared_1.VideoPrivacy.INTERNAL || !!this.VideoBlacklist;
+        return this.privacy === 3 || this.privacy === 4 || !!this.VideoBlacklist;
     }
     setPrivacy(newPrivacy) {
-        if (this.privacy === shared_1.VideoPrivacy.PRIVATE && newPrivacy !== shared_1.VideoPrivacy.PRIVATE) {
+        if (this.privacy === 3 && newPrivacy !== 3) {
             this.publishedAt = new Date();
         }
         this.privacy = newPrivacy;
     }
     isConfidential() {
-        return this.privacy === shared_1.VideoPrivacy.PRIVATE ||
-            this.privacy === shared_1.VideoPrivacy.UNLISTED ||
-            this.privacy === shared_1.VideoPrivacy.INTERNAL;
+        return this.privacy === 3 ||
+            this.privacy === 2 ||
+            this.privacy === 4;
     }
     publishIfNeededAndSave(t) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (this.state !== shared_1.VideoState.PUBLISHED) {
-                this.state = shared_1.VideoState.PUBLISHED;
+            if (this.state !== 1) {
+                this.state = 1;
                 this.publishedAt = new Date();
                 yield this.save({ transaction: t });
                 return true;

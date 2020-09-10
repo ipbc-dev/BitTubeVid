@@ -1,14 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
-const index_1 = require("../../../../shared/index");
+const chai = require("chai");
+const models_1 = require("@shared/models");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const login_1 = require("../../../../shared/extra-utils/users/login");
 const videos_1 = require("../../../../shared/extra-utils/videos/videos");
-const user_flag_model_1 = require("../../../../shared/models/users/user-flag.model");
 const expect = chai.expect;
 describe('Test users', function () {
     let server;
@@ -219,7 +218,7 @@ describe('Test users', function () {
                     username: user.username,
                     password: user.password,
                     videoQuota: 2 * 1024 * 1024,
-                    adminFlags: user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST
+                    adminFlags: 1
                 });
             });
         });
@@ -245,17 +244,17 @@ describe('Test users', function () {
                     expect(user.account.description).to.be.null;
                 }
                 expect(userMe.adminFlags).to.be.undefined;
-                expect(userGet.adminFlags).to.equal(user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST);
+                expect(userGet.adminFlags).to.equal(1);
                 expect(userMe.specialPlaylists).to.have.lengthOf(1);
-                expect(userMe.specialPlaylists[0].type).to.equal(index_1.VideoPlaylistType.WATCH_LATER);
+                expect(userMe.specialPlaylists[0].type).to.equal(2);
                 expect(userGet.videosCount).to.be.a('number');
                 expect(userGet.videosCount).to.equal(0);
                 expect(userGet.videoCommentsCount).to.be.a('number');
                 expect(userGet.videoCommentsCount).to.equal(0);
-                expect(userGet.videoAbusesCount).to.be.a('number');
-                expect(userGet.videoAbusesCount).to.equal(0);
-                expect(userGet.videoAbusesAcceptedCount).to.be.a('number');
-                expect(userGet.videoAbusesAcceptedCount).to.equal(0);
+                expect(userGet.abusesCount).to.be.a('number');
+                expect(userGet.abusesCount).to.equal(0);
+                expect(userGet.abusesAcceptedCount).to.be.a('number');
+                expect(userGet.abusesAcceptedCount).to.equal(0);
             });
         });
     });
@@ -612,8 +611,8 @@ describe('Test users', function () {
                     email: 'updated2@example.com',
                     emailVerified: true,
                     videoQuota: 42,
-                    role: index_1.UserRole.MODERATOR,
-                    adminFlags: user_flag_model_1.UserAdminFlag.NONE
+                    role: models_1.UserRole.MODERATOR,
+                    adminFlags: 0
                 });
                 const res = yield extra_utils_1.getUserInformation(server.url, accessToken, userId);
                 const user = res.body;
@@ -624,7 +623,7 @@ describe('Test users', function () {
                 expect(user.videoQuota).to.equal(42);
                 expect(user.roleLabel).to.equal('Moderator');
                 expect(user.id).to.be.a('number');
-                expect(user.adminFlags).to.equal(user_flag_model_1.UserAdminFlag.NONE);
+                expect(user.adminFlags).to.equal(0);
             });
         });
         it('Should have removed the user token', function () {
@@ -797,9 +796,9 @@ describe('Test users', function () {
                 const user = res.body;
                 expect(user.videosCount).to.equal(0);
                 expect(user.videoCommentsCount).to.equal(0);
-                expect(user.videoAbusesCount).to.equal(0);
-                expect(user.videoAbusesCreatedCount).to.equal(0);
-                expect(user.videoAbusesAcceptedCount).to.equal(0);
+                expect(user.abusesCount).to.equal(0);
+                expect(user.abusesCreatedCount).to.equal(0);
+                expect(user.abusesAcceptedCount).to.equal(0);
             });
         });
         it('Should report correct videos count', function () {
@@ -824,21 +823,21 @@ describe('Test users', function () {
                 expect(user.videoCommentsCount).to.equal(1);
             });
         });
-        it('Should report correct video abuses counts', function () {
+        it('Should report correct abuses counts', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const reason = 'my super bad reason';
-                yield extra_utils_1.reportVideoAbuse(server.url, user17AccessToken, videoId, reason);
-                const res1 = yield extra_utils_1.getVideoAbusesList({ url: server.url, token: server.accessToken });
+                yield extra_utils_1.reportAbuse({ url: server.url, token: user17AccessToken, videoId, reason });
+                const res1 = yield extra_utils_1.getAdminAbusesList({ url: server.url, token: server.accessToken });
                 const abuseId = res1.body.data[0].id;
                 const res2 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
                 const user2 = res2.body;
-                expect(user2.videoAbusesCount).to.equal(1);
-                expect(user2.videoAbusesCreatedCount).to.equal(1);
-                const body = { state: index_1.VideoAbuseState.ACCEPTED };
-                yield extra_utils_1.updateVideoAbuse(server.url, server.accessToken, videoId, abuseId, body);
+                expect(user2.abusesCount).to.equal(1);
+                expect(user2.abusesCreatedCount).to.equal(1);
+                const body = { state: 3 };
+                yield extra_utils_1.updateAbuse(server.url, server.accessToken, abuseId, body);
                 const res3 = yield extra_utils_1.getUserInformation(server.url, server.accessToken, user17Id, true);
                 const user3 = res3.body;
-                expect(user3.videoAbusesAcceptedCount).to.equal(1);
+                expect(user3.abusesAcceptedCount).to.equal(1);
             });
         });
     });

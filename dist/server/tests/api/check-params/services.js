@@ -5,13 +5,29 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 describe('Test services API validators', function () {
     let server;
+    let playlistUUID;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(60000);
             server = yield extra_utils_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
-            const res = yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'my super name' });
-            server.video = res.body.video;
+            yield extra_utils_1.setDefaultVideoChannel([server]);
+            {
+                const res = yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'my super name' });
+                server.video = res.body.video;
+            }
+            {
+                const res = yield extra_utils_1.createVideoPlaylist({
+                    url: server.url,
+                    token: server.accessToken,
+                    playlistAttrs: {
+                        displayName: 'super playlist',
+                        privacy: 1,
+                        videoChannelId: server.videoChannel.id
+                    }
+                });
+                playlistUUID = res.body.videoPlaylist.uuid;
+            }
         });
     });
     describe('Test oEmbed API validators', function () {
@@ -27,13 +43,13 @@ describe('Test services API validators', function () {
                 yield checkParamEmbed(server, embedUrl);
             });
         });
-        it('Should fail with an invalid video id', function () {
+        it('Should fail with an invalid element id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/blabla`;
                 yield checkParamEmbed(server, embedUrl);
             });
         });
-        it('Should fail with an unknown video', function () {
+        it('Should fail with an unknown element', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/88fc0165-d1f0-4a35-a51a-3b47f668689c`;
                 yield checkParamEmbed(server, embedUrl, 404);
@@ -69,9 +85,20 @@ describe('Test services API validators', function () {
                 yield checkParamEmbed(server, embedUrl, 501, { format: 'xml' });
             });
         });
-        it('Should succeed with the correct params', function () {
+        it('Should succeed with the correct params with a video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/${server.video.uuid}`;
+                const query = {
+                    format: 'json',
+                    maxheight: 400,
+                    maxwidth: 400
+                };
+                yield checkParamEmbed(server, embedUrl, 200, query);
+            });
+        });
+        it('Should succeed with the correct params with a playlist', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const embedUrl = `http://localhost:${server.port}/videos/watch/playlist/${playlistUUID}`;
                 const query = {
                     format: 'json',
                     maxheight: 400,

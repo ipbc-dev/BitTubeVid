@@ -3,11 +3,11 @@ var ServerBlocklistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerBlocklistModel = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const account_1 = require("../account/account");
-const server_1 = require("./server");
 const utils_1 = require("../utils");
-const sequelize_1 = require("sequelize");
+const server_1 = require("./server");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ACCOUNT"] = "WITH_ACCOUNT";

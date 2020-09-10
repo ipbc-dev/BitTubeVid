@@ -7,7 +7,6 @@ const express = require("express");
 const fs_extra_1 = require("fs-extra");
 const lodash_1 = require("lodash");
 const validator_1 = require("validator");
-const shared_1 = require("../../../shared");
 const audit_logger_1 = require("../../helpers/audit-logger");
 const core_utils_1 = require("../../helpers/core-utils");
 const signup_1 = require("../../helpers/signup");
@@ -24,9 +23,9 @@ exports.configRouter = configRouter;
 const auditLogger = audit_logger_1.auditLoggerFactory('config');
 configRouter.get('/about', getAbout);
 configRouter.get('/', middlewares_1.asyncMiddleware(getConfig));
-configRouter.get('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), getCustomConfig);
-configRouter.put('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), config_2.customConfigUpdateValidator, middlewares_1.asyncMiddleware(updateCustomConfig));
-configRouter.delete('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(shared_1.UserRight.MANAGE_CONFIGURATION), middlewares_1.asyncMiddleware(deleteCustomConfig));
+configRouter.get('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(8), getCustomConfig);
+configRouter.put('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(8), config_2.customConfigUpdateValidator, middlewares_1.asyncMiddleware(updateCustomConfig));
+configRouter.delete('/custom', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(8), middlewares_1.asyncMiddleware(deleteCustomConfig));
 let serverCommit;
 function getConfig(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {

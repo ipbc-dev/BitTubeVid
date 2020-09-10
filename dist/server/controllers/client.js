@@ -2,32 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clientsRouter = void 0;
 const tslib_1 = require("tslib");
-const fs_1 = require("fs");
 const express = require("express");
+const fs_1 = require("fs");
 const path_1 = require("path");
-const core_utils_1 = require("../helpers/core-utils");
-const constants_1 = require("../initializers/constants");
-const middlewares_1 = require("../middlewares");
-const i18n_1 = require("../../shared/models/i18n/i18n");
-const client_html_1 = require("../lib/client-html");
-const logger_1 = require("../helpers/logger");
 const config_1 = require("@server/initializers/config");
+const i18n_1 = require("@shared/core-utils/i18n");
+const core_utils_1 = require("../helpers/core-utils");
+const logger_1 = require("../helpers/logger");
+const constants_1 = require("../initializers/constants");
+const client_html_1 = require("../lib/client-html");
+const middlewares_1 = require("../middlewares");
 const clientsRouter = express.Router();
 exports.clientsRouter = clientsRouter;
 const distPath = path_1.join(core_utils_1.root(), 'client', 'dist');
-const embedPath = path_1.join(distPath, 'standalone', 'videos', 'embed.html');
 const testEmbedPath = path_1.join(distPath, 'standalone', 'videos', 'test-embed.html');
+clientsRouter.use('/videos/watch/playlist/:id', middlewares_1.asyncMiddleware(generateWatchPlaylistHtmlPage));
 clientsRouter.use('/videos/watch/:id', middlewares_1.asyncMiddleware(generateWatchHtmlPage));
 clientsRouter.use('/accounts/:nameWithHost', middlewares_1.asyncMiddleware(generateAccountHtmlPage));
 clientsRouter.use('/video-channels/:nameWithHost', middlewares_1.asyncMiddleware(generateVideoChannelHtmlPage));
-const embedCSPMiddleware = config_1.CONFIG.CSP.ENABLED
-    ? middlewares_1.embedCSP
-    : (req, res, next) => next();
-clientsRouter.use('/videos/embed', embedCSPMiddleware, (req, res) => {
-    res.removeHeader('X-Frame-Options');
-    res.sendFile(embedPath, { maxAge: 0 });
-});
-clientsRouter.use('/videos/test-embed', (req, res) => res.sendFile(testEmbedPath));
+const embedMiddlewares = [
+    config_1.CONFIG.CSP.ENABLED
+        ? middlewares_1.embedCSP
+        : (req, res, next) => next(),
+    (req, res, next) => {
+        res.removeHeader('X-Frame-Options');
+        res.setHeader('Cache-Control', 'public, max-age=0');
+        next();
+    },
+    middlewares_1.asyncMiddleware(generateEmbedHtmlPage)
+];
+clientsRouter.use('/videos/embed', ...embedMiddlewares);
+clientsRouter.use('/video-playlists/embed', ...embedMiddlewares);
+const testEmbedController = (req, res) => res.sendFile(testEmbedPath);
+clientsRouter.use('/videos/test-embed', testEmbedController);
+clientsRouter.use('/video-playlists/test-embed', testEmbedController);
 const staticClientFiles = [
     'ngsw-worker.js',
     'ngsw.json'
@@ -85,6 +93,12 @@ function serveIndexHTML(req, res) {
         return res.status(404).end();
     });
 }
+function generateEmbedHtmlPage(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const html = yield client_html_1.ClientHtml.getEmbedHTML();
+        return sendHTML(html, res);
+    });
+}
 function generateHTMLPage(req, res, paramLang) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getDefaultHTMLPage(req, res, paramLang);
@@ -94,6 +108,12 @@ function generateHTMLPage(req, res, paramLang) {
 function generateWatchHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getWatchHTMLPage(req.params.id + '', req, res);
+        return sendHTML(html, res);
+    });
+}
+function generateWatchPlaylistHtmlPage(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const html = yield client_html_1.ClientHtml.getWatchPlaylistHTMLPage(req.params.id + '', req, res);
         return sendHTML(html, res);
     });
 }

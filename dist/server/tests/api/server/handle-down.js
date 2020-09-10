@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
-const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
@@ -25,14 +24,14 @@ describe('Test handle downs', function () {
         licence: 4,
         language: 'ja',
         nsfw: true,
-        privacy: videos_1.VideoPrivacy.PUBLIC,
+        privacy: 1,
         description: 'my super description for server 1',
         support: 'my super support text for server 1',
         tags: ['tag1p1', 'tag2p1'],
         fixture: 'video_short1.webm'
     };
     const unlistedVideoAttributes = extra_utils_1.immutableAssign(videoAttributes, {
-        privacy: videos_1.VideoPrivacy.UNLISTED
+        privacy: 2
     });
     let checkAttributes;
     let unlistedCheckAttributes;
@@ -55,7 +54,7 @@ describe('Test handle downs', function () {
                 isLocal: false,
                 duration: 10,
                 tags: ['tag1p1', 'tag2p1'],
-                privacy: videos_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 commentsEnabled: true,
                 downloadEnabled: true,
                 channel: {
@@ -73,7 +72,7 @@ describe('Test handle downs', function () {
                 ]
             };
             unlistedCheckAttributes = extra_utils_1.immutableAssign(checkAttributes, {
-                privacy: videos_1.VideoPrivacy.UNLISTED
+                privacy: 2
             });
             yield extra_utils_1.setAccessTokensToServers(servers);
         });

@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 const lodash_1 = require("lodash");
 require("mocha");
-const videos_1 = require("../../../../shared/models/videos");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const expect = chai.expect;
 describe('Test a single server', function () {
@@ -28,7 +27,7 @@ describe('Test a single server', function () {
         isLocal: true,
         duration: 5,
         tags: ['tag1', 'tag2', 'tag3'],
-        privacy: videos_1.VideoPrivacy.PUBLIC,
+        privacy: 1,
         commentsEnabled: true,
         downloadEnabled: true,
         channel: {
@@ -59,7 +58,7 @@ describe('Test a single server', function () {
         },
         isLocal: true,
         tags: ['tagup1', 'tagup2'],
-        privacy: videos_1.VideoPrivacy.PUBLIC,
+        privacy: 1,
         duration: 5,
         commentsEnabled: false,
         downloadEnabled: false,

@@ -44,11 +44,12 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
         };
         return VideoChannelModel_1.count(query);
     }
-    static listForApi(actorId, start, count, sort) {
+    static listForApi(parameters) {
+        const { actorId } = parameters;
         const query = {
-            offset: start,
-            limit: count,
-            order: utils_1.getSort(sort)
+            offset: parameters.start,
+            limit: parameters.count,
+            order: utils_1.getSort(parameters.sort)
         };
         const scopes = {
             method: [ScopeNames.FOR_API, { actorId }]
@@ -109,6 +110,16 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
         });
     }
     static listByAccount(options) {
+        const escapedSearch = video_1.VideoModel.sequelize.escape(options.search);
+        const escapedLikeSearch = video_1.VideoModel.sequelize.escape('%' + options.search + '%');
+        const where = options.search
+            ? {
+                [sequelize_1.Op.or]: [
+                    sequelize_typescript_1.Sequelize.literal('lower(immutable_unaccent("VideoChannelModel"."name")) % lower(immutable_unaccent(' + escapedSearch + '))'),
+                    sequelize_typescript_1.Sequelize.literal('lower(immutable_unaccent("VideoChannelModel"."name")) LIKE lower(immutable_unaccent(' + escapedLikeSearch + '))')
+                ]
+            }
+            : null;
         const query = {
             offset: options.start,
             limit: options.count,
@@ -121,7 +132,8 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
                     },
                     required: true
                 }
-            ]
+            ],
+            where
         };
         const scopes = [ScopeNames.WITH_ACTOR];
         if (options.withStats === true) {
@@ -423,13 +435,14 @@ VideoChannelModel = VideoChannelModel_1 = tslib_1.__decorate([
             };
         },
         [ScopeNames.SUMMARY]: (options = {}) => {
+            var _a;
             const base = {
                 attributes: ['id', 'name', 'description', 'actorId'],
                 include: [
                     {
                         attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
                         model: actor_1.ActorModel.unscoped(),
-                        required: true,
+                        required: (_a = options.actorRequired) !== null && _a !== void 0 ? _a : true,
                         include: [
                             {
                                 attributes: ['host'],

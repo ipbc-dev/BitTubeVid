@@ -6,21 +6,20 @@ const ffmpeg_utils_1 = require("../helpers/ffmpeg-utils");
 const config_1 = require("../initializers/config");
 const constants_1 = require("../initializers/constants");
 const thumbnail_1 = require("../models/video/thumbnail");
-const thumbnail_type_1 = require("../../shared/models/videos/thumbnail.type");
 const image_utils_1 = require("../helpers/image-utils");
 const path_1 = require("path");
 const requests_1 = require("../helpers/requests");
 const video_paths_1 = require("./video-paths");
 function createPlaylistMiniatureFromExisting(inputPath, playlist, automaticallyGenerated, keepOriginal = false, size) {
     const { filename, outputPath, height, width, existingThumbnail } = buildMetadataFromPlaylist(playlist, size);
-    const type = thumbnail_type_1.ThumbnailType.MINIATURE;
+    const type = 1;
     const thumbnailCreator = () => image_utils_1.processImage(inputPath, outputPath, { width, height }, keepOriginal);
     return createThumbnailFromFunction({ thumbnailCreator, filename, height, width, type, automaticallyGenerated, existingThumbnail });
 }
 exports.createPlaylistMiniatureFromExisting = createPlaylistMiniatureFromExisting;
 function createPlaylistMiniatureFromUrl(fileUrl, playlist, size) {
     const { filename, basePath, height, width, existingThumbnail } = buildMetadataFromPlaylist(playlist, size);
-    const type = thumbnail_type_1.ThumbnailType.MINIATURE;
+    const type = 1;
     const thumbnailCreator = () => requests_1.downloadImage(fileUrl, basePath, filename, { width, height });
     return createThumbnailFromFunction({ thumbnailCreator, filename, height, width, type, existingThumbnail, fileUrl });
 }
@@ -73,7 +72,7 @@ function buildMetadataFromVideo(video, type, size) {
     const existingThumbnail = Array.isArray(video.Thumbnails)
         ? video.Thumbnails.find(t => t.type === type)
         : undefined;
-    if (type === thumbnail_type_1.ThumbnailType.MINIATURE) {
+    if (type === 1) {
         const filename = video.generateThumbnailName();
         const basePath = config_1.CONFIG.STORAGE.THUMBNAILS_DIR;
         return {
@@ -85,7 +84,7 @@ function buildMetadataFromVideo(video, type, size) {
             width: size ? size.width : constants_1.THUMBNAILS_SIZE.width
         };
     }
-    if (type === thumbnail_type_1.ThumbnailType.PREVIEW) {
+    if (type === 2) {
         const filename = video.generatePreviewName();
         const basePath = config_1.CONFIG.STORAGE.PREVIEWS_DIR;
         return {

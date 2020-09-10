@@ -3,8 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.unblacklistVideo = exports.blacklistVideo = exports.autoBlacklistVideoIfNeeded = void 0;
 const tslib_1 = require("tslib");
 const database_1 = require("@server/initializers/database");
-const models_1 = require("../../shared/models");
-const user_flag_model_1 = require("../../shared/models/users/user-flag.model");
 const logger_1 = require("../helpers/logger");
 const config_1 = require("../initializers/config");
 const video_blacklist_1 = require("../models/video/video-blacklist");
@@ -22,7 +20,7 @@ function autoBlacklistVideoIfNeeded(parameters) {
             videoId: video.id,
             unfederated: true,
             reason: 'Auto-blacklisted. Moderator review required.',
-            type: models_1.VideoBlacklistType.AUTO_BEFORE_PUBLISHED
+            type: 2
         };
         const [videoBlacklist] = yield video_blacklist_1.VideoBlacklistModel.findOrCreate({
             where: {
@@ -46,7 +44,7 @@ function blacklistVideo(videoInstance, options) {
             videoId: videoInstance.id,
             unfederated: options.unfederate === true,
             reason: options.reason,
-            type: models_1.VideoBlacklistType.MANUAL
+            type: 1
         });
         blacklist.Video = videoInstance;
         if (options.unfederate === true) {
@@ -69,7 +67,7 @@ function unblacklistVideo(videoBlacklist, video) {
             return videoBlacklistType;
         }));
         notifier_1.Notifier.Instance.notifyOnVideoUnblacklist(video);
-        if (videoBlacklistType === models_1.VideoBlacklistType.AUTO_BEFORE_PUBLISHED) {
+        if (videoBlacklistType === 2) {
             notifier_1.Notifier.Instance.notifyOnVideoPublishedAfterRemovedFromAutoBlacklist(video);
             delete video.VideoBlacklist;
             notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
@@ -85,7 +83,7 @@ function autoBlacklistNeeded(parameters) {
         return false;
     if (isRemote || isNew === false)
         return false;
-    if (user.hasRight(models_1.UserRight.MANAGE_VIDEO_BLACKLIST) || user.hasAdminFlag(user_flag_model_1.UserAdminFlag.BYPASS_VIDEO_AUTO_BLACKLIST))
+    if (user.hasRight(11) || user.hasAdminFlag(1))
         return false;
     return true;
 }

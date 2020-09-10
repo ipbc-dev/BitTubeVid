@@ -5,7 +5,6 @@ const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
-const videos_1 = require("../../../../shared/models/videos");
 const expect = chai.expect;
 describe('Test ActivityPub videos search', function () {
     let servers;
@@ -85,7 +84,7 @@ describe('Test ActivityPub videos search', function () {
             const attributes = {
                 name: 'updated',
                 tag: ['tag1', 'tag2'],
-                privacy: videos_1.VideoPrivacy.UNLISTED,
+                privacy: 2,
                 channelId: videoChannelId
             };
             yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, videoServer2UUID, attributes);
@@ -100,7 +99,7 @@ describe('Test ActivityPub videos search', function () {
             const video = res.body.data[0];
             expect(video.name).to.equal('updated');
             expect(video.channel.name).to.equal('super_channel');
-            expect(video.privacy.id).to.equal(videos_1.VideoPrivacy.UNLISTED);
+            expect(video.privacy.id).to.equal(2);
         });
     });
     it('Should delete video of server 2, and delete it on server 1', function () {

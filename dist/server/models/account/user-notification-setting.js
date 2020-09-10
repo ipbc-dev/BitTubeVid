@@ -3,11 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserNotificationSettingModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const user_notifications_1 = require("../../helpers/custom-validators/user-notifications");
+const oauth_model_1 = require("../../lib/oauth-model");
 const utils_1 = require("../utils");
 const user_1 = require("./user");
-const user_notifications_1 = require("../../helpers/custom-validators/user-notifications");
-const user_notification_setting_model_1 = require("../../../shared/models/users/user-notification-setting.model");
-const oauth_model_1 = require("../../lib/oauth-model");
 let UserNotificationSettingModel = class UserNotificationSettingModel extends sequelize_typescript_1.Model {
     static removeTokenCache(instance) {
         return oauth_model_1.clearCacheByUserId(instance.userId);
@@ -16,7 +15,7 @@ let UserNotificationSettingModel = class UserNotificationSettingModel extends se
         return {
             newCommentOnMyVideo: this.newCommentOnMyVideo,
             newVideoFromSubscription: this.newVideoFromSubscription,
-            videoAbuseAsModerator: this.videoAbuseAsModerator,
+            abuseAsModerator: this.abuseAsModerator,
             videoAutoBlacklistAsModerator: this.videoAutoBlacklistAsModerator,
             blacklistOnMyVideo: this.blacklistOnMyVideo,
             myVideoPublished: this.myVideoPublished,
@@ -25,7 +24,9 @@ let UserNotificationSettingModel = class UserNotificationSettingModel extends se
             commentMention: this.commentMention,
             newFollow: this.newFollow,
             newInstanceFollower: this.newInstanceFollower,
-            autoInstanceFollowing: this.autoInstanceFollowing
+            autoInstanceFollowing: this.autoInstanceFollowing,
+            abuseNewMessage: this.abuseNewMessage,
+            abuseStateChange: this.abuseStateChange
         };
     }
 };
@@ -46,10 +47,10 @@ tslib_1.__decorate([
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
-    sequelize_typescript_1.Is('UserNotificationSettingVideoAbuseAsModerator', value => utils_1.throwIfNotValid(value, user_notifications_1.isUserNotificationSettingValid, 'videoAbuseAsModerator')),
+    sequelize_typescript_1.Is('UserNotificationSettingAbuseAsModerator', value => utils_1.throwIfNotValid(value, user_notifications_1.isUserNotificationSettingValid, 'abuseAsModerator')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
-], UserNotificationSettingModel.prototype, "videoAbuseAsModerator", void 0);
+], UserNotificationSettingModel.prototype, "abuseAsModerator", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(null),
@@ -113,6 +114,20 @@ tslib_1.__decorate([
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
 ], UserNotificationSettingModel.prototype, "commentMention", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Is('UserNotificationSettingAbuseStateChange', value => utils_1.throwIfNotValid(value, user_notifications_1.isUserNotificationSettingValid, 'abuseStateChange')),
+    sequelize_typescript_1.Column,
+    tslib_1.__metadata("design:type", Number)
+], UserNotificationSettingModel.prototype, "abuseStateChange", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Default(null),
+    sequelize_typescript_1.Is('UserNotificationSettingAbuseNewMessage', value => utils_1.throwIfNotValid(value, user_notifications_1.isUserNotificationSettingValid, 'abuseNewMessage')),
+    sequelize_typescript_1.Column,
+    tslib_1.__metadata("design:type", Number)
+], UserNotificationSettingModel.prototype, "abuseNewMessage", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => user_1.UserModel),
     sequelize_typescript_1.Column,

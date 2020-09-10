@@ -7,7 +7,6 @@ const user_subscriptions_1 = require("@shared/extra-utils/users/user-subscriptio
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const user_notifications_1 = require("../../../../shared/extra-utils/users/user-notifications");
-const users_1 = require("../../../../shared/models/users");
 const expect = chai.expect;
 describe('Test notifications API', function () {
     let server;
@@ -90,12 +89,12 @@ describe('Test notifications API', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield user_notifications_1.updateMyNotificationSettings(server.url, userAccessToken, extra_utils_1.immutableAssign(user_notifications_1.getAllNotificationsSettings(), {
-                    newVideoFromSubscription: users_1.UserNotificationSettingValue.NONE
+                    newVideoFromSubscription: 0
                 }));
                 {
                     const res = yield extra_utils_1.getMyUserInformation(server.url, userAccessToken);
                     const info = res.body;
-                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(users_1.UserNotificationSettingValue.NONE);
+                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(0);
                 }
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideo(server);
                 const check = { web: true, mail: true };
@@ -106,12 +105,12 @@ describe('Test notifications API', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield user_notifications_1.updateMyNotificationSettings(server.url, userAccessToken, extra_utils_1.immutableAssign(user_notifications_1.getAllNotificationsSettings(), {
-                    newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB
+                    newVideoFromSubscription: 1
                 }));
                 {
                     const res = yield extra_utils_1.getMyUserInformation(server.url, userAccessToken);
                     const info = res.body;
-                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(users_1.UserNotificationSettingValue.WEB);
+                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(1);
                 }
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideo(server);
                 {
@@ -128,12 +127,12 @@ describe('Test notifications API', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield user_notifications_1.updateMyNotificationSettings(server.url, userAccessToken, extra_utils_1.immutableAssign(user_notifications_1.getAllNotificationsSettings(), {
-                    newVideoFromSubscription: users_1.UserNotificationSettingValue.EMAIL
+                    newVideoFromSubscription: 2
                 }));
                 {
                     const res = yield extra_utils_1.getMyUserInformation(server.url, userAccessToken);
                     const info = res.body;
-                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(users_1.UserNotificationSettingValue.EMAIL);
+                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(2);
                 }
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideo(server);
                 {
@@ -150,12 +149,12 @@ describe('Test notifications API', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 yield user_notifications_1.updateMyNotificationSettings(server.url, userAccessToken, extra_utils_1.immutableAssign(user_notifications_1.getAllNotificationsSettings(), {
-                    newVideoFromSubscription: users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL
+                    newVideoFromSubscription: 1 | 2
                 }));
                 {
                     const res = yield extra_utils_1.getMyUserInformation(server.url, userAccessToken);
                     const info = res.body;
-                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(users_1.UserNotificationSettingValue.WEB | users_1.UserNotificationSettingValue.EMAIL);
+                    expect(info.notificationSettings.newVideoFromSubscription).to.equal(1 | 2);
                 }
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideo(server);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'presence');

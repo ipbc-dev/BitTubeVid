@@ -6,7 +6,6 @@ const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const account_1 = require("../account/account");
 const video_1 = require("./video");
-const videos_1 = require("../../../shared/models/videos");
 const utils_1 = require("../utils");
 var ScopeNames;
 (function (ScopeNames) {

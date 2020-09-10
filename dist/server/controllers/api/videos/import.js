@@ -10,7 +10,6 @@ const constants_1 = require("../../../initializers/constants");
 const youtube_dl_1 = require("../../../helpers/youtube-dl");
 const express_utils_1 = require("../../../helpers/express-utils");
 const logger_1 = require("../../../helpers/logger");
-const shared_1 = require("../../../../shared");
 const video_1 = require("../../../models/video/video");
 const video_caption_1 = require("../../../models/video/video-caption");
 const captions_utils_1 = require("../../../helpers/captions-utils");
@@ -27,7 +26,6 @@ const video_blacklist_1 = require("../../../lib/video-blacklist");
 const config_1 = require("../../../initializers/config");
 const database_1 = require("../../../initializers/database");
 const thumbnail_1 = require("../../../lib/thumbnail");
-const thumbnail_type_1 = require("../../../../shared/models/videos/thumbnail.type");
 const auditLogger = audit_logger_1.auditLoggerFactory('video-imports');
 const videoImportsRouter = express.Router();
 exports.videoImportsRouter = videoImportsRouter;
@@ -73,7 +71,7 @@ function addTorrentImport(req, res, torrentfile) {
         const videoImportAttributes = {
             magnetUri,
             torrentName,
-            state: shared_1.VideoImportState.PENDING,
+            state: 1,
             userId: user.id
         };
         const videoImport = yield insertIntoDB({
@@ -124,7 +122,7 @@ function addYoutubeDLImport(req, res) {
         const tags = body.tags || youtubeDLInfo.tags;
         const videoImportAttributes = {
             targetUrl,
-            state: shared_1.VideoImportState.PENDING,
+            state: 1,
             userId: user.id
         };
         const videoImport = yield insertIntoDB({
@@ -178,11 +176,11 @@ function buildVideo(channelId, body, importData) {
         commentsEnabled: body.commentsEnabled !== false,
         downloadEnabled: body.downloadEnabled !== false,
         waitTranscoding: body.waitTranscoding || false,
-        state: shared_1.VideoState.TO_IMPORT,
+        state: 3,
         nsfw: body.nsfw || importData.nsfw || false,
         description: body.description || importData.description,
         support: body.support || null,
-        privacy: body.privacy || shared_1.VideoPrivacy.PRIVATE,
+        privacy: body.privacy || 3,
         duration: 0,
         channelId: channelId,
         originallyPublishedAt: body.originallyPublishedAt || importData.originallyPublishedAt
@@ -196,7 +194,7 @@ function processThumbnail(req, video) {
         const thumbnailField = req.files ? req.files['thumbnailfile'] : undefined;
         if (thumbnailField) {
             const thumbnailPhysicalFile = thumbnailField[0];
-            return thumbnail_1.createVideoMiniatureFromExisting(thumbnailPhysicalFile.path, video, thumbnail_type_1.ThumbnailType.MINIATURE, false);
+            return thumbnail_1.createVideoMiniatureFromExisting(thumbnailPhysicalFile.path, video, 1, false);
         }
         return undefined;
     });
@@ -206,7 +204,7 @@ function processPreview(req, video) {
         const previewField = req.files ? req.files['previewfile'] : undefined;
         if (previewField) {
             const previewPhysicalFile = previewField[0];
-            return thumbnail_1.createVideoMiniatureFromExisting(previewPhysicalFile.path, video, thumbnail_type_1.ThumbnailType.PREVIEW, false);
+            return thumbnail_1.createVideoMiniatureFromExisting(previewPhysicalFile.path, video, 2, false);
         }
         return undefined;
     });
@@ -214,7 +212,7 @@ function processPreview(req, video) {
 function processThumbnailFromUrl(url, video) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
-            return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.MINIATURE);
+            return thumbnail_1.createVideoMiniatureFromUrl(url, video, 1);
         }
         catch (err) {
             logger_1.logger.warn('Cannot generate video thumbnail %s for %s.', url, video.url, { err });
@@ -225,7 +223,7 @@ function processThumbnailFromUrl(url, video) {
 function processPreviewFromUrl(url, video) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
-            return thumbnail_1.createVideoMiniatureFromUrl(url, video, thumbnail_type_1.ThumbnailType.PREVIEW);
+            return thumbnail_1.createVideoMiniatureFromUrl(url, video, 2);
         }
         catch (err) {
             logger_1.logger.warn('Cannot generate video preview %s for %s.', url, video.url, { err });

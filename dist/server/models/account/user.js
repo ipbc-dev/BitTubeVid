@@ -3,27 +3,26 @@ var UserModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserModel = void 0;
 const tslib_1 = require("tslib");
+const lodash_1 = require("lodash");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const shared_1 = require("../../../shared");
-const users_1 = require("../../helpers/custom-validators/users");
+const users_1 = require("../../../shared/core-utils/users");
+const plugins_1 = require("../../helpers/custom-validators/plugins");
+const users_2 = require("../../helpers/custom-validators/users");
 const peertube_crypto_1 = require("../../helpers/peertube-crypto");
-const oauth_token_1 = require("../oauth/oauth-token");
-const utils_1 = require("../utils");
-const video_channel_1 = require("../video/video-channel");
-const video_playlist_1 = require("../video/video-playlist");
-const account_1 = require("./account");
-const lodash_1 = require("lodash");
 const constants_1 = require("../../initializers/constants");
 const oauth_model_1 = require("../../lib/oauth-model");
-const user_notification_setting_1 = require("./user-notification-setting");
-const video_1 = require("../video/video");
+const theme_utils_1 = require("../../lib/plugins/theme-utils");
 const actor_1 = require("../activitypub/actor");
 const actor_follow_1 = require("../activitypub/actor-follow");
+const oauth_token_1 = require("../oauth/oauth-token");
+const utils_1 = require("../utils");
+const video_1 = require("../video/video");
+const video_channel_1 = require("../video/video-channel");
 const video_import_1 = require("../video/video-import");
-const user_flag_model_1 = require("../../../shared/models/users/user-flag.model");
-const plugins_1 = require("../../helpers/custom-validators/plugins");
-const theme_utils_1 = require("../../lib/plugins/theme-utils");
+const video_playlist_1 = require("../video/video-playlist");
+const account_1 = require("./account");
+const user_notification_setting_1 = require("./user-notification-setting");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FOR_ME_API"] = "FOR_ME_API";
@@ -98,9 +97,9 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         });
     }
     static listWithRight(right) {
-        const roles = Object.keys(shared_1.USER_ROLE_LABELS)
+        const roles = Object.keys(users_1.USER_ROLE_LABELS)
             .map(k => parseInt(k, 10))
-            .filter(role => shared_1.hasUserRight(role, right));
+            .filter(role => users_1.hasUserRight(role, right));
         const query = {
             where: {
                 role: {
@@ -335,17 +334,17 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
     canGetVideo(video) {
         const videoUserId = video.VideoChannel.Account.userId;
         if (video.isBlacklisted()) {
-            return videoUserId === this.id || this.hasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST);
+            return videoUserId === this.id || this.hasRight(11);
         }
-        if (video.privacy === shared_1.VideoPrivacy.PRIVATE) {
-            return video.VideoChannel && videoUserId === this.id || this.hasRight(shared_1.UserRight.MANAGE_VIDEO_BLACKLIST);
+        if (video.privacy === 3) {
+            return video.VideoChannel && videoUserId === this.id || this.hasRight(11);
         }
-        if (video.privacy === shared_1.VideoPrivacy.INTERNAL)
+        if (video.privacy === 4)
             return true;
         return false;
     }
     hasRight(right) {
-        return shared_1.hasUserRight(this.role, right);
+        return users_1.hasUserRight(this.role, right);
     }
     hasAdminFlag(flag) {
         return this.adminFlags & flag;
@@ -357,8 +356,8 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         const videoQuotaUsed = this.get('videoQuotaUsed');
         const videoQuotaUsedDaily = this.get('videoQuotaUsedDaily');
         const videosCount = this.get('videosCount');
-        const [videoAbusesCount, videoAbusesAcceptedCount] = (this.get('videoAbusesCount') || ':').split(':');
-        const videoAbusesCreatedCount = this.get('videoAbusesCreatedCount');
+        const [abusesCount, abusesAcceptedCount] = (this.get('abusesCount') || ':').split(':');
+        const abusesCreatedCount = this.get('abusesCreatedCount');
         const videoCommentsCount = this.get('videoCommentsCount');
         const json = {
             id: this.id,
@@ -375,7 +374,7 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             autoPlayNextVideoPlaylist: this.autoPlayNextVideoPlaylist,
             videoLanguages: this.videoLanguages,
             role: this.role,
-            roleLabel: shared_1.USER_ROLE_LABELS[this.role],
+            roleLabel: users_1.USER_ROLE_LABELS[this.role],
             videoQuota: this.videoQuota,
             videoQuotaDaily: this.videoQuotaDaily,
             videoQuotaUsed: videoQuotaUsed !== undefined
@@ -387,14 +386,14 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             videosCount: videosCount !== undefined
                 ? parseInt(videosCount + '', 10)
                 : undefined,
-            videoAbusesCount: videoAbusesCount
-                ? parseInt(videoAbusesCount, 10)
+            abusesCount: abusesCount
+                ? parseInt(abusesCount, 10)
                 : undefined,
-            videoAbusesAcceptedCount: videoAbusesAcceptedCount
-                ? parseInt(videoAbusesAcceptedCount, 10)
+            abusesAcceptedCount: abusesAcceptedCount
+                ? parseInt(abusesAcceptedCount, 10)
                 : undefined,
-            videoAbusesCreatedCount: videoAbusesCreatedCount !== undefined
-                ? parseInt(videoAbusesCreatedCount + '', 10)
+            abusesCreatedCount: abusesCreatedCount !== undefined
+                ? parseInt(abusesCreatedCount + '', 10)
                 : undefined,
             videoCommentsCount: videoCommentsCount !== undefined
                 ? parseInt(videoCommentsCount + '', 10)
@@ -486,13 +485,13 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
 };
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
-    sequelize_typescript_1.Is('UserPassword', value => utils_1.throwIfNotValid(value, users_1.isUserPasswordValid, 'user password', true)),
+    sequelize_typescript_1.Is('UserPassword', value => utils_1.throwIfNotValid(value, users_2.isUserPasswordValid, 'user password', true)),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], UserModel.prototype, "password", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserUsername', value => utils_1.throwIfNotValid(value, users_1.isUserUsernameValid, 'user name')),
+    sequelize_typescript_1.Is('UserUsername', value => utils_1.throwIfNotValid(value, users_2.isUserUsernameValid, 'user name')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], UserModel.prototype, "username", void 0);
@@ -511,94 +510,94 @@ tslib_1.__decorate([
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
-    sequelize_typescript_1.Is('UserEmailVerified', value => utils_1.throwIfNotValid(value, users_1.isUserEmailVerifiedValid, 'email verified boolean', true)),
+    sequelize_typescript_1.Is('UserEmailVerified', value => utils_1.throwIfNotValid(value, users_2.isUserEmailVerifiedValid, 'email verified boolean', true)),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "emailVerified", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserNSFWPolicy', value => utils_1.throwIfNotValid(value, users_1.isUserNSFWPolicyValid, 'NSFW policy')),
+    sequelize_typescript_1.Is('UserNSFWPolicy', value => utils_1.throwIfNotValid(value, users_2.isUserNSFWPolicyValid, 'NSFW policy')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ENUM(...lodash_1.values(constants_1.NSFW_POLICY_TYPES))),
     tslib_1.__metadata("design:type", String)
 ], UserModel.prototype, "nsfwPolicy", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(true),
-    sequelize_typescript_1.Is('UserWebTorrentEnabled', value => utils_1.throwIfNotValid(value, users_1.isUserWebTorrentEnabledValid, 'WebTorrent enabled')),
+    sequelize_typescript_1.Is('UserWebTorrentEnabled', value => utils_1.throwIfNotValid(value, users_2.isUserWebTorrentEnabledValid, 'WebTorrent enabled')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "webTorrentEnabled", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(true),
-    sequelize_typescript_1.Is('UserVideosHistoryEnabled', value => utils_1.throwIfNotValid(value, users_1.isUserVideosHistoryEnabledValid, 'Videos history enabled')),
+    sequelize_typescript_1.Is('UserVideosHistoryEnabled', value => utils_1.throwIfNotValid(value, users_2.isUserVideosHistoryEnabledValid, 'Videos history enabled')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "videosHistoryEnabled", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(true),
-    sequelize_typescript_1.Is('UserAutoPlayVideo', value => utils_1.throwIfNotValid(value, users_1.isUserAutoPlayVideoValid, 'auto play video boolean')),
+    sequelize_typescript_1.Is('UserAutoPlayVideo', value => utils_1.throwIfNotValid(value, users_2.isUserAutoPlayVideoValid, 'auto play video boolean')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "autoPlayVideo", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
-    sequelize_typescript_1.Is('UserAutoPlayNextVideo', value => utils_1.throwIfNotValid(value, users_1.isUserAutoPlayNextVideoValid, 'auto play next video boolean')),
+    sequelize_typescript_1.Is('UserAutoPlayNextVideo', value => utils_1.throwIfNotValid(value, users_2.isUserAutoPlayNextVideoValid, 'auto play next video boolean')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "autoPlayNextVideo", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(true),
-    sequelize_typescript_1.Is('UserAutoPlayNextVideoPlaylist', value => utils_1.throwIfNotValid(value, users_1.isUserAutoPlayNextVideoPlaylistValid, 'auto play next video for playlists boolean')),
+    sequelize_typescript_1.Is('UserAutoPlayNextVideoPlaylist', value => utils_1.throwIfNotValid(value, users_2.isUserAutoPlayNextVideoPlaylistValid, 'auto play next video for playlists boolean')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "autoPlayNextVideoPlaylist", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
-    sequelize_typescript_1.Is('UserVideoLanguages', value => utils_1.throwIfNotValid(value, users_1.isUserVideoLanguages, 'video languages')),
+    sequelize_typescript_1.Is('UserVideoLanguages', value => utils_1.throwIfNotValid(value, users_2.isUserVideoLanguages, 'video languages')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.ARRAY(sequelize_typescript_1.DataType.STRING)),
     tslib_1.__metadata("design:type", Array)
 ], UserModel.prototype, "videoLanguages", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Default(user_flag_model_1.UserAdminFlag.NONE),
-    sequelize_typescript_1.Is('UserAdminFlags', value => utils_1.throwIfNotValid(value, users_1.isUserAdminFlagsValid, 'user admin flags')),
+    sequelize_typescript_1.Default(0),
+    sequelize_typescript_1.Is('UserAdminFlags', value => utils_1.throwIfNotValid(value, users_2.isUserAdminFlagsValid, 'user admin flags')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
 ], UserModel.prototype, "adminFlags", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
-    sequelize_typescript_1.Is('UserBlocked', value => utils_1.throwIfNotValid(value, users_1.isUserBlockedValid, 'blocked boolean')),
+    sequelize_typescript_1.Is('UserBlocked', value => utils_1.throwIfNotValid(value, users_2.isUserBlockedValid, 'blocked boolean')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "blocked", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),
-    sequelize_typescript_1.Is('UserBlockedReason', value => utils_1.throwIfNotValid(value, users_1.isUserBlockedReasonValid, 'blocked reason', true)),
+    sequelize_typescript_1.Is('UserBlockedReason', value => utils_1.throwIfNotValid(value, users_2.isUserBlockedReasonValid, 'blocked reason', true)),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], UserModel.prototype, "blockedReason", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserRole', value => utils_1.throwIfNotValid(value, users_1.isUserRoleValid, 'role')),
+    sequelize_typescript_1.Is('UserRole', value => utils_1.throwIfNotValid(value, users_2.isUserRoleValid, 'role')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
 ], UserModel.prototype, "role", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserVideoQuota', value => utils_1.throwIfNotValid(value, users_1.isUserVideoQuotaValid, 'video quota')),
+    sequelize_typescript_1.Is('UserVideoQuota', value => utils_1.throwIfNotValid(value, users_2.isUserVideoQuotaValid, 'video quota')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT),
     tslib_1.__metadata("design:type", Number)
 ], UserModel.prototype, "videoQuota", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('UserVideoQuotaDaily', value => utils_1.throwIfNotValid(value, users_1.isUserVideoQuotaDailyValid, 'video quota daily')),
+    sequelize_typescript_1.Is('UserVideoQuotaDaily', value => utils_1.throwIfNotValid(value, users_2.isUserVideoQuotaDailyValid, 'video quota daily')),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.BIGINT),
     tslib_1.__metadata("design:type", Number)
 ], UserModel.prototype, "videoQuotaDaily", void 0);
@@ -612,14 +611,14 @@ tslib_1.__decorate([
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
-    sequelize_typescript_1.Is('UserNoInstanceConfigWarningModal', value => utils_1.throwIfNotValid(value, users_1.isNoInstanceConfigWarningModal, 'no instance config warning modal')),
+    sequelize_typescript_1.Is('UserNoInstanceConfigWarningModal', value => utils_1.throwIfNotValid(value, users_2.isNoInstanceConfigWarningModal, 'no instance config warning modal')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "noInstanceConfigWarningModal", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(false),
     sequelize_typescript_1.Default(false),
-    sequelize_typescript_1.Is('UserNoInstanceConfigWarningModal', value => utils_1.throwIfNotValid(value, users_1.isNoWelcomeModal, 'no welcome modal')),
+    sequelize_typescript_1.Is('UserNoInstanceConfigWarningModal', value => utils_1.throwIfNotValid(value, users_2.isNoWelcomeModal, 'no welcome modal')),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Boolean)
 ], UserModel.prototype, "noWelcomeModal", void 0);
@@ -715,7 +714,7 @@ UserModel = UserModel_1 = tslib_1.__decorate([
                             required: true,
                             where: {
                                 type: {
-                                    [sequelize_1.Op.ne]: shared_1.VideoPlaylistType.REGULAR
+                                    [sequelize_1.Op.ne]: 1
                                 }
                             }
                         }
@@ -741,7 +740,7 @@ UserModel = UserModel_1 = tslib_1.__decorate([
                             required: true,
                             where: {
                                 type: {
-                                    [sequelize_1.Op.ne]: shared_1.VideoPlaylistType.REGULAR
+                                    [sequelize_1.Op.ne]: 1
                                 }
                             }
                         }
@@ -775,25 +774,23 @@ UserModel = UserModel_1 = tslib_1.__decorate([
                         sequelize_1.literal('(' +
                             `SELECT concat_ws(':', "abuses", "acceptedAbuses") ` +
                             'FROM (' +
-                            'SELECT COUNT("videoAbuse"."id") AS "abuses", ' +
-                            `COUNT("videoAbuse"."id") FILTER (WHERE "videoAbuse"."state" = ${shared_1.VideoAbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
-                            'FROM "videoAbuse" ' +
-                            'INNER JOIN "video" ON "videoAbuse"."videoId" = "video"."id" ' +
-                            'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-                            'INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ' +
+                            'SELECT COUNT("abuse"."id") AS "abuses", ' +
+                            `COUNT("abuse"."id") FILTER (WHERE "abuse"."state" = ${3}) AS "acceptedAbuses" ` +
+                            'FROM "abuse" ' +
+                            'INNER JOIN "account" ON "account"."id" = "abuse"."flaggedAccountId" ' +
                             'WHERE "account"."userId" = "UserModel"."id"' +
                             ') t' +
                             ')'),
-                        'videoAbusesCount'
+                        'abusesCount'
                     ],
                     [
                         sequelize_1.literal('(' +
-                            'SELECT COUNT("videoAbuse"."id") ' +
-                            'FROM "videoAbuse" ' +
-                            'INNER JOIN "account" ON "account"."id" = "videoAbuse"."reporterAccountId" ' +
+                            'SELECT COUNT("abuse"."id") ' +
+                            'FROM "abuse" ' +
+                            'INNER JOIN "account" ON "account"."id" = "abuse"."reporterAccountId" ' +
                             'WHERE "account"."userId" = "UserModel"."id"' +
                             ')'),
-                        'videoAbusesCreatedCount'
+                        'abusesCreatedCount'
                     ],
                     [
                         sequelize_1.literal('(' +

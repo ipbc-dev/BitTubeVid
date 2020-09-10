@@ -3,24 +3,26 @@ var UserNotificationModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserNotificationModel = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const shared_1 = require("../../../shared");
-const utils_1 = require("../utils");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const user_notifications_1 = require("../../helpers/custom-validators/user-notifications");
-const user_1 = require("./user");
-const video_1 = require("../video/video");
-const video_comment_1 = require("../video/video-comment");
-const sequelize_1 = require("sequelize");
-const video_channel_1 = require("../video/video-channel");
-const account_1 = require("./account");
-const video_abuse_1 = require("../video/video-abuse");
-const video_blacklist_1 = require("../video/video-blacklist");
-const video_import_1 = require("../video/video-import");
+const abuse_1 = require("../abuse/abuse");
+const video_abuse_1 = require("../abuse/video-abuse");
+const video_comment_abuse_1 = require("../abuse/video-comment-abuse");
 const actor_1 = require("../activitypub/actor");
 const actor_follow_1 = require("../activitypub/actor-follow");
 const avatar_1 = require("../avatar/avatar");
 const server_1 = require("../server/server");
+const utils_1 = require("../utils");
+const video_1 = require("../video/video");
+const video_blacklist_1 = require("../video/video-blacklist");
+const video_channel_1 = require("../video/video-channel");
+const video_comment_1 = require("../video/video-comment");
+const video_import_1 = require("../video/video-import");
+const account_1 = require("./account");
+const user_1 = require("./user");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ALL"] = "WITH_ALL";
@@ -118,10 +120,7 @@ let UserNotificationModel = UserNotificationModel_1 = class UserNotificationMode
             account: this.formatActor(this.Comment.Account),
             video: this.formatVideo(this.Comment.Video)
         } : undefined;
-        const videoAbuse = this.VideoAbuse ? {
-            id: this.VideoAbuse.id,
-            video: this.formatVideo(this.VideoAbuse.Video)
-        } : undefined;
+        const abuse = this.Abuse ? this.formatAbuse(this.Abuse) : undefined;
         const videoBlacklist = this.VideoBlacklist ? {
             id: this.VideoBlacklist.id,
             video: this.formatVideo(this.VideoBlacklist.Video)
@@ -156,7 +155,7 @@ let UserNotificationModel = UserNotificationModel_1 = class UserNotificationMode
             video,
             videoImport,
             comment,
-            videoAbuse,
+            abuse,
             videoBlacklist,
             account,
             actorFollow,
@@ -169,6 +168,26 @@ let UserNotificationModel = UserNotificationModel_1 = class UserNotificationMode
             id: video.id,
             uuid: video.uuid,
             name: video.name
+        };
+    }
+    formatAbuse(abuse) {
+        var _a, _b;
+        const commentAbuse = ((_a = abuse.VideoCommentAbuse) === null || _a === void 0 ? void 0 : _a.VideoComment) ? {
+            threadId: abuse.VideoCommentAbuse.VideoComment.getThreadId(),
+            video: {
+                id: abuse.VideoCommentAbuse.VideoComment.Video.id,
+                name: abuse.VideoCommentAbuse.VideoComment.Video.name,
+                uuid: abuse.VideoCommentAbuse.VideoComment.Video.uuid
+            }
+        } : undefined;
+        const videoAbuse = ((_b = abuse.VideoAbuse) === null || _b === void 0 ? void 0 : _b.Video) ? this.formatVideo(abuse.VideoAbuse.Video) : undefined;
+        const accountAbuse = (!commentAbuse && !videoAbuse) ? this.formatActor(abuse.FlaggedAccount) : undefined;
+        return {
+            id: abuse.id,
+            state: abuse.state,
+            video: videoAbuse,
+            comment: commentAbuse,
+            account: accountAbuse
         };
     }
     formatActor(accountOrChannel) {
@@ -249,19 +268,19 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:type", video_comment_1.VideoCommentModel)
 ], UserNotificationModel.prototype, "Comment", void 0);
 tslib_1.__decorate([
-    sequelize_typescript_1.ForeignKey(() => video_abuse_1.VideoAbuseModel),
+    sequelize_typescript_1.ForeignKey(() => abuse_1.AbuseModel),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", Number)
-], UserNotificationModel.prototype, "videoAbuseId", void 0);
+], UserNotificationModel.prototype, "abuseId", void 0);
 tslib_1.__decorate([
-    sequelize_typescript_1.BelongsTo(() => video_abuse_1.VideoAbuseModel, {
+    sequelize_typescript_1.BelongsTo(() => abuse_1.AbuseModel, {
         foreignKey: {
             allowNull: true
         },
         onDelete: 'cascade'
     }),
-    tslib_1.__metadata("design:type", video_abuse_1.VideoAbuseModel)
-], UserNotificationModel.prototype, "VideoAbuse", void 0);
+    tslib_1.__metadata("design:type", abuse_1.AbuseModel)
+], UserNotificationModel.prototype, "Abuse", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.ForeignKey(() => video_blacklist_1.VideoBlacklistModel),
     sequelize_typescript_1.Column,
@@ -335,10 +354,42 @@ UserNotificationModel = UserNotificationModel_1 = tslib_1.__decorate([
                     ]
                 },
                 {
-                    attributes: ['id'],
-                    model: video_abuse_1.VideoAbuseModel.unscoped(),
+                    attributes: ['id', 'state'],
+                    model: abuse_1.AbuseModel.unscoped(),
                     required: false,
-                    include: [buildVideoInclude(true)]
+                    include: [
+                        {
+                            attributes: ['id'],
+                            model: video_abuse_1.VideoAbuseModel.unscoped(),
+                            required: false,
+                            include: [buildVideoInclude(true)]
+                        },
+                        {
+                            attributes: ['id'],
+                            model: video_comment_abuse_1.VideoCommentAbuseModel.unscoped(),
+                            required: false,
+                            include: [
+                                {
+                                    attributes: ['id', 'originCommentId'],
+                                    model: video_comment_1.VideoCommentModel,
+                                    required: true,
+                                    include: [
+                                        {
+                                            attributes: ['id', 'name', 'uuid'],
+                                            model: video_1.VideoModel.unscoped(),
+                                            required: true
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            model: account_1.AccountModel,
+                            as: 'FlaggedAccount',
+                            required: true,
+                            include: [buildActorWithAvatarInclude()]
+                        }
+                    ]
                 },
                 {
                     attributes: ['id'],
@@ -424,9 +475,9 @@ UserNotificationModel = UserNotificationModel_1 = tslib_1.__decorate([
                 }
             },
             {
-                fields: ['videoAbuseId'],
+                fields: ['abuseId'],
                 where: {
-                    videoAbuseId: {
+                    abuseId: {
                         [sequelize_1.Op.ne]: null
                     }
                 }

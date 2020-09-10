@@ -350,6 +350,30 @@ describe('Test video channels', function () {
             expect(totoChannel.videosCount).to.equal(0);
         });
     });
+    it('Should search among account video channels', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            {
+                const res = yield index_1.getAccountVideoChannelsList({
+                    url: servers[0].url,
+                    accountName: userInfo.account.name + '@' + userInfo.account.host,
+                    search: 'root'
+                });
+                expect(res.body.total).to.equal(1);
+                const channels = res.body.data;
+                expect(channels).to.have.lengthOf(1);
+            }
+            {
+                const res = yield index_1.getAccountVideoChannelsList({
+                    url: servers[0].url,
+                    accountName: userInfo.account.name + '@' + userInfo.account.host,
+                    search: 'does not exist'
+                });
+                expect(res.body.total).to.equal(0);
+                const channels = res.body.data;
+                expect(channels).to.have.lengthOf(0);
+            }
+        });
+    });
     after(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.cleanupTests(servers);

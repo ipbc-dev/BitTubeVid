@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.videosSearchValidator = exports.videoChannelsSearchValidator = void 0;
+exports.videoChannelsOwnSearchValidator = exports.videoChannelsListSearchValidator = exports.videosSearchValidator = void 0;
 const utils_1 = require("./utils");
 const logger_1 = require("../../helpers/logger");
 const express_validator_1 = require("express-validator");
@@ -23,7 +23,7 @@ const videosSearchValidator = [
     }
 ];
 exports.videosSearchValidator = videosSearchValidator;
-const videoChannelsSearchValidator = [
+const videoChannelsListSearchValidator = [
     express_validator_1.query('search').not().isEmpty().withMessage('Should have a valid search'),
     express_validator_1.query('searchTarget').optional().custom(search_1.isSearchTargetValid).withMessage('Should have a valid search target'),
     (req, res, next) => {
@@ -33,4 +33,14 @@ const videoChannelsSearchValidator = [
         return next();
     }
 ];
-exports.videoChannelsSearchValidator = videoChannelsSearchValidator;
+exports.videoChannelsListSearchValidator = videoChannelsListSearchValidator;
+const videoChannelsOwnSearchValidator = [
+    express_validator_1.query('search').optional().not().isEmpty().withMessage('Should have a valid search'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking video channels search query', { parameters: req.query });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.videoChannelsOwnSearchValidator = videoChannelsOwnSearchValidator;

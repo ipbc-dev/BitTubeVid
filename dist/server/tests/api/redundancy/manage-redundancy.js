@@ -6,7 +6,6 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const redundancy_1 = require("@shared/extra-utils/server/redundancy");
-const models_1 = require("@shared/models");
 const expect = chai.expect;
 describe('Test manage videos redundancy', function () {
     const targets = ['my-videos', 'remote-videos'];
@@ -191,7 +190,7 @@ describe('Test manage videos redundancy', function () {
     it('Should manually add a redundancy and list it', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
-            const uuid = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'video 3 server 2', privacy: models_1.VideoPrivacy.UNLISTED })).uuid;
+            const uuid = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'video 3 server 2', privacy: 2 })).uuid;
             yield jobs_1.waitJobs(servers);
             const videoId = yield extra_utils_1.getLocalIdByUUID(servers[0].url, uuid);
             yield redundancy_1.addVideoRedundancy({

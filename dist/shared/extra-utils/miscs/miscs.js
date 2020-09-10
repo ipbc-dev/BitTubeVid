@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateVideoWithFramerate = exports.generateHighBitrateVideo = exports.root = exports.buildAbsoluteFixturePath = exports.testImage = exports.immutableAssign = exports.webtorrentAdd = exports.buildServerDirectory = exports.wait = exports.dateIsValid = void 0;
+exports.generateVideoWithFramerate = exports.generateHighBitrateVideo = exports.root = exports.buildAbsoluteFixturePath = exports.testImage = exports.immutableAssign = exports.webtorrentAdd = exports.buildServerDirectory = exports.areHttpImportTestsDisabled = exports.wait = exports.dateIsValid = void 0;
 const tslib_1 = require("tslib");
 const chai = require("chai");
 const path_1 = require("path");
@@ -58,18 +58,21 @@ function testImage(url, imageName, imagePath, extension = '.jpg') {
 }
 exports.testImage = testImage;
 function buildAbsoluteFixturePath(path, customCIPath = false) {
-    if (path_1.isAbsolute(path)) {
+    if (path_1.isAbsolute(path))
         return path;
-    }
-    if (customCIPath) {
-        if (process.env.GITLAB_CI)
-            return path_1.join(root(), 'cached-fixtures', path);
-        if (process.env.TRAVIS)
-            return path_1.join(process.env.HOME, 'fixtures', path);
+    if (customCIPath && process.env.GITHUB_WORKSPACE) {
+        return path_1.join(process.env.GITHUB_WORKSPACE, 'fixtures', path);
     }
     return path_1.join(root(), 'server', 'tests', 'fixtures', path);
 }
 exports.buildAbsoluteFixturePath = buildAbsoluteFixturePath;
+function areHttpImportTestsDisabled() {
+    const disabled = process.env.DISABLE_HTTP_IMPORT_TESTS === 'true';
+    if (disabled)
+        console.log('Import tests are disabled');
+    return disabled;
+}
+exports.areHttpImportTestsDisabled = areHttpImportTestsDisabled;
 function generateHighBitrateVideo() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const tempFixturePath = buildAbsoluteFixturePath('video_high_bitrate_1080p.mp4', true);

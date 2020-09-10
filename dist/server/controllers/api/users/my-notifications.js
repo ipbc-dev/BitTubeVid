@@ -28,7 +28,7 @@ function updateNotificationSettings(req, res) {
         const values = {
             newVideoFromSubscription: body.newVideoFromSubscription,
             newCommentOnMyVideo: body.newCommentOnMyVideo,
-            videoAbuseAsModerator: body.videoAbuseAsModerator,
+            abuseAsModerator: body.abuseAsModerator,
             videoAutoBlacklistAsModerator: body.videoAutoBlacklistAsModerator,
             blacklistOnMyVideo: body.blacklistOnMyVideo,
             myVideoPublished: body.myVideoPublished,
@@ -37,7 +37,9 @@ function updateNotificationSettings(req, res) {
             newUserRegistration: body.newUserRegistration,
             commentMention: body.commentMention,
             newInstanceFollower: body.newInstanceFollower,
-            autoInstanceFollowing: body.autoInstanceFollowing
+            autoInstanceFollowing: body.autoInstanceFollowing,
+            abuseNewMessage: body.abuseNewMessage,
+            abuseStateChange: body.abuseStateChange
         };
         yield user_notification_setting_1.UserNotificationSettingModel.update(values, query);
         return res.status(204).end();

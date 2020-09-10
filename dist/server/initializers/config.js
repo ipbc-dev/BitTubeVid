@@ -16,6 +16,7 @@ const CONFIG = {
         DBNAME: config.has('database.name') ? config.get('database.name') : 'peertube' + config.get('database.suffix'),
         HOSTNAME: config.get('database.hostname'),
         PORT: config.get('database.port'),
+        SSL: config.get('database.ssl'),
         USERNAME: config.get('database.username'),
         PASSWORD: config.get('database.password'),
         POOL: {

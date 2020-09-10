@@ -11,8 +11,6 @@ const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
 const validator_1 = require("validator");
 const sequelize_1 = require("sequelize");
-const video_playlist_element_model_1 = require("../../../shared/models/videos/playlist/video-playlist-element.model");
-const videos_1 = require("../../../shared/models/videos");
 let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylistElementModel extends sequelize_typescript_1.Model {
     static deleteAllOf(videoPlaylistId, transaction) {
         const query = {
@@ -74,9 +72,8 @@ let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylis
     static loadById(playlistElementId) {
         return VideoPlaylistElementModel_1.findByPk(playlistElementId);
     }
-    static loadByPlaylistAndVideoForAP(playlistId, videoId) {
+    static loadByPlaylistAndElementIdForAP(playlistId, playlistElementId) {
         const playlistWhere = validator_1.default.isUUID('' + playlistId) ? { uuid: playlistId } : { id: playlistId };
-        const videoWhere = validator_1.default.isUUID('' + videoId) ? { uuid: videoId } : { id: videoId };
         const query = {
             include: [
                 {
@@ -86,10 +83,12 @@ let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylis
                 },
                 {
                     attributes: ['url'],
-                    model: video_1.VideoModel.unscoped(),
-                    where: videoWhere
+                    model: video_1.VideoModel.unscoped()
                 }
-            ]
+            ],
+            where: {
+                id: playlistElementId
+            }
         };
         return VideoPlaylistElementModel_1.findOne(query);
     }
@@ -165,23 +164,23 @@ let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylis
     getType(displayNSFW, accountId) {
         const video = this.Video;
         if (!video)
-            return video_playlist_element_model_1.VideoPlaylistElementType.DELETED;
+            return 1;
         if (accountId && video.VideoChannel.Account.id === accountId)
-            return video_playlist_element_model_1.VideoPlaylistElementType.REGULAR;
-        if (video.privacy === videos_1.VideoPrivacy.INTERNAL && accountId)
-            return video_playlist_element_model_1.VideoPlaylistElementType.REGULAR;
-        if (video.privacy === videos_1.VideoPrivacy.PRIVATE || video.privacy === videos_1.VideoPrivacy.INTERNAL)
-            return video_playlist_element_model_1.VideoPlaylistElementType.PRIVATE;
+            return 0;
+        if (video.privacy === 4 && accountId)
+            return 0;
+        if (video.privacy === 3 || video.privacy === 4)
+            return 2;
         if (video.isBlacklisted() || video.isBlocked())
-            return video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE;
+            return 3;
         if (video.nsfw === true && displayNSFW === false)
-            return video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE;
-        return video_playlist_element_model_1.VideoPlaylistElementType.REGULAR;
+            return 3;
+        return 0;
     }
     getVideoElement(displayNSFW, accountId) {
         if (!this.Video)
             return null;
-        if (this.getType(displayNSFW, accountId) !== video_playlist_element_model_1.VideoPlaylistElementType.REGULAR)
+        if (this.getType(displayNSFW, accountId) !== 0)
             return null;
         return this.Video.toFormattedJSON();
     }
@@ -218,8 +217,8 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:type", Date)
 ], VideoPlaylistElementModel.prototype, "updatedAt", void 0);
 tslib_1.__decorate([
-    sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('VideoPlaylistUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url')),
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Is('VideoPlaylistUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url', true)),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.VIDEO_PLAYLISTS.URL.max)),
     tslib_1.__metadata("design:type", String)
 ], VideoPlaylistElementModel.prototype, "url", void 0);
@@ -282,10 +281,6 @@ VideoPlaylistElementModel = VideoPlaylistElementModel_1 = tslib_1.__decorate([
             },
             {
                 fields: ['videoId']
-            },
-            {
-                fields: ['videoPlaylistId', 'videoId'],
-                unique: true
             },
             {
                 fields: ['url'],

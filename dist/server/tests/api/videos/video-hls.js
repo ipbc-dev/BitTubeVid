@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const video_streaming_playlist_type_1 = require("../../../../shared/models/videos/video-streaming-playlist.type");
 const path_1 = require("path");
 const constants_1 = require("../../../initializers/constants");
 const expect = chai.expect;
@@ -15,7 +14,7 @@ function checkHlsPlaylist(servers, videoUUID, hlsOnly, resolutions = [240, 360, 
             const videoDetails = resVideoDetails.body;
             const baseUrl = `http://${videoDetails.account.host}`;
             expect(videoDetails.streamingPlaylists).to.have.lengthOf(1);
-            const hlsPlaylist = videoDetails.streamingPlaylists.find(p => p.type === video_streaming_playlist_type_1.VideoStreamingPlaylistType.HLS);
+            const hlsPlaylist = videoDetails.streamingPlaylists.find(p => p.type === 1);
             expect(hlsPlaylist).to.not.be.undefined;
             const hlsFiles = hlsPlaylist.files;
             expect(hlsFiles).to.have.lengthOf(resolutions.length);

@@ -4,10 +4,6 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
-const video_playlist_privacy_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-privacy.model");
-const videos_1 = require("../../../../shared/models/videos");
-const video_playlist_type_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-type.model");
-const video_playlist_element_model_1 = require("../../../../shared/models/videos/playlist/video-playlist-element.model");
 const blocklist_1 = require("../../../../shared/extra-utils/users/blocklist");
 const expect = chai.expect;
 function checkPlaylistElementType(servers, playlistId, type, position, name, total) {
@@ -17,7 +13,7 @@ function checkPlaylistElementType(servers, playlistId, type, position, name, tot
             expect(res.body.total).to.equal(total);
             const videoElement = res.body.data.find((e) => e.position === position);
             expect(videoElement.type).to.equal(type, 'On server ' + server.url);
-            if (type === video_playlist_element_model_1.VideoPlaylistElementType.REGULAR) {
+            if (type === 0) {
                 expect(videoElement.video).to.not.be.null;
                 expect(videoElement.video.name).to.equal(name);
             }
@@ -89,16 +85,16 @@ describe('Test video playlists', function () {
                 const url = servers[0].url;
                 const accessToken = servers[0].accessToken;
                 {
-                    const res = yield extra_utils_1.getAccountPlaylistsListWithToken(url, accessToken, 'root', 0, 5, video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER);
+                    const res = yield extra_utils_1.getAccountPlaylistsListWithToken(url, accessToken, 'root', 0, 5, 2);
                     expect(res.body.total).to.equal(1);
                     expect(res.body.data).to.have.lengthOf(1);
                     const playlist = res.body.data[0];
                     expect(playlist.displayName).to.equal('Watch later');
-                    expect(playlist.type.id).to.equal(video_playlist_type_model_1.VideoPlaylistType.WATCH_LATER);
+                    expect(playlist.type.id).to.equal(2);
                     expect(playlist.type.label).to.equal('Watch later');
                 }
                 {
-                    const res = yield extra_utils_1.getAccountPlaylistsListWithToken(url, accessToken, 'root', 0, 5, video_playlist_type_model_1.VideoPlaylistType.REGULAR);
+                    const res = yield extra_utils_1.getAccountPlaylistsListWithToken(url, accessToken, 'root', 0, 5, 1);
                     expect(res.body.total).to.equal(0);
                     expect(res.body.data).to.have.lengthOf(0);
                 }
@@ -129,7 +125,7 @@ describe('Test video playlists', function () {
                     token: servers[0].accessToken,
                     playlistAttrs: {
                         displayName: 'my super playlist',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         description: 'my super description',
                         thumbnailfile: 'thumbnail.jpg',
                         videoChannelId: servers[0].videoChannel.id
@@ -149,10 +145,11 @@ describe('Test video playlists', function () {
                         expect(playlist.isLocal).to.equal(server.serverNumber === 1);
                         expect(playlist.displayName).to.equal('my super playlist');
                         expect(playlist.description).to.equal('my super description');
-                        expect(playlist.privacy.id).to.equal(video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC);
+                        expect(playlist.privacy.id).to.equal(1);
                         expect(playlist.privacy.label).to.equal('Public');
-                        expect(playlist.type.id).to.equal(video_playlist_type_model_1.VideoPlaylistType.REGULAR);
+                        expect(playlist.type.id).to.equal(1);
                         expect(playlist.type.label).to.equal('Regular');
+                        expect(playlist.embedPath).to.equal('/video-playlists/embed/' + playlist.uuid);
                         expect(playlist.videosLength).to.equal(0);
                         expect(playlist.ownerAccount.name).to.equal('root');
                         expect(playlist.ownerAccount.displayName).to.equal('root');
@@ -171,7 +168,7 @@ describe('Test video playlists', function () {
                         token: servers[1].accessToken,
                         playlistAttrs: {
                             displayName: 'playlist 2',
-                            privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                            privacy: 1,
                             videoChannelId: servers[1].videoChannel.id
                         }
                     });
@@ -183,7 +180,7 @@ describe('Test video playlists', function () {
                         token: servers[1].accessToken,
                         playlistAttrs: {
                             displayName: 'playlist 3',
-                            privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                            privacy: 1,
                             thumbnailfile: 'thumbnail.jpg',
                             videoChannelId: servers[1].videoChannel.id
                         }
@@ -306,7 +303,7 @@ describe('Test video playlists', function () {
                     token: servers[1].accessToken,
                     playlistAttrs: {
                         displayName: 'playlist unlisted',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED
+                        privacy: 2
                     }
                 });
                 yield extra_utils_1.createVideoPlaylist({
@@ -314,7 +311,7 @@ describe('Test video playlists', function () {
                     token: servers[1].accessToken,
                     playlistAttrs: {
                         displayName: 'playlist private',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE
+                        privacy: 3
                     }
                 });
                 yield extra_utils_1.waitJobs(servers);
@@ -345,7 +342,7 @@ describe('Test video playlists', function () {
                     playlistAttrs: {
                         displayName: 'playlist 3 updated',
                         description: 'description updated',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED,
+                        privacy: 2,
                         thumbnailfile: 'thumbnail.jpg',
                         videoChannelId: servers[1].videoChannel.id
                     },
@@ -357,9 +354,9 @@ describe('Test video playlists', function () {
                     const playlist = res.body;
                     expect(playlist.displayName).to.equal('playlist 3 updated');
                     expect(playlist.description).to.equal('description updated');
-                    expect(playlist.privacy.id).to.equal(video_playlist_privacy_model_1.VideoPlaylistPrivacy.UNLISTED);
+                    expect(playlist.privacy.id).to.equal(2);
                     expect(playlist.privacy.label).to.equal('Unlisted');
-                    expect(playlist.type.id).to.equal(video_playlist_type_model_1.VideoPlaylistType.REGULAR);
+                    expect(playlist.type.id).to.equal(1);
                     expect(playlist.type.label).to.equal('Regular');
                     expect(playlist.videosLength).to.equal(2);
                     expect(playlist.ownerAccount.name).to.equal('root');
@@ -382,7 +379,7 @@ describe('Test video playlists', function () {
                     token: servers[0].accessToken,
                     playlistAttrs: {
                         displayName: 'playlist 4',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: servers[0].videoChannel.id
                     }
                 });
@@ -402,6 +399,8 @@ describe('Test video playlists', function () {
                 {
                     const res = yield addVideo({ videoId: nsfwVideoServer1, startTimestamp: 5 });
                     playlistElementNSFW = res.body.videoPlaylistElement.id;
+                    yield addVideo({ videoId: nsfwVideoServer1, startTimestamp: 4 });
+                    yield addVideo({ videoId: nsfwVideoServer1 });
                 }
                 yield extra_utils_1.waitJobs(servers);
             });
@@ -411,9 +410,9 @@ describe('Test video playlists', function () {
                 this.timeout(30000);
                 for (const server of servers) {
                     const res = yield extra_utils_1.getPlaylistVideos(server.url, server.accessToken, playlistServer1UUID, 0, 10);
-                    expect(res.body.total).to.equal(6);
+                    expect(res.body.total).to.equal(8);
                     const videoElements = res.body.data;
-                    expect(videoElements).to.have.lengthOf(6);
+                    expect(videoElements).to.have.lengthOf(8);
                     expect(videoElements[0].video.name).to.equal('video 0 server 1');
                     expect(videoElements[0].position).to.equal(1);
                     expect(videoElements[0].startTimestamp).to.equal(15);
@@ -438,6 +437,14 @@ describe('Test video playlists', function () {
                     expect(videoElements[5].position).to.equal(6);
                     expect(videoElements[5].startTimestamp).to.equal(5);
                     expect(videoElements[5].stopTimestamp).to.be.null;
+                    expect(videoElements[6].video.name).to.equal('NSFW video');
+                    expect(videoElements[6].position).to.equal(7);
+                    expect(videoElements[6].startTimestamp).to.equal(4);
+                    expect(videoElements[6].stopTimestamp).to.be.null;
+                    expect(videoElements[7].video.name).to.equal('NSFW video');
+                    expect(videoElements[7].position).to.equal(8);
+                    expect(videoElements[7].startTimestamp).to.be.null;
+                    expect(videoElements[7].stopTimestamp).to.be.null;
                     const res3 = yield extra_utils_1.getPlaylistVideos(server.url, server.accessToken, playlistServer1UUID, 0, 2);
                     expect(res3.body.data).to.have.lengthOf(2);
                 }
@@ -464,7 +471,7 @@ describe('Test video playlists', function () {
                     token: userAccessTokenServer1,
                     playlistAttrs: {
                         displayName: 'playlist 56',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: servers[0].videoChannel.id
                     }
                 });
@@ -488,20 +495,20 @@ describe('Test video playlists', function () {
                 const name = 'video 89';
                 const position = 1;
                 {
-                    yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, video1, { privacy: videos_1.VideoPrivacy.PRIVATE });
+                    yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, video1, { privacy: 3 });
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.PRIVATE, position, name, 3);
-                    yield checkPlaylistElementType(group1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.PRIVATE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.DELETED, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, 2, position, name, 3);
+                    yield checkPlaylistElementType(group1, playlistServer1UUID2, 2, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 1, position, name, 3);
                 }
                 {
-                    yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, video1, { privacy: videos_1.VideoPrivacy.PUBLIC });
+                    yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, video1, { privacy: 1 });
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(group1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.DELETED, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(group1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 1, position, name, 3);
                 }
             });
         });
@@ -513,18 +520,18 @@ describe('Test video playlists', function () {
                 {
                     yield extra_utils_1.addVideoToBlacklist(servers[0].url, servers[0].accessToken, video1, 'reason', true);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.DELETED, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 1, position, name, 3);
                 }
                 {
                     yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, video1);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(group1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.DELETED, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(groupWithoutToken1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(group1, playlistServer1UUID2, 0, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 1, position, name, 3);
                 }
             });
         });
@@ -536,38 +543,38 @@ describe('Test video playlists', function () {
                 {
                     yield blocklist_1.addAccountToAccountBlocklist(servers[0].url, userAccessTokenServer1, 'root@localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                     yield blocklist_1.removeAccountFromAccountBlocklist(servers[0].url, userAccessTokenServer1, 'root@localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                 }
                 {
                     yield blocklist_1.addServerToAccountBlocklist(servers[0].url, userAccessTokenServer1, 'localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                     yield blocklist_1.removeServerFromAccountBlocklist(servers[0].url, userAccessTokenServer1, 'localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                 }
                 {
                     yield blocklist_1.addAccountToServerBlocklist(servers[0].url, servers[0].accessToken, 'root@localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                     yield blocklist_1.removeAccountFromServerBlocklist(servers[0].url, servers[0].accessToken, 'root@localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                 }
                 {
                     yield blocklist_1.addServerToServerBlocklist(servers[0].url, servers[0].accessToken, 'localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE, position, name, 3);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(groupUser1, playlistServer1UUID2, 3, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                     yield blocklist_1.removeServerFromServerBlocklist(servers[0].url, servers[0].accessToken, 'localhost:' + servers[1].port);
                     yield extra_utils_1.waitJobs(servers);
-                    yield checkPlaylistElementType(group2, playlistServer1UUID2, video_playlist_element_model_1.VideoPlaylistElementType.REGULAR, position, name, 3);
+                    yield checkPlaylistElementType(group2, playlistServer1UUID2, 0, position, name, 3);
                 }
             });
         });
@@ -579,7 +586,7 @@ describe('Test video playlists', function () {
                 const element = elements.find(e => e.position === 3);
                 expect(element).to.exist;
                 expect(element.video).to.be.null;
-                expect(element.type).to.equal(video_playlist_element_model_1.VideoPlaylistElementType.UNAVAILABLE);
+                expect(element.type).to.equal(3);
             });
         });
     });
@@ -607,6 +614,8 @@ describe('Test video playlists', function () {
                             'video 1 server 3',
                             'video 3 server 1',
                             'video 4 server 1',
+                            'NSFW video',
+                            'NSFW video',
                             'NSFW video'
                         ]);
                     }
@@ -632,6 +641,8 @@ describe('Test video playlists', function () {
                             'video 2 server 3',
                             'video 1 server 3',
                             'video 4 server 1',
+                            'NSFW video',
+                            'NSFW video',
                             'NSFW video'
                         ]);
                     }
@@ -657,7 +668,9 @@ describe('Test video playlists', function () {
                             'video 2 server 3',
                             'NSFW video',
                             'video 1 server 3',
-                            'video 4 server 1'
+                            'video 4 server 1',
+                            'NSFW video',
+                            'NSFW video'
                         ]);
                         for (let i = 1; i <= elements.length; i++) {
                             expect(elements[i - 1].position).to.equal(i);
@@ -796,9 +809,9 @@ describe('Test video playlists', function () {
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of servers) {
                     const res = yield extra_utils_1.getPlaylistVideos(server.url, server.accessToken, playlistServer1UUID, 0, 10);
-                    expect(res.body.total).to.equal(4);
+                    expect(res.body.total).to.equal(6);
                     const elements = res.body.data;
-                    expect(elements).to.have.lengthOf(4);
+                    expect(elements).to.have.lengthOf(6);
                     expect(elements[0].video.name).to.equal('video 0 server 1');
                     expect(elements[0].position).to.equal(1);
                     expect(elements[1].video.name).to.equal('video 2 server 3');
@@ -807,6 +820,10 @@ describe('Test video playlists', function () {
                     expect(elements[2].position).to.equal(3);
                     expect(elements[3].video.name).to.equal('video 4 server 1');
                     expect(elements[3].position).to.equal(4);
+                    expect(elements[4].video.name).to.equal('NSFW video');
+                    expect(elements[4].position).to.equal(5);
+                    expect(elements[5].video.name).to.equal('NSFW video');
+                    expect(elements[5].position).to.equal(6);
                 }
             });
         });
@@ -818,7 +835,7 @@ describe('Test video playlists', function () {
                     token: servers[0].accessToken,
                     playlistAttrs: {
                         displayName: 'my super public playlist',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: servers[0].videoChannel.id
                     }
                 });
@@ -827,7 +844,7 @@ describe('Test video playlists', function () {
                 for (const server of servers) {
                     yield extra_utils_1.getVideoPlaylist(server.url, videoPlaylistIds.uuid, 200);
                 }
-                const playlistAttrs = { privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE };
+                const playlistAttrs = { privacy: 3 };
                 yield extra_utils_1.updateVideoPlaylist({ url: servers[0].url, token: servers[0].accessToken, playlistId: videoPlaylistIds.id, playlistAttrs });
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of [servers[1], servers[2]]) {
@@ -884,7 +901,7 @@ describe('Test video playlists', function () {
                     token: servers[0].accessToken,
                     playlistAttrs: {
                         displayName: 'channel playlist',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId
                     }
                 });
@@ -894,7 +911,7 @@ describe('Test video playlists', function () {
                 yield extra_utils_1.waitJobs(servers);
                 const res3 = yield extra_utils_1.getVideoPlaylistWithToken(servers[0].url, servers[0].accessToken, videoPlaylistUUID);
                 expect(res3.body.displayName).to.equal('channel playlist');
-                expect(res3.body.privacy.id).to.equal(video_playlist_privacy_model_1.VideoPlaylistPrivacy.PRIVATE);
+                expect(res3.body.privacy.id).to.equal(3);
                 yield extra_utils_1.getVideoPlaylist(servers[1].url, videoPlaylistUUID, 404);
             });
         });
@@ -917,7 +934,7 @@ describe('Test video playlists', function () {
                     token: userAccessToken,
                     playlistAttrs: {
                         displayName: 'playlist to be deleted',
-                        privacy: video_playlist_privacy_model_1.VideoPlaylistPrivacy.PUBLIC,
+                        privacy: 1,
                         videoChannelId: userChannel.id
                     }
                 });

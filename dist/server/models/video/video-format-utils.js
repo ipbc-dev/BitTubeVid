@@ -31,7 +31,9 @@ function videoModelToFormattedJSON(video, options) {
             label: video_1.VideoModel.getPrivacyLabel(video.privacy)
         },
         nsfw: video.nsfw,
-        description: options && options.completeDescription === true ? video.description : video.getTruncatedDescription(),
+        description: options && options.completeDescription === true
+            ? video.description
+            : video.getTruncatedDescription(),
         isLocal: video.isOwned(),
         duration: video.duration,
         views: video.views,
@@ -48,7 +50,8 @@ function videoModelToFormattedJSON(video, options) {
         channel: video.VideoChannel.toFormattedSummaryJSON(),
         userHistory: userHistory ? {
             currentTime: userHistory.currentTime
-        } : undefined
+        } : undefined,
+        pluginData: video.pluginData
     };
     if (options) {
         if (options.additionalAttributes.state === true) {

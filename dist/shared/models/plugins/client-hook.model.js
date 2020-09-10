@@ -35,9 +35,11 @@ exports.clientActionHookObject = {
     'action:video-watch.player.loaded': true,
     'action:video-watch.video-threads.loaded': true,
     'action:video-watch.video-thread-replies.loaded': true,
+    'action:video-edit.init': true,
     'action:login.init': true,
     'action:search.init': true,
     'action:router.navigation-end': true,
-    'action:signup.register.init': true
+    'action:signup.register.init': true,
+    'action:embed.player.loaded': true
 };
 exports.clientHookObject = Object.assign({}, exports.clientFilterHookObject, exports.clientActionHookObject);

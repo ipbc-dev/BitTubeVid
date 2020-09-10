@@ -299,16 +299,26 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             };
         });
     }
-    static listSubscriptionsForApi(actorId, start, count, sort) {
+    static listSubscriptionsForApi(options) {
+        const { actorId, start, count, sort } = options;
+        const where = {
+            actorId: actorId
+        };
+        if (options.search) {
+            Object.assign(where, {
+                [sequelize_1.Op.or]: [
+                    utils_1.searchAttribute(options.search, '$ActorFollowing.preferredUsername$'),
+                    utils_1.searchAttribute(options.search, '$ActorFollowing.VideoChannel.name$')
+                ]
+            });
+        }
         const query = {
             attributes: [],
             distinct: true,
             offset: start,
             limit: count,
             order: utils_1.getSort(sort),
-            where: {
-                actorId: actorId
-            },
+            where,
             include: [
                 {
                     attributes: ['id'],

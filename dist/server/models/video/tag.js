@@ -9,7 +9,6 @@ const videos_1 = require("../../helpers/custom-validators/videos");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
 const video_tag_1 = require("./video-tag");
-const videos_2 = require("../../../shared/models/videos");
 let TagModel = TagModel_1 = class TagModel extends sequelize_typescript_1.Model {
     static findOrCreateTags(tags, transaction) {
         if (tags === null)
@@ -40,7 +39,7 @@ let TagModel = TagModel_1 = class TagModel extends sequelize_typescript_1.Model 
             'ORDER BY random() ' +
             'LIMIT $count';
         const options = {
-            bind: { threshold, count, videoPrivacy: videos_2.VideoPrivacy.PUBLIC, videoState: videos_2.VideoState.PUBLISHED },
+            bind: { threshold, count, videoPrivacy: 1, videoState: 1 },
             type: sequelize_1.QueryTypes.SELECT
         };
         return TagModel_1.sequelize.query(query, options)

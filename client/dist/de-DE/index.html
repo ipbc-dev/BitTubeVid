@@ -28,7 +28,7 @@
     <!-- meta tags -->
 
     <!-- /!\ Do not remove it /!\ -->
-  <link rel="stylesheet" href="styles.ef9a7809bf9d73c61a2e.css"></head>
+  <link rel="stylesheet" href="styles.7342350cfd83d59a05b4.css"></head>
 
   <!-- 3. Display the application -->
   <body id="custom-css">
@@ -48,16 +48,24 @@
     </div>
 
     <script type="text/javascript">
-      window.onerror = function () {
+      function displayIncompatibleBrowser () {
         var elem = document.getElementById('incompatible-browser')
         if (elem.className.indexOf('browser-ok') === -1) {
           elem.style.display = 'block'
         }
+      }
+
+      window.onerror = function () {
+        displayIncompatibleBrowser()
+      }
+
+      if (/MSIE|Trident/.test(window.navigator.userAgent) ) {
+        displayIncompatibleBrowser()
       }
     </script>
 
     <my-app>
     </my-app>
 
-  <script src="runtime-es2015.ca2b2becf1f5b6598efb.js" type="module"></script><script src="runtime-es5.ca2b2becf1f5b6598efb.js" nomodule defer></script><script src="polyfills-es5.87623a41f6c2d68c03ea.js" nomodule defer></script><script src="polyfills-es2015.cb5c1e6dac52d0ab86e3.js" type="module"></script><script src="main-es2015.5e99ee2e41e9cedd2cc4.js" type="module"></script><script src="main-es5.5e99ee2e41e9cedd2cc4.js" nomodule defer></script></body>
+  <script src="runtime-es2015.0c637e8d3a345fff9548.js" type="module"></script><script src="runtime-es5.0c637e8d3a345fff9548.js" nomodule defer></script><script src="polyfills-es5.21f8d72b1fee10868ed2.js" nomodule defer></script><script src="polyfills-es2015.3f29be0bf3ea2f06df9a.js" type="module"></script><script src="main-es2015.3d5290ef9632a0012dfd.js" type="module"></script><script src="main-es5.3d5290ef9632a0012dfd.js" nomodule defer></script></body>
 </html>

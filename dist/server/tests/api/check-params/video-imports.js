@@ -1,10 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const lodash_1 = require("lodash");
 require("mocha");
+const lodash_1 = require("lodash");
 const path_1 = require("path");
-const video_privacy_enum_1 = require("../../../../shared/models/videos/video-privacy.enum");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
@@ -55,7 +54,7 @@ describe('Test video imports API validator', function () {
         let baseCorrectParams;
         before(function () {
             baseCorrectParams = {
-                targetUrl: video_imports_1.getYoutubeVideoUrl(),
+                targetUrl: video_imports_1.getGoodVideoUrl(),
                 name: 'my super name',
                 category: 5,
                 licence: 1,
@@ -67,7 +66,7 @@ describe('Test video imports API validator', function () {
                 description: 'my super description',
                 support: 'my super support text',
                 tags: ['tag1', 'tag2'],
-                privacy: video_privacy_enum_1.VideoPrivacy.PUBLIC,
+                privacy: 1,
                 channelId
             };
         });
@@ -224,15 +223,13 @@ describe('Test video imports API validator', function () {
         it('Should succeed with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
-                {
-                    yield extra_utils_1.makePostBodyRequest({
-                        url: server.url,
-                        path,
-                        token: server.accessToken,
-                        fields: baseCorrectParams,
-                        statusCodeExpected: 200
-                    });
-                }
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields: baseCorrectParams,
+                    statusCodeExpected: 200
+                });
             });
         });
         it('Should forbid to import http videos', function () {

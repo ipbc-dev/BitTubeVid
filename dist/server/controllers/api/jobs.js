@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.jobsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const users_1 = require("../../../shared/models/users");
 const job_queue_1 = require("../../lib/job-queue");
 const middlewares_1 = require("../../middlewares");
 const validators_1 = require("../../middlewares/validators");
@@ -11,7 +10,7 @@ const jobs_1 = require("../../middlewares/validators/jobs");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const jobsRouter = express.Router();
 exports.jobsRouter = jobsRouter;
-jobsRouter.get('/:state', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(users_1.UserRight.MANAGE_JOBS), validators_1.paginationValidator, middlewares_1.jobsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, jobs_1.listJobsValidator, middlewares_1.asyncMiddleware(listJobs));
+jobsRouter.get('/:state', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(7), validators_1.paginationValidator, middlewares_1.jobsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, jobs_1.listJobsValidator, middlewares_1.asyncMiddleware(listJobs));
 function listJobs(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const state = req.params.state;
