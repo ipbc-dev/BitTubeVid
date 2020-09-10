@@ -12,7 +12,7 @@ import { catchError } from 'rxjs/operators'
 import { ViewportScroller } from '@angular/common'
 import { HttpClient } from '@angular/common/http'
 import { environment } from '../../../../environments/environment'
-import { BytesPipe } from 'ngx-pipes'
+import { BytesPipe } from '@app/shared/shared-main/angular'
 import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 import { identifierModuleUrl } from '@angular/compiler'
 import {

@@ -2,14 +2,13 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Notifier, ServerService, RestExtractor, User, UserService } from '@app/core'
 import { environment } from '../../../../environments/environment'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { FormValidatorService, FormReactive } from '@app/shared/shared-forms'
 import { forkJoin, Subject, Subscription } from 'rxjs'
 import { SelectItem } from 'primeng/api'
 import { first, catchError } from 'rxjs/operators'
 import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
 import { forEach, now } from 'lodash-es'
-import { BytesPipe } from 'ngx-pipes'
+import { BytesPipe } from '@app/shared/shared-main/angular'
 
 @Component({
   selector: 'my-account-storage-settings',
@@ -44,8 +43,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     // private authService: AuthService,
     private notifier: Notifier,
     // private userService: UserService,
-    private serverService: ServerService,
-    private i18n: I18n
+    private serverService: ServerService
   ) {
     super()
     this.bytesPipe = new BytesPipe()
@@ -97,7 +95,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       } else {
         this.havePremium = false
       }
-      this.languageItems = [ { label: this.i18n('Unknown language'), value: '_unknown' } ]
+      this.languageItems = [ { label: $localize`Unknown language`, value: '_unknown' } ]
       this.languageItems = this.languageItems
                                .concat(languages.map(l => ({ label: l.label, value: l.id })))
 

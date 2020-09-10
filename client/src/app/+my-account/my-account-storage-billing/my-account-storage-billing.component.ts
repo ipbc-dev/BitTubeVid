@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Notifier, RestPagination, RestExtractor } from '@app/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { SortMeta } from 'primeng/api'
 import { environment } from '../../../environments/environment'
 import { forkJoin, Observable, Subject, Subscription } from 'rxjs'
 import { catchError } from 'rxjs/operators'
-import { BytesPipe } from 'ngx-pipes'
+import { BytesPipe } from '@app/shared/shared-main/angular'
 
 @Component({
   selector: 'my-account-storage-billing',
@@ -26,8 +25,7 @@ export class MyAccountStorageBillingComponent implements OnInit {
     // private notifier: Notifier,
     // private blocklistService: BlocklistService,
     private authHttp: HttpClient,
-    private restExtractor: RestExtractor,
-    private i18n: I18n
+    private restExtractor: RestExtractor
   ) {
     // super()
     this.bytesPipe = new BytesPipe()
