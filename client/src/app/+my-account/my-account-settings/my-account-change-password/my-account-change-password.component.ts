@@ -1,11 +1,9 @@
-import { Component, OnInit } from '@angular/core'
-import { AuthService, Notifier } from '@app/core'
-import { FormReactive, UserService } from '../../../shared'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { UserValidatorsService } from '@app/shared/forms/form-validators/user-validators.service'
 import { filter } from 'rxjs/operators'
-import { User } from '../../../../../../shared'
+import { Component, OnInit } from '@angular/core'
+import { AuthService, Notifier, UserService } from '@app/core'
+import { USER_CONFIRM_PASSWORD_VALIDATOR, USER_PASSWORD_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { User } from '@shared/models'
 
 @Component({
   selector: 'my-account-change-password',
@@ -18,20 +16,18 @@ export class MyAccountChangePasswordComponent extends FormReactive implements On
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
     private authService: AuthService,
-    private userService: UserService,
-    private i18n: I18n
-  ) {
+    private userService: UserService
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      'current-password': this.userValidatorsService.USER_PASSWORD,
-      'new-password': this.userValidatorsService.USER_PASSWORD,
-      'new-confirmed-password': this.userValidatorsService.USER_CONFIRM_PASSWORD
+      'current-password': USER_PASSWORD_VALIDATOR,
+      'new-password': USER_PASSWORD_VALIDATOR,
+      'new-confirmed-password': USER_CONFIRM_PASSWORD_VALIDATOR
     })
 
     this.user = this.authService.getUser()
@@ -49,7 +45,7 @@ export class MyAccountChangePasswordComponent extends FormReactive implements On
 
     this.userService.changePassword(currentPassword, newPassword).subscribe(
       () => {
-        this.notifier.success(this.i18n('Password updated.'))
+        this.notifier.success($localize`Password updated.`)
 
         this.form.reset()
         this.error = null
@@ -57,7 +53,7 @@ export class MyAccountChangePasswordComponent extends FormReactive implements On
 
       err => {
         if (err.status === 401) {
-          this.error = this.i18n('You current password is invalid.')
+          this.error = $localize`You current password is invalid.`
           return
         }
 

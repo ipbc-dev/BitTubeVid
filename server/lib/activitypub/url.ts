@@ -5,14 +5,15 @@ import {
   MActorId,
   MActorUrl,
   MCommentId,
-  MVideoAbuseId,
   MVideoId,
   MVideoUrl,
-  MVideoUUID
-} from '../../typings/models'
-import { MVideoPlaylist, MVideoPlaylistUUID } from '../../typings/models/video/video-playlist'
-import { MVideoFileVideoUUID } from '../../typings/models/video/video-file'
-import { MStreamingPlaylist } from '../../typings/models/video/video-streaming-playlist'
+  MVideoUUID,
+  MAbuseId,
+  MVideoPlaylistElement
+} from '../../types/models'
+import { MVideoPlaylist, MVideoPlaylistUUID } from '../../types/models/video/video-playlist'
+import { MVideoFileVideoUUID } from '../../types/models/video/video-file'
+import { MStreamingPlaylist } from '../../types/models/video/video-streaming-playlist'
 
 function getVideoActivityPubUrl (video: MVideoUUID) {
   return WEBSERVER.URL + '/videos/watch/' + video.uuid
@@ -22,8 +23,8 @@ function getVideoPlaylistActivityPubUrl (videoPlaylist: MVideoPlaylist) {
   return WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid
 }
 
-function getVideoPlaylistElementActivityPubUrl (videoPlaylist: MVideoPlaylistUUID, video: MVideoUUID) {
-  return WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid + '/' + video.uuid
+function getVideoPlaylistElementActivityPubUrl (videoPlaylist: MVideoPlaylistUUID, videoPlaylistElement: MVideoPlaylistElement) {
+  return WEBSERVER.URL + '/video-playlists/' + videoPlaylist.uuid + '/videos/' + videoPlaylistElement.id
 }
 
 function getVideoCacheFileActivityPubUrl (videoFile: MVideoFileVideoUUID) {
@@ -48,8 +49,8 @@ function getAccountActivityPubUrl (accountName: string) {
   return WEBSERVER.URL + '/accounts/' + accountName
 }
 
-function getVideoAbuseActivityPubUrl (videoAbuse: MVideoAbuseId) {
-  return WEBSERVER.URL + '/admin/video-abuses/' + videoAbuse.id
+function getAbuseActivityPubUrl (abuse: MAbuseId) {
+  return WEBSERVER.URL + '/admin/abuses/' + abuse.id
 }
 
 function getVideoViewActivityPubUrl (byActor: MActorUrl, video: MVideoId) {
@@ -118,7 +119,7 @@ export {
   getVideoCacheStreamingPlaylistActivityPubUrl,
   getVideoChannelActivityPubUrl,
   getAccountActivityPubUrl,
-  getVideoAbuseActivityPubUrl,
+  getAbuseActivityPubUrl,
   getActorFollowActivityPubUrl,
   getActorFollowAcceptActivityPubUrl,
   getVideoAnnounceActivityPubUrl,

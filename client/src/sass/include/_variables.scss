@@ -49,6 +49,7 @@ $menu-width: 240px;
 $menu-lateral-padding: 26px;
 
 $sub-menu-color: #F7F7F7;
+$sub-menu-height: 81px;
 
 $footer-height: 30px;
 $footer-margin: 30px;
@@ -56,10 +57,9 @@ $footer-margin: 30px;
 $separator-border-color: rgba(0, 0, 0, 0.10);
 
 $video-miniature-width: 238px;
-$video-miniature-margin-bottom: 30px;
+$video-miniature-margin-bottom: 15px;
 $video-thumbnail-height: 122px;
 $video-thumbnail-width: 223px;
-$video-thumbnail-ratio: $video-thumbnail-width / $video-thumbnail-height;
 
 $theater-bottom-space: 115px;
 
@@ -92,6 +92,7 @@ $variables: (
   --secondaryColor: var(--secondaryColor),
 
   --greyForegroundColor: var(--greyForegroundColor),
+  --greyBackgroundColor: var(--greyBackgroundColor),
 
   --menuBackgroundColor: var(--menuBackgroundColor),
   --menuForegroundColor: var(--menuForegroundColor),
@@ -116,26 +117,27 @@ $variables: (
   --embedBigPlayBackgroundColor: var(--embedBigPlayBackgroundColor)
 );
 
-@function var($variable) {
+@function pvar($variable) {
   @return map-get($variables, $variable);
 }
 
 /*** z-index groups ***/
 
 $zindex: (
-  miniature    :    10,
-  privacymsg   :    20,
-  typeahead    :    30,
-  header       :  1000,
-  menu         : 11000,
-  dropdown     : 12000,
-  popover      : 13000,
-  tooltip      : 14000,
-  loadbar      : 15000,
-  modal        : 16000,
-  help-popover : 17000,
-  notification : 18000,
-  hotkeys      : 19000
+  miniature       :    10,
+  privacymsg      :    20,
+  dropdown        : 12000,
+  sub-menu        : 12500,
+  menu            : 12600,
+  search-typeahead: 12650,
+  header          : 12700,
+  popover         : 13000,
+  tooltip         : 14000,
+  loadbar         : 15000,
+  modal           : 16000,
+  help-popover    : 17000,
+  notification    : 18000,
+  hotkeys         : 19000
 );
 
 @function z($label) {

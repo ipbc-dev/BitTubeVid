@@ -1,0 +1,56 @@
+<div *ngIf="user.isUploadDisabled()" class="no-upload">
+  <div class="alert alert-warning">
+    <div i18n>Sorry, the upload feature is disabled for your account. If you want to add videos, an admin must unlock your quota.</div>
+    <a i18n routerLink="/about/instance" class="about-link">Read instance rules for help</a>
+  </div>
+  <img src="/client/assets/images/mascot/defeated.svg" alt="defeated mascot">
+</div>
+
+<div *ngIf="!user.isUploadDisabled()" class="margin-content">
+  <div class="alert alert-warning" *ngIf="isRootUser()" i18n>
+    We recommend you to not use the <strong>root</strong> user to publish your videos, since it's the super-admin account of your instance.
+    <br />
+    Instead, <a routerLink="/admin/users">create a dedicated account</a> to upload your videos.
+  </div>
+
+  <my-user-quota *ngIf="!isInSecondStep()" [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-quota>
+
+  <div class="title-page title-page-single" *ngIf="isInSecondStep()">
+    <ng-container *ngIf="secondStepType === 'import-url' || secondStepType === 'import-torrent'" i18n>Import {{ videoName }}</ng-container>
+    <ng-container *ngIf="secondStepType === 'upload'" i18n>Upload {{ videoName }}</ng-container>
+  </div>
+
+  <div ngbNav #nav="ngbNav" class="nav-tabs video-add-nav" [ngClass]="{ 'hide-nav': secondStepType !== undefined }">
+    <ng-container ngbNavItem>
+      <a ngbNavLink>
+        <span i18n>Upload a file</span>
+      </a>
+
+      <ng-template ngbNavContent>
+        <my-video-upload #videoUpload (firstStepDone)="onFirstStepDone('upload', $event)" (firstStepError)="onError()"></my-video-upload>
+      </ng-template>
+    </ng-container>
+
+    <ng-container ngbNavItem *ngIf="isVideoImportHttpEnabled()">
+      <a ngbNavLink>
+        <span i18n>Import with URL</span>
+      </a>
+
+      <ng-template ngbNavContent>
+        <my-video-import-url #videoImportUrl (firstStepDone)="onFirstStepDone('import-url', $event)" (firstStepError)="onError()"></my-video-import-url>
+      </ng-template>
+    </ng-container>
+
+    <ng-container ngbNavItem *ngIf="isVideoImportTorrentEnabled()">
+      <a ngbNavLink>
+        <span i18n>Import with torrent</span>
+      </a>
+
+      <ng-template ngbNavContent>
+        <my-video-import-torrent #videoImportTorrent (firstStepDone)="onFirstStepDone('import-torrent', $event)" (firstStepError)="onError()"></my-video-import-torrent>
+      </ng-template>
+    </ng-container>
+  </div>
+
+  <div [ngbNavOutlet]="nav"></div>
+</div>

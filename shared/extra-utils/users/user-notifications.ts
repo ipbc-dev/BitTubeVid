@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import { makeGetRequest, makePostBodyRequest, makePutBodyRequest } from '../requests/requests'
-import { UserNotification, UserNotificationSetting, UserNotificationType } from '../../models/users'
-import { ServerInfo } from '..'
 import { expect } from 'chai'
 import { inspect } from 'util'
+import { AbuseState } from '@shared/models'
+import { UserNotification, UserNotificationSetting, UserNotificationSettingValue, UserNotificationType } from '../../models/users'
+import { MockSmtpServer } from '../miscs/email'
+import { makeGetRequest, makePostBodyRequest, makePutBodyRequest } from '../requests/requests'
+import { doubleFollow } from '../server/follows'
+import { flushAndRunMultipleServers, ServerInfo } from '../server/servers'
+import { getUserNotificationSocket } from '../socket/socket-io'
+import { setAccessTokensToServers, userLogin } from './login'
+import { createUser, getMyUserInformation } from './users'
 
 function updateMyNotificationSettings (url: string, token: string, settings: UserNotificationSetting, statusCodeExpected = 204) {
   const path = '/api/v1/users/me/notification-settings'
@@ -76,7 +82,7 @@ async function getLastNotification (serverUrl: string, accessToken: string) {
 
 type CheckerBaseParams = {
   server: ServerInfo
-  emails: object[]
+  emails: any[]
   socketNotifications: UserNotification[]
   token: string
   check?: { web: boolean, mail: boolean }
@@ -110,10 +116,10 @@ async function checkNotification (
 
     if (checkType === 'presence') {
       const obj = inspect(base.socketNotifications, { depth: 5 })
-      expect(socketNotification, 'The socket notification is absent when is should be present. ' + obj).to.not.be.undefined
+      expect(socketNotification, 'The socket notification is absent when it should be present. ' + obj).to.not.be.undefined
     } else {
       const obj = inspect(socketNotification, { depth: 5 })
-      expect(socketNotification, 'The socket notification is present when is should not be present. ' + obj).to.be.undefined
+      expect(socketNotification, 'The socket notification is present when it should not be present. ' + obj).to.be.undefined
     }
   }
 
@@ -125,7 +131,8 @@ async function checkNotification (
                       .find(e => emailNotificationFinder(e))
 
     if (checkType === 'presence') {
-      expect(email, 'The email is absent when is should be present. ' + inspect(base.emails)).to.not.be.undefined
+      const emails = base.emails.map(e => e.text)
+      expect(email, 'The email is absent when is should be present. ' + inspect(emails)).to.not.be.undefined
     } else {
       expect(email, 'The email is present when is should not be present. ' + inspect(email)).to.be.undefined
     }
@@ -133,13 +140,17 @@ async function checkNotification (
 }
 
 function checkVideo (video: any, videoName?: string, videoUUID?: string) {
-  expect(video.name).to.be.a('string')
-  expect(video.name).to.not.be.empty
-  if (videoName) expect(video.name).to.equal(videoName)
+  if (videoName) {
+    expect(video.name).to.be.a('string')
+    expect(video.name).to.not.be.empty
+    expect(video.name).to.equal(videoName)
+  }
 
-  expect(video.uuid).to.be.a('string')
-  expect(video.uuid).to.not.be.empty
-  if (videoUUID) expect(video.uuid).to.equal(videoUUID)
+  if (videoUUID) {
+    expect(video.uuid).to.be.a('string')
+    expect(video.uuid).to.not.be.empty
+    expect(video.uuid).to.equal(videoUUID)
+  }
 
   expect(video.id).to.be.a('number')
 }
@@ -430,18 +441,18 @@ async function checkNewCommentOnMyVideo (base: CheckerBaseParams, uuid: string, 
 }
 
 async function checkNewVideoAbuseForModerators (base: CheckerBaseParams, videoUUID: string, videoName: string, type: CheckerType) {
-  const notificationType = UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS
+  const notificationType = UserNotificationType.NEW_ABUSE_FOR_MODERATORS
 
   function notificationChecker (notification: UserNotification, type: CheckerType) {
     if (type === 'presence') {
       expect(notification).to.not.be.undefined
       expect(notification.type).to.equal(notificationType)
 
-      expect(notification.videoAbuse.id).to.be.a('number')
-      checkVideo(notification.videoAbuse.video, videoName, videoUUID)
+      expect(notification.abuse.id).to.be.a('number')
+      checkVideo(notification.abuse.video, videoName, videoUUID)
     } else {
       expect(notification).to.satisfy((n: UserNotification) => {
-        return n === undefined || n.videoAbuse === undefined || n.videoAbuse.video.uuid !== videoUUID
+        return n === undefined || n.abuse === undefined || n.abuse.video.uuid !== videoUUID
       })
     }
   }
@@ -449,6 +460,112 @@ async function checkNewVideoAbuseForModerators (base: CheckerBaseParams, videoUU
   function emailNotificationFinder (email: object) {
     const text = email['text']
     return text.indexOf(videoUUID) !== -1 && text.indexOf('abuse') !== -1
+  }
+
+  await checkNotification(base, notificationChecker, emailNotificationFinder, type)
+}
+
+async function checkNewAbuseMessage (base: CheckerBaseParams, abuseId: number, message: string, toEmail: string, type: CheckerType) {
+  const notificationType = UserNotificationType.ABUSE_NEW_MESSAGE
+
+  function notificationChecker (notification: UserNotification, type: CheckerType) {
+    if (type === 'presence') {
+      expect(notification).to.not.be.undefined
+      expect(notification.type).to.equal(notificationType)
+
+      expect(notification.abuse.id).to.equal(abuseId)
+    } else {
+      expect(notification).to.satisfy((n: UserNotification) => {
+        return n === undefined || n.type !== notificationType || n.abuse === undefined || n.abuse.id !== abuseId
+      })
+    }
+  }
+
+  function emailNotificationFinder (email: object) {
+    const text = email['text']
+    const to = email['to'].filter(t => t.address === toEmail)
+
+    return text.indexOf(message) !== -1 && to.length !== 0
+  }
+
+  await checkNotification(base, notificationChecker, emailNotificationFinder, type)
+}
+
+async function checkAbuseStateChange (base: CheckerBaseParams, abuseId: number, state: AbuseState, type: CheckerType) {
+  const notificationType = UserNotificationType.ABUSE_STATE_CHANGE
+
+  function notificationChecker (notification: UserNotification, type: CheckerType) {
+    if (type === 'presence') {
+      expect(notification).to.not.be.undefined
+      expect(notification.type).to.equal(notificationType)
+
+      expect(notification.abuse.id).to.equal(abuseId)
+      expect(notification.abuse.state).to.equal(state)
+    } else {
+      expect(notification).to.satisfy((n: UserNotification) => {
+        return n === undefined || n.abuse === undefined || n.abuse.id !== abuseId
+      })
+    }
+  }
+
+  function emailNotificationFinder (email: object) {
+    const text = email['text']
+
+    const contains = state === AbuseState.ACCEPTED
+      ? ' accepted'
+      : ' rejected'
+
+    return text.indexOf(contains) !== -1
+  }
+
+  await checkNotification(base, notificationChecker, emailNotificationFinder, type)
+}
+
+async function checkNewCommentAbuseForModerators (base: CheckerBaseParams, videoUUID: string, videoName: string, type: CheckerType) {
+  const notificationType = UserNotificationType.NEW_ABUSE_FOR_MODERATORS
+
+  function notificationChecker (notification: UserNotification, type: CheckerType) {
+    if (type === 'presence') {
+      expect(notification).to.not.be.undefined
+      expect(notification.type).to.equal(notificationType)
+
+      expect(notification.abuse.id).to.be.a('number')
+      checkVideo(notification.abuse.comment.video, videoName, videoUUID)
+    } else {
+      expect(notification).to.satisfy((n: UserNotification) => {
+        return n === undefined || n.abuse === undefined || n.abuse.comment.video.uuid !== videoUUID
+      })
+    }
+  }
+
+  function emailNotificationFinder (email: object) {
+    const text = email['text']
+    return text.indexOf(videoUUID) !== -1 && text.indexOf('abuse') !== -1
+  }
+
+  await checkNotification(base, notificationChecker, emailNotificationFinder, type)
+}
+
+async function checkNewAccountAbuseForModerators (base: CheckerBaseParams, displayName: string, type: CheckerType) {
+  const notificationType = UserNotificationType.NEW_ABUSE_FOR_MODERATORS
+
+  function notificationChecker (notification: UserNotification, type: CheckerType) {
+    if (type === 'presence') {
+      expect(notification).to.not.be.undefined
+      expect(notification.type).to.equal(notificationType)
+
+      expect(notification.abuse.id).to.be.a('number')
+      expect(notification.abuse.account.displayName).to.equal(displayName)
+    } else {
+      expect(notification).to.satisfy((n: UserNotification) => {
+        return n === undefined || n.abuse === undefined || n.abuse.account.displayName !== displayName
+      })
+    }
+  }
+
+  function emailNotificationFinder (email: object) {
+    const text = email['text']
+    return text.indexOf(displayName) !== -1 && text.indexOf('abuse') !== -1
   }
 
   await checkNotification(base, notificationChecker, emailNotificationFinder, type)
@@ -506,11 +623,104 @@ async function checkNewBlacklistOnMyVideo (
   await checkNotification(base, notificationChecker, emailNotificationFinder, 'presence')
 }
 
+function getAllNotificationsSettings () {
+  return {
+    newVideoFromSubscription: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    newCommentOnMyVideo: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    abuseAsModerator: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    videoAutoBlacklistAsModerator: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    blacklistOnMyVideo: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    myVideoImportFinished: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    myVideoPublished: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    commentMention: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    newFollow: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    newUserRegistration: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    newInstanceFollower: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    abuseNewMessage: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    abuseStateChange: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    autoInstanceFollowing: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL
+  } as UserNotificationSetting
+}
+
+async function prepareNotificationsTest (serversCount = 3) {
+  const userNotifications: UserNotification[] = []
+  const adminNotifications: UserNotification[] = []
+  const adminNotificationsServer2: UserNotification[] = []
+  const emails: object[] = []
+
+  const port = await MockSmtpServer.Instance.collectEmails(emails)
+
+  const overrideConfig = {
+    smtp: {
+      hostname: 'localhost',
+      port
+    },
+    signup: {
+      limit: 20
+    }
+  }
+  const servers = await flushAndRunMultipleServers(serversCount, overrideConfig)
+
+  await setAccessTokensToServers(servers)
+
+  if (serversCount > 1) {
+    await doubleFollow(servers[0], servers[1])
+  }
+
+  const user = {
+    username: 'user_1',
+    password: 'super password'
+  }
+  await createUser({
+    url: servers[0].url,
+    accessToken: servers[0].accessToken,
+    username: user.username,
+    password: user.password,
+    videoQuota: 10 * 1000 * 1000
+  })
+  const userAccessToken = await userLogin(servers[0], user)
+
+  await updateMyNotificationSettings(servers[0].url, userAccessToken, getAllNotificationsSettings())
+  await updateMyNotificationSettings(servers[0].url, servers[0].accessToken, getAllNotificationsSettings())
+
+  if (serversCount > 1) {
+    await updateMyNotificationSettings(servers[1].url, servers[1].accessToken, getAllNotificationsSettings())
+  }
+
+  {
+    const socket = getUserNotificationSocket(servers[0].url, userAccessToken)
+    socket.on('new-notification', n => userNotifications.push(n))
+  }
+  {
+    const socket = getUserNotificationSocket(servers[0].url, servers[0].accessToken)
+    socket.on('new-notification', n => adminNotifications.push(n))
+  }
+
+  if (serversCount > 1) {
+    const socket = getUserNotificationSocket(servers[1].url, servers[1].accessToken)
+    socket.on('new-notification', n => adminNotificationsServer2.push(n))
+  }
+
+  const resChannel = await getMyUserInformation(servers[0].url, servers[0].accessToken)
+  const channelId = resChannel.body.videoChannels[0].id
+
+  return {
+    userNotifications,
+    adminNotifications,
+    adminNotificationsServer2,
+    userAccessToken,
+    emails,
+    servers,
+    channelId
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   CheckerBaseParams,
   CheckerType,
+  getAllNotificationsSettings,
   checkNotification,
   markAsReadAllNotifications,
   checkMyVideoImportIsFinished,
@@ -525,8 +735,13 @@ export {
   updateMyNotificationSettings,
   checkNewVideoAbuseForModerators,
   checkVideoAutoBlacklistForModerators,
+  checkNewAbuseMessage,
+  checkAbuseStateChange,
   getUserNotifications,
   markAsReadNotifications,
   getLastNotification,
-  checkNewInstanceFollower
+  checkNewInstanceFollower,
+  prepareNotificationsTest,
+  checkNewCommentAbuseForModerators,
+  checkNewAccountAbuseForModerators
 }

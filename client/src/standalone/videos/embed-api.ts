@@ -26,7 +26,7 @@ export class PeerTubeEmbedApi {
   }
 
   private get element () {
-    return this.embed.videoElement
+    return this.embed.playerElement
   }
 
   private constructChannel () {
@@ -50,6 +50,10 @@ export class PeerTubeEmbedApi {
     channel.bind('setPlaybackRate', (txn, playbackRate) => this.embed.player.playbackRate(playbackRate))
     channel.bind('getPlaybackRate', (txn, params) => this.embed.player.playbackRate())
     channel.bind('getPlaybackRates', (txn, params) => this.embed.player.options_.playbackRates)
+
+    channel.bind('playNextVideo', (txn, params) => this.embed.playNextVideo())
+    channel.bind('playPreviousVideo', (txn, params) => this.embed.playPreviousVideo())
+    channel.bind('getCurrentPosition', (txn, params) => this.embed.getCurrentPosition())
     this.channel = channel
   }
 
@@ -108,7 +112,6 @@ export class PeerTubeEmbedApi {
     setInterval(() => {
       const position = this.element.currentTime
       const volume = this.element.volume
-      const duration = this.element.duration
 
       this.channel.notify({
         method: 'playbackStatusUpdate',

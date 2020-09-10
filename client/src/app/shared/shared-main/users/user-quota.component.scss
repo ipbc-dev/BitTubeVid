@@ -1,0 +1,30 @@
+@import '_variables';
+@import '_mixins';
+
+label {
+  font-weight: $font-regular;
+  font-size: 100%;
+}
+
+.user-quota {
+  label {
+    margin-right: 5px;
+  }
+
+  &, .progress {
+    width: 100% !important;
+  }
+
+  .progress {
+    @include disable-outline;
+    @include button-focus(pvar(--mainColorLightest));
+    @include progressbar;
+
+    height: 2rem;
+
+    span {
+      align-self: center;
+    }
+  }
+}
+

@@ -28,7 +28,7 @@ async function delInstance (url: string) {
 async function setInstance (url: string, username: string, password: string, isDefault: boolean) {
   const [ settings, netrc ] = await Promise.all([ getSettings(), getNetrc() ])
 
-  if (settings.remotes.indexOf(url) === -1) {
+  if (settings.remotes.includes(url) === false) {
     settings.remotes.push(url)
   }
 
@@ -149,10 +149,10 @@ program
 program.on('--help', function () {
   console.log('  Examples:')
   console.log()
-  console.log('    $ peertube add -u https://peertube.cpy.re -U "PEERTUBE_USER" --password "PEERTUBE_PASSWORD"')
-  console.log('    $ peertube add -u https://peertube.cpy.re -U root')
-  console.log('    $ peertube list')
-  console.log('    $ peertube del https://peertube.cpy.re')
+  console.log('    $ peertube auth add -u https://peertube.cpy.re -U "PEERTUBE_USER" --password "PEERTUBE_PASSWORD"')
+  console.log('    $ peertube auth add -u https://peertube.cpy.re -U root')
+  console.log('    $ peertube auth list')
+  console.log('    $ peertube auth del https://peertube.cpy.re')
   console.log()
 })
 

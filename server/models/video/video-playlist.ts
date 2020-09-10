@@ -51,9 +51,9 @@ import {
   MVideoPlaylistFull,
   MVideoPlaylistFullSummary,
   MVideoPlaylistIdWithElements
-} from '../../typings/models/video/video-playlist'
-import { MThumbnail } from '../../typings/models/video/thumbnail'
-import { MAccountId, MChannelId } from '@server/typings/models'
+} from '../../types/models/video/video-playlist'
+import { MThumbnail } from '../../types/models/video/thumbnail'
+import { MAccountId, MChannelId } from '@server/types/models'
 
 enum ScopeNames {
   AVAILABLE_FOR_LIST = 'AVAILABLE_FOR_LIST',
@@ -490,6 +490,14 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
     return join(STATIC_PATHS.THUMBNAILS, this.Thumbnail.filename)
   }
 
+  getWatchUrl () {
+    return WEBSERVER.URL + '/videos/watch/playlist/' + this.uuid
+  }
+
+  getEmbedStaticPath () {
+    return '/video-playlists/embed/' + this.uuid
+  }
+
   setAsRefreshed () {
     this.changed('updatedAt', true)
 
@@ -520,6 +528,7 @@ export class VideoPlaylistModel extends Model<VideoPlaylistModel> {
       },
 
       thumbnailPath: this.getThumbnailStaticPath(),
+      embedPath: this.getEmbedStaticPath(),
 
       type: {
         id: this.type,

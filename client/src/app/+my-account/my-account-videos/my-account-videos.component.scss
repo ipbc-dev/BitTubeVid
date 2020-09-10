@@ -1,19 +1,8 @@
 @import '_variables';
 @import '_mixins';
 
-.videos-header {
-  display: flex;
-  justify-content: space-between;
-  margin: 20px 0 50px;
-
-  h4,
-  .fake-element {
-    flex: 1;
-  }
-
-  input[type=text] {
-    @include peertube-input-text(300px);
-  }
+input[type=text] {
+  @include peertube-input-text(300px);
 }
 
 .action-button-delete-selection {
@@ -67,10 +56,6 @@ my-edit-button {
 }
 
 @media screen and (max-width: $small-view) {
-  .videos-header {
-    flex-direction: column;
-  }
-
   .action-button {
     flex-direction: column;
     align-self: center;
@@ -84,7 +69,7 @@ my-edit-button {
       .video-bottom,
       .video-bottom .video-miniature-information {
         /* same width than a.video-thumbnail */
-        max-width: 223px !important;
+        max-width: $video-thumbnail-width !important;
       }
     }
   }
@@ -110,7 +95,7 @@ my-edit-button {
     ::ng-deep {
       .action-button {
         /* same width than a.video-thumbnail */
-        width: 223px;
+        width: $video-thumbnail-width;
       }
     }
   }
@@ -124,9 +109,19 @@ my-edit-button {
         flex-direction: column;
 
         .video-miniature-name {
-          max-width: 223px;
+          max-width: $video-thumbnail-width;
         }
       }
+    }
+  }
+}
+
+@media screen and (max-width: $mobile-view) {
+  .videos-header {
+    flex-direction: column;
+
+    input[type=text] {
+      width: 100% !important;
     }
   }
 }

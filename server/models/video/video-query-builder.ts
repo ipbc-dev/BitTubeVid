@@ -1,7 +1,7 @@
 import { VideoFilter, VideoPrivacy, VideoState } from '@shared/models'
 import { buildDirectionAndField, createSafeIn } from '@server/models/utils'
 import { Model } from 'sequelize-typescript'
-import { MUserAccountId, MUserId } from '@server/typings/models'
+import { MUserAccountId, MUserId } from '@server/types/models'
 import validator from 'validator'
 import { exists } from '@server/helpers/custom-validators/misc'
 
@@ -135,12 +135,14 @@ function buildListQuery (model: typeof Model, options: BuildVideosQueryOptions) 
       '  EXISTS (' +
       '    SELECT 1 FROM "videoShare" ' +
       '    INNER JOIN "actorFollow" "actorFollowShare" ON "actorFollowShare"."targetActorId" = "videoShare"."actorId" ' +
-      '    AND "actorFollowShare"."actorId" = :followerActorId WHERE "videoShare"."videoId" = "video"."id"' +
+      '    AND "actorFollowShare"."actorId" = :followerActorId AND "actorFollowShare"."state" = \'accepted\' ' +
+      '    WHERE "videoShare"."videoId" = "video"."id"' +
       '  )' +
       '  OR' +
       '  EXISTS (' +
       '    SELECT 1 from "actorFollow" ' +
-      '    WHERE "actorFollow"."targetActorId" = "videoChannel"."actorId" AND "actorFollow"."actorId" = :followerActorId' +
+      '    WHERE "actorFollow"."targetActorId" = "videoChannel"."actorId" AND "actorFollow"."actorId" = :followerActorId ' +
+      '    AND "actorFollow"."state" = \'accepted\'' +
       '  )'
 
     if (options.includeLocalVideos) {
@@ -154,7 +156,16 @@ function buildListQuery (model: typeof Model, options: BuildVideosQueryOptions) 
   }
 
   if (options.withFiles === true) {
-    and.push('EXISTS (SELECT 1 FROM "videoFile" WHERE "videoFile"."videoId" = "video"."id")')
+    and.push(
+      '(' +
+      '  EXISTS (SELECT 1 FROM "videoFile" WHERE "videoFile"."videoId" = "video"."id") ' +
+      '  OR EXISTS (' +
+      '    SELECT 1 FROM "videoStreamingPlaylist" ' +
+      '    INNER JOIN "videoFile" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist"."id" ' +
+      '    WHERE "videoStreamingPlaylist"."videoId" = "video"."id"' +
+      '  )' +
+      ')'
+    )
   }
 
   if (options.tagsOneOf) {
@@ -325,7 +336,7 @@ function buildListQuery (model: typeof Model, options: BuildVideosQueryOptions) 
         attributes.push('COALESCE("video"."originallyPublishedAt", "video"."publishedAt") AS "publishedAtForOrder"')
       }
 
-      order = buildOrder(model, options.sort)
+      order = buildOrder(options.sort)
       suffix += `${order} `
     }
 
@@ -355,7 +366,7 @@ function buildListQuery (model: typeof Model, options: BuildVideosQueryOptions) 
   return { query, replacements, order }
 }
 
-function buildOrder (model: typeof Model, value: string) {
+function buildOrder (value: string) {
   const { direction, field } = buildDirectionAndField(value)
   if (field.match(/^[a-zA-Z."]+$/) === null) throw new Error('Invalid sort column ' + field)
 
@@ -441,7 +452,13 @@ function wrapForAPIResults (baseQuery: string, replacements: any, options: Build
   ]
 
   if (options.withFiles) {
-    joins.push('INNER JOIN "videoFile" AS "VideoFiles" ON "VideoFiles"."videoId" = "video"."id"')
+    joins.push('LEFT JOIN "videoFile" AS "VideoFiles" ON "VideoFiles"."videoId" = "video"."id"')
+
+    joins.push('LEFT JOIN "videoStreamingPlaylist" AS "VideoStreamingPlaylists" ON "VideoStreamingPlaylists"."videoId" = "video"."id"')
+    joins.push(
+      'LEFT JOIN "videoFile" AS "VideoStreamingPlaylists->VideoFiles" ' +
+        'ON "VideoStreamingPlaylists->VideoFiles"."videoStreamingPlaylistId" = "VideoStreamingPlaylists"."id"'
+    )
 
     Object.assign(attributes, {
       '"VideoFiles"."id"': '"VideoFiles.id"',
@@ -452,7 +469,18 @@ function wrapForAPIResults (baseQuery: string, replacements: any, options: Build
       '"VideoFiles"."extname"': '"VideoFiles.extname"',
       '"VideoFiles"."infoHash"': '"VideoFiles.infoHash"',
       '"VideoFiles"."fps"': '"VideoFiles.fps"',
-      '"VideoFiles"."videoId"': '"VideoFiles.videoId"'
+      '"VideoFiles"."videoId"': '"VideoFiles.videoId"',
+
+      '"VideoStreamingPlaylists"."id"': '"VideoStreamingPlaylists.id"',
+      '"VideoStreamingPlaylists->VideoFiles"."id"': '"VideoStreamingPlaylists.VideoFiles.id"',
+      '"VideoStreamingPlaylists->VideoFiles"."createdAt"': '"VideoStreamingPlaylists.VideoFiles.createdAt"',
+      '"VideoStreamingPlaylists->VideoFiles"."updatedAt"': '"VideoStreamingPlaylists.VideoFiles.updatedAt"',
+      '"VideoStreamingPlaylists->VideoFiles"."resolution"': '"VideoStreamingPlaylists.VideoFiles.resolution"',
+      '"VideoStreamingPlaylists->VideoFiles"."size"': '"VideoStreamingPlaylists.VideoFiles.size"',
+      '"VideoStreamingPlaylists->VideoFiles"."extname"': '"VideoStreamingPlaylists.VideoFiles.extname"',
+      '"VideoStreamingPlaylists->VideoFiles"."infoHash"': '"VideoStreamingPlaylists.VideoFiles.infoHash"',
+      '"VideoStreamingPlaylists->VideoFiles"."fps"': '"VideoStreamingPlaylists.VideoFiles.fps"',
+      '"VideoStreamingPlaylists->VideoFiles"."videoId"': '"VideoStreamingPlaylists.VideoFiles.videoId"'
     })
   }
 

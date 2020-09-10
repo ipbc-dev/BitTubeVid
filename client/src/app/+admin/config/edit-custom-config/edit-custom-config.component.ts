@@ -1,16 +1,25 @@
+import { forkJoin } from 'rxjs'
+import { ViewportScroller } from '@angular/common'
 import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
-import { ServerService } from '@app/core/server/server.service'
-import { CustomConfigValidatorsService, FormReactive, UserValidatorsService } from '@app/shared'
 import { Notifier } from '@app/core'
-import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { SelectItem } from 'primeng/api'
-import { forkJoin } from 'rxjs'
-import { ServerConfig } from '@shared/models'
-import { ViewportScroller } from '@angular/common'
+import { ServerService } from '@app/core/server/server.service'
+import {
+  ADMIN_EMAIL_VALIDATOR,
+  CACHE_CAPTIONS_SIZE_VALIDATOR,
+  CACHE_PREVIEWS_SIZE_VALIDATOR,
+  INDEX_URL_VALIDATOR,
+  INSTANCE_NAME_VALIDATOR,
+  INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
+  SEARCH_INDEX_URL_VALIDATOR,
+  SERVICES_TWITTER_USERNAME_VALIDATOR,
+  SIGNUP_LIMIT_VALIDATOR,
+  TRANSCODING_THREADS_VALIDATOR
+} from '@app/shared/form-validators/custom-config-validators'
+import { USER_VIDEO_QUOTA_DAILY_VALIDATOR, USER_VIDEO_QUOTA_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService, SelectOptionsItem } from '@app/shared/shared-forms'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+import { CustomConfig, ServerConfig } from '@shared/models'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -27,57 +36,54 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   resolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
 
-  languageItems: SelectItem[] = []
-  categoryItems: SelectItem[] = []
+  languageItems: SelectOptionsItem[] = []
+  categoryItems: SelectOptionsItem[] = []
 
   private serverConfig: ServerConfig
 
   constructor (
     private viewportScroller: ViewportScroller,
     protected formValidatorService: FormValidatorService,
-    private customConfigValidatorsService: CustomConfigValidatorsService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
     private configService: ConfigService,
-    private serverService: ServerService,
-    private i18n: I18n
+    private serverService: ServerService
   ) {
     super()
 
     this.resolutions = [
       {
         id: '0p',
-        label: this.i18n('Audio-only'),
-        description: this.i18n('A <code>.mp4</code> that keeps the original audio track, with no video')
+        label: $localize`Audio-only`,
+        description: $localize`A <code>.mp4</code> that keeps the original audio track, with no video`
       },
       {
         id: '240p',
-        label: this.i18n('240p')
+        label: $localize`240p`
       },
       {
         id: '360p',
-        label: this.i18n('360p')
+        label: $localize`360p`
       },
       {
         id: '480p',
-        label: this.i18n('480p')
+        label: $localize`480p`
       },
       {
         id: '720p',
-        label: this.i18n('720p')
+        label: $localize`720p`
       },
       {
         id: '1080p',
-        label: this.i18n('1080p')
+        label: $localize`1080p`
       },
       {
         id: '2160p',
-        label: this.i18n('2160p')
+        label: $localize`2160p`
       }
     ]
 
     this.transcodingThreadOptions = [
-      { value: 0, label: this.i18n('Auto (via ffmpeg)') },
+      { value: 0, label: $localize`Auto (via ffmpeg)` },
       { value: 1, label: '1' },
       { value: 2, label: '2' },
       { value: 4, label: '4' },
@@ -109,8 +115,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
-        name: this.customConfigValidatorsService.INSTANCE_NAME,
-        shortDescription: this.customConfigValidatorsService.INSTANCE_SHORT_DESCRIPTION,
+        name: INSTANCE_NAME_VALIDATOR,
+        shortDescription: INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
         description: null,
 
         isNSFW: false,
@@ -142,21 +148,21 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       },
       services: {
         twitter: {
-          username: this.customConfigValidatorsService.SERVICES_TWITTER_USERNAME,
+          username: SERVICES_TWITTER_USERNAME_VALIDATOR,
           whitelisted: null
         }
       },
       cache: {
         previews: {
-          size: this.customConfigValidatorsService.CACHE_PREVIEWS_SIZE
+          size: CACHE_PREVIEWS_SIZE_VALIDATOR
         },
         captions: {
-          size: this.customConfigValidatorsService.CACHE_CAPTIONS_SIZE
+          size: CACHE_CAPTIONS_SIZE_VALIDATOR
         }
       },
       signup: {
         enabled: null,
-        limit: this.customConfigValidatorsService.SIGNUP_LIMIT,
+        limit: SIGNUP_LIMIT_VALIDATOR,
         requiresEmailVerification: null
       },
       import: {
@@ -170,18 +176,18 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         }
       },
       admin: {
-        email: this.customConfigValidatorsService.ADMIN_EMAIL
+        email: ADMIN_EMAIL_VALIDATOR
       },
       contactForm: {
         enabled: null
       },
       user: {
-        videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
-        videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY
+        videoQuota: USER_VIDEO_QUOTA_VALIDATOR,
+        videoQuotaDaily: USER_VIDEO_QUOTA_DAILY_VALIDATOR
       },
       transcoding: {
         enabled: null,
-        threads: this.customConfigValidatorsService.TRANSCODING_THREADS,
+        threads: TRANSCODING_THREADS_VALIDATOR,
         allowAdditionalExtensions: null,
         allowAudioFiles: null,
         resolutions: {},
@@ -212,8 +218,26 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
           },
           autoFollowIndex: {
             enabled: null,
-            indexUrl: this.customConfigValidatorsService.INDEX_URL
+            indexUrl: INDEX_URL_VALIDATOR
           }
+        }
+      },
+      broadcastMessage: {
+        enabled: null,
+        level: null,
+        dismissable: null,
+        message: null
+      },
+      search: {
+        remoteUri: {
+          users: null,
+          anonymous: null
+        },
+        searchIndex: {
+          enabled: null,
+          url: SEARCH_INDEX_URL_VALIDATOR,
+          disableLocalSearch: null,
+          isDefaultSearch: null
         }
       }
     }
@@ -248,6 +272,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     return this.form.value['signup']['enabled'] === true
   }
 
+  isSearchIndexEnabled () {
+    return this.form.value['search']['searchIndex']['enabled'] === true
+  }
+
   isAutoFollowIndexEnabled () {
     return this.form.value['followings']['instance']['autoFollowIndex']['enabled'] === true
   }
@@ -263,27 +291,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
           this.updateForm()
 
-          this.notifier.success(this.i18n('Configuration updated.'))
+          this.notifier.success($localize`Configuration updated.`)
         },
 
         err => this.notifier.error(err.message)
       )
-  }
-
-  getSelectedLanguageLabel () {
-    return this.i18n('{{\'{0} languages selected')
-  }
-
-  getDefaultLanguageLabel () {
-    return this.i18n('No language')
-  }
-
-  getSelectedCategoryLabel () {
-    return this.i18n('{{\'{0} categories selected')
-  }
-
-  getDefaultCategoryLabel () {
-    return this.i18n('No category')
   }
 
   gotoAnchor () {
@@ -311,8 +323,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       ([ config, languages, categories ]) => {
         this.customConfig = config
 
-        this.languageItems = languages.map(l => ({ label: l.label, value: l.id }))
-        this.categoryItems = categories.map(l => ({ label: l.label, value: l.id }))
+        this.languageItems = languages.map(l => ({ label: l.label, id: l.id }))
+        this.categoryItems = categories.map(l => ({ label: l.label, id: l.id + '' }))
 
         this.updateForm()
         // Force form validation

@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import { omit } from 'lodash'
 import 'mocha'
+import { omit } from 'lodash'
 import { join } from 'path'
-import { VideoPrivacy } from '../../../../shared/models/videos/video-privacy.enum'
 import {
   cleanupTests,
   createUser,
@@ -23,14 +22,13 @@ import {
   checkBadSortPagination,
   checkBadStartPagination
 } from '../../../../shared/extra-utils/requests/check-api-params'
-import { getMagnetURI, getYoutubeVideoUrl } from '../../../../shared/extra-utils/videos/video-imports'
+import { getMagnetURI, getGoodVideoUrl } from '../../../../shared/extra-utils/videos/video-imports'
+import { VideoPrivacy } from '../../../../shared/models/videos/video-privacy.enum'
 
 describe('Test video imports API validator', function () {
   const path = '/api/v1/videos/imports'
   let server: ServerInfo
   let userAccessToken = ''
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let accountName: string
   let channelId: number
 
   // ---------------------------------------------------------------
@@ -50,7 +48,6 @@ describe('Test video imports API validator', function () {
     {
       const res = await getMyUserInformation(server.url, server.accessToken)
       channelId = res.body.videoChannels[0].id
-      accountName = res.body.account.name + '@' + res.body.account.host
     }
   })
 
@@ -79,7 +76,7 @@ describe('Test video imports API validator', function () {
 
     before(function () {
       baseCorrectParams = {
-        targetUrl: getYoutubeVideoUrl(),
+        targetUrl: getGoodVideoUrl(),
         name: 'my super name',
         category: 5,
         licence: 1,
@@ -249,15 +246,13 @@ describe('Test video imports API validator', function () {
     it('Should succeed with the correct parameters', async function () {
       this.timeout(30000)
 
-      {
-        await makePostBodyRequest({
-          url: server.url,
-          path,
-          token: server.accessToken,
-          fields: baseCorrectParams,
-          statusCodeExpected: 200
-        })
-      }
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields: baseCorrectParams,
+        statusCodeExpected: 200
+      })
     })
 
     it('Should forbid to import http videos', async function () {

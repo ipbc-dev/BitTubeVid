@@ -30,6 +30,10 @@ input[type=checkbox] {
   @include peertube-select-container($form-base-input-width);
 }
 
+my-select-checkbox {
+  @include ng-select($form-base-input-width);
+}
+
 input[type=submit] {
   @include peertube-button;
   @include orange-button;
@@ -64,8 +68,10 @@ textarea {
 }
 
 .disabled-checkbox-extra {
-  opacity: .5;
-  pointer-events: none;
+  &, ::ng-deep label {
+    opacity: .5;
+    pointer-events: none;
+  }
 }
 
 .form-group-right {
@@ -76,4 +82,8 @@ ngb-tabset:not(.previews) ::ng-deep {
   .nav-link {
     font-size: 105%;
   }
+}
+
+.submit-error {
+  margin-bottom: 20px;
 }

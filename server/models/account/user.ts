@@ -1,3 +1,5 @@
+import * as Bluebird from 'bluebird'
+import { values } from 'lodash'
 import { col, FindOptions, fn, literal, Op, QueryTypes, where, WhereOptions } from 'sequelize'
 import {
   AfterDestroy,
@@ -19,8 +21,21 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { hasUserRight, MyUser, USER_ROLE_LABELS, UserRight, VideoAbuseState, VideoPlaylistType, VideoPrivacy } from '../../../shared'
+import {
+  MMyUserFormattable,
+  MUserDefault,
+  MUserFormattable,
+  MUserId,
+  MUserNotifSettingChannelDefault,
+  MUserWithNotificationSetting,
+  MVideoFullLight
+} from '@server/types/models'
+import { hasUserRight, USER_ROLE_LABELS } from '../../../shared/core-utils/users'
+import { AbuseState, MyUser, UserRight, VideoPlaylistType, VideoPrivacy } from '../../../shared/models'
 import { User, UserRole } from '../../../shared/models/users'
+import { UserAdminFlag } from '../../../shared/models/users/user-flag.model'
+import { NSFWPolicyType } from '../../../shared/models/videos/nsfw-policy.type'
+import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
 import {
   isNoInstanceConfigWarningModal,
   isNoWelcomeModal,
@@ -42,33 +57,19 @@ import {
   isUserWebTorrentEnabledValid
 } from '../../helpers/custom-validators/users'
 import { comparePassword, cryptPassword } from '../../helpers/peertube-crypto'
-import { OAuthTokenModel } from '../oauth/oauth-token'
-import { getSort, throwIfNotValid } from '../utils'
-import { VideoChannelModel } from '../video/video-channel'
-import { VideoPlaylistModel } from '../video/video-playlist'
-import { AccountModel } from './account'
-import { NSFWPolicyType } from '../../../shared/models/videos/nsfw-policy.type'
-import { values } from 'lodash'
 import { DEFAULT_USER_THEME_NAME, NSFW_POLICY_TYPES } from '../../initializers/constants'
 import { clearCacheByUserId } from '../../lib/oauth-model'
-import { UserNotificationSettingModel } from './user-notification-setting'
-import { VideoModel } from '../video/video'
+import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
 import { ActorModel } from '../activitypub/actor'
 import { ActorFollowModel } from '../activitypub/actor-follow'
+import { OAuthTokenModel } from '../oauth/oauth-token'
+import { getSort, throwIfNotValid } from '../utils'
+import { VideoModel } from '../video/video'
+import { VideoChannelModel } from '../video/video-channel'
 import { VideoImportModel } from '../video/video-import'
-import { UserAdminFlag } from '../../../shared/models/users/user-flag.model'
-import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
-import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
-import * as Bluebird from 'bluebird'
-import {
-  MMyUserFormattable,
-  MUserDefault,
-  MUserFormattable,
-  MUserId,
-  MUserNotifSettingChannelDefault,
-  MUserWithNotificationSetting,
-  MVideoFullLight
-} from '@server/typings/models'
+import { VideoPlaylistModel } from '../video/video-playlist'
+import { AccountModel } from './account'
+import { UserNotificationSettingModel } from './user-notification-setting'
 
 enum ScopeNames {
   FOR_ME_API = 'FOR_ME_API',
@@ -168,28 +169,26 @@ enum ScopeNames {
             '(' +
               `SELECT concat_ws(':', "abuses", "acceptedAbuses") ` +
               'FROM (' +
-                'SELECT COUNT("videoAbuse"."id") AS "abuses", ' +
-                       `COUNT("videoAbuse"."id") FILTER (WHERE "videoAbuse"."state" = ${VideoAbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
-                'FROM "videoAbuse" ' +
-                'INNER JOIN "video" ON "videoAbuse"."videoId" = "video"."id" ' +
-                'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-                'INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ' +
+                'SELECT COUNT("abuse"."id") AS "abuses", ' +
+                       `COUNT("abuse"."id") FILTER (WHERE "abuse"."state" = ${AbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
+                'FROM "abuse" ' +
+                'INNER JOIN "account" ON "account"."id" = "abuse"."flaggedAccountId" ' +
                 'WHERE "account"."userId" = "UserModel"."id"' +
               ') t' +
             ')'
           ),
-          'videoAbusesCount'
+          'abusesCount'
         ],
         [
           literal(
             '(' +
-              'SELECT COUNT("videoAbuse"."id") ' +
-              'FROM "videoAbuse" ' +
-              'INNER JOIN "account" ON "account"."id" = "videoAbuse"."reporterAccountId" ' +
+              'SELECT COUNT("abuse"."id") ' +
+              'FROM "abuse" ' +
+              'INNER JOIN "account" ON "account"."id" = "abuse"."reporterAccountId" ' +
               'WHERE "account"."userId" = "UserModel"."id"' +
             ')'
           ),
-          'videoAbusesCreatedCount'
+          'abusesCreatedCount'
         ],
         [
           literal(
@@ -412,11 +411,18 @@ export class UserModel extends Model<UserModel> {
     return this.count()
   }
 
-  static listForApi (start: number, count: number, sort: string, search?: string) {
-    let where: WhereOptions
+  static listForApi (parameters: {
+    start: number
+    count: number
+    sort: string
+    search?: string
+    blocked?: boolean
+  }) {
+    const { start, count, sort, search, blocked } = parameters
+    const where: WhereOptions = {}
 
     if (search) {
-      where = {
+      Object.assign(where, {
         [Op.or]: [
           {
             email: {
@@ -429,7 +435,13 @@ export class UserModel extends Model<UserModel> {
             }
           }
         ]
-      }
+      })
+    }
+
+    if (blocked !== undefined) {
+      Object.assign(where, {
+        blocked: blocked
+      })
     }
 
     const query: FindOptions = {
@@ -767,8 +779,8 @@ export class UserModel extends Model<UserModel> {
     const videoQuotaUsed = this.get('videoQuotaUsed')
     const videoQuotaUsedDaily = this.get('videoQuotaUsedDaily')
     const videosCount = this.get('videosCount')
-    const [ videoAbusesCount, videoAbusesAcceptedCount ] = (this.get('videoAbusesCount') as string || ':').split(':')
-    const videoAbusesCreatedCount = this.get('videoAbusesCreatedCount')
+    const [ abusesCount, abusesAcceptedCount ] = (this.get('abusesCount') as string || ':').split(':')
+    const abusesCreatedCount = this.get('abusesCreatedCount')
     const videoCommentsCount = this.get('videoCommentsCount')
 
     const json: User = {
@@ -802,14 +814,14 @@ export class UserModel extends Model<UserModel> {
       videosCount: videosCount !== undefined
         ? parseInt(videosCount + '', 10)
         : undefined,
-      videoAbusesCount: videoAbusesCount
-        ? parseInt(videoAbusesCount, 10)
+      abusesCount: abusesCount
+        ? parseInt(abusesCount, 10)
         : undefined,
-      videoAbusesAcceptedCount: videoAbusesAcceptedCount
-        ? parseInt(videoAbusesAcceptedCount, 10)
+      abusesAcceptedCount: abusesAcceptedCount
+        ? parseInt(abusesAcceptedCount, 10)
         : undefined,
-      videoAbusesCreatedCount: videoAbusesCreatedCount !== undefined
-        ? parseInt(videoAbusesCreatedCount + '', 10)
+      abusesCreatedCount: abusesCreatedCount !== undefined
+        ? parseInt(abusesCreatedCount + '', 10)
         : undefined,
       videoCommentsCount: videoCommentsCount !== undefined
         ? parseInt(videoCommentsCount + '', 10)

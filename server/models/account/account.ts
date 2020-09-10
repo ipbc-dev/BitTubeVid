@@ -32,15 +32,17 @@ import { FindOptions, IncludeOptions, Op, Transaction, WhereOptions } from 'sequ
 import { AccountBlocklistModel } from './account-blocklist'
 import { ServerBlocklistModel } from '../server/server-blocklist'
 import { ActorFollowModel } from '../activitypub/actor-follow'
-import { MAccountActor, MAccountAP, MAccountDefault, MAccountFormattable, MAccountSummaryFormattable } from '../../typings/models'
+import { MAccountActor, MAccountAP, MAccountDefault, MAccountFormattable, MAccountSummaryFormattable, MAccount } from '../../types/models'
 import * as Bluebird from 'bluebird'
 import { ModelCache } from '@server/models/model-cache'
+import { VideoModel } from '../video/video'
 
 export enum ScopeNames {
   SUMMARY = 'SUMMARY'
 }
 
 export type SummaryOptions = {
+  actorRequired?: boolean // Default: true
   whereActor?: WhereOptions
   withAccountBlockerIds?: number[]
 }
@@ -64,12 +66,12 @@ export type SummaryOptions = {
     }
 
     const query: FindOptions = {
-      attributes: [ 'id', 'name' ],
+      attributes: [ 'id', 'name', 'actorId' ],
       include: [
         {
           attributes: [ 'id', 'preferredUsername', 'url', 'serverId', 'avatarId' ],
           model: ActorModel.unscoped(),
-          required: true,
+          required: options.actorRequired ?? true,
           where: whereActor,
           include: [
             serverInclude,
@@ -343,6 +345,29 @@ export class AccountModel extends Model<AccountModel> {
       })
   }
 
+  static loadAccountIdFromVideo (videoId: number): Bluebird<MAccount> {
+    const query = {
+      include: [
+        {
+          attributes: [ 'id', 'accountId' ],
+          model: VideoChannelModel.unscoped(),
+          required: true,
+          include: [
+            {
+              attributes: [ 'id', 'channelId' ],
+              model: VideoModel.unscoped(),
+              where: {
+                id: videoId
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+    return AccountModel.findOne(query)
+  }
+
   static listLocalsForSitemap (sort: string): Bluebird<MAccountActor[]> {
     const query = {
       attributes: [ ],
@@ -362,6 +387,10 @@ export class AccountModel extends Model<AccountModel> {
     return AccountModel
       .unscoped()
       .findAll(query)
+  }
+
+  getClientUrl () {
+    return WEBSERVER.URL + '/accounts/' + this.Actor.getIdentifier()
   }
 
   toFormattedJSON (this: MAccountFormattable): Account {

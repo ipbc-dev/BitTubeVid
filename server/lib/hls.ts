@@ -11,7 +11,7 @@ import { flatten, uniq } from 'lodash'
 import { VideoFileModel } from '../models/video/video-file'
 import { CONFIG } from '../initializers/config'
 import { sequelizeTypescript } from '../initializers/database'
-import { MVideoWithFile } from '@server/typings/models'
+import { MVideoWithFile } from '@server/types/models'
 import { getVideoFilename, getVideoFilePath } from './video-paths'
 
 async function updateStreamingPlaylistsInfohashesIfNeeded () {
@@ -50,9 +50,13 @@ async function updateMasterHLSPlaylist (video: MVideoWithFile) {
     let line = `#EXT-X-STREAM-INF:${bandwidth},${resolution}`
     if (file.fps) line += ',FRAME-RATE=' + file.fps
 
-    const audioCodec = await getAudioStreamCodec(videoFilePath)
     const videoCodec = await getVideoStreamCodec(videoFilePath)
-    line += `,CODECS="${videoCodec},${audioCodec}"`
+    line += `,CODECS="${videoCodec}`
+
+    const audioCodec = await getAudioStreamCodec(videoFilePath)
+    if (audioCodec) line += `,${audioCodec}`
+
+    line += '"'
 
     masterPlaylists.push(line)
     masterPlaylists.push(VideoStreamingPlaylistModel.getHlsPlaylistFilename(file.resolution))

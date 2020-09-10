@@ -5,8 +5,13 @@
   @include create-button;
 }
 
-tr.banned {
-  color: red;
+tr.banned > td {
+  background-color: lighten($color: $red, $amount: 40) !important;
+}
+
+.table-email {
+  @include disable-default-a-behaviour;
+  color: pvar(--mainForegroundColor);
 }
 
 .banned-info {
@@ -15,6 +20,12 @@ tr.banned {
 
 .ban-reason-label {
   font-weight: $font-semibold;
+}
+
+.user-table-primary-text .glyphicon {
+  font-size: 80%;
+  color: gray;
+  margin-left: 0.1rem;
 }
 
 .caption {
@@ -30,6 +41,32 @@ p-tableCheckbox {
   top: -2.5px;
 }
 
+my-global-icon {
+  width: 18px;
+}
+
 .chip {
   @include chip;
+}
+
+.badge {
+  @include table-badge;
+}
+
+.progress {
+  @include progressbar($small: true);
+  width: auto;
+  max-width: 100%;
+}
+
+.input-group {
+  @include peertube-input-group(300px);
+
+  input {
+    flex: 1;
+  }
+
+  .dropdown-toggle::after {
+    margin-left: 0;
+  }
 }

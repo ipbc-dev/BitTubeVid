@@ -1,0 +1,197 @@
+<div *ngIf="componentPagination.totalItems === 0" class="no-notification" i18n>You don't have notifications.</div>
+
+<div class="notifications" myInfiniteScroller [autoInit]="true" (nearOfBottom)="onNearOfBottom()" [dataObservable]="onDataSubject.asObservable()">
+  <div *ngFor="let notification of notifications" class="notification" [ngClass]="{ unread: !notification.read }" (click)="markAsRead(notification)">
+
+    <ng-container [ngSwitch]="notification.type">
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_VIDEO_FROM_SUBSCRIPTION">
+        <ng-container *ngIf="notification.video; then hasVideo; else noVideo"></ng-container>
+
+        <ng-template #hasVideo>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">
+            <img alt="" aria-labelledby="avatar" class="avatar" [src]="notification.video.channel.avatarUrl" />
+          </a>
+
+          <div class="message" i18n>
+            {{ notification.video.channel.displayName }} published a new video: <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.video.name }}</a>
+          </div>
+        </ng-template>
+
+        <ng-template #noVideo>
+          <my-global-icon iconName="alert" aria-hidden="true"></my-global-icon>
+
+          <div class="message" i18n>
+            The notification concerns a video now unavailable
+          </div>
+        </ng-template>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.UNBLACKLIST_ON_MY_VIDEO">
+        <my-global-icon iconName="undo" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          Your video <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.video.name }}</a> has been unblocked
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.BLACKLIST_ON_MY_VIDEO">
+        <my-global-icon iconName="no" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          Your video <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.videoBlacklist.video.name }}</a> has been blocked
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_ABUSE_FOR_MODERATORS">
+        <my-global-icon iconName="flag" aria-hidden="true"></my-global-icon>
+
+        <div class="message" *ngIf="notification.videoUrl" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">A new video abuse</a> has been created on video <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.abuse.video.name }}</a>
+        </div>
+
+        <div class="message" *ngIf="notification.commentUrl" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">A new comment abuse</a> has been created on video <a (click)="markAsRead(notification)" [routerLink]="notification.commentUrl">{{ notification.abuse.comment.video.name }}</a>
+        </div>
+
+        <div class="message" *ngIf="notification.accountUrl" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">A new account abuse</a> has been created on account <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">{{ notification.abuse.account.displayName }}</a>
+        </div>
+
+        <!-- Deleted entity associated to the abuse -->
+        <div class="message" *ngIf="!notification.videoUrl && !notification.commentUrl && !notification.accountUrl" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">A new abuse</a> has been created
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.ABUSE_STATE_CHANGE">
+        <my-global-icon iconName="flag" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">Your abuse {{ notification.abuse.id }}</a> has been
+          <ng-container *ngIf="isAccepted(notification)">accepted</ng-container>
+          <ng-container *ngIf="!isAccepted(notification)">rejected</ng-container>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.ABUSE_NEW_MESSAGE">
+        <my-global-icon iconName="flag" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.abuseUrl" [queryParams]="notification.abuseQueryParams">Abuse {{ notification.abuse.id }}</a> has a new message
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.VIDEO_AUTO_BLACKLIST_FOR_MODERATORS">
+        <my-global-icon iconName="no" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          The recently added video <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.videoBlacklist.video.name }}</a> has been <a (click)="markAsRead(notification)" [routerLink]="notification.videoAutoBlacklistUrl">automatically blocked</a>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_COMMENT_ON_MY_VIDEO">
+        <ng-container *ngIf="notification.comment; then hasComment; else noComment"></ng-container>
+
+        <ng-template #hasComment>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">
+            <img alt="" aria-labelledby="avatar" class="avatar" [src]="notification.comment.account.avatarUrl" />
+          </a>
+
+          <div class="message" i18n>
+            <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">{{ notification.comment.account.displayName }}</a> commented your video <a (click)="markAsRead(notification)" [routerLink]="notification.commentUrl">{{ notification.comment.video.name }}</a>
+          </div>
+        </ng-template>
+
+        <ng-template #noComment>
+          <my-global-icon iconName="alert" aria-hidden="true"></my-global-icon>
+
+          <div class="message" i18n>
+            The notification concerns a comment now unavailable
+          </div>
+        </ng-template>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.MY_VIDEO_PUBLISHED">
+        <my-global-icon iconName="film" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          Your video <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl">{{ notification.video.name }}</a> has been published
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.MY_VIDEO_IMPORT_SUCCESS">
+        <my-global-icon iconName="cloud-download" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.videoUrl || notification.videoImportUrl">Your video import</a> {{ notification.videoImportIdentifier }} succeeded
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.MY_VIDEO_IMPORT_ERROR">
+        <my-global-icon iconName="cloud-error" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.videoImportUrl">Your video import</a> {{ notification.videoImportIdentifier }} failed
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_USER_REGISTRATION">
+        <my-global-icon iconName="user-add" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          User <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">{{ notification.account.name }}</a> registered on your instance
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_FOLLOW">
+        <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">
+          <img alt="" aria-labelledby="avatar" class="avatar" [src]="notification.actorFollow.follower.avatarUrl" />
+        </a>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">{{ notification.actorFollow.follower.displayName }}</a> is following
+
+          <ng-container *ngIf="notification.actorFollow.following.type === 'channel'">your channel {{ notification.actorFollow.following.displayName }}</ng-container>
+          <ng-container *ngIf="notification.actorFollow.following.type === 'account'">your account</ng-container>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.COMMENT_MENTION">
+        <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">
+          <img alt="" aria-labelledby="avatar" class="avatar" [src]="notification.comment.account.avatarUrl" />
+        </a>
+
+        <div class="message" i18n>
+          <a (click)="markAsRead(notification)" [routerLink]="notification.accountUrl">{{ notification.comment.account.displayName }}</a> mentioned you on <a (click)="markAsRead(notification)" [routerLink]="notification.commentUrl">video {{ notification.comment.video.name }}</a>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.NEW_INSTANCE_FOLLOWER">
+        <my-global-icon iconName="users" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          Your instance has <a (click)="markAsRead(notification)" [routerLink]="notification.instanceFollowUrl">a new follower</a> ({{ notification.actorFollow?.follower.host }})
+          <ng-container *ngIf="notification.actorFollow?.state === 'pending'"> awaiting your approval</ng-container>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="UserNotificationType.AUTO_INSTANCE_FOLLOWING">
+        <my-global-icon iconName="users" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          Your instance automatically followed <a (click)="markAsRead(notification)" [routerLink]="notification.instanceFollowUrl">{{ notification.actorFollow.following.host }}</a>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchDefault>
+        <my-global-icon iconName="alert" aria-hidden="true"></my-global-icon>
+
+        <div class="message" i18n>
+          The notification points to a content now unavailable
+        </div>
+      </ng-container>
+    </ng-container>
+
+    <div [title]="notification.createdAt" class="from-date">{{ notification.createdAt | myFromNow }}</div>
+  </div>
+</div>

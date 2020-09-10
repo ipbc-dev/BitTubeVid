@@ -5,6 +5,6 @@
   margin-right: 30px;
 }
 
-.empty-table-message {
-  @include empty-state;
+.badge {
+  @include table-badge;
 }

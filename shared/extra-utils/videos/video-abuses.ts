@@ -1,17 +1,26 @@
 import * as request from 'supertest'
-import { VideoAbuseUpdate } from '../../models/videos/abuse/video-abuse-update.model'
-import { makeDeleteRequest, makePutBodyRequest, makeGetRequest } from '../requests/requests'
-import { VideoAbuseState } from '@shared/models'
-import { VideoAbuseVideoIs } from '@shared/models/videos/abuse/video-abuse-video-is.type'
+import { AbusePredefinedReasonsString, AbuseState, AbuseUpdate, AbuseVideoIs } from '@shared/models'
+import { makeDeleteRequest, makeGetRequest, makePutBodyRequest } from '../requests/requests'
 
-function reportVideoAbuse (url: string, token: string, videoId: number | string, reason: string, specialStatus = 200) {
+// FIXME: deprecated in 2.3. Remove this file
+
+function reportVideoAbuse (
+  url: string,
+  token: string,
+  videoId: number | string,
+  reason: string,
+  predefinedReasons?: AbusePredefinedReasonsString[],
+  startAt?: number,
+  endAt?: number,
+  specialStatus = 200
+) {
   const path = '/api/v1/videos/' + videoId + '/abuse'
 
   return request(url)
           .post(path)
           .set('Accept', 'application/json')
           .set('Authorization', 'Bearer ' + token)
-          .send({ reason })
+          .send({ reason, predefinedReasons, startAt, endAt })
           .expect(specialStatus)
 }
 
@@ -19,9 +28,10 @@ function getVideoAbusesList (options: {
   url: string
   token: string
   id?: number
+  predefinedReason?: AbusePredefinedReasonsString
   search?: string
-  state?: VideoAbuseState
-  videoIs?: VideoAbuseVideoIs
+  state?: AbuseState
+  videoIs?: AbuseVideoIs
   searchReporter?: string
   searchReportee?: string
   searchVideo?: string
@@ -31,6 +41,7 @@ function getVideoAbusesList (options: {
     url,
     token,
     id,
+    predefinedReason,
     search,
     state,
     videoIs,
@@ -44,6 +55,7 @@ function getVideoAbusesList (options: {
   const query = {
     sort: 'createdAt',
     id,
+    predefinedReason,
     search,
     state,
     videoIs,
@@ -67,7 +79,7 @@ function updateVideoAbuse (
   token: string,
   videoId: string | number,
   videoAbuseId: number,
-  body: VideoAbuseUpdate,
+  body: AbuseUpdate,
   statusCodeExpected = 204
 ) {
   const path = '/api/v1/videos/' + videoId + '/abuse/' + videoAbuseId

@@ -1,11 +1,9 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core'
-import { Notifier } from '@app/core'
+import { Notifier, UserService } from '@app/core'
+import { OWNERSHIP_CHANGE_USERNAME_VALIDATOR } from '@app/shared/form-validators/video-ownership-change-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { Video, VideoOwnershipService } from '@app/shared/shared-main'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
-import { FormReactive, UserService } from '../../../shared/index'
-import { Video } from '@app/shared/video/video.model'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService, VideoChangeOwnershipValidatorsService } from '@app/shared'
-import { VideoOwnershipService } from '@app/shared/video-ownership'
 
 @Component({
   selector: 'my-video-change-ownership',
@@ -23,19 +21,17 @@ export class VideoChangeOwnershipComponent extends FormReactive implements OnIni
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private videoChangeOwnershipValidatorsService: VideoChangeOwnershipValidatorsService,
     private videoOwnershipService: VideoOwnershipService,
     private notifier: Notifier,
     private userService: UserService,
-    private modalService: NgbModal,
-    private i18n: I18n
-  ) {
+    private modalService: NgbModal
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      username: this.videoChangeOwnershipValidatorsService.USERNAME
+      username: OWNERSHIP_CHANGE_USERNAME_VALIDATOR
     })
     this.usernamePropositions = []
   }
@@ -65,7 +61,7 @@ export class VideoChangeOwnershipComponent extends FormReactive implements OnIni
     this.videoOwnershipService
       .changeOwnership(this.video.id, username)
       .subscribe(
-        () => this.notifier.success(this.i18n('Ownership change request sent.')),
+        () => this.notifier.success($localize`Ownership change request sent.`),
 
         err => this.notifier.error(err.message)
       )

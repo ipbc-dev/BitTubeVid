@@ -1,26 +1,20 @@
-<div class="form-row"> <!-- profile grid -->
-  <div class="form-group col-12 col-lg-4 col-xl-3">
-    <div i18n class="account-title">PROFILE</div>
-  </div>
+<h1 class="sr-only" i18n>Settings</h1>
+<div class="form-row"> <!-- preview -->
+  <div class="form-group col-12 col-lg-4 col-xl-3"></div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
     <my-actor-avatar-info [actor]="user.account" (avatarChange)="onAvatarChange($event)"></my-actor-avatar-info>
+  </div>
+</div>
 
-    <div class="user-quota mb-3">
-      <div>
-        <div class="progress" i18n-title title="Total video quota">
-          <div class="progress-bar" role="progressbar" [style]="{ width: userVideoQuotaPercentage + '%' }" [attr.aria-valuenow]="userVideoQuotaUsed" aria-valuemin="0" [attr.aria-valuemax]="userVideoQuota">{{ userVideoQuotaUsed | bytes: 0 }}</div>
-          <span class="ml-auto mr-2">{{ userVideoQuota }}</span>
-        </div>
-      </div>
+<div class="form-row"> <!-- profile settings grid -->
+  <div class="form-group col-12 col-lg-4 col-xl-3">
+    <h2 i18n class="account-title">PROFILE SETTINGS</h2>
+  </div>
 
-      <div *ngIf="hasDailyQuota()" class="mt-3">
-        <div class="progress" i18n-title title="Daily video quota">
-          <div class="progress-bar secondary" role="progressbar" [style]="{ width: userVideoQuotaDailyPercentage + '%' }" [attr.aria-valuenow]="userVideoQuotaUsedDaily" aria-valuemin="0" [attr.aria-valuemax]="userVideoQuotaDaily">{{ userVideoQuotaUsedDaily | bytes: 0 }}</div>
-          <span class="ml-auto mr-2">{{ userVideoQuotaDaily }}</span>
-        </div>
-      </div>
-    </div>
+  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+
+    <my-user-quota [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-quota>
 
     <my-account-profile [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-profile>
   </div>
@@ -29,18 +23,18 @@
 <div class="form-row mt-5"> <!-- video settings grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div class="anchor" id="video-settings"></div> <!-- video settings anchor -->
-    <div i18n class="account-title">VIDEO SETTINGS</div>
+    <h2 i18n class="account-title">VIDEO SETTINGS</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
-    <my-account-video-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-video-settings>
+    <my-user-video-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-video-settings>
   </div>
 </div>
 
 <div class="form-row mt-5"> <!-- notifications grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div class="anchor" id="notifications"></div> <!-- notifications anchor -->
-    <div i18n class="account-title">NOTIFICATIONS</div>
+    <h2 i18n class="account-title">NOTIFICATIONS</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
@@ -50,17 +44,17 @@
 
 <div class="form-row mt-5"> <!-- interface grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
-    <div i18n class="account-title">INTERFACE</div>
+    <h2 i18n class="account-title">INTERFACE</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
-    <my-account-interface-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-interface-settings>
+    <my-user-interface-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-interface-settings>
   </div>
 </div>
 
 <div class="form-row mt-5" *ngIf="user.pluginAuth === null"> <!-- password grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
-    <div i18n class="account-title">PASSWORD</div>
+    <h2 i18n class="account-title">PASSWORD</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
@@ -70,7 +64,7 @@
 
 <div class="form-row mt-5"> <!-- email grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
-    <div i18n class="account-title">EMAIL</div>
+    <h2 i18n class="account-title">EMAIL</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
@@ -80,7 +74,7 @@
 
 <div class="form-row mt-5"> <!-- danger zone grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
-    <div i18n class="account-title">DANGER ZONE</div>
+    <h2 i18n class="account-title account-title-danger">DANGER ZONE</h2>
   </div>
 
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">

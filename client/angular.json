@@ -13,6 +13,10 @@
           "baseHref": "/client/en-US/"
         },
         "locales": {
+          "ar": {
+            "translation": "src/locale/angular.ar.xlf",
+            "baseHref": "/client/ar/"
+          },
           "hu": {
             "translation": "src/locale/angular.hu-HU.xlf",
             "baseHref": "/client/hu-HU/"
@@ -40,6 +44,10 @@
           "es": {
             "translation": "src/locale/angular.es-ES.xlf",
             "baseHref": "/client/es-ES/"
+          },
+          "oc": {
+            "translation": "src/locale/angular.oc.xlf",
+            "baseHref": "/client/oc/"
           },
           "pt": {
             "translation": "src/locale/angular.pt-BR.xlf",
@@ -100,6 +108,14 @@
           "it": {
             "translation": "src/locale/angular.it-IT.xlf",
             "baseHref": "/client/it-IT/"
+          },
+          "vi": {
+            "translation": "src/locale/angular.vi-VN.xlf",
+            "baseHref": "/client/vi-VN/"
+          },
+          "kab": {
+            "translation": "src/locale/angular.kab.xlf",
+            "baseHref": "/client/kab/"
           }
         }
       },
@@ -108,6 +124,7 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "aot": true,
+            "localize": true,
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -124,6 +141,34 @@
             ],
             "styles": [
               "src/sass/application.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "@angularclass/hmr",
+              "debug",
+              "mousetrap",
+              "chart.js",
+              "linkifyjs/html",
+              "linkifyjs",
+              "markdown-it",
+              "sanitize-html",
+              "socket.io-client",
+              "socket.io-parser",
+              "@app/+about/about-peertube/about-peertube-contributors.component",
+              "path",
+              "video.js",
+              "p2p-media-loader-hlsjs",
+              "videojs-hotkeys/videojs.hotkeys",
+              "p2p-media-loader-core",
+              "qrcode",
+              "webtorrent",
+              "cache-chunk-store",
+              "global/document",
+              "videojs-vtt.js",
+              "videojs-vtt.js",
+              "@babel/runtime/helpers/possibleConstructorReturn",
+              "@babel/runtime/helpers/inherits",
+              "@babel/runtime/helpers/construct",
+              "@videojs/xhr"
             ],
             "scripts": []
           },
@@ -159,7 +204,18 @@
                 }
               ]
             },
+            "i18n": {
+              "optimization": false,
+              "outputHashing": "none",
+              "sourceMap": true,
+              "extractCss": true,
+              "namedChunks": true,
+              "aot": true,
+              "buildOptimizer": false,
+              "budgets": []
+            },
             "hmr": {
+              "localize": false,
               "budgets": [
                 {
                   "type": "anyComponentStyle",
@@ -174,6 +230,7 @@
               ]
             },
             "e2e": {
+              "localize": false,
               "budgets": [
                 {
                   "type": "anyComponentStyle",
@@ -186,72 +243,6 @@
                   "with": "src/environments/environment.e2e.ts"
                 }
               ]
-            },
-            "hu-HU": {
-              "localize": [ "hu" ]
-            },
-            "th-TH": {
-              "localize":  [ "th" ]
-            },
-            "fi-FI": {
-              "localize":  [ "fi" ]
-            },
-            "nl-NL": {
-              "localize":  [ "nl" ]
-            },
-            "gd": {
-              "localize":  [ "gd" ]
-            },
-            "el-GR": {
-              "localize":  [ "el" ]
-            },
-            "es-ES": {
-              "localize":  [ "es" ]
-            },
-            "pt-BR": {
-              "localize":  [ "pt" ]
-            },
-            "pt-PT": {
-              "localize":  [ "pt-PT" ]
-            },
-            "sv-SE": {
-              "localize":  [ "sv" ]
-            },
-            "pl-PL": {
-              "localize":  [ "pl" ]
-            },
-            "ru-RU": {
-              "localize":  [ "ru" ]
-            },
-            "zh-Hans-CN": {
-              "localize":  [ "zh-Hans" ]
-            },
-            "zh-Hant-TW": {
-              "localize":  [ "zh-Hant" ]
-            },
-            "fr-FR": {
-              "localize":  [ "fr" ]
-            },
-            "ja-JP": {
-              "localize":  [ "ja" ]
-            },
-            "eu-ES": {
-              "localize":  [ "eu" ]
-            },
-            "ca-ES": {
-              "localize":  [ "ca" ]
-            },
-            "cs-CZ": {
-              "localize":  [ "cs" ]
-            },
-            "eo": {
-              "localize":  [ "eo" ]
-            },
-            "de-DE": {
-              "localize":  [ "de" ]
-            },
-            "it-IT": {
-              "localize":  [ "it" ]
             }
           }
         },
@@ -320,7 +311,7 @@
               "i18nBaseFile": "angular",
               "defaultLanguage": "en-US",
               "languages": [
-                "ar-001",
+                "ar",
                 "ca-ES",
                 "cs-CZ",
                 "da-DK",
@@ -340,6 +331,7 @@
                 "it-IT",
                 "ja-JP",
                 "jbo",
+                "kab",
                 "ko-KR",
                 "lt-LT",
                 "nb-NO",
@@ -400,7 +392,7 @@
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
-      "styleext": "scss"
+      "style": "scss"
     },
     "@schematics/angular:directive": {
       "prefix": "app"

@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core'
 import { RouterModule, Routes } from '@angular/router'
 import { MetaGuard } from '@ngx-meta/core'
-import { VideoChannelsComponent } from './video-channels.component'
-import { VideoChannelVideosComponent } from './video-channel-videos/video-channel-videos.component'
 import { VideoChannelAboutComponent } from './video-channel-about/video-channel-about.component'
-import { VideoChannelPlaylistsComponent } from '@app/+video-channels/video-channel-playlists/video-channel-playlists.component'
+import { VideoChannelPlaylistsComponent } from './video-channel-playlists/video-channel-playlists.component'
+import { VideoChannelVideosComponent } from './video-channel-videos/video-channel-videos.component'
+import { VideoChannelsComponent } from './video-channels.component'
 
 const videoChannelsRoutes: Routes = [
   {
@@ -22,7 +22,7 @@ const videoChannelsRoutes: Routes = [
         component: VideoChannelVideosComponent,
         data: {
           meta: {
-            title: 'Video channel videos'
+            title: $localize`Video channel videos`
           },
           reuse: {
             enabled: true,
@@ -35,7 +35,7 @@ const videoChannelsRoutes: Routes = [
         component: VideoChannelPlaylistsComponent,
         data: {
           meta: {
-            title: 'Video channel playlists'
+            title: $localize`Video channel playlists`
           }
         }
       },
@@ -44,7 +44,7 @@ const videoChannelsRoutes: Routes = [
         component: VideoChannelAboutComponent,
         data: {
           meta: {
-            title: 'About video channel'
+            title: $localize`About video channel`
           }
         }
       }

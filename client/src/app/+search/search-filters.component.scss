@@ -1,0 +1,67 @@
+@import '_variables';
+@import '_mixins';
+
+form {
+  margin-top: 40px;
+}
+
+.radio-label {
+  font-size: 15px;
+  font-weight: $font-bold;
+}
+
+.peertube-radio-container {
+  @include peertube-radio-container;
+
+  display: inline-block;
+  margin-right: 30px;
+}
+
+.peertube-select-container {
+  @include peertube-select-container(auto);
+
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+input[type=text] {
+  @include peertube-input-text(100%);
+  display: block;
+}
+
+input[type=submit] {
+  @include peertube-button-link;
+  @include orange-button;
+}
+
+.submit-button {
+  text-align: right;
+}
+
+.reset-button {
+  @include peertube-button;
+
+  font-weight: $font-semibold;
+  display: inline-block;
+  padding: 0 10px 0 10px;
+  white-space: nowrap;
+  background: transparent;
+
+  margin-right: 1rem;
+}
+
+.reset-button-small {
+  font-size: 80%;
+  height: unset;
+  line-height: unset;
+  margin: unset;
+  margin-bottom: 0.5rem;
+}
+
+.label-container {
+  display: flex;
+  white-space: nowrap;
+}

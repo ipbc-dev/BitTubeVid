@@ -1,11 +1,11 @@
-import { Component, OnInit, ViewChild, AfterViewChecked } from '@angular/core'
-import { Notifier, ServerService } from '@app/core'
-import { ContactAdminModalComponent } from '@app/+about/about-instance/contact-admin-modal.component'
-import { InstanceService } from '@app/shared/instance/instance.service'
-import { ServerConfig } from '@shared/models'
-import { ActivatedRoute } from '@angular/router'
-import { ResolverData } from './about-instance.resolver'
 import { ViewportScroller } from '@angular/common'
+import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
+import { ContactAdminModalComponent } from '@app/+about/about-instance/contact-admin-modal.component'
+import { ServerService } from '@app/core'
+import { InstanceService } from '@app/shared/shared-instance'
+import { ServerConfig } from '@shared/models'
+import { ResolverData } from './about-instance.resolver'
 
 @Component({
   selector: 'my-about-instance',
@@ -34,6 +34,8 @@ export class AboutInstanceComponent implements OnInit, AfterViewChecked {
   categories: string[] = []
 
   serverConfig: ServerConfig
+
+  private lastScrollHash: string
 
   constructor (
     private viewportScroller: ViewportScroller,
@@ -74,7 +76,11 @@ export class AboutInstanceComponent implements OnInit, AfterViewChecked {
   }
 
   ngAfterViewChecked () {
-    if (window.location.hash) this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+    if (window.location.hash && window.location.hash !== this.lastScrollHash) {
+      this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+
+      this.lastScrollHash = window.location.hash
+    }
   }
 
   openContactModal () {

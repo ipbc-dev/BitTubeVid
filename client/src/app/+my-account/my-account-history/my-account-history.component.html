@@ -1,3 +1,8 @@
+<h1>
+  <my-global-icon iconName="history" aria-hidden="true"></my-global-icon>
+  <ng-container i18n>My history</ng-container>
+</h1>
+
 <div class="top-buttons">
   <div class="history-switch">
     <p-inputSwitch [(ngModel)]="videosHistoryEnabled" (ngModelChange)="onVideosHistoryChange()"></p-inputSwitch>
@@ -5,7 +10,7 @@
   </div>
 
   <button class="delete-history" (click)="deleteHistory()" i18n>
-    <my-global-icon iconName="delete"></my-global-icon>
+    <my-global-icon iconName="delete" aria-hidden="true"></my-global-icon>
     Delete history
   </button>
 </div>
@@ -17,6 +22,7 @@
   <div class="video" *ngFor="let video of videos">
     <my-video-miniature
       [video]="video" [displayAsRow]="true"
-      (videoRemoved)="removeVideoFromArray(video)" (videoBlacklisted)="removeVideoFromArray(video)"></my-video-miniature>
+      (videoRemoved)="removeVideoFromArray(video)" (videoBlocked)="removeVideoFromArray(video)"
+    ></my-video-miniature>
   </div>
 </div>

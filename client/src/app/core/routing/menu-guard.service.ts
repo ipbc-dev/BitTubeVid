@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core'
 import { CanActivate, CanDeactivate } from '@angular/router'
-import { MenuService } from '@app/core/menu'
-import { ScreenService } from '@app/shared/misc/screen.service'
+import { MenuService } from '../menu'
+import { ScreenService } from '../wrappers'
 
 abstract class MenuGuard implements CanActivate, CanDeactivate<any> {
   display = true
@@ -15,7 +15,7 @@ abstract class MenuGuard implements CanActivate, CanDeactivate<any> {
     // small screens already have the site-wide onResize from screenService
     // > medium screens have enough space to fit the administrative menus
     if (!this.screen.isInMobileView() && this.screen.isInMediumView()) {
-      this.menu.isMenuDisplayed = this.display
+      this.menu.setMenuDisplay(this.display)
     }
     return true
   }

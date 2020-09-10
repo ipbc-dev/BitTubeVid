@@ -3,23 +3,6 @@ import validator from 'validator'
 import { Col } from 'sequelize/types/lib/utils'
 import { literal, OrderItem, Op } from 'sequelize'
 
-type Primitive = string | Function | number | boolean | Symbol | undefined | null
-type DeepOmitHelper<T, K extends keyof T> = {
-  [P in K]: // extra level of indirection needed to trigger homomorhic behavior
-  T[P] extends infer TP // distribute over unions
-    ? TP extends Primitive
-      ? TP // leave primitives and functions alone
-      : TP extends any[]
-        ? DeepOmitArray<TP, K> // Array special handling
-        : DeepOmit<TP, K>
-    : never
-}
-type DeepOmit<T, K> = T extends Primitive ? T : DeepOmitHelper<T, Exclude<keyof T, K>>
-
-type DeepOmitArray<T extends any[], K> = {
-  [P in keyof T]: DeepOmit<T[P], K>
-}
-
 type SortType = { sortModel: string, sortValue: string }
 
 // Translate for example "-name" to [ [ 'name', 'DESC' ], [ 'id', 'ASC' ] ]
@@ -136,10 +119,7 @@ function createSimilarityAttribute (col: string, value: string) {
   )
 }
 
-function buildBlockedAccountSQL (serverAccountId: number, userAccountId?: number) {
-  const blockerIds = [ serverAccountId ]
-  if (userAccountId) blockerIds.push(userAccountId)
-
+function buildBlockedAccountSQL (blockerIds: number[]) {
   const blockerIdsString = blockerIds.join(', ')
 
   return 'SELECT "targetAccountId" AS "id" FROM "accountBlocklist" WHERE "accountId" IN (' + blockerIdsString + ')' +
@@ -147,6 +127,30 @@ function buildBlockedAccountSQL (serverAccountId: number, userAccountId?: number
     'SELECT "account"."id" AS "id" FROM account INNER JOIN "actor" ON account."actorId" = actor.id ' +
     'INNER JOIN "serverBlocklist" ON "actor"."serverId" = "serverBlocklist"."targetServerId" ' +
     'WHERE "serverBlocklist"."accountId" IN (' + blockerIdsString + ')'
+}
+
+function buildBlockedAccountSQLOptimized (columnNameJoin: string, blockerIds: number[]) {
+  const blockerIdsString = blockerIds.join(', ')
+
+  return [
+    literal(
+      `NOT EXISTS (` +
+      `  SELECT 1 FROM "accountBlocklist" ` +
+      `  WHERE "targetAccountId" = ${columnNameJoin} ` +
+      `  AND "accountId" IN (${blockerIdsString})` +
+      `)`
+    ),
+
+    literal(
+      `NOT EXISTS (` +
+      `  SELECT 1 FROM "account" ` +
+      `  INNER JOIN "actor" ON account."actorId" = actor.id ` +
+      `  INNER JOIN "serverBlocklist" ON "actor"."serverId" = "serverBlocklist"."targetServerId" ` +
+      `  WHERE "account"."id" = ${columnNameJoin} ` +
+      `  AND "serverBlocklist"."accountId" IN (${blockerIdsString})` +
+      `)`
+    )
+  ]
 }
 
 function buildServerIdsFollowedBy (actorId: any) {
@@ -220,8 +224,8 @@ function searchAttribute (sourceField?: string, targetField?: string) {
 // ---------------------------------------------------------------------------
 
 export {
-  DeepOmit,
   buildBlockedAccountSQL,
+  buildBlockedAccountSQLOptimized,
   buildLocalActorIdsIn,
   SortType,
   buildLocalAccountIdsIn,

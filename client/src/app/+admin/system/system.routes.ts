@@ -1,17 +1,15 @@
 import { Routes } from '@angular/router'
-import { UserRightGuard } from '../../core'
-import { UserRight } from '../../../../../shared'
-import { JobsComponent } from '@app/+admin/system/jobs/jobs.component'
-import { LogsComponent } from '@app/+admin/system/logs'
-import { SystemComponent } from '@app/+admin/system/system.component'
-import { DebugComponent } from '@app/+admin/system/debug'
+import { UserRightGuard } from '@app/core'
+import { UserRight } from '@shared/models'
+import { DebugComponent } from './debug'
+import { JobsComponent } from './jobs/jobs.component'
+import { LogsComponent } from './logs'
+import { SystemComponent } from './system.component'
 
 export const SystemRoutes: Routes = [
   {
     path: 'system',
     component: SystemComponent,
-    data: {
-    },
     children: [
       {
         path: '',
@@ -25,7 +23,7 @@ export const SystemRoutes: Routes = [
         data: {
           meta: {
             userRight: UserRight.MANAGE_JOBS,
-            title: 'Jobs'
+            title: $localize`Jobs`
           }
         }
       },
@@ -36,7 +34,7 @@ export const SystemRoutes: Routes = [
         data: {
           meta: {
             userRight: UserRight.MANAGE_LOGS,
-            title: 'Logs'
+            title: $localize`Logs`
           }
         }
       },
@@ -47,7 +45,7 @@ export const SystemRoutes: Routes = [
         data: {
           meta: {
             userRight: UserRight.MANAGE_DEBUG,
-            title: 'Debug'
+            title: $localize`Debug`
           }
         }
       }

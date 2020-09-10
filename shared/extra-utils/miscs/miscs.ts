@@ -56,25 +56,29 @@ async function testImage (url: string, imageName: string, imagePath: string, ext
   const body = res.body
 
   const data = await readFile(join(root(), 'server', 'tests', 'fixtures', imageName + extension))
-  const minLength = body.length - ((20 * body.length) / 100)
-  const maxLength = body.length + ((20 * body.length) / 100)
+  const minLength = body.length - ((30 * body.length) / 100)
+  const maxLength = body.length + ((30 * body.length) / 100)
 
-  expect(data.length).to.be.above(minLength)
-  expect(data.length).to.be.below(maxLength)
+  expect(data.length).to.be.above(minLength, "the generated image is way smaller than the recorded fixture")
+  expect(data.length).to.be.below(maxLength, "the generated image is way larger than the recorded fixture")
 }
 
 function buildAbsoluteFixturePath (path: string, customCIPath = false) {
-  if (isAbsolute(path)) {
-    return path
-  }
+  if (isAbsolute(path)) return path
 
-  if (customCIPath) {
-    if (process.env.GITLAB_CI) return join(root(), 'cached-fixtures', path)
-
-    if (process.env.TRAVIS) return join(process.env.HOME, 'fixtures', path)
+  if (customCIPath && process.env.GITHUB_WORKSPACE) {
+    return join(process.env.GITHUB_WORKSPACE, 'fixtures', path)
   }
 
   return join(root(), 'server', 'tests', 'fixtures', path)
+}
+
+function areHttpImportTestsDisabled () {
+  const disabled = process.env.DISABLE_HTTP_IMPORT_TESTS === 'true'
+
+  if (disabled) console.log('Import tests are disabled')
+
+  return disabled
 }
 
 async function generateHighBitrateVideo () {
@@ -131,6 +135,7 @@ async function generateVideoWithFramerate (fps = 60) {
 export {
   dateIsValid,
   wait,
+  areHttpImportTestsDisabled,
   buildServerDirectory,
   webtorrentAdd,
   immutableAssign,

@@ -1,14 +1,19 @@
 import { Component, OnInit } from '@angular/core'
 import { Router } from '@angular/router'
 import { AuthService, Notifier, ServerService } from '@app/core'
-import { MyAccountVideoPlaylistEdit } from './my-account-video-playlist-edit'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { VideoPlaylistValidatorsService } from '@app/shared'
+import { populateAsyncUserVideoChannels } from '@app/helpers'
+import {
+  setPlaylistChannelValidator,
+  VIDEO_PLAYLIST_CHANNEL_ID_VALIDATOR,
+  VIDEO_PLAYLIST_DESCRIPTION_VALIDATOR,
+  VIDEO_PLAYLIST_DISPLAY_NAME_VALIDATOR,
+  VIDEO_PLAYLIST_PRIVACY_VALIDATOR
+} from '@app/shared/form-validators/video-playlist-validators'
+import { FormValidatorService } from '@app/shared/shared-forms'
+import { VideoPlaylistService } from '@app/shared/shared-video-playlist'
 import { VideoPlaylistCreate } from '@shared/models/videos/playlist/video-playlist-create.model'
-import { VideoPlaylistService } from '@app/shared/video-playlist/video-playlist.service'
 import { VideoPlaylistPrivacy } from '@shared/models/videos/playlist/video-playlist-privacy.model'
-import { populateAsyncUserVideoChannels } from '@app/shared/misc/utils'
+import { MyAccountVideoPlaylistEdit } from './my-account-video-playlist-edit'
 
 @Component({
   selector: 'my-account-video-playlist-create',
@@ -21,27 +26,25 @@ export class MyAccountVideoPlaylistCreateComponent extends MyAccountVideoPlaylis
   constructor (
     protected formValidatorService: FormValidatorService,
     private authService: AuthService,
-    private videoPlaylistValidatorsService: VideoPlaylistValidatorsService,
     private notifier: Notifier,
     private router: Router,
     private videoPlaylistService: VideoPlaylistService,
-    private serverService: ServerService,
-    private i18n: I18n
-  ) {
+    private serverService: ServerService
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      displayName: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_DISPLAY_NAME,
-      privacy: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_PRIVACY,
-      description: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_DESCRIPTION,
-      videoChannelId: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_CHANNEL_ID,
+      displayName: VIDEO_PLAYLIST_DISPLAY_NAME_VALIDATOR,
+      privacy: VIDEO_PLAYLIST_PRIVACY_VALIDATOR,
+      description: VIDEO_PLAYLIST_DESCRIPTION_VALIDATOR,
+      videoChannelId: VIDEO_PLAYLIST_CHANNEL_ID_VALIDATOR,
       thumbnailfile: null
     })
 
     this.form.get('privacy').valueChanges.subscribe(privacy => {
-      this.videoPlaylistValidatorsService.setChannelValidator(this.form.get('videoChannelId'), privacy)
+      setPlaylistChannelValidator(this.form.get('videoChannelId'), privacy)
     })
 
     populateAsyncUserVideoChannels(this.authService, this.userVideoChannels)
@@ -71,9 +74,7 @@ export class MyAccountVideoPlaylistCreateComponent extends MyAccountVideoPlaylis
 
     this.videoPlaylistService.createVideoPlaylist(videoPlaylistCreate).subscribe(
       () => {
-        this.notifier.success(
-          this.i18n('Playlist {{playlistName}} created.', { playlistName: videoPlaylistCreate.displayName })
-        )
+        this.notifier.success($localize`Playlist ${videoPlaylistCreate.displayName} created.`)
         this.router.navigate([ '/my-account', 'video-playlists' ])
       },
 
@@ -86,6 +87,6 @@ export class MyAccountVideoPlaylistCreateComponent extends MyAccountVideoPlaylis
   }
 
   getFormButtonTitle () {
-    return this.i18n('Create')
+    return $localize`Create`
   }
 }

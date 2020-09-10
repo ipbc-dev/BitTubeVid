@@ -27,14 +27,23 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
 }
 
 /* rules for dropdowns excepts when in button group, to avoid impacting the dropdown-toggle */
-.dropdown:not(.btn-group):not(.dropdown-root):not(.action-dropdown):not(.input-group-prepend) {
+.dropdown {
   z-index: z(dropdown) !important;
-
-  &.list-overflow-menu,
-  &.parent-entry {
-    z-index: z(header) - 1 !important;
-  }
 }
+
+.list-overflow-menu,
+.parent-entry {
+  z-index: z(header) - 1 !important;
+}
+
+.btn-group,
+.dropdown-root,
+.action-dropdown,
+.input-group-prepend,
+.column-toggle {
+  z-index: inherit !important;
+}
+
 
 .dropdown-menu {
   z-index: z(dropdown) + 1 !important;
@@ -51,8 +60,8 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
     padding: 3px 15px;
 
     &.active {
-      color: var(--mainBackgroundColor) !important;
-      background-color: var(--mainHoverColor);
+      color: pvar(--mainBackgroundColor) !important;
+      background-color: pvar(--mainHoverColor);
       opacity: .9;
     }
 
@@ -94,7 +103,7 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
   text-align: center;
 
   .modal-content {
-    background-color: var(--mainBackgroundColor);
+    background-color: pvar(--mainBackgroundColor);
   }
 
   .modal-header {
@@ -143,6 +152,36 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
   }
 }
 
+
+// On desktop browsers, make the content and header horizontally sticked to right not move when modal open and close
+.modal-open {
+  overflow-y: scroll !important; // Make sure vertical scroll bar is always visible on desktop browsers to get disabled scrollbar effect
+  width: 100vw; // Make sure the content fits all the available width
+}
+
+// On touchscreen devices, simply overflow: hidden to avoid detached overlay on scroll
+@media (hover: none) and (pointer: coarse) {
+  .modal-open, .menu-open {
+    overflow: hidden !important;
+  }
+
+  // On touchscreen devices display content overlay when opened menu
+  .menu-open {
+    .main-col {
+      &::before {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        opacity: 0.75;
+        content: '';
+        display: block;
+        position: fixed;
+        z-index: z('menu') - 1;
+      }
+    }
+  }
+}
+
 // Nav customizations
 .nav .nav-link {
   display: flex !important;
@@ -153,46 +192,45 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
 
 .nav.nav-pills {
   font-size: 16px !important;
+  font-weight: $font-semibold !important;
 
-  .nav-link.active {
-    font-weight: $font-semibold !important;
+  .nav-link {
+    opacity: 0.6 !important;
+
+    &.active, &:hover, &:active, &:focus {
+      opacity: 1 !important;
+    }
   }
 
   a {
     @include disable-default-a-behaviour;
 
-    color: var(--mainForegroundColor);
-  }
-}
-
-.nav-tabs {
-
-  .nav-link {
-    @include disable-default-a-behaviour;
-
-    color: var(--mainForegroundColor) !important;
+    color: pvar(--mainForegroundColor);
   }
 }
 
 .nav-tabs .nav-link {
-  &:not(.active) {
-    border-bottom: 3px solid transparent;
-  }
+  @include disable-default-a-behaviour;
+
+  color: pvar(--mainForegroundColor);
+  font-weight: $font-semibold;
+  border: none;
+  border-bottom: 2px solid transparent;
+  opacity: 0.6;
+
   &.active {
-    font-weight: $font-semibold;
-    background-color: var(--mainBackgroundColor) !important;
-    border: none;
-    border-bottom: 2px solid var(--mainColor);
+    color: pvar(--mainForegroundColor);
+    background-color: pvar(--mainBackgroundColor) !important;
+    border-bottom-color: pvar(--mainColor);
   }
-  &:hover {
-    border-top-color: transparent;
-    border-left-color: transparent;
-    border-right-color: transparent;
+
+  &.active, &:hover, &:active, &:focus {
+    opacity: 1;
   }
 }
 
 .card {
-  background-color: var(--mainBackgroundColor);
+  background-color: pvar(--mainBackgroundColor);
   border-color: #dee2e6;
 }
 
@@ -240,27 +278,27 @@ ngb-tooltip-window {
 }
 
 .btn-outline-tertiary {
-  color: var(--secondaryColor);
-  border-color: var(--secondaryColor);
+  color: pvar(--secondaryColor);
+  border-color: pvar(--secondaryColor);
 
   &:focus-within,
   &:focus,
   &:hover {
-    color: var(--mainBackgroundColor);
-    background-color: var(--secondaryColor);
+    color: pvar(--mainBackgroundColor);
+    background-color: pvar(--secondaryColor);
   }
 }
 
 // input box-shadow on focus
 .form-control {
   font-size: 15px;
-  color: var(--mainForegroundColor);
-  background-color: var(--inputBackgroundColor);
+  color: pvar(--mainForegroundColor);
+  background-color: pvar(--inputBackgroundColor);
   outline: none;
 
   &:focus-within,
   &:focus {
-    box-shadow: #{$focus-box-shadow-form} var(--mainColorLightest);
+    box-shadow: #{$focus-box-shadow-form} pvar(--mainColorLightest);
 
     &.input-error {
       box-shadow: #{$focus-box-shadow-form} #{scale-color($red, $alpha: -75%)};
@@ -303,6 +341,7 @@ ngb-tooltip-window {
     position: absolute;
     right: .5rem;
     height: 95%;
+    font-size: 14px;
 
     &:hover {
       color: rgba(0, 0, 0, 0.7);

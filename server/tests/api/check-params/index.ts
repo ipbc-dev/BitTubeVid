@@ -1,5 +1,7 @@
+import './abuses'
 import './accounts'
 import './blocklist'
+import './bulk'
 import './config'
 import './contact-form'
 import './debug'

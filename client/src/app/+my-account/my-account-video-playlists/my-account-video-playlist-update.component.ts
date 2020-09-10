@@ -1,16 +1,20 @@
+import { forkJoin, Subscription } from 'rxjs'
+import { map, switchMap } from 'rxjs/operators'
 import { Component, OnDestroy, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { AuthService, Notifier, ServerService } from '@app/core'
-import { forkJoin, Subscription } from 'rxjs'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { MyAccountVideoPlaylistEdit } from '@app/+my-account/my-account-video-playlists/my-account-video-playlist-edit'
-import { populateAsyncUserVideoChannels } from '@app/shared/misc/utils'
-import { VideoPlaylistService } from '@app/shared/video-playlist/video-playlist.service'
-import { VideoPlaylistValidatorsService } from '@app/shared'
-import { VideoPlaylistUpdate } from '@shared/models/videos/playlist/video-playlist-update.model'
-import { VideoPlaylist } from '@app/shared/video-playlist/video-playlist.model'
-import { delayWhen, map, switchMap } from 'rxjs/operators'
+import { populateAsyncUserVideoChannels } from '@app/helpers'
+import {
+  setPlaylistChannelValidator,
+  VIDEO_PLAYLIST_CHANNEL_ID_VALIDATOR,
+  VIDEO_PLAYLIST_DESCRIPTION_VALIDATOR,
+  VIDEO_PLAYLIST_DISPLAY_NAME_VALIDATOR,
+  VIDEO_PLAYLIST_PRIVACY_VALIDATOR
+} from '@app/shared/form-validators/video-playlist-validators'
+import { FormValidatorService } from '@app/shared/shared-forms'
+import { VideoPlaylist, VideoPlaylistService } from '@app/shared/shared-video-playlist'
+import { VideoPlaylistUpdate } from '@shared/models'
+import { MyAccountVideoPlaylistEdit } from './my-account-video-playlist-edit'
 
 @Component({
   selector: 'my-account-video-playlist-update',
@@ -26,12 +30,10 @@ export class MyAccountVideoPlaylistUpdateComponent extends MyAccountVideoPlaylis
   constructor (
     protected formValidatorService: FormValidatorService,
     private authService: AuthService,
-    private videoPlaylistValidatorsService: VideoPlaylistValidatorsService,
     private notifier: Notifier,
     private router: Router,
     private route: ActivatedRoute,
     private videoPlaylistService: VideoPlaylistService,
-    private i18n: I18n,
     private serverService: ServerService
   ) {
     super()
@@ -39,15 +41,15 @@ export class MyAccountVideoPlaylistUpdateComponent extends MyAccountVideoPlaylis
 
   ngOnInit () {
     this.buildForm({
-      displayName: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_DISPLAY_NAME,
-      privacy: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_PRIVACY,
-      description: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_DESCRIPTION,
-      videoChannelId: this.videoPlaylistValidatorsService.VIDEO_PLAYLIST_CHANNEL_ID,
+      displayName: VIDEO_PLAYLIST_DISPLAY_NAME_VALIDATOR,
+      privacy: VIDEO_PLAYLIST_PRIVACY_VALIDATOR,
+      description: VIDEO_PLAYLIST_DESCRIPTION_VALIDATOR,
+      videoChannelId: VIDEO_PLAYLIST_CHANNEL_ID_VALIDATOR,
       thumbnailfile: null
     })
 
     this.form.get('privacy').valueChanges.subscribe(privacy => {
-      this.videoPlaylistValidatorsService.setChannelValidator(this.form.get('videoChannelId'), privacy)
+      setPlaylistChannelValidator(this.form.get('videoChannelId'), privacy)
     })
 
     populateAsyncUserVideoChannels(this.authService, this.userVideoChannels)
@@ -93,10 +95,7 @@ export class MyAccountVideoPlaylistUpdateComponent extends MyAccountVideoPlaylis
 
     this.videoPlaylistService.updateVideoPlaylist(this.videoPlaylistToUpdate, videoPlaylistUpdate).subscribe(
       () => {
-        this.notifier.success(
-          this.i18n('Playlist {{videoPlaylistName}} updated.', { videoPlaylistName: videoPlaylistUpdate.displayName })
-        )
-
+        this.notifier.success($localize`Playlist ${videoPlaylistUpdate.displayName} updated.`)
         this.router.navigate([ '/my-account', 'video-playlists' ])
       },
 
@@ -109,7 +108,7 @@ export class MyAccountVideoPlaylistUpdateComponent extends MyAccountVideoPlaylis
   }
 
   getFormButtonTitle () {
-    return this.i18n('Update')
+    return $localize`Update`
   }
 
   private hydrateFormFromPlaylist () {

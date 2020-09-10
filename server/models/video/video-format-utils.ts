@@ -19,8 +19,8 @@ import {
   MVideoFile,
   MVideoFormattable,
   MVideoFormattableDetails
-} from '../../typings/models'
-import { MVideoFileRedundanciesOpt } from '../../typings/models/video/video-file'
+} from '../../types/models'
+import { MVideoFileRedundanciesOpt } from '../../types/models/video/video-file'
 import { VideoFile } from '@shared/models/videos/video-file.model'
 import { generateMagnetUri } from '@server/helpers/webtorrent'
 import { extractVideo } from '@server/helpers/video'
@@ -59,7 +59,11 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
       label: VideoModel.getPrivacyLabel(video.privacy)
     },
     nsfw: video.nsfw,
-    description: options && options.completeDescription === true ? video.description : video.getTruncatedDescription(),
+
+    description: options && options.completeDescription === true
+      ? video.description
+      : video.getTruncatedDescription(),
+
     isLocal: video.isOwned(),
     duration: video.duration,
     views: video.views,
@@ -78,7 +82,10 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
 
     userHistory: userHistory ? {
       currentTime: userHistory.currentTime
-    } : undefined
+    } : undefined,
+
+    // Can be added by external plugins
+    pluginData: (video as any).pluginData
   }
 
   if (options) {
@@ -175,6 +182,12 @@ function streamingPlaylistsModelToFormattedJSON (video: MVideo, playlists: MStre
     })
 }
 
+function sortByResolutionDesc (fileA: MVideoFile, fileB: MVideoFile) {
+  if (fileA.resolution < fileB.resolution) return 1
+  if (fileA.resolution === fileB.resolution) return 0
+  return -1
+}
+
 function videoFilesModelToFormattedJSON (
   model: MVideo | MStreamingPlaylistVideo,
   baseUrlHttp: string,
@@ -183,7 +196,8 @@ function videoFilesModelToFormattedJSON (
 ): VideoFile[] {
   const video = extractVideo(model)
 
-  return videoFiles
+  return [ ...videoFiles ]
+    .sort(sortByResolutionDesc)
     .map(videoFile => {
       return {
         resolution: {
@@ -200,11 +214,6 @@ function videoFilesModelToFormattedJSON (
         metadataUrl: video.getVideoFileMetadataUrl(videoFile, baseUrlHttp)
       } as VideoFile
     })
-    .sort((a, b) => {
-      if (a.resolution.id < b.resolution.id) return 1
-      if (a.resolution.id === b.resolution.id) return 0
-      return -1
-    })
 }
 
 function addVideoFilesInAPAcc (
@@ -214,7 +223,9 @@ function addVideoFilesInAPAcc (
   baseUrlWs: string,
   files: MVideoFile[]
 ) {
-  for (const file of files) {
+  const sortedFiles = [ ...files ].sort(sortByResolutionDesc)
+
+  for (const file of sortedFiles) {
     acc.push({
       type: 'Link',
       mediaType: MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname] as any,
@@ -323,10 +334,7 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
     })
   }
 
-  // FIXME: remove and uncomment in PT 2.3
-  // Breaks compatibility with PT <= 2.1
-  // const icons = [ video.getMiniature(), video.getPreview() ]
-  const miniature = video.getMiniature()
+  const icons = [ video.getMiniature(), video.getPreview() ]
 
   return {
     type: 'Video' as 'Video',
@@ -348,23 +356,16 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
     originallyPublishedAt: video.originallyPublishedAt ? video.originallyPublishedAt.toISOString() : null,
     updated: video.updatedAt.toISOString(),
     mediaType: 'text/markdown',
-    content: video.getTruncatedDescription(),
+    content: video.description,
     support: video.support,
     subtitleLanguage,
-    icon: {
+    icon: icons.map(i => ({
       type: 'Image',
-      url: miniature.getFileUrl(video),
+      url: i.getFileUrl(video),
       mediaType: 'image/jpeg',
-      width: miniature.width,
-      height: miniature.height
-    } as any,
-    // icon: icons.map(i => ({
-    //   type: 'Image',
-    //   url: i.getFileUrl(video),
-    //   mediaType: 'image/jpeg',
-    //   width: i.width,
-    //   height: i.height
-    // })),
+      width: i.width,
+      height: i.height
+    })),
     url,
     likes: getVideoLikesActivityPubUrl(video),
     dislikes: getVideoDislikesActivityPubUrl(video),

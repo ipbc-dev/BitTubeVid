@@ -1,10 +1,16 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
-import { AuthService } from '@app/core'
-import { FormReactive, UserService, UserValidatorsService } from '@app/shared'
-import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
-import { FormGroup } from '@angular/forms'
-import { pairwise } from 'rxjs/operators'
 import { concat, of } from 'rxjs'
+import { pairwise } from 'rxjs/operators'
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
+import { FormGroup } from '@angular/forms'
+import { UserService } from '@app/core'
+import {
+  USER_DISPLAY_NAME_REQUIRED_VALIDATOR,
+  USER_EMAIL_VALIDATOR,
+  USER_PASSWORD_VALIDATOR,
+  USER_TERMS_VALIDATOR,
+  USER_USERNAME_VALIDATOR
+} from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 
 @Component({
   selector: 'my-register-step-user',
@@ -20,9 +26,7 @@ export class RegisterStepUserComponent extends FormReactive implements OnInit {
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private authService: AuthService,
-    private userService: UserService,
-    private userValidatorsService: UserValidatorsService
+    private userService: UserService
   ) {
     super()
   }
@@ -33,11 +37,11 @@ export class RegisterStepUserComponent extends FormReactive implements OnInit {
 
   ngOnInit () {
     this.buildForm({
-      displayName: this.userValidatorsService.USER_DISPLAY_NAME_REQUIRED,
-      username: this.userValidatorsService.USER_USERNAME,
-      password: this.userValidatorsService.USER_PASSWORD,
-      email: this.userValidatorsService.USER_EMAIL,
-      terms: this.userValidatorsService.USER_TERMS
+      displayName: USER_DISPLAY_NAME_REQUIRED_VALIDATOR,
+      username: USER_USERNAME_VALIDATOR,
+      password: USER_PASSWORD_VALIDATOR,
+      email: USER_EMAIL_VALIDATOR,
+      terms: USER_TERMS_VALIDATOR
     })
 
     setTimeout(() => this.formBuilt.emit(this.form))

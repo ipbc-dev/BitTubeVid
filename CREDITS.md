@@ -3,54 +3,70 @@
  * Chocobozzz
  * Rigel Kent
  * Filip Bengtsson
+ * kimsible
+ * Kim
  * Felix Ableitner
  * Gérald Niel
+ * Jeff Huang
+ * Phongpanot
  * Julien Maulny
  * Jorropo
  * Josh Morel
- * Kim
+ * Александр
  * BO41
+ * Berto Te
  * Francesc
- * Phongpanot
- * Frank Sträter
  * Tirifto
+ * mando laress
+ * Frank Sträter
  * John Livingston
+ * ButterflyOfFire
  * Xabi
  * buoyantair
- * Jeff Huang
- * kimsible
- * Attila F
+ * josé m
  * Balázs Úr
+ * Quentin PAGÈS
+ * Vodoyo Kamal
+ * Attila F
+ * Caroline Chuong
+ * Laurent Ettouati
  * Benjamin Bouvier
  * Jan Keromnes
+ * Kemal Oktay Aktoğan
  * Lucas Declercq
+ * Slimane Selyan AMIRI
  * knuxify
  * matograine
- * Александр
+ * Daniel Santos
  * David Libeau
  * Florent F
  * Luc Didry
  * Nassim Bounouas
- * josé m
+ * NorbiPeti
+ * Rafael Fontenelle
+ * Viorel-Cătălin Răpițeanu
+ * Ahmed ABERWAG
  * Anne-Gaelle Moulun
  * BRAINS YUM
- * Berto Te
+ * Belkacem Mohammed
+ * Besnik Bleta
  * Côme 744
+ * David Soh
  * Dimitri Gilbert
  * Florent Poinsaut
  * Green-Star
  * Micah Elizabeth Scott
- * Quentin PAGÈS
+ * Racida S
  * SVNET Libre
  * Thomas Kuntz
  * William Lahti
  * Wirebrass
+ * Yury Bulka
  * Angristan
  * Chris Sakura 佐倉くりす on Youtube
  * DontUseGithub
  * GunChleoc
  * Marcin Mikołajczak
- * NorbiPeti
  * Okhin
  * Pierre-Alain TORET
  * Serge Victor
@@ -61,29 +77,32 @@
  * Andréas Livet
  * Andrés Maldonado
  * Aurélien Bertron
+ * Ch
  * Hans Meiser
+ * Iñigo A
  * Jefferson Hernandez
- * Kemal Oktay Aktoğan
+ * Joan Montané
  * Kiro
  * LecygneNoir
  * Leopere
  * Manuela Silva
+ * Ugaitz
  * Yohan Boniface
  * am97
  * anotheranonymoususer
  * dada
  * frankdelange
  * jonathanraes
+ * test2a
  * Al-Hassan Abdel-Raouf
  * Andrew Morgan
+ * Antimidia
  * Arne Uplegger
  * Aurélien Béranger
  * Average Dude
  * Axel Viala
  * Balázs Meskó
  * BitTube
- * ButterflyOfFire
- * Ch
  * Dashie
  * Dirk Kelly
  * EndoGai
@@ -91,7 +110,6 @@
  * Florian
  * Frank de Lange
  * Gaëtan Rizio
- * Joan Montané
  * Jocelyn Jaubert
  * Julien Lemaire
  * Lucas Teixeira
@@ -105,8 +123,11 @@
  * Quentin
  * Ronan
  * SerCom_KC
+ * Tzafrir Cohen
  * Valvin
+ * Waazdakka
  * ahmadsharifian
+ * bopol
  * framail
  * les
  * libertas
@@ -121,6 +142,8 @@
  * Adam Magnier
  * Adnane Belmadiaf
  * Alexander F. Rødseth
+ * Ali Alim
+ * Aman Sharma
  * Antoine Millet
  * Anton Latukha
  * Armando Lüscher
@@ -137,9 +160,11 @@
  * Chris Sakura 佐倉くりす on Youtube - 日本語は第二言語やけ、間違っとったら思いっきり叩いてくださいｗ つたない日本語ばっかりやけど頑張りまーす♪
  * Christoph Geschwind
  * Claude
+ * Clifford Garwood II
  * Clément Brizard
  * David Dobryakov
  * DeeJayBro
+ * Diazepan Medina
  * Edouard SCHWEISGUTH
  * Edwin Alberto Amado Baron
  * Emmanuel Pret
@@ -148,7 +173,10 @@
  * Fabio Agreles Bezerra
  * Fernandez, ReK2
  * Florian CUNY
+ * Girish Ramakrishnan
  * Glandos
+ * Guillaume Pérution-Kihli
+ * Gérald CHATAGNON
  * Haelwenn (lanodan) Monnier
  * HesioZ
  * ICabaleiro
@@ -160,6 +188,7 @@
  * Jagannath Bhat
  * Jarosław Maciejewski
  * Jessica Fairchild
+ * Jinn Koriech
  * Jorge Silva
  * Jos
  * Julien Le Bras
@@ -168,6 +197,7 @@
  * Kyâne Pichou
  * Leo Mouyna
  * Lesterpig
+ * Levi Bard
  * LiPeK
  * Lint
  * LoveIsGrief
@@ -201,6 +231,7 @@
  * ROPEDE
  * Raphael
  * Raphaël Droz
+ * Rebecca
  * Rech
  * Robin
  * Sankar
@@ -208,13 +239,16 @@
  * Simon Gilliot
  * Simounet
  * Stefan Schüller
+ * Sumit Khanna
+ * Timothée Grégoire
  * Tomás Sebastián Romero
  * TrashMacNugget
+ * Vagelis F
  * Vincent Stakenburg
+ * WhiredPlanck
  * Yann Sionneau
  * Yorwba
  * Yun
- * Yury Bulka
  * Zig-03
  * [ Bie ] Watcharapong Suriyawan
  * anmol26s
@@ -235,6 +269,7 @@
  * numéro6
  * osauzet
  * potedeo
+ * roberto marcolin
  * spf
  * tilllt
  * tomamplius
@@ -368,7 +403,9 @@
 
 # Icons
 
- * [Robbie Pearce](https://robbiepearce.com/softies/)
- * [Fork-Awesome](https://github.com/ForkAwesome/Fork-Awesome)
- * `playlist add` by Material UI
- * `language` by Aaron Jin
+ * [Feather Icons](feathericons.com/) (MIT)
+ * `playlist add`, `history`, `subscriptions`, `miscellaneous-services.svg` by Material UI (Apache 2.0)
+ * `support` by Chocobozzz (CC-BY)
+ * `language` by Aaron Jin (CC-BY)
+ * `video-language` by Rigel Kent (CC-BY)
+ * `peertube-x` by Solen DP (CC-BY)

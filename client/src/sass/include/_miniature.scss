@@ -6,7 +6,7 @@
 
   transition: color 0.2s;
   font-weight: $font-semibold;
-  color: var(--mainForegroundColor);
+  color: pvar(--mainForegroundColor);
   margin-top: 10px;
   margin-bottom: 5px;
 
@@ -52,18 +52,7 @@ $play-overlay-width: 18px;
     }
 
     .icon {
-      width: 0;
-      height: 0;
-
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%) scale(0.5);
-
-      border-top: ($play-overlay-height / 2) solid transparent;
-      border-bottom: ($play-overlay-height / 2) solid transparent;
-
-      border-left: $play-overlay-width solid rgba(255, 255, 255, 0.95);
+      @include play-icon($play-overlay-width, $play-overlay-height);
     }
   }
 
@@ -80,7 +69,7 @@ $play-overlay-width: 18px;
   }
 
   &.focus-visible {
-    box-shadow: #{$focus-box-shadow-form} var(--mainColorLightest);
+    box-shadow: #{$focus-box-shadow-form} pvar(--mainColorLightest);
     outline: none;
   }
 
@@ -108,38 +97,6 @@ $play-overlay-width: 18px;
   color: #fff;
 }
 
-@mixin video-miniature-small-screen {
-  text-align: center;
-
-  ::ng-deep .video-miniature {
-    padding-right: 0;
-    height: auto;
-    width: 100%;
-    margin-bottom: 20px;
-
-    .video-miniature-information {
-      width: 100% !important;
-      text-align: left;
-
-      span {
-        width: 100%;
-      }
-    }
-
-    .video-thumbnail {
-      margin-bottom: 10px;
-      width: 100%;
-      height: calc(100% / #{$video-thumbnail-ratio});
-      border-radius: 0;
-
-      img {
-        width: 100%;
-        height: 100%;
-      }
-    }
-  }
-}
-
 @mixin miniature-rows {
   &:first-child {
     padding-top: 30px;
@@ -149,10 +106,6 @@ $play-overlay-width: 18px;
     }
   }
 
-  my-video-miniature {
-    text-align: left;
-  }
-
   .section-title {
     font-size: 24px;
     font-weight: $font-semibold;
@@ -160,7 +113,10 @@ $play-overlay-width: 18px;
     margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
-    border-top: 1px solid $separator-border-color;
+
+    &:not(h2) {
+      border-top: 1px solid $separator-border-color;
+    }
 
     a {
       &:hover, &:focus:not(.focus-visible), &:active {
@@ -168,7 +124,7 @@ $play-overlay-width: 18px;
         outline: none;
       }
 
-      color: var(--mainForegroundColor);
+      color: pvar(--mainForegroundColor);
     }
   }
 
@@ -187,7 +143,7 @@ $play-overlay-width: 18px;
       }
 
       .followers {
-        color: var(--greyForegroundColor);
+        color: pvar(--greyForegroundColor);
         font-weight: normal;
         font-size: 14px;
         margin-left: 10px;
@@ -203,7 +159,7 @@ $play-overlay-width: 18px;
     display: inline-block;
     font-size: 16px;
     text-transform: uppercase;
-    color: var(--greyForegroundColor);
+    color: pvar(--greyForegroundColor);
     margin-bottom: 10px;
     font-weight: $font-semibold;
     text-decoration: none;
@@ -213,40 +169,82 @@ $play-overlay-width: 18px;
     max-height: initial;
     overflow: initial;
 
-    @include video-miniature-small-screen;
-
     .section-title {
       font-size: 17px;
+      margin-left: 10px;
     }
   }
 }
 
-@mixin adapt-margin-content-width {
-  width: $video-miniature-width * 6;
-  margin: auto !important;
-
-  @media screen and (max-width: 1800px) {
-    width: $video-miniature-width * 5;
-  }
-
-  @media screen and (max-width: 1800px - $video-miniature-width) {
-    width: $video-miniature-width * 4;
-  }
-
-  @media screen and (max-width: 1800px - (2* $video-miniature-width)) {
-    width: $video-miniature-width * 3;
-  }
-
-  @media screen and (max-width: 1800px - (3* $video-miniature-width)) {
-    width: $video-miniature-width * 2;
-  }
+@mixin fluid-videos-miniature-layout {
+  margin-left: $not-expanded-horizontal-margins !important;
+  margin-right: $not-expanded-horizontal-margins !important;
 
   @media screen and (max-width: $mobile-view) {
     width: auto;
     margin: 0 !important;
 
     .videos {
-      @include video-miniature-small-screen;
+      text-align: center;
+
+      ::ng-deep .video-miniature {
+        padding-right: 0;
+        height: auto;
+        width: 100%;
+        margin-bottom: 25px;
+
+        .video-miniature-information {
+          width: 100% !important;
+          text-align: left;
+
+          span {
+            width: 100%;
+          }
+        }
+
+        .video-thumbnail {
+          border-radius: 0;
+        }
+      }
+    }
+  }
+
+  @media screen and (min-width: #{breakpoint(fhd)}) {
+    margin-left: 6vw !important;
+    margin-right: 6vw !important;
+  }
+
+  @media screen and (min-width: $mobile-view) {
+
+    .videos {
+      --miniature-min-width: #{$video-thumbnail-width - 15px};
+      --miniature-max-width: #{$video-thumbnail-width};
+
+      display: grid;
+      column-gap: 5px;
+      grid-template-columns: repeat(
+        auto-fill,
+        minmax(
+          var(--miniature-min-width),
+          1fr
+        )
+      );
+
+      @media screen and (min-width: #{breakpoint(fhd)}) {
+        column-gap: 1%;
+        --miniature-min-width: #{$video-thumbnail-width};
+      }
+
+      .video-wrapper {
+        margin: 0 auto;
+        width: 100%;
+
+        my-video-miniature {
+          display: block;
+          min-width: var(--miniature-min-width);
+          max-width: var(--miniature-max-width);
+        }
+      }
     }
   }
 }

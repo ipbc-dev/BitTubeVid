@@ -40,7 +40,7 @@ import { JobQueue } from '../../lib/job-queue'
 import { CONFIG } from '../../initializers/config'
 import { sequelizeTypescript } from '../../initializers/database'
 import { createPlaylistMiniatureFromExisting } from '../../lib/thumbnail'
-import { MVideoPlaylistFull, MVideoPlaylistThumbnail, MVideoThumbnail } from '@server/typings/models'
+import { MVideoPlaylistFull, MVideoPlaylistThumbnail, MVideoThumbnail } from '@server/types/models'
 import { getServerActor } from '@server/models/application/application'
 
 const reqThumbnailFile = createReqFiles([ 'thumbnailfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { thumbnailfile: CONFIG.STORAGE.TMP_DIR })
@@ -297,13 +297,15 @@ async function addVideoInPlaylist (req: express.Request, res: express.Response) 
     const position = await VideoPlaylistElementModel.getNextPositionOf(videoPlaylist.id, t)
 
     const playlistElement = await VideoPlaylistElementModel.create({
-      url: getVideoPlaylistElementActivityPubUrl(videoPlaylist, video),
       position,
       startTimestamp: body.startTimestamp || null,
       stopTimestamp: body.stopTimestamp || null,
       videoPlaylistId: videoPlaylist.id,
       videoId: video.id
     }, { transaction: t })
+
+    playlistElement.url = getVideoPlaylistElementActivityPubUrl(videoPlaylist, playlistElement)
+    await playlistElement.save({ transaction: t })
 
     videoPlaylist.changed('updatedAt', true)
     await videoPlaylist.save({ transaction: t })

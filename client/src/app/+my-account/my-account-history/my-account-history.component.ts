@@ -1,17 +1,18 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { immutableAssign } from '@app/shared/misc/utils'
-import { ComponentPagination } from '@app/shared/rest/component-pagination.model'
-import { AuthService } from '../../core/auth'
-import { ConfirmService } from '../../core/confirm'
-import { AbstractVideoList } from '../../shared/video/abstract-video-list'
-import { VideoService } from '../../shared/video/video.service'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { ScreenService } from '@app/shared/misc/screen.service'
-import { UserHistoryService } from '@app/shared/users/user-history.service'
-import { UserService } from '@app/shared'
-import { Notifier, ServerService } from '@app/core'
-import { LocalStorageService } from '@app/shared/misc/storage.service'
+import {
+  AuthService,
+  ComponentPagination,
+  ConfirmService,
+  LocalStorageService,
+  Notifier,
+  ScreenService,
+  ServerService,
+  UserService
+} from '@app/core'
+import { immutableAssign } from '@app/helpers'
+import { UserHistoryService } from '@app/shared/shared-main'
+import { AbstractVideoList } from '@app/shared/shared-video-miniature'
 
 @Component({
   selector: 'my-account-history',
@@ -28,7 +29,6 @@ export class MyAccountHistoryComponent extends AbstractVideoList implements OnIn
   videosHistoryEnabled: boolean
 
   constructor (
-    protected i18n: I18n,
     protected router: Router,
     protected serverService: ServerService,
     protected route: ActivatedRoute,
@@ -38,12 +38,11 @@ export class MyAccountHistoryComponent extends AbstractVideoList implements OnIn
     protected screenService: ScreenService,
     protected storageService: LocalStorageService,
     private confirmService: ConfirmService,
-    private videoService: VideoService,
     private userHistoryService: UserHistoryService
   ) {
     super()
 
-    this.titlePage = this.i18n('My videos history')
+    this.titlePage = $localize`My videos history`
   }
 
   ngOnInit () {
@@ -71,8 +70,8 @@ export class MyAccountHistoryComponent extends AbstractVideoList implements OnIn
       .subscribe(
         () => {
           const message = this.videosHistoryEnabled === true ?
-            this.i18n('Videos history is enabled') :
-            this.i18n('Videos history is disabled')
+            $localize`Videos history is enabled` :
+            $localize`Videos history is disabled`
 
           this.notifier.success(message)
 
@@ -84,8 +83,8 @@ export class MyAccountHistoryComponent extends AbstractVideoList implements OnIn
   }
 
   async deleteHistory () {
-    const title = this.i18n('Delete videos history')
-    const message = this.i18n('Are you sure you want to delete all your videos history?')
+    const title = $localize`Delete videos history`
+    const message = $localize`Are you sure you want to delete all your videos history?`
 
     const res = await this.confirmService.confirm(message, title)
     if (res !== true) return
@@ -93,7 +92,7 @@ export class MyAccountHistoryComponent extends AbstractVideoList implements OnIn
     this.userHistoryService.deleteUserVideosHistory()
         .subscribe(
           () => {
-            this.notifier.success(this.i18n('Videos history deleted'))
+            this.notifier.success($localize`Videos history deleted`)
 
             this.reloadVideos()
           },

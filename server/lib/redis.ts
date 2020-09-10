@@ -8,7 +8,8 @@ import {
   USER_PASSWORD_RESET_LIFETIME,
   USER_PASSWORD_CREATE_LIFETIME,
   VIDEO_VIEW_LIFETIME,
-  WEBSERVER
+  WEBSERVER,
+  TRACKER_RATE_LIMITS
 } from '../initializers/constants'
 import { CONFIG } from '../initializers/config'
 
@@ -83,6 +84,10 @@ class Redis {
     return generatedString
   }
 
+  async removePasswordVerificationString (userId: number) {
+    return this.removeValue(this.generateResetPasswordKey(userId))
+  }
+
   async getResetPasswordLink (userId: number) {
     return this.getValue(this.generateResetPasswordKey(userId))
   }
@@ -119,6 +124,16 @@ class Redis {
 
   async doesVideoIPViewExist (ip: string, videoUUID: string) {
     return this.exists(this.generateViewKey(ip, videoUUID))
+  }
+
+  /* ************ Tracker IP block ************ */
+
+  setTrackerBlockIP (ip: string) {
+    return this.setValue(this.generateTrackerBlockIPKey(ip), '1', TRACKER_RATE_LIMITS.BLOCK_IP_LIFETIME)
+  }
+
+  async doesTrackerBlockIPExist (ip: string) {
+    return this.exists(this.generateTrackerBlockIPKey(ip))
   }
 
   /* ************ API cache ************ */
@@ -213,6 +228,10 @@ class Redis {
     return `views-${videoUUID}-${ip}`
   }
 
+  private generateTrackerBlockIPKey (ip: string) {
+    return `tracker-block-ip-${ip}`
+  }
+
   private generateContactFormKey (ip: string) {
     return 'contact-form-' + ip
   }
@@ -269,6 +288,16 @@ class Redis {
         if (err) return rej(err)
 
         if (ok !== 'OK') return rej(new Error('Redis set result is not OK.'))
+
+        return res()
+      })
+    })
+  }
+
+  private removeValue (key: string) {
+    return new Promise<void>((res, rej) => {
+      this.client.del(this.prefix + key, err => {
+        if (err) return rej(err)
 
         return res()
       })

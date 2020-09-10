@@ -5,21 +5,23 @@ import { pathExists, readdir, readFile } from 'fs-extra'
 import * as parseTorrent from 'parse-torrent'
 import { extname, join } from 'path'
 import * as request from 'supertest'
+import { v4 as uuidv4 } from 'uuid'
+import validator from 'validator'
+import { loadLanguages, VIDEO_CATEGORIES, VIDEO_LANGUAGES, VIDEO_LICENCES, VIDEO_PRIVACIES } from '../../../server/initializers/constants'
+import { VideoDetails, VideoPrivacy } from '../../models/videos'
 import {
   buildAbsoluteFixturePath,
-  getMyUserInformation,
+  buildServerDirectory,
+  dateIsValid,
   immutableAssign,
-  makeGetRequest,
-  makePutBodyRequest,
-  makeUploadRequest,
   root,
-  ServerInfo,
-  testImage
-} from '../'
-import validator from 'validator'
-import { VideoDetails, VideoPrivacy } from '../../models/videos'
-import { VIDEO_CATEGORIES, VIDEO_LANGUAGES, loadLanguages, VIDEO_LICENCES, VIDEO_PRIVACIES } from '../../../server/initializers/constants'
-import { dateIsValid, webtorrentAdd, buildServerDirectory } from '../miscs/miscs'
+  testImage,
+  webtorrentAdd
+} from '../miscs/miscs'
+import { makeGetRequest, makePutBodyRequest, makeUploadRequest } from '../requests/requests'
+import { waitJobs } from '../server/jobs'
+import { ServerInfo } from '../server/servers'
+import { getMyUserInformation } from '../users/users'
 
 loadLanguages()
 
@@ -93,6 +95,12 @@ function getVideo (url: string, id: number | string, expectedStatus = 200) {
           .get(path)
           .set('Accept', 'application/json')
           .expect(expectedStatus)
+}
+
+async function getVideoIdFromUUID (url: string, uuid: string) {
+  const res = await getVideo(url, uuid)
+
+  return res.body.id
 }
 
 function getVideoFileMetadataUrl (url: string) {
@@ -638,11 +646,34 @@ async function getLocalIdByUUID (url: string, uuid: string) {
   return res.body.id
 }
 
+// serverNumber starts from 1
+async function uploadRandomVideoOnServers (servers: ServerInfo[], serverNumber: number, additionalParams: any = {}) {
+  const server = servers.find(s => s.serverNumber === serverNumber)
+  const res = await uploadRandomVideo(server, false, additionalParams)
+
+  await waitJobs(servers)
+
+  return res
+}
+
+async function uploadRandomVideo (server: ServerInfo, wait = true, additionalParams: any = {}) {
+  const prefixName = additionalParams.prefixName || ''
+  const name = prefixName + uuidv4()
+
+  const data = Object.assign({ name }, additionalParams)
+  const res = await uploadVideo(server.url, server.accessToken, data)
+
+  if (wait) await waitJobs([ server ])
+
+  return { uuid: res.body.video.uuid, name }
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   getVideoDescription,
   getVideoCategories,
+  uploadRandomVideo,
   getVideoLicences,
   videoUUIDToId,
   getVideoPrivacies,
@@ -660,6 +691,7 @@ export {
   getVideosListWithToken,
   uploadVideo,
   getVideosWithFilters,
+  uploadRandomVideoOnServers,
   updateVideo,
   rateVideo,
   viewVideo,
@@ -669,5 +701,6 @@ export {
   checkVideoFilesWereRemoved,
   getPlaylistVideos,
   uploadVideoAndGetId,
-  getLocalIdByUUID
+  getLocalIdByUUID,
+  getVideoIdFromUUID
 }

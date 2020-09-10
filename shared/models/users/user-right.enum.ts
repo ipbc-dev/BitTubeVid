@@ -1,4 +1,4 @@
-export enum UserRight {
+export const enum UserRight {
   ALL,
 
   MANAGE_USERS,
@@ -11,7 +11,7 @@ export enum UserRight {
 
   MANAGE_SERVER_REDUNDANCY,
 
-  MANAGE_VIDEO_ABUSES,
+  MANAGE_ABUSES,
 
   MANAGE_JOBS,
 

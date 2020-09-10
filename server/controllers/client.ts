@@ -1,55 +1,84 @@
 import * as express from 'express'
+import { constants, promises as fs } from 'fs'
 import { join } from 'path'
-import { root } from '../helpers/core-utils'
-import { ACCEPT_HEADERS, STATIC_MAX_AGE } from '../initializers/constants'
-import { asyncMiddleware, embedCSP } from '../middlewares'
-import { buildFileLocale, getCompleteLocale, is18nLocale, LOCALE_FILES } from '../../shared/models/i18n/i18n'
-import { ClientHtml } from '../lib/client-html'
-import { logger } from '../helpers/logger'
 import { CONFIG } from '@server/initializers/config'
+import { buildFileLocale, getCompleteLocale, is18nLocale, LOCALE_FILES } from '@shared/core-utils/i18n'
+import { root } from '../helpers/core-utils'
+import { logger } from '../helpers/logger'
+import { ACCEPT_HEADERS, STATIC_MAX_AGE } from '../initializers/constants'
+import { ClientHtml } from '../lib/client-html'
+import { asyncMiddleware, embedCSP } from '../middlewares'
 
 const clientsRouter = express.Router()
 
 const distPath = join(root(), 'client', 'dist')
-const embedPath = join(distPath, 'standalone', 'videos', 'embed.html')
 const testEmbedPath = join(distPath, 'standalone', 'videos', 'test-embed.html')
 
 // Special route that add OpenGraph and oEmbed tags
 // Do not use a template engine for a so little thing
+clientsRouter.use('/videos/watch/playlist/:id', asyncMiddleware(generateWatchPlaylistHtmlPage))
 clientsRouter.use('/videos/watch/:id', asyncMiddleware(generateWatchHtmlPage))
 clientsRouter.use('/accounts/:nameWithHost', asyncMiddleware(generateAccountHtmlPage))
 clientsRouter.use('/video-channels/:nameWithHost', asyncMiddleware(generateVideoChannelHtmlPage))
 
-const embedCSPMiddleware = CONFIG.CSP.ENABLED
-  ? embedCSP
-  : (req: express.Request, res: express.Response, next: express.NextFunction) => next()
+const embedMiddlewares = [
+  CONFIG.CSP.ENABLED
+    ? embedCSP
+    : (req: express.Request, res: express.Response, next: express.NextFunction) => next(),
 
-clientsRouter.use(
-  '/videos/embed',
-  embedCSPMiddleware,
-  (req: express.Request, res: express.Response) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     res.removeHeader('X-Frame-Options')
-    res.sendFile(embedPath)
-  }
-)
-clientsRouter.use(
-  '/videos/test-embed',
-  (req: express.Request, res: express.Response) => res.sendFile(testEmbedPath)
-)
+
+    // Don't cache HTML file since it's an index to the immutable JS/CSS files
+    res.setHeader('Cache-Control', 'public, max-age=0')
+
+    next()
+  },
+
+  asyncMiddleware(generateEmbedHtmlPage)
+]
+
+clientsRouter.use('/videos/embed', ...embedMiddlewares)
+clientsRouter.use('/video-playlists/embed', ...embedMiddlewares)
+
+const testEmbedController = (req: express.Request, res: express.Response) => res.sendFile(testEmbedPath)
+
+clientsRouter.use('/videos/test-embed', testEmbedController)
+clientsRouter.use('/video-playlists/test-embed', testEmbedController)
 
 // Static HTML/CSS/JS client files
-
 const staticClientFiles = [
-  'manifest.webmanifest',
   'ngsw-worker.js',
   'ngsw.json'
 ]
+
 for (const staticClientFile of staticClientFiles) {
   const path = join(root(), 'client', 'dist', staticClientFile)
 
-  clientsRouter.get('/' + staticClientFile, (req: express.Request, res: express.Response) => {
+  clientsRouter.get(`/${staticClientFile}`, (req: express.Request, res: express.Response) => {
     res.sendFile(path, { maxAge: STATIC_MAX_AGE.SERVER })
   })
+}
+
+// Dynamic PWA manifest
+clientsRouter.get('/manifest.webmanifest', asyncMiddleware(generateManifest))
+
+// Static client overrides
+const staticClientOverrides = [
+  'assets/images/logo.svg',
+  'assets/images/favicon.png',
+  'assets/images/icons/icon-36x36.png',
+  'assets/images/icons/icon-48x48.png',
+  'assets/images/icons/icon-72x72.png',
+  'assets/images/icons/icon-96x96.png',
+  'assets/images/icons/icon-144x144.png',
+  'assets/images/icons/icon-192x192.png',
+  'assets/images/icons/icon-512x512.png'
+]
+
+for (const staticClientOverride of staticClientOverrides) {
+  const overridePhysicalPath = join(CONFIG.STORAGE.CLIENT_OVERRIDES_DIR, staticClientOverride)
+  clientsRouter.use(`/client/${staticClientOverride}`, asyncMiddleware(serveClientOverride(overridePhysicalPath)))
 }
 
 clientsRouter.use('/client/locales/:locale/:file.json', serveServerTranslations)
@@ -100,6 +129,12 @@ async function serveIndexHTML (req: express.Request, res: express.Response) {
   return res.status(404).end()
 }
 
+async function generateEmbedHtmlPage (req: express.Request, res: express.Response) {
+  const html = await ClientHtml.getEmbedHTML()
+
+  return sendHTML(html, res)
+}
+
 async function generateHTMLPage (req: express.Request, res: express.Response, paramLang?: string) {
   const html = await ClientHtml.getDefaultHTMLPage(req, res, paramLang)
 
@@ -108,6 +143,12 @@ async function generateHTMLPage (req: express.Request, res: express.Response, pa
 
 async function generateWatchHtmlPage (req: express.Request, res: express.Response) {
   const html = await ClientHtml.getWatchHTMLPage(req.params.id + '', req, res)
+
+  return sendHTML(html, res)
+}
+
+async function generateWatchPlaylistHtmlPage (req: express.Request, res: express.Response) {
+  const html = await ClientHtml.getWatchPlaylistHTMLPage(req.params.id + '', req, res)
 
   return sendHTML(html, res)
 }
@@ -128,4 +169,29 @@ function sendHTML (html: string, res: express.Response) {
   res.set('Content-Type', 'text/html; charset=UTF-8')
 
   return res.send(html)
+}
+
+async function generateManifest (req: express.Request, res: express.Response) {
+  const manifestPhysicalPath = join(root(), 'client', 'dist', 'manifest.webmanifest')
+  const manifestJson = await fs.readFile(manifestPhysicalPath, 'utf8')
+  const manifest = JSON.parse(manifestJson)
+
+  manifest.name = CONFIG.INSTANCE.NAME
+  manifest.short_name = CONFIG.INSTANCE.NAME
+  manifest.description = CONFIG.INSTANCE.SHORT_DESCRIPTION
+
+  res.json(manifest)
+}
+
+function serveClientOverride (path: string) {
+  return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    try {
+      await fs.access(path, constants.F_OK)
+      // Serve override client
+      res.sendFile(path, { maxAge: STATIC_MAX_AGE.SERVER })
+    } catch {
+      // Serve dist client
+      next()
+    }
+  }
 }

@@ -1,9 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core'
-import { Account } from '@app/shared/account/account.model'
-import { AccountService } from '@app/shared/account/account.service'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { Subscription } from 'rxjs'
-import { MarkdownService } from '@app/shared/renderer'
+import { Component, OnDestroy, OnInit } from '@angular/core'
+import { MarkdownService } from '@app/core'
+import { Account, AccountService } from '@app/shared/shared-main'
 
 @Component({
   selector: 'my-account-about',
@@ -17,7 +15,6 @@ export class AccountAboutComponent implements OnInit, OnDestroy {
   private accountSub: Subscription
 
   constructor (
-    private i18n: I18n,
     private accountService: AccountService,
     private markdownService: MarkdownService
   ) { }
@@ -38,6 +35,6 @@ export class AccountAboutComponent implements OnInit, OnDestroy {
   getAccountDescription () {
     if (this.descriptionHTML) return this.descriptionHTML
 
-    return this.i18n('No description')
+    return $localize`No description`
   }
 }
