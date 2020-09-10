@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.5 (BitTube)
+## v0.2.5-rc1 (BitTube)
   * Based on Peertube V2.4.0
   * Fixing minor bugs
   * Remember to update your config file
