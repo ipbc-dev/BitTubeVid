@@ -1,10 +1,10 @@
 import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core'
 import { Notifier, UserService } from '@app/core'
-import { FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { User } from '@shared/models'
+import { USER_BAN_REASON_VALIDATOR } from '../form-validators/user-validators'
 
 @Component({
   selector: 'my-user-ban-modal',
@@ -22,16 +22,14 @@ export class UserBanModalComponent extends FormReactive implements OnInit {
     protected formValidatorService: FormValidatorService,
     private modalService: NgbModal,
     private notifier: Notifier,
-    private userService: UserService,
-    private userValidatorsService: UserValidatorsService,
-    private i18n: I18n
+    private userService: UserService
   ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      reason: this.userValidatorsService.USER_BAN_REASON
+      reason: USER_BAN_REASON_VALIDATOR
     })
   }
 
@@ -52,8 +50,8 @@ export class UserBanModalComponent extends FormReactive implements OnInit {
       .subscribe(
         () => {
           const message = Array.isArray(this.usersToBan)
-            ? this.i18n('{{num}} users banned.', { num: this.usersToBan.length })
-            : this.i18n('User {{username}} banned.', { username: this.usersToBan.username })
+            ? $localize`${this.usersToBan.length} users banned.`
+            : $localize`User ${this.usersToBan.username} banned.`
 
           this.notifier.success(message)
 

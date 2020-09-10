@@ -2,8 +2,17 @@ import { Component, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { AuthService, Notifier, ScreenService, ServerService, UserService } from '@app/core'
-import { FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import {
+  USER_CHANNEL_NAME_VALIDATOR,
+  USER_EMAIL_VALIDATOR,
+  USER_PASSWORD_OPTIONAL_VALIDATOR,
+  USER_PASSWORD_VALIDATOR,
+  USER_ROLE_VALIDATOR,
+  USER_USERNAME_VALIDATOR,
+  USER_VIDEO_QUOTA_DAILY_VALIDATOR,
+  USER_VIDEO_QUOTA_VALIDATOR
+} from '@app/shared/form-validators/user-validators'
+import { FormValidatorService } from '@app/shared/shared-forms'
 import { UserCreate, UserRole } from '@shared/models'
 import { UserEdit } from './user-edit'
 
@@ -21,13 +30,11 @@ export class UserCreateComponent extends UserEdit implements OnInit {
     protected configService: ConfigService,
     protected screenService: ScreenService,
     protected auth: AuthService,
-    private userValidatorsService: UserValidatorsService,
     private route: ActivatedRoute,
     private router: Router,
     private notifier: Notifier,
-    private userService: UserService,
-    private i18n: I18n
-  ) {
+    private userService: UserService
+    ) {
     super()
 
     this.buildQuotaOptions()
@@ -43,12 +50,13 @@ export class UserCreateComponent extends UserEdit implements OnInit {
     }
 
     this.buildForm({
-      username: this.userValidatorsService.USER_USERNAME,
-      email: this.userValidatorsService.USER_EMAIL,
-      password: this.isPasswordOptional() ? this.userValidatorsService.USER_PASSWORD_OPTIONAL : this.userValidatorsService.USER_PASSWORD,
-      role: this.userValidatorsService.USER_ROLE,
-      videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
-      videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY,
+      username: USER_USERNAME_VALIDATOR,
+      channelName: USER_CHANNEL_NAME_VALIDATOR,
+      email: USER_EMAIL_VALIDATOR,
+      password: this.isPasswordOptional() ? USER_PASSWORD_OPTIONAL_VALIDATOR : USER_PASSWORD_VALIDATOR,
+      role: USER_ROLE_VALIDATOR,
+      videoQuota: USER_VIDEO_QUOTA_VALIDATOR,
+      videoQuotaDaily: USER_VIDEO_QUOTA_DAILY_VALIDATOR,
       byPassAutoBlock: null
     }, defaultValues)
   }
@@ -66,7 +74,7 @@ export class UserCreateComponent extends UserEdit implements OnInit {
 
     this.userService.addUser(userCreate).subscribe(
       () => {
-        this.notifier.success(this.i18n('User {{username}} created.', { username: userCreate.username }))
+        this.notifier.success($localize`User ${userCreate.username} created.`)
         this.router.navigate([ '/admin/users/list' ])
       },
 
@@ -84,6 +92,6 @@ export class UserCreateComponent extends UserEdit implements OnInit {
   }
 
   getFormButtonTitle () {
-    return this.i18n('Create user')
+    return $localize`Create user`
   }
 }

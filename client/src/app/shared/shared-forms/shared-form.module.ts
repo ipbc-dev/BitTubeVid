@@ -1,38 +1,30 @@
 
+import { InputMaskModule } from 'primeng/inputmask'
+import { InputSwitchModule } from 'primeng/inputswitch'
 import { NgModule } from '@angular/core'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
-import { BatchDomainsValidatorsService } from '@app/shared/shared-forms/form-validators/batch-domains-validators.service'
+import { NgSelectModule } from '@ng-select/ng-select'
 import { SharedGlobalIconModule } from '../shared-icons'
 import { SharedMainModule } from '../shared-main/shared-main.module'
-import {
-  CustomConfigValidatorsService,
-  FormValidatorService,
-  InstanceValidatorsService,
-  LoginValidatorsService,
-  ResetPasswordValidatorsService,
-  UserValidatorsService,
-  VideoAbuseValidatorsService,
-  VideoAcceptOwnershipValidatorsService,
-  VideoBlockValidatorsService,
-  VideoCaptionsValidatorsService,
-  VideoChangeOwnershipValidatorsService,
-  VideoChannelValidatorsService,
-  VideoCommentValidatorsService,
-  VideoPlaylistValidatorsService,
-  VideoValidatorsService
-} from './form-validators'
+import { FormValidatorService } from './form-validator.service'
 import { InputReadonlyCopyComponent } from './input-readonly-copy.component'
 import { MarkdownTextareaComponent } from './markdown-textarea.component'
 import { PeertubeCheckboxComponent } from './peertube-checkbox.component'
 import { PreviewUploadComponent } from './preview-upload.component'
 import { ReactiveFileComponent } from './reactive-file.component'
+import { SelectChannelComponent, SelectCheckboxComponent, SelectOptionsComponent, SelectTagsComponent } from './select'
 import { TextareaAutoResizeDirective } from './textarea-autoresize.directive'
 import { TimestampInputComponent } from './timestamp-input.component'
+import { DynamicFormFieldComponent } from './dynamic-form-field.component'
 
 @NgModule({
   imports: [
     FormsModule,
     ReactiveFormsModule,
+
+    InputMaskModule,
+    InputSwitchModule,
+    NgSelectModule,
 
     SharedMainModule,
     SharedGlobalIconModule
@@ -45,12 +37,23 @@ import { TimestampInputComponent } from './timestamp-input.component'
     PreviewUploadComponent,
     ReactiveFileComponent,
     TextareaAutoResizeDirective,
-    TimestampInputComponent
+    TimestampInputComponent,
+
+    SelectChannelComponent,
+    SelectOptionsComponent,
+    SelectTagsComponent,
+    SelectCheckboxComponent,
+
+    DynamicFormFieldComponent
   ],
 
   exports: [
     FormsModule,
     ReactiveFormsModule,
+
+    InputMaskModule,
+    InputSwitchModule,
+    NgSelectModule,
 
     InputReadonlyCopyComponent,
     MarkdownTextareaComponent,
@@ -58,27 +61,18 @@ import { TimestampInputComponent } from './timestamp-input.component'
     PreviewUploadComponent,
     ReactiveFileComponent,
     TextareaAutoResizeDirective,
-    TimestampInputComponent
+    TimestampInputComponent,
+
+    SelectChannelComponent,
+    SelectOptionsComponent,
+    SelectTagsComponent,
+    SelectCheckboxComponent,
+
+    DynamicFormFieldComponent
   ],
 
   providers: [
-    CustomConfigValidatorsService,
-    FormValidatorService,
-    LoginValidatorsService,
-    InstanceValidatorsService,
-    LoginValidatorsService,
-    ResetPasswordValidatorsService,
-    UserValidatorsService,
-    VideoAbuseValidatorsService,
-    VideoAcceptOwnershipValidatorsService,
-    VideoBlockValidatorsService,
-    VideoCaptionsValidatorsService,
-    VideoChangeOwnershipValidatorsService,
-    VideoChannelValidatorsService,
-    VideoCommentValidatorsService,
-    VideoPlaylistValidatorsService,
-    VideoValidatorsService,
-    BatchDomainsValidatorsService
+    FormValidatorService
   ]
 })
 export class SharedFormModule { }

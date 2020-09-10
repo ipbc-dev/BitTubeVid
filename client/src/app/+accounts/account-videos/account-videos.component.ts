@@ -6,14 +6,12 @@ import { AuthService, ConfirmService, LocalStorageService, Notifier, ScreenServi
 import { immutableAssign } from '@app/helpers'
 import { Account, AccountService, VideoService } from '@app/shared/shared-main'
 import { AbstractVideoList } from '@app/shared/shared-video-miniature'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 
 @Component({
   selector: 'my-account-videos',
   templateUrl: '../../shared/shared-video-miniature/abstract-video-list.html',
   styleUrls: [
-    '../../shared/shared-video-miniature/abstract-video-list.scss',
-    './account-videos.component.scss'
+    '../../shared/shared-video-miniature/abstract-video-list.scss'
   ]
 })
 export class AccountVideosComponent extends AbstractVideoList implements OnInit, OnDestroy {
@@ -24,7 +22,6 @@ export class AccountVideosComponent extends AbstractVideoList implements OnInit,
   private accountSub: Subscription
 
   constructor (
-    protected i18n: I18n,
     protected router: Router,
     protected serverService: ServerService,
     protected route: ActivatedRoute,
@@ -67,7 +64,7 @@ export class AccountVideosComponent extends AbstractVideoList implements OnInit,
                .getAccountVideos(this.account, newPagination, this.sort)
                .pipe(
                  tap(({ total }) => {
-                   this.titlePage = this.i18n('Published {{total}} videos', { total })
+                   this.titlePage = $localize`Published ${total} videos`
                  })
                )
   }

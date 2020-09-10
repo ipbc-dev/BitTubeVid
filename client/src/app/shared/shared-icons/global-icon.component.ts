@@ -4,11 +4,13 @@ import { HooksService } from '@app/core/plugins/hooks.service'
 const icons = {
   // misc icons
   'npm': require('!!raw-loader?!../../../assets/images/misc/npm.svg').default,
+  'markdown': require('!!raw-loader?!../../../assets/images/misc/markdown.svg').default,
   'language': require('!!raw-loader?!../../../assets/images/misc/language.svg').default,
   'video-lang': require('!!raw-loader?!../../../assets/images/misc/video-lang.svg').default,
   'support': require('!!raw-loader?!../../../assets/images/misc/support.svg').default,
-  'robot': require('!!raw-loader?!../../../assets/images/misc/miscellaneous_services.svg').default, // material ui
-  'videos': require('!!raw-loader?!../../../assets/images/misc/video_library.svg').default, // material ui
+  'peertube-x': require('!!raw-loader?!../../../assets/images/misc/peertube-x.svg').default,
+  'robot': require('!!raw-loader?!../../../assets/images/misc/miscellaneous-services.svg').default, // material ui
+  'videos': require('!!raw-loader?!../../../assets/images/misc/video-library.svg').default, // material ui
   'history': require('!!raw-loader?!../../../assets/images/misc/history.svg').default, // material ui
   'subscriptions': require('!!raw-loader?!../../../assets/images/misc/subscriptions.svg').default, // material ui
   'playlist-add': require('!!raw-loader?!../../../assets/images/misc/playlist-add.svg').default, // material ui
@@ -42,9 +44,9 @@ const icons = {
   'share': require('!!raw-loader?!../../../assets/images/feather/share-2.svg').default,
   'channel': require('!!raw-loader?!../../../assets/images/feather/tv.svg').default,
   'user': require('!!raw-loader?!../../../assets/images/feather/user.svg').default,
+  'user-x': require('!!raw-loader?!../../../assets/images/feather/user-x.svg').default,
   'users': require('!!raw-loader?!../../../assets/images/feather/users.svg').default,
   'user-add': require('!!raw-loader?!../../../assets/images/feather/user-plus.svg').default,
-  'server': require('!!raw-loader?!../../../assets/images/feather/server.svg').default,
   'add': require('!!raw-loader?!../../../assets/images/feather/plus-circle.svg').default,
   'cloud-error': require('!!raw-loader?!../../../assets/images/feather/cloud-off.svg').default,
   'undo': require('!!raw-loader?!../../../assets/images/feather/corner-up-left.svg').default,
@@ -63,7 +65,9 @@ const icons = {
   'go': require('!!raw-loader?!../../../assets/images/feather/arrow-up-right.svg').default,
   'cross': require('!!raw-loader?!../../../assets/images/feather/x.svg').default,
   'tick': require('!!raw-loader?!../../../assets/images/feather/check.svg').default,
-  'repeat': require('!!raw-loader?!../../../assets/images/feather/repeat.svg').default
+  'columns': require('!!raw-loader?!../../../assets/images/feather/columns.svg').default,
+  'repeat': require('!!raw-loader?!../../../assets/images/feather/repeat.svg').default,
+  'message-circle': require('!!raw-loader?!../../../assets/images/feather/message-circle.svg').default
 }
 
 export type GlobalIconName = keyof typeof icons

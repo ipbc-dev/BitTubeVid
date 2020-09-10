@@ -4,10 +4,7 @@ import { ActivatedRoute } from '@angular/router'
 import { AuthService, ComponentPagination, ConfirmService, hasMoreItems, Notifier, User } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
 import { Syndication, VideoDetails } from '@app/shared/shared-main'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { VideoCommentThreadTree } from './video-comment-thread-tree.model'
-import { VideoComment } from './video-comment.model'
-import { VideoCommentService } from './video-comment.service'
+import { VideoComment, VideoCommentService, VideoCommentThreadTree } from '@app/shared/shared-video-comment'
 
 @Component({
   selector: 'my-video-comments',
@@ -30,6 +27,8 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
     totalItems: null
   }
   inReplyToCommentId: number
+  commentReplyRedraftValue: string
+  commentThreadRedraftValue: string
   threadComments: { [ id: number ]: VideoCommentThreadTree } = {}
   threadLoading: { [ id: number ]: boolean } = {}
 
@@ -45,7 +44,6 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
     private confirmService: ConfirmService,
     private videoCommentService: VideoCommentService,
     private activatedRoute: ActivatedRoute,
-    private i18n: I18n,
     private hooks: HooksService
   ) {}
 
@@ -135,6 +133,7 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
 
   onCommentThreadCreated (comment: VideoComment) {
     this.comments.unshift(comment)
+    this.commentThreadRedraftValue = undefined
   }
 
   onWantedToReply (comment: VideoComment) {
@@ -143,6 +142,7 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
 
   onResetReply () {
     this.inReplyToCommentId = undefined
+    this.commentReplyRedraftValue = undefined
   }
 
   onThreadCreated (commentTree: VideoCommentThreadTree) {
@@ -160,17 +160,19 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
     this.timestampClicked.emit(timestamp)
   }
 
-  async onWantedToDelete (commentToDelete: VideoComment) {
-    let message = 'Do you really want to delete this comment?'
-
+  async onWantedToDelete (
+    commentToDelete: VideoComment,
+    title = $localize`Delete`,
+    message = $localize`Do you really want to delete this comment?`
+  ): Promise<boolean> {
     if (commentToDelete.isLocal || this.video.isLocal) {
-      message += this.i18n(' The deletion will be sent to remote instances so they can reflect the change.')
+      message += $localize` The deletion will be sent to remote instances so they can reflect the change.`
     } else {
-      message += this.i18n(' It is a remote comment, so the deletion will only be effective on your instance.')
+      message += $localize` It is a remote comment, so the deletion will only be effective on your instance.`
     }
 
-    const res = await this.confirmService.confirm(message, this.i18n('Delete'))
-    if (res === false) return
+    const res = await this.confirmService.confirm(message, title)
+    if (res === false) return false
 
     this.videoCommentService.deleteVideoComment(commentToDelete.videoId, commentToDelete.id)
       .subscribe(
@@ -187,6 +189,23 @@ export class VideoCommentsComponent implements OnInit, OnChanges, OnDestroy {
 
         err => this.notifier.error(err.message)
       )
+
+    return true
+  }
+
+  async onWantedToRedraft (commentToRedraft: VideoComment) {
+    const confirm = await this.onWantedToDelete(commentToRedraft, $localize`Delete and re-draft`, $localize`Do you really want to delete and re-draft this comment?`)
+
+    if (confirm) {
+      this.inReplyToCommentId = commentToRedraft.inReplyToCommentId
+
+      if (commentToRedraft.threadId === commentToRedraft.id) {
+        this.commentThreadRedraftValue = commentToRedraft.text
+      } else {
+        this.commentReplyRedraftValue = commentToRedraft.text
+      }
+
+    }
   }
 
   isUserLoggedIn () {

@@ -4,10 +4,9 @@ import { AuthService, CanComponentDeactivate, Notifier, ServerService } from '@a
 import { scrollToTop } from '@app/helpers'
 import { FormValidatorService } from '@app/shared/shared-forms'
 import { VideoCaptionService, VideoEdit, VideoImportService, VideoService } from '@app/shared/shared-main'
-import { VideoSend } from './video-send'
 import { LoadingBarService } from '@ngx-loading-bar/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoPrivacy, VideoUpdate } from '@shared/models'
+import { VideoSend } from './video-send'
 
 @Component({
   selector: 'my-video-import-torrent',
@@ -43,9 +42,8 @@ export class VideoImportTorrentComponent extends VideoSend implements OnInit, Ca
     protected videoService: VideoService,
     protected videoCaptionService: VideoCaptionService,
     private router: Router,
-    private videoImportService: VideoImportService,
-    private i18n: I18n
-  ) {
+    private videoImportService: VideoImportService
+    ) {
     super()
   }
 
@@ -84,11 +82,11 @@ export class VideoImportTorrentComponent extends VideoSend implements OnInit, Ca
       channelId: this.firstStepChannelId
     }
 
-    this.loadingBar.start()
+    this.loadingBar.useRef().start()
 
     this.videoImportService.importVideoTorrent(torrentfile || this.magnetUri, videoUpdate).subscribe(
       res => {
-        this.loadingBar.complete()
+        this.loadingBar.useRef().complete()
         this.firstStepDone.emit(res.video.name)
         this.isImportingVideo = false
         this.hasImportedVideo = true
@@ -105,7 +103,7 @@ export class VideoImportTorrentComponent extends VideoSend implements OnInit, Ca
       },
 
       err => {
-        this.loadingBar.complete()
+        this.loadingBar.useRef().complete()
         this.isImportingVideo = false
         this.firstStepError.emit()
         this.notifier.error(err.message)
@@ -127,7 +125,7 @@ export class VideoImportTorrentComponent extends VideoSend implements OnInit, Ca
         .subscribe(
           () => {
             this.isUpdatingVideo = false
-            this.notifier.success(this.i18n('Video to import updated.'))
+            this.notifier.success($localize`Video to import updated.`)
 
             this.router.navigate([ '/my-account', 'video-imports' ])
           },

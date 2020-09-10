@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core'
-import { AuthService, CanComponentDeactivate, ServerService } from '@app/core'
+import { AuthService, AuthUser, CanComponentDeactivate, ServerService } from '@app/core'
 import { ServerConfig } from '@shared/models'
 import { VideoImportTorrentComponent } from './video-add-components/video-import-torrent.component'
 import { VideoImportUrlComponent } from './video-add-components/video-import-url.component'
@@ -15,6 +15,8 @@ export class VideoAddComponent implements OnInit, CanComponentDeactivate {
   @ViewChild('videoImportUrl') videoImportUrl: VideoImportUrlComponent
   @ViewChild('videoImportTorrent') videoImportTorrent: VideoImportTorrentComponent
 
+  user: AuthUser = null
+
   secondStepType: 'upload' | 'import-url' | 'import-torrent'
   videoName: string
   serverConfig: ServerConfig
@@ -24,11 +26,19 @@ export class VideoAddComponent implements OnInit, CanComponentDeactivate {
     private serverService: ServerService
   ) {}
 
+  get userInformationLoaded () {
+    return this.auth.userInformationLoaded
+  }
+
   ngOnInit () {
+    this.user = this.auth.getUser()
+
     this.serverConfig = this.serverService.getTmpConfig()
 
     this.serverService.getConfig()
       .subscribe(config => this.serverConfig = config)
+
+    this.user = this.auth.getUser()
   }
 
   onFirstStepDone (type: 'upload' | 'import-url' | 'import-torrent', videoName: string) {
@@ -72,6 +82,6 @@ export class VideoAddComponent implements OnInit, CanComponentDeactivate {
   }
 
   isRootUser () {
-    return this.auth.getUser().username === 'root'
+    return this.user.username === 'root'
   }
 }

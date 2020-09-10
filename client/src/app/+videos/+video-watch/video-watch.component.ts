@@ -7,13 +7,15 @@ import { ActivatedRoute, Router } from '@angular/router'
 import { AuthService, AuthUser, ConfirmService, MarkdownService, Notifier, RestExtractor, ServerService, UserService } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
 import { RedirectService } from '@app/core/routing/redirect.service'
-import { isXPercentInViewport, peertubeLocalStorage, scrollToTop } from '@app/helpers'
+import { isXPercentInViewport, scrollToTop } from '@app/helpers'
 import { Video, VideoCaptionService, VideoDetails, VideoService } from '@app/shared/shared-main'
+import { VideoShareComponent } from '@app/shared/shared-share-modal'
 import { SubscribeButtonComponent } from '@app/shared/shared-user-subscription'
+import { VideoDownloadComponent } from '@app/shared/shared-video-miniature'
 import { VideoPlaylist, VideoPlaylistService } from '@app/shared/shared-video-playlist'
 import { MetaService } from '@ngx-meta/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
-import { ServerConfig, UserVideoRateType, VideoCaption, VideoPrivacy, VideoState } from '@shared/models'
+import { peertubeLocalStorage } from '@root-helpers/peertube-web-storage'
+import { ServerConfig, ServerErrorCode, UserVideoRateType, VideoCaption, VideoPrivacy, VideoState } from '@shared/models'
 import { getStoredP2PEnabled, getStoredTheater } from '../../../assets/player/peertube-player-local-storage'
 import {
   CustomizationOptions,
@@ -25,7 +27,6 @@ import {
 } from '../../../assets/player/peertube-player-manager'
 import { isWebRTCDisabled, timeToInt } from '../../../assets/player/utils'
 import { environment } from '../../../environments/environment'
-import { VideoShareComponent } from './modal/video-share.component'
 import { VideoSupportComponent } from './modal/video-support.component'
 import { VideoWatchPlaylistComponent } from './video-watch-playlist.component'
 
@@ -41,6 +42,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   @ViewChild('videoShareModal') videoShareModal: VideoShareComponent
   @ViewChild('videoSupportModal') videoSupportModal: VideoSupportComponent
   @ViewChild('subscribeButton') subscribeButton: SubscribeButtonComponent
+  @ViewChild('videoDownloadModal') videoDownloadModal: VideoDownloadComponent
 
   player: any
   playerElement: HTMLVideoElement
@@ -51,6 +53,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   video: VideoDetails = null
   videoCaptions: VideoCaption[] = []
 
+  playlistPosition: number
   playlist: VideoPlaylist = null
 
   completeDescriptionShown = false
@@ -94,16 +97,15 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     private zone: NgZone,
     private redirectService: RedirectService,
     private videoCaptionService: VideoCaptionService,
-    private i18n: I18n,
     private hotkeysService: HotkeysService,
     private hooks: HooksService,
     private location: PlatformLocation,
     @Inject(LOCALE_ID) private localeId: string
   ) {
-    this.tooltipLike = this.i18n('Like this video')
-    this.tooltipDislike = this.i18n('Dislike this video')
-    this.tooltipSupport = this.i18n('Support options for this video')
-    this.tooltipSaveToPlaylist = this.i18n('Save to playlist')
+    this.tooltipLike = $localize`Like this video`
+    this.tooltipDislike = $localize`Dislike this video`
+    this.tooltipSupport = $localize`Support options for this video`
+    this.tooltipSaveToPlaylist = $localize`Save to playlist`
   }
 
   get user () {
@@ -115,6 +117,8 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit () {
+    PeertubePlayerManager.initState()
+
     this.serverConfig = this.serverService.getTmpConfig()
 
     this.configSub = this.serverService.getConfig()
@@ -139,9 +143,9 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
       if (playlistId) this.loadPlaylist(playlistId)
     })
 
-    this.queryParamsSub = this.route.queryParams.subscribe(async queryParams => {
-      const videoId = queryParams[ 'videoId' ]
-      if (videoId) this.loadVideo(videoId)
+    this.queryParamsSub = this.route.queryParams.subscribe(queryParams => {
+      this.playlistPosition = queryParams[ 'playlistPosition' ]
+      this.videoWatchPlaylist.updatePlaylistIndex(this.playlistPosition)
 
       const start = queryParams[ 'start' ]
       if (this.player && start) this.player.currentTime(parseInt(start, 10))
@@ -160,6 +164,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     // Unsubscribe subscriptions
     if (this.paramsSub) this.paramsSub.unsubscribe()
     if (this.queryParamsSub) this.queryParamsSub.unsubscribe()
+    if (this.configSub) this.configSub.unsubscribe()
 
     // Unbind hotkeys
     this.hotkeysService.remove(this.hotkeys)
@@ -184,7 +189,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   getRatePopoverText () {
     if (this.isUserLoggedIn()) return undefined
 
-    return this.i18n('You need to be connected to rate this content.')
+    return $localize`You need to be connected to rate this content.`
   }
 
   showMoreDescription () {
@@ -199,6 +204,14 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   showLessDescription () {
     this.updateVideoDescription(this.shortVideoDescription)
     this.completeDescriptionShown = false
+  }
+
+  showDownloadModal () {
+    this.videoDownloadModal.show(this.video, this.videoCaptions)
+  }
+
+  isVideoDownloadable () {
+    return this.video && this.video instanceof VideoDetails && this.video.downloadEnabled
   }
 
   loadCompleteDescription () {
@@ -224,15 +237,24 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   }
 
   showSupportModal () {
+    // Check video was playing before opening support modal
+    const isVideoPlaying = this.isPlaying()
+
     this.pausePlayer()
 
-    this.videoSupportModal.show()
+    const modalRef = this.videoSupportModal.show()
+
+    modalRef.result.then(() => {
+      if (isVideoPlaying) {
+        this.resumePlayer()
+      }
+    })
   }
 
   showShareModal () {
     this.pausePlayer()
 
-    this.videoShareModal.show(this.currentTime)
+    this.videoShareModal.show(this.currentTime, this.videoWatchPlaylist.currentPlaylistPosition)
   }
 
   isUserLoggedIn () {
@@ -307,6 +329,19 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     )
   }
 
+  isChannelDisplayNameGeneric () {
+    const genericChannelDisplayName = [
+      `Main ${this.video.channel.ownerAccount.name} channel`,
+      `Default ${this.video.channel.ownerAccount.name} channel`
+    ]
+
+    return genericChannelDisplayName.includes(this.video.channel.displayName)
+  }
+
+  onPlaylistVideoFound (videoId: string) {
+    this.loadVideo(videoId)
+  }
+
   private loadVideo (videoId: string) {
     // Video did not change
     if (this.video && this.video.uuid === videoId) return
@@ -328,12 +363,31 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     ])
       .pipe(
         // If 401, the video is private or blocked so redirect to 404
-        catchError(err => this.restExtractor.redirectTo404IfNotFound(err, [ 400, 401, 403, 404 ]))
+        catchError(err => {
+          if (err.body.errorCode === ServerErrorCode.DOES_NOT_RESPECT_FOLLOW_CONSTRAINTS && err.body.originUrl) {
+            const search = window.location.search
+            let originUrl = err.body.originUrl
+            if (search) originUrl += search
+
+            this.confirmService.confirm(
+              $localize`This video is not available on this instance. Do you want to be redirected on the origin instance: <a href="${originUrl}">${originUrl}</a>?`,
+              $localize`Redirection`
+            ).then(res => {
+              if (res === false) return this.restExtractor.redirectTo404IfNotFound(err, [ 400, 401, 403, 404 ])
+
+              return window.location.href = originUrl
+            })
+          }
+
+          return this.restExtractor.redirectTo404IfNotFound(err, [ 400, 401, 403, 404 ])
+        })
       )
       .subscribe(([ video, captionsResult ]) => {
         const queryParams = this.route.snapshot.queryParams
 
         const urlOptions = {
+          resume: queryParams.resume,
+
           startTime: queryParams.start,
           stopTime: queryParams.stop,
 
@@ -362,8 +416,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
       .subscribe(playlist => {
         this.playlist = playlist
 
-        const videoId = this.route.snapshot.queryParams['videoId']
-        this.videoWatchPlaylist.loadPlaylistElements(playlist, !videoId)
+        this.videoWatchPlaylist.loadPlaylistElements(playlist, !this.playlistPosition, this.playlistPosition)
       })
   }
 
@@ -379,10 +432,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
   }
 
   private setVideoLikesBarTooltipText () {
-    this.likesBarTooltipText = this.i18n('{{likesNumber}} likes / {{dislikesNumber}} dislikes', {
-      likesNumber: this.video.likes,
-      dislikesNumber: this.video.dislikes
-    })
+    this.likesBarTooltipText = `${this.video.likes} likes / ${this.video.dislikes} dislikes`
   }
 
   private handleError (err: any) {
@@ -431,12 +481,10 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     this.remoteServerDown = false
     this.currentTime = undefined
 
-    this.videoWatchPlaylist.updatePlaylistIndex(video)
-
     if (this.isVideoBlur(this.video)) {
       const res = await this.confirmService.confirm(
-        this.i18n('This video contains mature or explicit content. Are you sure you want to watch it?'),
-        this.i18n('Mature or explicit content')
+        $localize`This video contains mature or explicit content. Are you sure you want to watch it?`,
+        $localize`Mature or explicit content`
       )
       if (res === false) return this.location.back()
     }
@@ -485,9 +533,9 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
        */
       this.player.upnext({
         timeout: 10000, // 10s
-        headText: this.i18n('Up Next'),
-        cancelText: this.i18n('Cancel'),
-        suspendedText: this.i18n('Autoplay is suspended'),
+        headText: $localize`Up Next`,
+        cancelText: $localize`Cancel`,
+        suspendedText: $localize`Autoplay is suspended`,
         getTitle: () => this.nextVideoTitle,
         next: () => this.zone.run(() => this.autoplayNext()),
         condition: () => {
@@ -519,7 +567,7 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
         this.zone.run(() => this.theaterEnabled = enabled)
       })
 
-      this.hooks.runAction('action:video-watch.player.loaded', 'video-watch', { player: this.player })
+      this.hooks.runAction('action:video-watch.player.loaded', 'video-watch', { player: this.player, videojs, video: this.video })
     })
 
     this.setVideoDescriptionHTML()
@@ -632,16 +680,14 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
       const byUrl = urlOptions.startTime !== undefined
       const byHistory = video.userHistory && (!this.playlist || urlOptions.resume !== undefined)
 
-      if (byUrl) {
-        return timeToInt(urlOptions.startTime)
-      } else if (byHistory) {
-        return video.userHistory.currentTime
-      } else {
-        return 0
-      }
+      if (byUrl) return timeToInt(urlOptions.startTime)
+      if (byHistory) return video.userHistory.currentTime
+
+      return 0
     }
 
     let startTime = getStartTime()
+
     // If we are at the end of the video, reset the timer
     if (video.duration - startTime <= 1) startTime = 0
 
@@ -736,25 +782,37 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
     this.player.pause()
   }
 
+  private resumePlayer () {
+    if (!this.player) return
+
+    this.player.play()
+  }
+
+  private isPlaying () {
+    if (!this.player) return
+
+    return !this.player.paused()
+  }
+
   private initHotkeys () {
     this.hotkeys = [
       // These hotkeys are managed by the player
-      new Hotkey('f', e => e, undefined, this.i18n('Enter/exit fullscreen (requires player focus)')),
-      new Hotkey('space', e => e, undefined, this.i18n('Play/Pause the video (requires player focus)')),
-      new Hotkey('m', e => e, undefined, this.i18n('Mute/unmute the video (requires player focus)')),
+      new Hotkey('f', e => e, undefined, $localize`Enter/exit fullscreen (requires player focus)`),
+      new Hotkey('space', e => e, undefined, $localize`Play/Pause the video (requires player focus)`),
+      new Hotkey('m', e => e, undefined, $localize`Mute/unmute the video (requires player focus)`),
 
-      new Hotkey('0-9', e => e, undefined, this.i18n('Skip to a percentage of the video: 0 is 0% and 9 is 90% (requires player focus)')),
+      new Hotkey('0-9', e => e, undefined, $localize`Skip to a percentage of the video: 0 is 0% and 9 is 90% (requires player focus)`),
 
-      new Hotkey('up', e => e, undefined, this.i18n('Increase the volume (requires player focus)')),
-      new Hotkey('down', e => e, undefined, this.i18n('Decrease the volume (requires player focus)')),
+      new Hotkey('up', e => e, undefined, $localize`Increase the volume (requires player focus)`),
+      new Hotkey('down', e => e, undefined, $localize`Decrease the volume (requires player focus)`),
 
-      new Hotkey('right', e => e, undefined, this.i18n('Seek the video forward (requires player focus)')),
-      new Hotkey('left', e => e, undefined, this.i18n('Seek the video backward (requires player focus)')),
+      new Hotkey('right', e => e, undefined, $localize`Seek the video forward (requires player focus)`),
+      new Hotkey('left', e => e, undefined, $localize`Seek the video backward (requires player focus)`),
 
-      new Hotkey('>', e => e, undefined, this.i18n('Increase playback rate (requires player focus)')),
-      new Hotkey('<', e => e, undefined, this.i18n('Decrease playback rate (requires player focus)')),
+      new Hotkey('>', e => e, undefined, $localize`Increase playback rate (requires player focus)`),
+      new Hotkey('<', e => e, undefined, $localize`Decrease playback rate (requires player focus)`),
 
-      new Hotkey('.', e => e, undefined, this.i18n('Navigate in the video frame by frame (requires player focus)'))
+      new Hotkey('.', e => e, undefined, $localize`Navigate in the video frame by frame (requires player focus)`)
     ]
 
     if (this.isUserLoggedIn()) {
@@ -762,17 +820,17 @@ export class VideoWatchComponent implements OnInit, OnDestroy {
         new Hotkey('shift+l', () => {
           this.setLike()
           return false
-        }, undefined, this.i18n('Like the video')),
+        }, undefined, $localize`Like the video`),
 
         new Hotkey('shift+d', () => {
           this.setDislike()
           return false
-        }, undefined, this.i18n('Dislike the video')),
+        }, undefined, $localize`Dislike the video`),
 
         new Hotkey('shift+s', () => {
           this.subscribeButton.subscribed ? this.subscribeButton.unsubscribe() : this.subscribeButton.subscribe()
           return false
-        }, undefined, this.i18n('Subscribe to the account'))
+        }, undefined, $localize`Subscribe to the account`)
       ])
     }
 

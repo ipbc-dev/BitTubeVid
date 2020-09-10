@@ -8,12 +8,12 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
 
 @import '~video.js/dist/video-js.css';
 
-$assets-path: '../assets/';
+$assets-path: '../../assets/';
 @import './player/index';
-@import './loading-bar';
 
 @import './bootstrap';
 @import './primeng-custom';
+@import './ng-select.scss';
 
 [hidden] {
   display: none !important;
@@ -32,6 +32,7 @@ body {
   --secondaryColor: #{$secondary-color};
 
   --greyForegroundColor: #{$grey-foreground-color};
+  --greyBackgroundColor: #{$grey-background-color};
 
   --menuBackgroundColor: #{$menu-background};
   --menuForegroundColor: #{$menu-color};
@@ -52,11 +53,17 @@ body {
 
   --activatedActionButtonColor: #{$activated-action-button-color};
 
+  --expanded-horizontal-margin-content: #{$expanded-horizontal-margins};
+
   font-family: $main-fonts;
   font-weight: $font-regular;
   color: pvar(--mainForegroundColor);
   background-color: pvar(--mainBackgroundColor);
   font-size: 14px;
+  // On desktop browsers, make sure vertical scroll bar is always visible
+  // Allow to disable the scrollbar instead of hide it when the content fit the body
+  // And not move the content and header horizontally sticked to right when the content is updating
+  overflow-y: scroll;
 }
 
 ::selection {
@@ -94,6 +101,16 @@ button {
 label {
   font-weight: $font-bold;
   font-size: 15px;
+}
+
+code {
+  background-color: pvar(--greyBackgroundColor);
+  border-radius: 3px;
+  padding: .2em .4em;
+  margin: auto .4em;
+  font-size: 75%;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .form-error {
@@ -135,12 +152,22 @@ label {
   .sub-menu {
     background-color: pvar(--submenuColor);
     width: 100%;
-    height: 81px;
-    margin-bottom: $sub-menu-margin-bottom;
     display: flex;
     align-items: center;
     padding-left: $not-expanded-horizontal-margins;
     padding-right: $not-expanded-horizontal-margins;
+    height: $sub-menu-height;
+    margin-bottom: $sub-menu-margin-bottom;
+
+    &.sub-menu-fixed {
+      position: fixed;
+      z-index: #{z('sub-menu') - 1};
+    }
+  }
+
+  // Use an appropriate offset top when sub-menu fixed
+  .margin-content.offset-content {
+    padding-top: $sub-menu-height + $sub-menu-margin-bottom;
   }
 
   // Override some properties if the main content is expanded (no menu on the left)
@@ -149,13 +176,13 @@ label {
     width: 100%;
 
     .margin-content {
-      margin-left: $expanded-horizontal-margins;
-      margin-right: $expanded-horizontal-margins;
+      margin-left: var(--expanded-horizontal-margin-content);
+      margin-right: var(--expanded-horizontal-margin-content);
     }
 
     .sub-menu {
-      padding-left: $expanded-horizontal-margins;
-      padding-right: $expanded-horizontal-margins;
+      padding-left: var(--expanded-horizontal-margin-content);
+      padding-right: var(--expanded-horizontal-margin-content);
     }
   }
 
@@ -171,6 +198,7 @@ label {
 }
 
 .title-page {
+  opacity: 0.6;
   color: pvar(--mainForegroundColor);
   font-size: 16px;
   display: inline-block;
@@ -178,14 +206,15 @@ label {
   font-weight: $font-semibold;
   @include disable-default-a-behaviour;
 
-  &.active, &.title-page-single {
+  border-bottom: 2px solid transparent;
+
+  &.title-page-single {
     margin-top: 30px;
     margin-bottom: 25px;
   }
 
   &.active {
-    font-weight: $font-bold;
-    border-bottom: 2px solid pvar(--mainColor);
+    border-bottom-color: pvar(--mainColor);
   }
 
   &.title-page-single {
@@ -194,6 +223,11 @@ label {
 
   &:hover, &:active, &:focus {
     color: pvar(--mainForegroundColor);
+  }
+
+  &.active, &:hover,  &:active, &:focus, &.title-page-single {
+    opacity: 1;
+    outline: 0px hidden !important;
   }
 
   @media screen and (max-width: $mobile-view) {
@@ -205,11 +239,6 @@ label {
 .title-page-settings {
   white-space: nowrap;
   font-size: 115%;
-  font-weight: $font-regular;
-
-  &.active {
-    font-weight: $font-semibold;
-  }
 }
 
 .admin-sub-header {
@@ -228,11 +257,15 @@ label {
     color: pvar(--mainForegroundColor);
     padding: 5px 15px;
     border-radius: 0.25rem;
+    font-weight: $font-semibold;
+    opacity: 0.6;
 
     &.active {
-      font-weight: $font-semibold;
       background-color: #f0f0f0;
-      color: #000;
+    }
+
+    &.active, &:hover, &:active, &:focus {
+      opacity: 1;
     }
   }
 }
@@ -261,6 +294,7 @@ table {
   max-height: 500px;
 
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 16px;
@@ -276,17 +310,24 @@ table {
   }
 }
 
+/* offsetTop for scrollToAnchor */
+
 .anchor {
   position: relative;
   top: #{-($header-height + 20px)};
+}
+
+.offset-content { // if sub-menu fixed
+  .anchor {
+    top: #{-($header-height + $sub-menu-height + 20px)};
+  }
 }
 
 @media screen and (max-width: #{breakpoint(xxl)}) {
   .main-col {
     &.expanded {
       .margin-content {
-        margin-left: $expanded-horizontal-margins/2;
-        margin-right: $expanded-horizontal-margins/2;
+        --expanded-horizontal-margin-content: #{$expanded-horizontal-margins/2};
       }
     }
   }
@@ -297,8 +338,7 @@ table {
   .main-col {
     &, &.expanded {
       .margin-content {
-        margin-left: $expanded-horizontal-margins/3;
-        margin-right: $expanded-horizontal-margins/3;
+        --expanded-horizontal-margin-content: #{$expanded-horizontal-margins/3};
       }
 
       .sub-menu {
@@ -325,8 +365,7 @@ table {
 
     &, &.expanded {
       .margin-content {
-        margin-left: 15px;
-        margin-right: 15px;
+        --expanded-horizontal-margin-content: 15px;
       }
 
       .sub-menu {
@@ -335,6 +374,11 @@ table {
         padding-right: 15px;
         margin-bottom: $sub-menu-margin-bottom-small-view;
         overflow-x: auto;
+      }
+
+      // Use an appropriate offset top when sub-menu fixed
+      .margin-content.offset-content {
+        padding-top: $sub-menu-height + $sub-menu-margin-bottom-small-view;
       }
 
       .admin-sub-header {
@@ -352,7 +396,7 @@ table {
       input[type=email],
       textarea,
       .peertube-select-container {
-        width: 100% !important;
+        flex-grow: 1;
       }
 
       .caption input[type=text] {

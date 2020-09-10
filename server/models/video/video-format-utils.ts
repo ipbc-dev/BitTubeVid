@@ -59,7 +59,11 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
       label: VideoModel.getPrivacyLabel(video.privacy)
     },
     nsfw: video.nsfw,
-    description: options && options.completeDescription === true ? video.description : video.getTruncatedDescription(),
+
+    description: options && options.completeDescription === true
+      ? video.description
+      : video.getTruncatedDescription(),
+
     isLocal: video.isOwned(),
     duration: video.duration,
     views: video.views,
@@ -78,7 +82,10 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
 
     userHistory: userHistory ? {
       currentTime: userHistory.currentTime
-    } : undefined
+    } : undefined,
+
+    // Can be added by external plugins
+    pluginData: (video as any).pluginData
   }
 
   if (options) {

@@ -16,6 +16,7 @@ import { MyAccountVideoPlaylistUpdateComponent } from './my-account-video-playli
 import { MyAccountVideoPlaylistsComponent } from './my-account-video-playlists/my-account-video-playlists.component'
 import { MyAccountVideosComponent } from './my-account-videos/my-account-videos.component'
 import { MyAccountComponent } from './my-account.component'
+import { MyAccountAbusesListComponent } from './my-account-abuses/my-account-abuses-list.component'
 
 const myAccountRoutes: Routes = [
   {
@@ -33,7 +34,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountSettingsComponent,
         data: {
           meta: {
-            title: 'Account settings'
+            title: $localize`Account settings`
           }
         }
       },
@@ -51,7 +52,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideoPlaylistsComponent,
         data: {
           meta: {
-            title: 'Account playlists'
+            title: $localize`Account playlists`
           }
         }
       },
@@ -60,7 +61,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideoPlaylistCreateComponent,
         data: {
           meta: {
-            title: 'Create new playlist'
+            title: $localize`Create new playlist`
           }
         }
       },
@@ -69,7 +70,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideoPlaylistElementsComponent,
         data: {
           meta: {
-            title: 'Playlist elements'
+            title: $localize`Playlist elements`
           }
         }
       },
@@ -78,7 +79,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideoPlaylistUpdateComponent,
         data: {
           meta: {
-            title: 'Update playlist'
+            title: $localize`Update playlist`
           }
         }
       },
@@ -88,7 +89,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideosComponent,
         data: {
           meta: {
-            title: 'Account videos'
+            title: $localize`Account videos`
           },
           reuse: {
             enabled: true,
@@ -101,7 +102,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountVideoImportsComponent,
         data: {
           meta: {
-            title: 'Account video imports'
+            title: $localize`Account video imports`
           }
         }
       },
@@ -110,7 +111,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountSubscriptionsComponent,
         data: {
           meta: {
-            title: 'Account subscriptions'
+            title: $localize`Account subscriptions`
           }
         }
       },
@@ -119,7 +120,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountOwnershipComponent,
         data: {
           meta: {
-            title: 'Ownership changes'
+            title: $localize`Ownership changes`
           }
         }
       },
@@ -128,7 +129,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountBlocklistComponent,
         data: {
           meta: {
-            title: 'Muted accounts'
+            title: $localize`Muted accounts`
           }
         }
       },
@@ -137,7 +138,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountServerBlocklistComponent,
         data: {
           meta: {
-            title: 'Muted servers'
+            title: $localize`Muted servers`
           }
         }
       },
@@ -146,7 +147,7 @@ const myAccountRoutes: Routes = [
         component: MyAccountHistoryComponent,
         data: {
           meta: {
-            title: 'Videos history'
+            title: $localize`Videos history`
           },
           reuse: {
             enabled: true,
@@ -159,7 +160,16 @@ const myAccountRoutes: Routes = [
         component: MyAccountNotificationsComponent,
         data: {
           meta: {
-            title: 'Notifications'
+            title: $localize`Notifications`
+          }
+        }
+      },
+      {
+        path: 'abuses',
+        component: MyAccountAbusesListComponent,
+        data: {
+          meta: {
+            title: $localize`My abuse reports`
           }
         }
       }

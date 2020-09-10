@@ -74,7 +74,7 @@ class WebTorrentPlugin extends Plugin {
     this.startTime = timeToInt(options.startTime)
 
     // Disable auto play on iOS
-    this.autoplay = options.autoplay && isIOS() === false
+    this.autoplay = options.autoplay
     this.playerRefusedP2P = !getStoredP2PEnabled()
 
     this.videoFiles = options.videoFiles
@@ -329,11 +329,6 @@ class WebTorrentPlugin extends Plugin {
   private tryToPlay (done?: (err?: Error) => void) {
     if (!done) done = function () { /* empty */ }
 
-    // Try in mute mode because we have issues with Safari
-    if (isSafari() && this.player.muted() === false) {
-      this.player.muted(true)
-    }
-
     const playPromise = this.player.play()
     if (playPromise !== undefined) {
       return playPromise.then(() => done())
@@ -369,11 +364,10 @@ class WebTorrentPlugin extends Plugin {
     if (files.length === 0) return undefined
     if (files.length === 1) return files[0]
 
-    // Don't change the torrent is the play was ended
+    // Don't change the torrent if the player ended
     if (this.torrent && this.torrent.progress === 1 && this.player.ended()) return this.currentVideoFile
 
     if (!averageDownloadSpeed) averageDownloadSpeed = this.getAndSaveActualDownloadSpeed()
-    averageDownloadSpeed = 0
 
     // Limit resolution according to player height
     const playerHeight = this.playerElement.offsetHeight

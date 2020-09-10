@@ -2,20 +2,29 @@
 
 import 'mocha'
 import { v4 as uuidv4 } from 'uuid'
+
 import {
+  addVideoCommentThread,
   addVideoToBlacklist,
   cleanupTests,
+  createUser,
   follow,
+  generateUserAccessToken,
+  getAccount,
   getCustomConfig,
+  getVideoCommentThreads,
+  getVideoIdFromUUID,
   immutableAssign,
   MockInstancesIndex,
   registerUser,
   removeVideoFromBlacklist,
-  reportVideoAbuse,
+  reportAbuse,
   unfollow,
   updateCustomConfig,
   updateCustomSubConfig,
-  wait
+  wait,
+  updateAbuse,
+  addAbuseMessage
 } from '../../../../shared/extra-utils'
 import { ServerInfo, uploadVideo } from '../../../../shared/extra-utils/index'
 import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
@@ -23,19 +32,24 @@ import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
 import {
   checkAutoInstanceFollowing,
   CheckerBaseParams,
+  checkNewAccountAbuseForModerators,
   checkNewBlacklistOnMyVideo,
+  checkNewCommentAbuseForModerators,
   checkNewInstanceFollower,
   checkNewVideoAbuseForModerators,
   checkNewVideoFromSubscription,
   checkUserRegistered,
   checkVideoAutoBlacklistForModerators,
   checkVideoIsPublished,
-  prepareNotificationsTest
+  prepareNotificationsTest,
+  checkAbuseStateChange,
+  checkNewAbuseMessage
 } from '../../../../shared/extra-utils/users/user-notifications'
 import { addUserSubscription, removeUserSubscription } from '../../../../shared/extra-utils/users/user-subscriptions'
 import { CustomConfig } from '../../../../shared/models/server'
 import { UserNotification } from '../../../../shared/models/users'
 import { VideoPrivacy } from '../../../../shared/models/videos'
+import { AbuseState } from '@shared/models'
 
 describe('Test moderation notifications', function () {
   let servers: ServerInfo[] = []
@@ -57,7 +71,7 @@ describe('Test moderation notifications', function () {
     adminNotificationsServer2 = res.adminNotificationsServer2
   })
 
-  describe('Video abuse for moderators notification', function () {
+  describe('Abuse for moderators notification', function () {
     let baseParams: CheckerBaseParams
 
     before(() => {
@@ -70,31 +84,210 @@ describe('Test moderation notifications', function () {
     })
 
     it('Should send a notification to moderators on local video abuse', async function () {
-      this.timeout(10000)
+      this.timeout(20000)
 
       const name = 'video for abuse ' + uuidv4()
       const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
-      const uuid = resVideo.body.video.uuid
+      const video = resVideo.body.video
 
-      await reportVideoAbuse(servers[0].url, servers[0].accessToken, uuid, 'super reason')
+      await reportAbuse({ url: servers[0].url, token: servers[0].accessToken, videoId: video.id, reason: 'super reason' })
 
       await waitJobs(servers)
-      await checkNewVideoAbuseForModerators(baseParams, uuid, name, 'presence')
+      await checkNewVideoAbuseForModerators(baseParams, video.uuid, name, 'presence')
     })
 
     it('Should send a notification to moderators on remote video abuse', async function () {
-      this.timeout(10000)
+      this.timeout(20000)
 
       const name = 'video for abuse ' + uuidv4()
       const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
-      const uuid = resVideo.body.video.uuid
+      const video = resVideo.body.video
 
       await waitJobs(servers)
 
-      await reportVideoAbuse(servers[1].url, servers[1].accessToken, uuid, 'super reason')
+      const videoId = await getVideoIdFromUUID(servers[1].url, video.uuid)
+      await reportAbuse({ url: servers[1].url, token: servers[1].accessToken, videoId, reason: 'super reason' })
 
       await waitJobs(servers)
-      await checkNewVideoAbuseForModerators(baseParams, uuid, name, 'presence')
+      await checkNewVideoAbuseForModerators(baseParams, video.uuid, name, 'presence')
+    })
+
+    it('Should send a notification to moderators on local comment abuse', async function () {
+      this.timeout(20000)
+
+      const name = 'video for abuse ' + uuidv4()
+      const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
+      const video = resVideo.body.video
+      const resComment = await addVideoCommentThread(servers[0].url, userAccessToken, video.id, 'comment abuse ' + uuidv4())
+      const comment = resComment.body.comment
+
+      await reportAbuse({ url: servers[0].url, token: servers[0].accessToken, commentId: comment.id, reason: 'super reason' })
+
+      await waitJobs(servers)
+      await checkNewCommentAbuseForModerators(baseParams, video.uuid, name, 'presence')
+    })
+
+    it('Should send a notification to moderators on remote comment abuse', async function () {
+      this.timeout(20000)
+
+      const name = 'video for abuse ' + uuidv4()
+      const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
+      const video = resVideo.body.video
+      await addVideoCommentThread(servers[0].url, userAccessToken, video.id, 'comment abuse ' + uuidv4())
+
+      await waitJobs(servers)
+
+      const resComments = await getVideoCommentThreads(servers[1].url, video.uuid, 0, 5)
+      const commentId = resComments.body.data[0].id
+      await reportAbuse({ url: servers[1].url, token: servers[1].accessToken, commentId, reason: 'super reason' })
+
+      await waitJobs(servers)
+      await checkNewCommentAbuseForModerators(baseParams, video.uuid, name, 'presence')
+    })
+
+    it('Should send a notification to moderators on local account abuse', async function () {
+      this.timeout(20000)
+
+      const username = 'user' + new Date().getTime()
+      const resUser = await createUser({ url: servers[0].url, accessToken: servers[0].accessToken, username, password: 'donald' })
+      const accountId = resUser.body.user.account.id
+
+      await reportAbuse({ url: servers[0].url, token: servers[0].accessToken, accountId, reason: 'super reason' })
+
+      await waitJobs(servers)
+      await checkNewAccountAbuseForModerators(baseParams, username, 'presence')
+    })
+
+    it('Should send a notification to moderators on remote account abuse', async function () {
+      this.timeout(20000)
+
+      const username = 'user' + new Date().getTime()
+      const tmpToken = await generateUserAccessToken(servers[0], username)
+      await uploadVideo(servers[0].url, tmpToken, { name: 'super video' })
+
+      await waitJobs(servers)
+
+      const resAccount = await getAccount(servers[1].url, username + '@' + servers[0].host)
+      await reportAbuse({ url: servers[1].url, token: servers[1].accessToken, accountId: resAccount.body.id, reason: 'super reason' })
+
+      await waitJobs(servers)
+      await checkNewAccountAbuseForModerators(baseParams, username, 'presence')
+    })
+  })
+
+  describe('Abuse state change notification', function () {
+    let baseParams: CheckerBaseParams
+    let abuseId: number
+
+    before(async function () {
+      baseParams = {
+        server: servers[0],
+        emails,
+        socketNotifications: userNotifications,
+        token: userAccessToken
+      }
+
+      const name = 'abuse ' + uuidv4()
+      const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
+      const video = resVideo.body.video
+
+      const res = await reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason' })
+      abuseId = res.body.abuse.id
+    })
+
+    it('Should send a notification to reporter if the abuse has been accepted', async function () {
+      this.timeout(10000)
+
+      await updateAbuse(servers[0].url, servers[0].accessToken, abuseId, { state: AbuseState.ACCEPTED })
+      await waitJobs(servers)
+
+      await checkAbuseStateChange(baseParams, abuseId, AbuseState.ACCEPTED, 'presence')
+    })
+
+    it('Should send a notification to reporter if the abuse has been rejected', async function () {
+      this.timeout(10000)
+
+      await updateAbuse(servers[0].url, servers[0].accessToken, abuseId, { state: AbuseState.REJECTED })
+      await waitJobs(servers)
+
+      await checkAbuseStateChange(baseParams, abuseId, AbuseState.REJECTED, 'presence')
+    })
+  })
+
+  describe('New abuse message notification', function () {
+    let baseParamsUser: CheckerBaseParams
+    let baseParamsAdmin: CheckerBaseParams
+    let abuseId: number
+    let abuseId2: number
+
+    before(async function () {
+      baseParamsUser = {
+        server: servers[0],
+        emails,
+        socketNotifications: userNotifications,
+        token: userAccessToken
+      }
+
+      baseParamsAdmin = {
+        server: servers[0],
+        emails,
+        socketNotifications: adminNotifications,
+        token: servers[0].accessToken
+      }
+
+      const name = 'abuse ' + uuidv4()
+      const resVideo = await uploadVideo(servers[0].url, userAccessToken, { name })
+      const video = resVideo.body.video
+
+      {
+        const res = await reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason' })
+        abuseId = res.body.abuse.id
+      }
+
+      {
+        const res = await reportAbuse({ url: servers[0].url, token: userAccessToken, videoId: video.id, reason: 'super reason 2' })
+        abuseId2 = res.body.abuse.id
+      }
+    })
+
+    it('Should send a notification to reporter on new message', async function () {
+      this.timeout(10000)
+
+      const message = 'my super message to users'
+      await addAbuseMessage(servers[0].url, servers[0].accessToken, abuseId, message)
+      await waitJobs(servers)
+
+      await checkNewAbuseMessage(baseParamsUser, abuseId, message, 'user_1@example.com', 'presence')
+    })
+
+    it('Should not send a notification to the admin if sent by the admin', async function () {
+      this.timeout(10000)
+
+      const message = 'my super message that should not be sent to the admin'
+      await addAbuseMessage(servers[0].url, servers[0].accessToken, abuseId, message)
+      await waitJobs(servers)
+
+      await checkNewAbuseMessage(baseParamsAdmin, abuseId, message, 'admin' + servers[0].internalServerNumber + '@example.com', 'absence')
+    })
+
+    it('Should send a notification to moderators', async function () {
+      this.timeout(10000)
+
+      const message = 'my super message to moderators'
+      await addAbuseMessage(servers[0].url, userAccessToken, abuseId2, message)
+      await waitJobs(servers)
+
+      await checkNewAbuseMessage(baseParamsAdmin, abuseId2, message, 'admin' + servers[0].internalServerNumber + '@example.com', 'presence')
+    })
+
+    it('Should not send a notification to reporter if sent by the reporter', async function () {
+      this.timeout(10000)
+
+      const message = 'my super message that should not be sent to reporter'
+      await addAbuseMessage(servers[0].url, userAccessToken, abuseId2, message)
+      await waitJobs(servers)
+
+      await checkNewAbuseMessage(baseParamsUser, abuseId2, message, 'user_1@example.com', 'absence')
     })
   })
 

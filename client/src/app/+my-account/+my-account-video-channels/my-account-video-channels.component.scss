@@ -5,6 +5,10 @@
   @include create-button;
 }
 
+input[type=text] {
+  @include peertube-input-text(300px);
+}
+
 ::ng-deep .action-button {
   &.action-button-edit {
     margin-right: 10px;
@@ -42,10 +46,6 @@
         color: $grey-actor-name;
         margin-left: 5px;
       }
-
-      .video-channel-followers {
-
-      }
     }
   }
 
@@ -55,14 +55,13 @@
   }
 }
 
-.video-channels-header {
-  text-align: right;
-  margin: 20px 0 50px;
-}
-
 ::ng-deep .chartjs-render-monitor {
   position: relative;
   top: 1px;
+}
+
+.video-channels-header {
+  margin-bottom: 30px;
 }
 
 @media screen and (max-width: $small-view) {
@@ -94,6 +93,17 @@
 
     .video-channel-buttons {
       align-self: center;
+    }
+  }
+}
+
+@media screen and (max-width: $mobile-view) {
+  .video-channels-header {
+    flex-direction: column;
+
+    input[type=text] {
+      width: 100% !important;
+      margin-bottom: 12px;
     }
   }
 }

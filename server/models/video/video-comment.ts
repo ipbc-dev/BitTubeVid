@@ -1,7 +1,20 @@
 import * as Bluebird from 'bluebird'
 import { uniq } from 'lodash'
-import { FindOptions, Op, Order, ScopeOptions, Sequelize, Transaction } from 'sequelize'
-import { AllowNull, BelongsTo, Column, CreatedAt, DataType, ForeignKey, Is, Model, Scopes, Table, UpdatedAt } from 'sequelize-typescript'
+import { FindOptions, Op, Order, ScopeOptions, Sequelize, Transaction, WhereOptions } from 'sequelize'
+import {
+  AllowNull,
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DataType,
+  ForeignKey,
+  HasMany,
+  Is,
+  Model,
+  Scopes,
+  Table,
+  UpdatedAt
+} from 'sequelize-typescript'
 import { getServerActor } from '@server/models/application/application'
 import { MAccount, MAccountId, MUserAccountId } from '@server/types/models'
 import { VideoPrivacy } from '@shared/models'
@@ -24,13 +37,14 @@ import {
   MCommentOwnerVideoReply,
   MVideoImmutable
 } from '../../types/models/video'
+import { VideoCommentAbuseModel } from '../abuse/video-comment-abuse'
 import { AccountModel } from '../account/account'
 import { ActorModel, unusedActorAttributesForAPI } from '../activitypub/actor'
-import { buildBlockedAccountSQL, buildLocalAccountIdsIn, getCommentSort, throwIfNotValid } from '../utils'
+import { buildBlockedAccountSQL, buildBlockedAccountSQLOptimized, buildLocalAccountIdsIn, getCommentSort, throwIfNotValid } from '../utils'
 import { VideoModel } from './video'
 import { VideoChannelModel } from './video-channel'
 
-enum ScopeNames {
+export enum ScopeNames {
   WITH_ACCOUNT = 'WITH_ACCOUNT',
   WITH_ACCOUNT_FOR_API = 'WITH_ACCOUNT_FOR_API',
   WITH_IN_REPLY_TO = 'WITH_IN_REPLY_TO',
@@ -223,6 +237,15 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
     onDelete: 'CASCADE'
   })
   Account: AccountModel
+
+  @HasMany(() => VideoCommentAbuseModel, {
+    foreignKey: {
+      name: 'videoCommentId',
+      allowNull: true
+    },
+    onDelete: 'set null'
+  })
+  CommentAbuses: VideoCommentAbuseModel[]
 
   static loadById (id: number, t?: Transaction): Bluebird<MComment> {
     const query: FindOptions = {
@@ -437,19 +460,20 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
     const serverActor = await getServerActor()
     const { start, count, videoId, accountId, videoChannelId } = parameters
 
-    const accountExclusion = {
-      [Op.notIn]: Sequelize.literal(
-        '(' + buildBlockedAccountSQL([ serverActor.Account.id, '"Video->VideoChannel"."accountId"' ]) + ')'
-      )
+    const whereAnd: WhereOptions[] = buildBlockedAccountSQLOptimized(
+      '"VideoCommentModel"."accountId"',
+      [ serverActor.Account.id, '"Video->VideoChannel"."accountId"' ]
+    )
+
+    if (accountId) {
+      whereAnd.push({
+        [Op.eq]: accountId
+      })
     }
-    const accountWhere = accountId
-      ? {
-        [Op.and]: {
-          ...accountExclusion,
-          [Op.eq]: accountId
-        }
-      }
-      : accountExclusion
+
+    const accountWhere = {
+      [Op.and]: whereAnd
+    }
 
     const videoChannelWhere = videoChannelId ? { id: videoChannelId } : undefined
 
@@ -632,7 +656,7 @@ export class VideoCommentModel extends Model<VideoCommentModel> {
       id: this.id,
       url: this.url,
       text: this.text,
-      threadId: this.originCommentId || this.id,
+      threadId: this.getThreadId(),
       inReplyToCommentId: this.inReplyToCommentId || null,
       videoId: this.videoId,
       createdAt: this.createdAt,

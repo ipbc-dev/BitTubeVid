@@ -1,10 +1,8 @@
-import { BytesPipe } from 'ngx-pipes'
 import { SortMeta } from 'primeng/api'
 import { Component, OnInit } from '@angular/core'
 import { ConfirmService, Notifier, RestPagination, RestTable, ServerService } from '@app/core'
-import { peertubeLocalStorage } from '@app/helpers/peertube-web-storage'
-import { RedundancyService } from '@app/shared/shared-main'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { BytesPipe, RedundancyService } from '@app/shared/shared-main'
+import { peertubeLocalStorage } from '@root-helpers/peertube-web-storage'
 import { VideoRedundanciesTarget, VideoRedundancy } from '@shared/models'
 import { VideosRedundancyStats } from '@shared/models/server'
 
@@ -33,9 +31,8 @@ export class VideoRedundanciesListComponent extends RestTable implements OnInit 
     private notifier: Notifier,
     private confirmService: ConfirmService,
     private redundancyService: RedundancyService,
-    private serverService: ServerService,
-    private i18n: I18n
-  ) {
+    private serverService: ServerService
+    ) {
     super()
 
     this.bytesPipe = new BytesPipe()
@@ -101,7 +98,7 @@ export class VideoRedundanciesListComponent extends RestTable implements OnInit 
     this.redundanciesGraphsData.push({
       stats,
       graphData: {
-        labels: [ this.i18n('Used'), this.i18n('Available') ],
+        labels: [ $localize`Used`, $localize`Available` ],
         datasets: [
           {
             data: [ stats.totalUsed, totalSize ],
@@ -140,14 +137,14 @@ export class VideoRedundanciesListComponent extends RestTable implements OnInit 
   }
 
   async removeRedundancy (redundancy: VideoRedundancy) {
-    const message = this.i18n('Do you really want to remove this video redundancy?')
-    const res = await this.confirmService.confirm(message, this.i18n('Remove redundancy'))
+    const message = $localize`Do you really want to remove this video redundancy?`
+    const res = await this.confirmService.confirm(message, $localize`Remove redundancy`)
     if (res === false) return
 
     this.redundancyService.removeVideoRedundancies(redundancy)
       .subscribe(
         () => {
-          this.notifier.success(this.i18n('Video redundancies removed!'))
+          this.notifier.success($localize`Video redundancies removed!`)
           this.loadData()
         },
 

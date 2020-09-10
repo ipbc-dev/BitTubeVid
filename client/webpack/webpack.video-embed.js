@@ -1,7 +1,6 @@
 const helpers = require('./helpers')
 const path = require('path')
 
-const CheckerPlugin = require('awesome-typescript-loader').CheckerPlugin
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
@@ -27,15 +26,22 @@ module.exports = function () {
       modules: [ helpers.root('src'), helpers.root('node_modules') ],
 
       alias: {
-        'video.js$': path.resolve('node_modules/video.js/core.js')
+        'video.js$': path.resolve('node_modules/video.js/core.js'),
+        '@root-helpers': path.resolve('src/root-helpers'),
+        '@shared/models': path.resolve('../shared/models'),
+        '@shared/core-utils': path.resolve('../shared/core-utils')
       }
     },
 
     output: {
       path: helpers.root('dist/standalone/videos'),
-      filename: '[name].[hash].bundle.js',
+
+      filename: process.env.ANALYZE_BUNDLE === 'true'
+        ? '[name].bundle.js'
+        : '[name].[hash].bundle.js',
+
       sourceMapFilename: '[file].map',
-      chunkFilename: '[id].chunk.js',
+      chunkFilename: '[id].[hash].chunk.js',
       publicPath: '/client/standalone/videos/'
     },
 
@@ -48,13 +54,12 @@ module.exports = function () {
           test: /\.ts$/,
           use: [
             {
-              loader: 'awesome-typescript-loader',
+              loader: 'ts-loader',
               options: {
-                configFileName: 'tsconfig.json'
+                configFile: 'tsconfig.base.json'
               }
             }
-          ],
-          exclude: [/\.(spec|e2e)\.ts$/]
+          ]
         },
 
         {
@@ -69,12 +74,6 @@ module.exports = function () {
                   importLoaders: 1
                 }
               },
-              // {
-              //   loader: 'resolve-url-loader',
-              //   options: {
-              //     debug: true
-              //   }
-              // },
               {
                 loader: 'sass-loader',
                 options: {
@@ -113,7 +112,9 @@ module.exports = function () {
 
     plugins: [
       new ExtractTextPlugin({
-        filename: '[name].[hash].css'
+        filename: process.env.ANALYZE_BUNDLE === 'true'
+          ? '[name].css'
+          : '[name].[hash].css'
       }),
 
       new PurifyCSSPlugin({
@@ -126,8 +127,6 @@ module.exports = function () {
           whitelist: [ '*vjs*', '*video-js*' ]
         }
       }),
-
-      new CheckerPlugin(),
 
       new HtmlWebpackPlugin({
         template: 'src/standalone/videos/embed.html',

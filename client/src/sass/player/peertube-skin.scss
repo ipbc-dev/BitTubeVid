@@ -20,7 +20,8 @@ body {
   color: pvar(--embedForegroundColor);
 
   .vjs-dock-text {
-    padding-right: 10px;
+    padding: $dock-padding;
+    padding-right: 60px;
     background: linear-gradient(to bottom, rgba(0, 0, 0, .6) 0, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0) 100%);
   }
 
@@ -123,6 +124,14 @@ body {
     }
   }
 
+  // Do not display poster when video is starting
+  &.vjs-has-autoplay:not(.vjs-has-started) {
+    .vjs-poster {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
   // Hide the big play button on autoplay
   &.vjs-has-autoplay {
     .vjs-big-play-button {
@@ -146,6 +155,10 @@ body {
     background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.6));
     box-shadow: 0 -15px 40px 10px rgba(0, 0, 0, 0.2);
     text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+
+    > button:first-child {
+      margin-left: $first-control-bar-element-margin-left;
+    }
 
     .vjs-progress-control,
     .vjs-play-control,
@@ -230,7 +243,6 @@ body {
 
       cursor: pointer;
       font-size: $font-size;
-      margin-left: 1em;
       width: 3em;
     }
 
@@ -301,22 +313,32 @@ body {
       }
     }
 
-    .vjs-next-video {
+    .vjs-next-video,
+    .vjs-previous-video {
       line-height: $control-bar-height;
       text-align: right;
 
       .icon {
-        &.icon-next {
+        &.icon-next,
+        &.icon-previous {
           mask-image: url('#{$assets-path}/player/images/next.svg');
+          -webkit-mask-image: url('#{$assets-path}/player/images/next.svg');
           background-color: white;
           mask-size: cover;
-          transform: scale(2.2);
+          -webkit-mask-size: cover;
+          width: 11px;
+          height: 11px;
+          margin-top: -2px;
+          display: inline-block;
+        }
+
+        &.icon-previous {
+          transform: rotate(180deg);
         }
       }
     }
 
-    .vjs-peertube,
-    .vjs-next-video {
+    .vjs-peertube {
       .icon {
         display: inline-block;
         width: 15px;
@@ -570,7 +592,9 @@ body {
       }
     }
 
-    .vjs-volume-control {
+    .vjs-volume-control,
+    .vjs-next-video,
+    .vjs-previous-video {
       display: none !important;
     }
 
@@ -580,6 +604,10 @@ body {
 
     .vjs-settings {
       width: 33px;
+    }
+
+    .vjs-play-control {
+      margin-left: $first-control-bar-element-margin-left;
     }
   }
 
@@ -646,5 +674,15 @@ body {
 .vjs-error.vjs-error-display-enabled {
   .vjs-error-display {
     display: block;
+  }
+}
+
+.vjs-no-next-in-playlist {
+  .vjs-next-video {
+    cursor: default;
+
+    .icon {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
   }
 }

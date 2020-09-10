@@ -1,6 +1,10 @@
 @import '_variables';
 @import '_mixins';
 
+input[type=text] {
+  @include peertube-input-text(300px);
+}
+
 .video-channel {
   @include row-blocks;
 
@@ -41,11 +45,11 @@
   }
 }
 
-@media screen and (max-width: $small-view) {
-  .video-channels-header {
-    text-align: center;
-  }
+.video-subscriptions-header {
+  margin-bottom: 30px;
+}
 
+@media screen and (max-width: $small-view) {
   .video-channel {
     .video-channel-info {
       padding-bottom: 10px;
@@ -60,6 +64,16 @@
 
     img {
       margin-right: 0;
+    }
+  }
+}
+
+@media screen and (max-width: $mobile-view) {
+  .video-subscriptions-header {
+    flex-direction: column;
+
+    input[type=text] {
+      width: 100% !important;
     }
   }
 }

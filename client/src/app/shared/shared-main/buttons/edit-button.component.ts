@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core'
+import { Component, Input, OnInit } from '@angular/core'
 
 @Component({
   selector: 'my-edit-button',
@@ -6,7 +6,24 @@ import { Component, Input } from '@angular/core'
   templateUrl: './edit-button.component.html'
 })
 
-export class EditButtonComponent {
+export class EditButtonComponent implements OnInit {
   @Input() label: string
+  @Input() title: string
   @Input() routerLink: string[] | string = []
+
+  ngOnInit () {
+    // <my-edit-button /> No label
+    if (this.label === undefined && !this.title) {
+      this.title = $localize`Update`
+    }
+
+    // <my-edit-button label /> Use default label
+    if (this.label === '') {
+      this.label = $localize`Update`
+
+      if (!this.title) {
+        this.title = this.label
+      }
+    }
+  }
 }

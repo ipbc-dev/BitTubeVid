@@ -363,14 +363,17 @@ describe('Test config', function () {
   })
 
   it('Should have the correct updated video allowed extensions', async function () {
+    this.timeout(10000)
+
     const res = await getConfig(server.url)
     const data: ServerConfig = res.body
 
-    expect(data.video.file.extensions).to.have.length.above(3)
+    expect(data.video.file.extensions).to.have.length.above(4)
     expect(data.video.file.extensions).to.contain('.mp4')
     expect(data.video.file.extensions).to.contain('.webm')
     expect(data.video.file.extensions).to.contain('.ogv')
     expect(data.video.file.extensions).to.contain('.flv')
+    expect(data.video.file.extensions).to.contain('.wmv')
     expect(data.video.file.extensions).to.contain('.mkv')
     expect(data.video.file.extensions).to.contain('.mp3')
     expect(data.video.file.extensions).to.contain('.ogg')

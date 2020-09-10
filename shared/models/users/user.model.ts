@@ -4,7 +4,7 @@ import { UserRole } from './user-role'
 import { NSFWPolicyType } from '../videos/nsfw-policy.type'
 import { UserNotificationSetting } from './user-notification-setting.model'
 import { UserAdminFlag } from './user-flag.model'
-import { VideoPlaylistType } from '@shared/models'
+import { VideoPlaylistType } from '../videos/playlist/video-playlist-type.model'
 
 export interface User {
   id: number
@@ -31,10 +31,13 @@ export interface User {
   videoQuotaDaily: number
   videoQuotaUsed?: number
   videoQuotaUsedDaily?: number
+
   videosCount?: number
-  videoAbusesCount?: number
-  videoAbusesAcceptedCount?: number
-  videoAbusesCreatedCount?: number
+
+  abusesCount?: number
+  abusesAcceptedCount?: number
+  abusesCreatedCount?: number
+
   videoCommentsCount? : number
 
   theme: string

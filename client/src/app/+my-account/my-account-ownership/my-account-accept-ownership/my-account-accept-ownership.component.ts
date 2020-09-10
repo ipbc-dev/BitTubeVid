@@ -1,9 +1,9 @@
 import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core'
 import { AuthService, Notifier } from '@app/core'
-import { FormReactive, FormValidatorService, VideoAcceptOwnershipValidatorsService } from '@app/shared/shared-forms'
+import { OWNERSHIP_CHANGE_CHANNEL_VALIDATOR } from '@app/shared/form-validators/video-ownership-change-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { VideoChannelService, VideoOwnershipService } from '@app/shared/shared-main'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoChangeOwnership, VideoChannel } from '@shared/models'
 
 @Component({
@@ -24,14 +24,12 @@ export class MyAccountAcceptOwnershipComponent extends FormReactive implements O
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private videoChangeOwnershipValidatorsService: VideoAcceptOwnershipValidatorsService,
     private videoOwnershipService: VideoOwnershipService,
     private notifier: Notifier,
     private authService: AuthService,
     private videoChannelService: VideoChannelService,
-    private modalService: NgbModal,
-    private i18n: I18n
-  ) {
+    private modalService: NgbModal
+    ) {
     super()
   }
 
@@ -42,7 +40,7 @@ export class MyAccountAcceptOwnershipComponent extends FormReactive implements O
       .subscribe(videoChannels => this.videoChannels = videoChannels.data)
 
     this.buildForm({
-      channel: this.videoChangeOwnershipValidatorsService.CHANNEL
+      channel: OWNERSHIP_CHANGE_CHANNEL_VALIDATOR
     })
   }
 
@@ -63,7 +61,7 @@ export class MyAccountAcceptOwnershipComponent extends FormReactive implements O
       .acceptOwnership(videoChangeOwnership.id, { channelId: channel })
       .subscribe(
         () => {
-          this.notifier.success(this.i18n('Ownership accepted'))
+          this.notifier.success($localize`Ownership accepted`)
           if (this.accepted) this.accepted.emit()
           this.videoChangeOwnership = undefined
         },

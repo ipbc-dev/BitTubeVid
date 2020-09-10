@@ -4,7 +4,7 @@ import { AuthService, Notifier, SessionStorageService, User, UserService } from 
 import { Video } from '@app/shared/shared-main'
 import { MiniatureDisplayOptions } from '@app/shared/shared-video-miniature'
 import { VideoPlaylist } from '@app/shared/shared-video-playlist'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { UserLocalStorageKeys } from '@root-helpers/users'
 import { RecommendationInfo } from './recommendation-info.model'
 import { RecommendedVideosStore } from './recommended-videos.store'
 
@@ -37,7 +37,6 @@ export class RecommendedVideosComponent implements OnInit, OnChanges {
     private userService: UserService,
     private authService: AuthService,
     private notifier: Notifier,
-    private i18n: I18n,
     private store: RecommendedVideosStore,
     private sessionStorageService: SessionStorageService
   ) {
@@ -48,13 +47,16 @@ export class RecommendedVideosComponent implements OnInit, OnChanges {
     if (this.authService.isLoggedIn()) {
       this.autoPlayNextVideo = this.authService.getUser().autoPlayNextVideo
     } else {
-      this.autoPlayNextVideo = this.sessionStorageService.getItem(User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true' || false
-      this.sessionStorageService.watch([User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO]).subscribe(
-        () => this.autoPlayNextVideo = this.sessionStorageService.getItem(User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true'
+      this.autoPlayNextVideo = this.sessionStorageService.getItem(UserLocalStorageKeys.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true'
+
+      this.sessionStorageService.watch([UserLocalStorageKeys.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO]).subscribe(
+        () => {
+          this.autoPlayNextVideo = this.sessionStorageService.getItem(UserLocalStorageKeys.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true'
+        }
       )
     }
 
-    this.autoPlayNextVideoTooltip = this.i18n('When active, the next video is automatically played after the current one.')
+    this.autoPlayNextVideoTooltip = $localize`When active, the next video is automatically played after the current one.`
   }
 
   ngOnInit () {
@@ -73,7 +75,7 @@ export class RecommendedVideosComponent implements OnInit, OnChanges {
   }
 
   switchAutoPlayNextVideo () {
-    this.sessionStorageService.setItem(User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO, this.autoPlayNextVideo.toString())
+    this.sessionStorageService.setItem(UserLocalStorageKeys.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO, this.autoPlayNextVideo.toString())
 
     if (this.authService.isLoggedIn()) {
       const details = {

@@ -1,12 +1,11 @@
-import { has } from 'lodash-es'
-import { BytesPipe } from 'ngx-pipes'
 import { SortMeta } from 'primeng/api'
 import { from, Observable, of } from 'rxjs'
 import { catchError, concatMap, filter, first, map, shareReplay, throttleTime, toArray } from 'rxjs/operators'
 import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core'
 import { AuthService } from '@app/core/auth'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { getBytes } from '@root-helpers/bytes'
+import { UserLocalStorageKeys } from '@root-helpers/users'
 import {
   Avatar,
   NSFWPolicyType,
@@ -29,8 +28,6 @@ import { User } from './user.model'
 export class UserService {
   static BASE_USERS_URL = environment.apiUrl + '/api/v1/users/'
 
-  private bytesPipe = new BytesPipe()
-
   private userCache: { [ id: number ]: Observable<UserServerModel> } = {}
 
   constructor (
@@ -39,9 +36,8 @@ export class UserService {
     private restExtractor: RestExtractor,
     private restService: RestService,
     private localStorageService: LocalStorageService,
-    private sessionStorageService: SessionStorageService,
-    private i18n: I18n
-  ) { }
+    private sessionStorageService: SessionStorageService
+    ) { }
 
   changePassword (currentPassword: string, newPassword: string) {
     const url = UserService.BASE_USERS_URL + 'me'
@@ -82,37 +78,28 @@ export class UserService {
   }
 
   updateMyAnonymousProfile (profile: UserUpdateMe) {
-    const supportedKeys = {
-      // local storage keys
-      nsfwPolicy: (val: NSFWPolicyType) => this.localStorageService.setItem(User.KEYS.NSFW_POLICY, val),
-      webTorrentEnabled: (val: boolean) => this.localStorageService.setItem(User.KEYS.WEBTORRENT_ENABLED, String(val)),
-      autoPlayVideo: (val: boolean) => this.localStorageService.setItem(User.KEYS.AUTO_PLAY_VIDEO, String(val)),
-      autoPlayNextVideoPlaylist: (val: boolean) => this.localStorageService.setItem(User.KEYS.AUTO_PLAY_VIDEO_PLAYLIST, String(val)),
-      theme: (val: string) => this.localStorageService.setItem(User.KEYS.THEME, val),
-      videoLanguages: (val: string[]) => this.localStorageService.setItem(User.KEYS.VIDEO_LANGUAGES, JSON.stringify(val)),
+    try {
+      this.localStorageService.setItem(UserLocalStorageKeys.NSFW_POLICY, profile.nsfwPolicy)
+      this.localStorageService.setItem(UserLocalStorageKeys.WEBTORRENT_ENABLED, profile.webTorrentEnabled)
 
-      // session storage keys
-      autoPlayNextVideo: (val: boolean) =>
-        this.sessionStorageService.setItem(User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO, String(val))
-    }
+      this.localStorageService.setItem(UserLocalStorageKeys.AUTO_PLAY_VIDEO, profile.autoPlayNextVideo)
+      this.localStorageService.setItem(UserLocalStorageKeys.AUTO_PLAY_VIDEO_PLAYLIST, profile.autoPlayNextVideoPlaylist)
 
-    for (const key of Object.keys(profile)) {
-      try {
-        if (has(supportedKeys, key)) supportedKeys[key](profile[key])
-      } catch (err) {
-        console.error(`Cannot set item ${key} in localStorage. Likely due to a value impossible to stringify.`, err)
-      }
+      this.localStorageService.setItem(UserLocalStorageKeys.THEME, profile.theme)
+      this.localStorageService.setItem(UserLocalStorageKeys.VIDEO_LANGUAGES, profile.videoLanguages)
+    } catch (err) {
+      console.error(`Cannot set item in localStorage. Likely due to a value impossible to stringify.`, err)
     }
   }
 
   listenAnonymousUpdate () {
     return this.localStorageService.watch([
-      User.KEYS.NSFW_POLICY,
-      User.KEYS.WEBTORRENT_ENABLED,
-      User.KEYS.AUTO_PLAY_VIDEO,
-      User.KEYS.AUTO_PLAY_VIDEO_PLAYLIST,
-      User.KEYS.THEME,
-      User.KEYS.VIDEO_LANGUAGES
+      UserLocalStorageKeys.NSFW_POLICY,
+      UserLocalStorageKeys.WEBTORRENT_ENABLED,
+      UserLocalStorageKeys.AUTO_PLAY_VIDEO,
+      UserLocalStorageKeys.AUTO_PLAY_VIDEO_PLAYLIST,
+      UserLocalStorageKeys.THEME,
+      UserLocalStorageKeys.VIDEO_LANGUAGES
     ]).pipe(
       throttleTime(200),
       filter(() => this.authService.isLoggedIn() !== true),
@@ -280,7 +267,7 @@ export class UserService {
     let videoLanguages: string[]
 
     try {
-      videoLanguages = JSON.parse(this.localStorageService.getItem(User.KEYS.VIDEO_LANGUAGES))
+      videoLanguages = JSON.parse(this.localStorageService.getItem(UserLocalStorageKeys.VIDEO_LANGUAGES))
     } catch (err) {
       videoLanguages = null
       console.error('Cannot parse desired video languages from localStorage.', err)
@@ -288,16 +275,16 @@ export class UserService {
 
     return new User({
       // local storage keys
-      nsfwPolicy: this.localStorageService.getItem(User.KEYS.NSFW_POLICY) as NSFWPolicyType,
-      webTorrentEnabled: this.localStorageService.getItem(User.KEYS.WEBTORRENT_ENABLED) !== 'false',
-      theme: this.localStorageService.getItem(User.KEYS.THEME) || 'instance-default',
+      nsfwPolicy: this.localStorageService.getItem(UserLocalStorageKeys.NSFW_POLICY) as NSFWPolicyType,
+      webTorrentEnabled: this.localStorageService.getItem(UserLocalStorageKeys.WEBTORRENT_ENABLED) !== 'false',
+      theme: this.localStorageService.getItem(UserLocalStorageKeys.THEME) || 'instance-default',
       videoLanguages,
 
-      autoPlayNextVideoPlaylist: this.localStorageService.getItem(User.KEYS.AUTO_PLAY_VIDEO_PLAYLIST) !== 'false',
-      autoPlayVideo: this.localStorageService.getItem(User.KEYS.AUTO_PLAY_VIDEO) === 'true',
+      autoPlayNextVideoPlaylist: this.localStorageService.getItem(UserLocalStorageKeys.AUTO_PLAY_VIDEO_PLAYLIST) !== 'false',
+      autoPlayVideo: this.localStorageService.getItem(UserLocalStorageKeys.AUTO_PLAY_VIDEO) === 'true',
 
       // session storage keys
-      autoPlayNextVideo: this.sessionStorageService.getItem(User.KEYS.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true'
+      autoPlayNextVideo: this.sessionStorageService.getItem(UserLocalStorageKeys.SESSION_STORAGE_AUTO_PLAY_NEXT_VIDEO) === 'true'
     })
   }
 
@@ -385,23 +372,39 @@ export class UserService {
   private formatUser (user: UserServerModel) {
     let videoQuota
     if (user.videoQuota === -1) {
-      videoQuota = this.i18n('Unlimited')
+      videoQuota = '∞'
     } else {
-      videoQuota = this.bytesPipe.transform(user.videoQuota, 0)
+      videoQuota = getBytes(user.videoQuota, 0)
     }
 
-    const videoQuotaUsed = this.bytesPipe.transform(user.videoQuotaUsed, 0)
+    const videoQuotaUsed = getBytes(user.videoQuotaUsed, 0)
+
+    let videoQuotaDaily: string
+    let videoQuotaUsedDaily: string
+    if (user.videoQuotaDaily === -1) {
+      videoQuotaDaily = '∞'
+      videoQuotaUsedDaily = getBytes(0, 0) + ''
+    } else {
+      videoQuotaDaily = getBytes(user.videoQuotaDaily, 0) + ''
+      videoQuotaUsedDaily = getBytes(user.videoQuotaUsedDaily || 0, 0) + ''
+    }
 
     const roleLabels: { [ id in UserRole ]: string } = {
-      [UserRole.USER]: this.i18n('User'),
-      [UserRole.ADMINISTRATOR]: this.i18n('Administrator'),
-      [UserRole.MODERATOR]: this.i18n('Moderator')
+      [UserRole.USER]: $localize`User`,
+      [UserRole.ADMINISTRATOR]: $localize`Administrator`,
+      [UserRole.MODERATOR]: $localize`Moderator`
     }
 
     return Object.assign(user, {
       roleLabel: roleLabels[user.role],
       videoQuota,
-      videoQuotaUsed
+      videoQuotaUsed,
+      rawVideoQuota: user.videoQuota,
+      rawVideoQuotaUsed: user.videoQuotaUsed,
+      videoQuotaDaily,
+      videoQuotaUsedDaily,
+      rawVideoQuotaDaily: user.videoQuotaDaily,
+      rawVideoQuotaUsedDaily: user.videoQuotaUsedDaily
     })
   }
 }

@@ -1,13 +1,31 @@
+import { forkJoin } from 'rxjs'
 import { map } from 'rxjs/operators'
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core'
+import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
 import { FormArray, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms'
-import { ServerService } from '@app/core'
+import { HooksService, PluginService, ServerService } from '@app/core'
 import { removeElementFromArray } from '@app/helpers'
-import { FormReactiveValidationMessages, FormValidatorService, VideoValidatorsService } from '@app/shared/shared-forms'
+import {
+  VIDEO_CATEGORY_VALIDATOR,
+  VIDEO_CHANNEL_VALIDATOR,
+  VIDEO_DESCRIPTION_VALIDATOR,
+  VIDEO_LANGUAGE_VALIDATOR,
+  VIDEO_LICENCE_VALIDATOR,
+  VIDEO_NAME_VALIDATOR,
+  VIDEO_ORIGINALLY_PUBLISHED_AT_VALIDATOR,
+  VIDEO_PRIVACY_VALIDATOR,
+  VIDEO_SCHEDULE_PUBLICATION_AT_VALIDATOR,
+  VIDEO_SUPPORT_VALIDATOR,
+  VIDEO_TAGS_ARRAY_VALIDATOR
+} from '@app/shared/form-validators/video-validators'
+import { FormReactiveValidationMessages, FormValidatorService, SelectChannelItem } from '@app/shared/shared-forms'
+import { InstanceService } from '@app/shared/shared-instance'
 import { VideoCaptionEdit, VideoEdit, VideoService } from '@app/shared/shared-main'
 import { ServerConfig, VideoConstant, VideoPrivacy } from '@shared/models'
+import { RegisterClientFormFieldOptions, RegisterClientVideoFieldOptions } from '@shared/models/plugins/register-client-form-field.model'
 import { I18nPrimengCalendarService } from './i18n-primeng-calendar.service'
 import { VideoCaptionAddModalComponent } from './video-caption-add-modal.component'
+
+type VideoLanguages = VideoConstant<string> & { group?: string }
 
 @Component({
   selector: 'my-video-edit',
@@ -18,12 +36,15 @@ export class VideoEditComponent implements OnInit, OnDestroy {
   @Input() form: FormGroup
   @Input() formErrors: { [ id: string ]: string } = {}
   @Input() validationMessages: FormReactiveValidationMessages = {}
-  @Input() userVideoChannels: { id: number, label: string, support: string }[] = []
+  @Input() userVideoChannels: SelectChannelItem[] = []
   @Input() schedulePublicationPossible = true
   @Input() videoCaptions: (VideoCaptionEdit & { captionPath?: string })[] = []
   @Input() waitTranscodingEnabled = true
+  @Input() type: 'import-url' | 'import-torrent' | 'upload' | 'update'
 
   @ViewChild('videoCaptionAddModal', { static: true }) videoCaptionAddModal: VideoCaptionAddModalComponent
+
+  @Output() pluginFieldsAdded = new EventEmitter<void>()
 
   // So that it can be accessed in the template
   readonly SPECIAL_SCHEDULED_PRIVACY = VideoEdit.SPECIAL_SCHEDULED_PRIVACY
@@ -31,10 +52,12 @@ export class VideoEditComponent implements OnInit, OnDestroy {
   videoPrivacies: VideoConstant<VideoPrivacy>[] = []
   videoCategories: VideoConstant<number>[] = []
   videoLicences: VideoConstant<number>[] = []
-  videoLanguages: VideoConstant<string>[] = []
+  videoLanguages: VideoLanguages[] = []
 
   tagValidators: ValidatorFn[]
   tagValidatorsMessages: { [ name: string ]: string }
+
+  pluginDataFormGroup: FormGroup
 
   schedulePublicationEnabled = false
 
@@ -47,21 +70,25 @@ export class VideoEditComponent implements OnInit, OnDestroy {
 
   serverConfig: ServerConfig
 
+  pluginFields: {
+    commonOptions: RegisterClientFormFieldOptions
+    videoFormOptions: RegisterClientVideoFieldOptions
+  }[] = []
+
   private schedulerInterval: any
   private firstPatchDone = false
   private initialVideoCaptions: string[] = []
 
   constructor (
     private formValidatorService: FormValidatorService,
-    private videoValidatorsService: VideoValidatorsService,
     private videoService: VideoService,
     private serverService: ServerService,
+    private pluginService: PluginService,
+    private instanceService: InstanceService,
     private i18nPrimengCalendarService: I18nPrimengCalendarService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private hooks: HooksService
   ) {
-    this.tagValidators = this.videoValidatorsService.VIDEO_TAGS.VALIDATORS
-    this.tagValidatorsMessages = this.videoValidatorsService.VIDEO_TAGS.MESSAGES
-
     this.calendarLocale = this.i18nPrimengCalendarService.getCalendarLocale()
     this.calendarTimezone = this.i18nPrimengCalendarService.getTimezone()
     this.calendarDateFormat = this.i18nPrimengCalendarService.getDateFormat()
@@ -82,22 +109,22 @@ export class VideoEditComponent implements OnInit, OnDestroy {
       tags: []
     }
     const obj: any = {
-      name: this.videoValidatorsService.VIDEO_NAME,
-      privacy: this.videoValidatorsService.VIDEO_PRIVACY,
-      channelId: this.videoValidatorsService.VIDEO_CHANNEL,
+      name: VIDEO_NAME_VALIDATOR,
+      privacy: VIDEO_PRIVACY_VALIDATOR,
+      channelId: VIDEO_CHANNEL_VALIDATOR,
       nsfw: null,
       commentsEnabled: null,
       downloadEnabled: null,
       waitTranscoding: null,
-      category: this.videoValidatorsService.VIDEO_CATEGORY,
-      licence: this.videoValidatorsService.VIDEO_LICENCE,
-      language: this.videoValidatorsService.VIDEO_LANGUAGE,
-      description: this.videoValidatorsService.VIDEO_DESCRIPTION,
-      tags: null,
+      category: VIDEO_CATEGORY_VALIDATOR,
+      licence: VIDEO_LICENCE_VALIDATOR,
+      language: VIDEO_LANGUAGE_VALIDATOR,
+      description: VIDEO_DESCRIPTION_VALIDATOR,
+      tags: VIDEO_TAGS_ARRAY_VALIDATOR,
       previewfile: null,
-      support: this.videoValidatorsService.VIDEO_SUPPORT,
-      schedulePublicationAt: this.videoValidatorsService.VIDEO_SCHEDULE_PUBLICATION_AT,
-      originallyPublishedAt: this.videoValidatorsService.VIDEO_ORIGINALLY_PUBLISHED_AT
+      support: VIDEO_SUPPORT_VALIDATOR,
+      schedulePublicationAt: VIDEO_SCHEDULE_PUBLICATION_AT_VALIDATOR,
+      originallyPublishedAt: VIDEO_ORIGINALLY_PUBLISHED_AT_VALIDATOR
     }
 
     this.formValidatorService.updateForm(
@@ -122,15 +149,40 @@ export class VideoEditComponent implements OnInit, OnDestroy {
   ngOnInit () {
     this.updateForm()
 
+    this.pluginService.ensurePluginsAreLoaded('video-edit')
+      .then(() => this.updatePluginFields())
+
     this.serverService.getVideoCategories()
         .subscribe(res => this.videoCategories = res)
+
     this.serverService.getVideoLicences()
         .subscribe(res => this.videoLicences = res)
-    this.serverService.getVideoLanguages()
-      .subscribe(res => this.videoLanguages = res)
+
+    forkJoin([
+      this.instanceService.getAbout(),
+      this.serverService.getVideoLanguages()
+    ]).pipe(map(([ about, languages ]) => ({ about, languages })))
+      .subscribe(res => {
+        this.videoLanguages = res.languages
+          .map(l => {
+            return res.about.instance.languages.includes(l.id)
+              ? { ...l, group: $localize`Instance languages`, groupOrder: 0 }
+              : { ...l, group: $localize`All languages`, groupOrder: 1 }
+          })
+          .sort((a, b) => a.groupOrder - b.groupOrder)
+      })
 
     this.serverService.getVideoPrivacies()
-      .subscribe(privacies => this.videoPrivacies = this.videoService.explainedPrivacyLabels(privacies))
+      .subscribe(privacies => {
+        this.videoPrivacies = this.videoService.explainedPrivacyLabels(privacies)
+        if (this.schedulePublicationPossible) {
+          this.videoPrivacies.push({
+            id: this.SPECIAL_SCHEDULED_PRIVACY,
+            label: $localize`Scheduled`,
+            description: $localize`Hide the video until a specific date`
+          })
+        }
+      })
 
     this.serverConfig = this.serverService.getTmpConfig()
     this.serverService.getConfig()
@@ -141,6 +193,8 @@ export class VideoEditComponent implements OnInit, OnDestroy {
     this.ngZone.runOutsideAngular(() => {
       this.schedulerInterval = setInterval(() => this.minScheduledDate = new Date(), 1000 * 60) // Update every minute
     })
+
+    this.hooks.runAction('action:video-edit.init', 'video-edit', { type: this.type })
   }
 
   ngOnDestroy () {
@@ -189,6 +243,23 @@ export class VideoEditComponent implements OnInit, OnDestroy {
 
       return 1
     })
+  }
+
+  private updatePluginFields () {
+    this.pluginFields = this.pluginService.getRegisteredVideoFormFields(this.type)
+
+    if (this.pluginFields.length === 0) return
+
+    const obj: any = {}
+
+    for (const setting of this.pluginFields) {
+      obj[setting.commonOptions.name] = new FormControl(setting.commonOptions.default)
+    }
+
+    this.pluginDataFormGroup = new FormGroup(obj)
+    this.form.addControl('pluginData', this.pluginDataFormGroup)
+
+    this.pluginFieldsAdded.emit()
   }
 
   private trackPrivacyChange () {
