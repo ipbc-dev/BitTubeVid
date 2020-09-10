@@ -3,6 +3,7 @@
 ## v0.2.5 (BitTube)
   * Based on Peertube V2.4.0
   * Fixing minor bugs
+  * Remember to update your config file
 ## v0.2.4 (BitTube)
   * Based on Peertube V2.3.0
   * Fixing minor bugs
