@@ -1,3 +1,4 @@
+
 import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { ServerService } from '@app/core/server/server.service'
@@ -5,20 +6,31 @@ import { Notifier } from '@app/core'
 import { ConfirmService } from '@app/core/confirm'
 import { interfacePremiumStoragePlan } from '@shared/models/server/premium-storage-plan-interface'
 import { RestExtractor } from '@app/core/rest'
-import { ServerConfig } from '@shared/models'
-import { CustomConfig } from '../../../../../../shared/models/server/custom-config.model'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
 import { catchError } from 'rxjs/operators'
 import { ViewportScroller } from '@angular/common'
-import { CustomConfigValidatorsService, FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
-import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
 import { HttpClient } from '@angular/common/http'
 import { environment } from '../../../../environments/environment'
 import { BytesPipe } from 'ngx-pipes'
 import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 import { identifierModuleUrl } from '@angular/compiler'
+import {
+  ADMIN_EMAIL_VALIDATOR,
+  CACHE_CAPTIONS_SIZE_VALIDATOR,
+  CACHE_PREVIEWS_SIZE_VALIDATOR,
+  INDEX_URL_VALIDATOR,
+  INSTANCE_NAME_VALIDATOR,
+  INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
+  SEARCH_INDEX_URL_VALIDATOR,
+  SERVICES_TWITTER_USERNAME_VALIDATOR,
+  SIGNUP_LIMIT_VALIDATOR,
+  TRANSCODING_THREADS_VALIDATOR
+} from '@app/shared/form-validators/custom-config-validators'
+import { USER_VIDEO_QUOTA_DAILY_VALIDATOR, USER_VIDEO_QUOTA_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService, SelectOptionsItem } from '@app/shared/shared-forms'
+import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+import { CustomConfig, ServerConfig } from '@shared/models'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -37,13 +49,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   resolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
 
-  languageItems: SelectItem[] = []
-  categoryItems: SelectItem[] = []
   storagePlans: any[] = []
   planIndex: number = null
   premiumStorageActive = false
   addPremiumPlanClicked = false
   showAddPlanModal = false
+  languageItems: SelectOptionsItem[] = []
+  categoryItems: SelectOptionsItem[] = []
 
   private serverConfig: ServerConfig
   private bytesPipe: BytesPipe
@@ -51,52 +63,49 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   constructor (
     private viewportScroller: ViewportScroller,
     protected formValidatorService: FormValidatorService,
-    private customConfigValidatorsService: CustomConfigValidatorsService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
     private authHttp: HttpClient,
     private restExtractor: RestExtractor,
     private configService: ConfigService,
-    private serverService: ServerService,
     private confirmService: ConfirmService,
-    private i18n: I18n
+    private serverService: ServerService
   ) {
     super()
     this.bytesPipe = new BytesPipe()
     this.resolutions = [
       {
         id: '0p',
-        label: this.i18n('Audio-only'),
-        description: this.i18n('A <code>.mp4</code> that keeps the original audio track, with no video')
+        label: $localize`Audio-only`,
+        description: $localize`A <code>.mp4</code> that keeps the original audio track, with no video`
       },
       {
         id: '240p',
-        label: this.i18n('240p')
+        label: $localize`240p`
       },
       {
         id: '360p',
-        label: this.i18n('360p')
+        label: $localize`360p`
       },
       {
         id: '480p',
-        label: this.i18n('480p')
+        label: $localize`480p`
       },
       {
         id: '720p',
-        label: this.i18n('720p')
+        label: $localize`720p`
       },
       {
         id: '1080p',
-        label: this.i18n('1080p')
+        label: $localize`1080p`
       },
       {
         id: '2160p',
-        label: this.i18n('2160p')
+        label: $localize`2160p`
       }
     ]
 
     this.transcodingThreadOptions = [
-      { value: 0, label: this.i18n('Auto (via ffmpeg)') },
+      { value: 0, label: $localize`Auto (via ffmpeg)` },
       { value: 1, label: '1' },
       { value: 2, label: '2' },
       { value: 4, label: '4' },
@@ -126,8 +135,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
-        name: this.customConfigValidatorsService.INSTANCE_NAME,
-        shortDescription: this.customConfigValidatorsService.INSTANCE_SHORT_DESCRIPTION,
+        name: INSTANCE_NAME_VALIDATOR,
+        shortDescription: INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
         description: null,
 
         isNSFW: false,
@@ -159,21 +168,21 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       },
       services: {
         twitter: {
-          username: this.customConfigValidatorsService.SERVICES_TWITTER_USERNAME,
+          username: SERVICES_TWITTER_USERNAME_VALIDATOR,
           whitelisted: null
         }
       },
       cache: {
         previews: {
-          size: this.customConfigValidatorsService.CACHE_PREVIEWS_SIZE
+          size: CACHE_PREVIEWS_SIZE_VALIDATOR
         },
         captions: {
-          size: this.customConfigValidatorsService.CACHE_CAPTIONS_SIZE
+          size: CACHE_CAPTIONS_SIZE_VALIDATOR
         }
       },
       signup: {
         enabled: null,
-        limit: this.customConfigValidatorsService.SIGNUP_LIMIT,
+        limit: SIGNUP_LIMIT_VALIDATOR,
         requiresEmailVerification: null
       },
       import: {
@@ -187,18 +196,18 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         }
       },
       admin: {
-        email: this.customConfigValidatorsService.ADMIN_EMAIL
+        email: ADMIN_EMAIL_VALIDATOR
       },
       contactForm: {
         enabled: null
       },
       user: {
-        videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
-        videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY
+        videoQuota: USER_VIDEO_QUOTA_VALIDATOR,
+        videoQuotaDaily: USER_VIDEO_QUOTA_DAILY_VALIDATOR
       },
       transcoding: {
         enabled: null,
-        threads: this.customConfigValidatorsService.TRANSCODING_THREADS,
+        threads: TRANSCODING_THREADS_VALIDATOR,
         allowAdditionalExtensions: null,
         allowAudioFiles: null,
         resolutions: {},
@@ -229,7 +238,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
           },
           autoFollowIndex: {
             enabled: null,
-            indexUrl: this.customConfigValidatorsService.INDEX_URL
+            indexUrl: INDEX_URL_VALIDATOR
           }
         }
       },
@@ -249,7 +258,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         },
         searchIndex: {
           enabled: null,
-          url: this.customConfigValidatorsService.SEARCH_INDEX_URL,
+          url: SEARCH_INDEX_URL_VALIDATOR,
           disableLocalSearch: null,
           isDefaultSearch: null
         }
@@ -387,8 +396,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   async onRowDelete (rowData: any) {
     const res = await this.confirmService.confirm(
-      this.i18n("Do you really want to delete '{{planName}}' plan? \n ATENTION! If some user already bought this plan you can delete his payment also! Before delete a plan, be sure that anybody is using it or consider to just deactivate it", { planName: rowData.name }),
-      this.i18n('Delete')
+      $localize`Do you really want to delete '{{planName}}' plan? \n ATENTION! If some user already bought this plan you can delete his payment also! Before delete a plan, be sure that anybody is using it or consider to just deactivate it", { planName: rowData.name }`,
+      $localize`Delete`
     )
     if (res === false) return
     const body = {
@@ -488,27 +497,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
           this.updateForm()
 
-          this.notifier.success(this.i18n('Configuration updated.'))
+          this.notifier.success($localize`Configuration updated.`)
         },
 
         err => this.notifier.error(err.message)
       )
-  }
-
-  getSelectedLanguageLabel () {
-    return this.i18n('{{\'{0} languages selected')
-  }
-
-  getDefaultLanguageLabel () {
-    return this.i18n('No language')
-  }
-
-  getSelectedCategoryLabel () {
-    return this.i18n('{{\'{0} categories selected')
-  }
-
-  getDefaultCategoryLabel () {
-    return this.i18n('No category')
   }
 
   gotoAnchor () {
@@ -536,8 +529,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       ([ config, languages, categories ]) => {
         this.customConfig = config
 
-        this.languageItems = languages.map(l => ({ label: l.label, value: l.id }))
-        this.categoryItems = categories.map(l => ({ label: l.label, value: l.id }))
+        this.languageItems = languages.map(l => ({ label: l.label, id: l.id }))
+        this.categoryItems = categories.map(l => ({ label: l.label, id: l.id + '' }))
 
         this.updateForm()
         // Force form validation

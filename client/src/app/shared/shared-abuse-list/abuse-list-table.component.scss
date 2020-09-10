@@ -1,0 +1,18 @@
+.comment-flagged-account,
+.account-flagged-handle {
+  font-size: 11px;
+  color: var(--greyForegroundColor);
+}
+
+.abuse-states .glyphicon-comment {
+  margin-left: 0.5rem;
+}
+
+.abuse-messages {
+  my-global-icon {
+    width: 22px;
+    margin-left: 3px;
+    position: relative;
+    top: -2px;
+  }
+}

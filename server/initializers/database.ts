@@ -1,46 +1,48 @@
+import { QueryTypes, Transaction } from 'sequelize'
 import { Sequelize as SequelizeTypescript } from 'sequelize-typescript'
+import { AbuseModel } from '@server/models/abuse/abuse'
+import { AbuseMessageModel } from '@server/models/abuse/abuse-message'
+import { VideoAbuseModel } from '@server/models/abuse/video-abuse'
+import { VideoCommentAbuseModel } from '@server/models/abuse/video-comment-abuse'
 import { isTestInstance } from '../helpers/core-utils'
 import { logger } from '../helpers/logger'
-
 import { AccountModel } from '../models/account/account'
+import { AccountBlocklistModel } from '../models/account/account-blocklist'
 import { AccountVideoRateModel } from '../models/account/account-video-rate'
 import { UserModel } from '../models/account/user'
+import { UserNotificationModel } from '../models/account/user-notification'
+import { UserNotificationSettingModel } from '../models/account/user-notification-setting'
+import { UserVideoHistoryModel } from '../models/account/user-video-history'
 import { ActorModel } from '../models/activitypub/actor'
 import { ActorFollowModel } from '../models/activitypub/actor-follow'
 import { ApplicationModel } from '../models/application/application'
 import { AvatarModel } from '../models/avatar/avatar'
 import { OAuthClientModel } from '../models/oauth/oauth-client'
 import { OAuthTokenModel } from '../models/oauth/oauth-token'
+import { VideoRedundancyModel } from '../models/redundancy/video-redundancy'
 import { ServerModel } from '../models/server/server'
+import { ServerBlocklistModel } from '../models/server/server-blocklist'
+import { ScheduleVideoUpdateModel } from '../models/video/schedule-video-update'
 import { TagModel } from '../models/video/tag'
 import { VideoModel } from '../models/video/video'
-import { VideoAbuseModel } from '../models/video/video-abuse'
 import { VideoBlacklistModel } from '../models/video/video-blacklist'
+import { VideoCaptionModel } from '../models/video/video-caption'
+import { VideoChangeOwnershipModel } from '../models/video/video-change-ownership'
 import { VideoChannelModel } from '../models/video/video-channel'
 import { VideoCommentModel } from '../models/video/video-comment'
 import { VideoFileModel } from '../models/video/video-file'
-import { VideoShareModel } from '../models/video/video-share'
-import { VideoTagModel } from '../models/video/video-tag'
-import { CONFIG } from './config'
-import { ScheduleVideoUpdateModel } from '../models/video/schedule-video-update'
-import { VideoCaptionModel } from '../models/video/video-caption'
 import { VideoImportModel } from '../models/video/video-import'
-import { VideoViewModel } from '../models/video/video-view'
-import { VideoChangeOwnershipModel } from '../models/video/video-change-ownership'
-import { VideoRedundancyModel } from '../models/redundancy/video-redundancy'
-import { UserVideoHistoryModel } from '../models/account/user-video-history'
-import { AccountBlocklistModel } from '../models/account/account-blocklist'
-import { ServerBlocklistModel } from '../models/server/server-blocklist'
-import { UserNotificationModel } from '../models/account/user-notification'
-import { UserNotificationSettingModel } from '../models/account/user-notification-setting'
-import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
 import { VideoPlaylistModel } from '../models/video/video-playlist'
 import { VideoPlaylistElementModel } from '../models/video/video-playlist-element'
 import { ThumbnailModel } from '../models/video/thumbnail'
 import { PremiumStoragePlanModel } from '../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../models/user-premium-storage-payments'
 import { PluginModel } from '../models/server/plugin'
-import { QueryTypes, Transaction } from 'sequelize'
+import { VideoShareModel } from '../models/video/video-share'
+import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
+import { VideoTagModel } from '../models/video/video-tag'
+import { VideoViewModel } from '../models/video/video-view'
+import { CONFIG } from './config'
 
 require('pg').defaults.parseInt8 = true // Avoid BIGINT to be converted to string
 
@@ -48,6 +50,7 @@ const dbname = CONFIG.DATABASE.DBNAME
 const username = CONFIG.DATABASE.USERNAME
 const password = CONFIG.DATABASE.PASSWORD
 const host = CONFIG.DATABASE.HOSTNAME
+const ssl = CONFIG.DATABASE.SSL
 const port = CONFIG.DATABASE.PORT
 const poolMax = CONFIG.DATABASE.POOL.MAX
 
@@ -58,6 +61,7 @@ const sequelizeTypescript = new SequelizeTypescript({
   port,
   username,
   password,
+  ssl,
   pool: {
     max: poolMax
   },
@@ -75,6 +79,16 @@ const sequelizeTypescript = new SequelizeTypescript({
   }
 })
 
+function checkDatabaseConnectionOrDie () {
+  sequelizeTypescript.authenticate()
+    .then(() => logger.debug('Connection to PostgreSQL has been established successfully.'))
+    .catch(err => {
+
+      logger.error('Unable to connect to PostgreSQL database.', { err })
+      process.exit(-1)
+    })
+}
+
 async function initDatabaseModels (silent: boolean) {
   sequelizeTypescript.addModels([
     ApplicationModel,
@@ -88,6 +102,9 @@ async function initDatabaseModels (silent: boolean) {
     TagModel,
     AccountVideoRateModel,
     UserModel,
+    AbuseMessageModel,
+    AbuseModel,
+    VideoCommentAbuseModel,
     VideoAbuseModel,
     VideoModel,
     VideoChangeOwnershipModel,
@@ -129,6 +146,7 @@ async function initDatabaseModels (silent: boolean) {
 
 export {
   initDatabaseModels,
+  checkDatabaseConnectionOrDie,
   sequelizeTypescript
 }
 

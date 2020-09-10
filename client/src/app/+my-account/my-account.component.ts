@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { ServerService } from '@app/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { AuthService, AuthUser, ScreenService, ServerService } from '@app/core'
 import { ServerConfig } from '@shared/models'
 import { TopMenuDropdownParam } from '../shared/shared-main/misc/top-menu-dropdown.component'
 
@@ -11,44 +10,65 @@ import { TopMenuDropdownParam } from '../shared/shared-main/misc/top-menu-dropdo
 })
 export class MyAccountComponent implements OnInit {
   menuEntries: TopMenuDropdownParam[] = []
+  user: AuthUser
 
   private serverConfig: ServerConfig
 
   constructor (
     private serverService: ServerService,
-    private i18n: I18n
-  ) { }
+    private authService: AuthService,
+    private screenService: ScreenService
+    ) { }
+
+  get isBroadcastMessageDisplayed () {
+    return this.screenService.isBroadcastMessageDisplayed
+  }
 
   ngOnInit (): void {
     this.serverConfig = this.serverService.getTmpConfig()
     this.serverService.getConfig()
         .subscribe(config => this.serverConfig = config)
 
+    this.user = this.authService.getUser()
+
+    this.authService.userInformationLoaded.subscribe(
+      () => this.buildMenu()
+    )
+  }
+
+  isVideoImportEnabled () {
+    const importConfig = this.serverConfig.import.videos
+
+    return importConfig.http.enabled || importConfig.torrent.enabled
+  }
+
+  private buildMenu () {
     const libraryEntries: TopMenuDropdownParam = {
-      label: this.i18n('My library'),
+      label: $localize`My library`,
       children: [
         {
-          label: this.i18n('My channels'),
+          label: $localize`My channels`,
           routerLink: '/my-account/video-channels',
           iconName: 'channel'
         },
         {
-          label: this.i18n('My videos'),
+          label: $localize`My videos`,
           routerLink: '/my-account/videos',
-          iconName: 'videos'
+          iconName: 'videos',
+          isDisplayed: () => this.user.canSeeVideosLink
         },
         {
-          label: this.i18n('My playlists'),
+          label: $localize`My playlists`,
           routerLink: '/my-account/video-playlists',
           iconName: 'playlists'
         },
         {
-          label: this.i18n('My subscriptions'),
+          label: $localize`My subscriptions`,
           routerLink: '/my-account/subscriptions',
-          iconName: 'inbox-full'
+          iconName: 'subscriptions'
         },
         {
-          label: this.i18n('My history'),
+          label: $localize`My history`,
           routerLink: '/my-account/history/videos',
           iconName: 'history'
         }
@@ -59,54 +79,53 @@ export class MyAccountComponent implements OnInit {
       libraryEntries.children.push({
         label: 'My imports',
         routerLink: '/my-account/video-imports',
-        iconName: 'cloud-download'
+        iconName: 'cloud-download',
+        isDisplayed: () => this.user.canSeeVideosLink
       })
     }
 
     const miscEntries: TopMenuDropdownParam = {
-      label: this.i18n('Misc'),
+      label: $localize`Misc`,
       children: [
         {
-          label: this.i18n('Muted accounts'),
+          label: $localize`Muted accounts`,
           routerLink: '/my-account/blocklist/accounts',
-          iconName: 'user'
+          iconName: 'user-x'
         },
         {
-          label: this.i18n('Premium storage billing'),
+          label: $localize`Premium storage billing`,
           routerLink: '/my-account/premium-storage/billing',
           iconName: 'history'
         },
         {
-          label: this.i18n('Muted servers'),
+          label: $localize`Muted servers`,
           routerLink: '/my-account/blocklist/servers',
-          iconName: 'server'
+          iconName: 'peertube-x'
         },
         {
-          label: this.i18n('Ownership changes'),
+          label: $localize`My abuse reports`,
+          routerLink: '/my-account/abuses',
+          iconName: 'flag'
+        },
+        {
+          label: $localize`Ownership changes`,
           routerLink: '/my-account/ownership',
-          iconName: 'ownership-change'
+          iconName: 'download'
         }
       ]
     }
 
     this.menuEntries = [
       {
-        label: this.i18n('My settings'),
+        label: $localize`My settings`,
         routerLink: '/my-account/settings'
       },
       {
-        label: this.i18n('My notifications'),
+        label: $localize`My notifications`,
         routerLink: '/my-account/notifications'
       },
       libraryEntries,
       miscEntries
     ]
   }
-
-  isVideoImportEnabled () {
-    const importConfig = this.serverConfig.import.videos
-
-    return importConfig.http.enabled || importConfig.torrent.enabled
-  }
-
 }

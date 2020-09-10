@@ -33,6 +33,7 @@ yarn-error.log
 /**/.idea
 /dist
 /PeerTube.iml
+/.vscode/
 
 # Zanata
 /.zanata-cache

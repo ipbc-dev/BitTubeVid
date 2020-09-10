@@ -1,9 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
-import { ValidatorFn } from '@angular/forms'
 import { ServerService } from '@app/core'
-import { VideoValidatorsService } from '@app/shared/shared-forms'
 import { AdvancedSearch } from '@app/shared/shared-search'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ServerConfig, VideoConstant } from '@shared/models'
 
 @Component({
@@ -20,9 +17,6 @@ export class SearchFiltersComponent implements OnInit {
   videoLicences: VideoConstant<number>[] = []
   videoLanguages: VideoConstant<string>[] = []
 
-  tagValidators: ValidatorFn[]
-  tagValidatorsMessages: { [ name: string ]: string }
-
   publishedDateRanges: { id: string, label: string }[] = []
   sorts: { id: string, label: string }[] = []
   durationRanges: { id: string, label: string }[] = []
@@ -36,66 +30,62 @@ export class SearchFiltersComponent implements OnInit {
   private serverConfig: ServerConfig
 
   constructor (
-    private i18n: I18n,
-    private videoValidatorsService: VideoValidatorsService,
     private serverService: ServerService
   ) {
-    this.tagValidators = this.videoValidatorsService.VIDEO_TAGS.VALIDATORS
-    this.tagValidatorsMessages = this.videoValidatorsService.VIDEO_TAGS.MESSAGES
     this.publishedDateRanges = [
       {
         id: 'any_published_date',
-        label: this.i18n('Any')
+        label: $localize`Any`
       },
       {
         id: 'today',
-        label: this.i18n('Today')
+        label: $localize`Today`
       },
       {
         id: 'last_7days',
-        label: this.i18n('Last 7 days')
+        label: $localize`Last 7 days`
       },
       {
         id: 'last_30days',
-        label: this.i18n('Last 30 days')
+        label: $localize`Last 30 days`
       },
       {
         id: 'last_365days',
-        label: this.i18n('Last 365 days')
+        label: $localize`Last 365 days`
       }
     ]
 
     this.durationRanges = [
       {
         id: 'any_duration',
-        label: this.i18n('Any')
+        label: $localize`Any`
       },
       {
         id: 'short',
-        label: this.i18n('Short (< 4 min)')
+        label: $localize`Short (< 4 min)`
       },
       {
         id: 'medium',
-        label: this.i18n('Medium (4-10 min)')
+        label: $localize`Medium (4-10 min)`
       },
       {
         id: 'long',
-        label: this.i18n('Long (> 10 min)')
+        label: $localize`Long (> 10 min)`
       }
     ]
 
     this.sorts = [
       {
         id: '-match',
-        label: this.i18n('Relevance')
+        label: $localize`Relevance`
       },
       {
         id: '-publishedAt',
-        label: this.i18n('Publish date')
+        label: $localize`Publish date`
       },
       {
         id: '-views',
-        label: this.i18n('Views')
+        label: $localize`Views`
       }
     ]
   }

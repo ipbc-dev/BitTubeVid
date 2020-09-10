@@ -1,8 +1,6 @@
-import { BytesPipe } from 'ngx-pipes'
 import { ViewportScroller } from '@angular/common'
 import { AfterViewChecked, Component, OnInit } from '@angular/core'
 import { AuthService, Notifier, User, UserService } from '@app/core'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 
 @Component({
   selector: 'my-account-settings',
@@ -12,24 +10,14 @@ import { I18n } from '@ngx-translate/i18n-polyfill'
 export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
   user: User = null
 
-  userVideoQuota = '0'
-  userVideoQuotaUsed = 0
-  userVideoQuotaPercentage = 15
-
-  userVideoQuotaDaily = '0'
-  userVideoQuotaUsedDaily = 0
-  userVideoQuotaDailyPercentage = 15
-
-  userQuotaObject = {}
   private lastScrollHash: string
 
   constructor (
     private viewportScroller: ViewportScroller,
     private userService: UserService,
     private authService: AuthService,
-    private notifier: Notifier,
-    private i18n: I18n
-  ) {}
+    private notifier: Notifier
+    ) {}
 
   get userInformationLoaded () {
     return this.authService.userInformationLoaded
@@ -37,41 +25,6 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
 
   ngOnInit () {
     this.user = this.authService.getUser()
-
-    this.authService.userInformationLoaded.subscribe(
-      () => {
-        if (this.user.videoQuota !== -1) {
-          this.userVideoQuota = new BytesPipe().transform(this.user.videoQuota, 0).toString()
-        } else {
-          this.userVideoQuota = this.i18n('Unlimited')
-        }
-
-        if (this.user.videoQuotaDaily !== -1) {
-          this.userVideoQuotaDaily = new BytesPipe().transform(this.user.videoQuotaDaily, 0).toString()
-        } else {
-          this.userVideoQuotaDaily = this.i18n('Unlimited')
-        }
-      }
-    )
-
-    this.userService.getMyVideoQuotaUsed()
-      .subscribe(data => {
-        this.userVideoQuotaUsed = data.videoQuotaUsed
-        this.userVideoQuotaPercentage = this.userVideoQuotaUsed * 100 / this.user.videoQuota
-
-        this.userVideoQuotaUsedDaily = data.videoQuotaUsedDaily
-        this.userVideoQuotaDailyPercentage = this.userVideoQuotaUsedDaily * 100 / this.user.videoQuotaDaily
-      })
-
-    this.userQuotaObject = { 
-      userVideoQuota : this.userVideoQuota,
-      userVideoQuotaUsed : this.userVideoQuotaUsed,
-      userVideoQuotaPercentage : this.userVideoQuotaPercentage,
-
-      userVideoQuotaDaily : this.userVideoQuotaDaily,
-      userVideoQuotaUsedDaily : this.userVideoQuotaUsedDaily,
-      userVideoQuotaDailyPercentage : this.userVideoQuotaDailyPercentage
-    }
   }
 
   ngAfterViewChecked () {
@@ -86,16 +39,12 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
     this.userService.changeAvatar(formData)
       .subscribe(
         data => {
-          this.notifier.success(this.i18n('Avatar changed.'))
+          this.notifier.success($localize`Avatar changed.`)
 
           this.user.updateAccountAvatar(data.avatar)
         },
 
         err => this.notifier.error(err.message)
       )
-  }
-
-  hasDailyQuota () {
-    return this.user.videoQuotaDaily !== -1
   }
 }

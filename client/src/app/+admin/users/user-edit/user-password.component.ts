@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core'
 import { Notifier, UserService } from '@app/core'
-import { FormReactive, FormValidatorService, UserValidatorsService } from '@app/shared/shared-forms'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { USER_PASSWORD_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { UserUpdate } from '@shared/models'
 
 @Component({
@@ -18,17 +18,15 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
-    private userService: UserService,
-    private i18n: I18n
-  ) {
+    private userService: UserService
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      password: this.userValidatorsService.USER_PASSWORD
+      password: USER_PASSWORD_VALIDATOR
     })
   }
 
@@ -39,9 +37,7 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
 
     this.userService.updateUser(this.userId, userUpdate).subscribe(
       () => {
-        this.notifier.success(
-          this.i18n('Password changed for user {{username}}.', { username: this.username })
-        )
+        this.notifier.success($localize`Password changed for user ${this.username}.`)
       },
 
       err => this.error = err.message
@@ -53,6 +49,6 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
   }
 
   getFormButtonTitle () {
-    return this.i18n('Update user password')
+    return $localize`Update user password`
   }
 }

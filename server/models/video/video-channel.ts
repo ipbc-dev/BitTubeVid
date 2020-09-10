@@ -54,6 +54,7 @@ export enum ScopeNames {
 
 type AvailableForListOptions = {
   actorId: number
+  search?: string
 }
 
 type AvailableWithStatsOptions = {
@@ -61,6 +62,7 @@ type AvailableWithStatsOptions = {
 }
 
 export type SummaryOptions = {
+  actorRequired?: boolean // Default: true
   withAccount?: boolean // Default: false
   withAccountBlockerIds?: number[]
 }
@@ -121,7 +123,7 @@ export type SummaryOptions = {
         {
           attributes: [ 'id', 'preferredUsername', 'url', 'serverId', 'avatarId' ],
           model: ActorModel.unscoped(),
-          required: true,
+          required: options.actorRequired ?? true,
           include: [
             {
               attributes: [ 'host' ],
@@ -308,11 +310,18 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
     return VideoChannelModel.count(query)
   }
 
-  static listForApi (actorId: number, start: number, count: number, sort: string) {
+  static listForApi (parameters: {
+    actorId: number
+    start: number
+    count: number
+    sort: string
+  }) {
+    const { actorId } = parameters
+
     const query = {
-      offset: start,
-      limit: count,
-      order: getSort(sort)
+      offset: parameters.start,
+      limit: parameters.count,
+      order: getSort(parameters.sort)
     }
 
     const scopes = {
@@ -395,7 +404,23 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
     count: number
     sort: string
     withStats?: boolean
+    search?: string
   }) {
+    const escapedSearch = VideoModel.sequelize.escape(options.search)
+    const escapedLikeSearch = VideoModel.sequelize.escape('%' + options.search + '%')
+    const where = options.search
+      ? {
+        [Op.or]: [
+          Sequelize.literal(
+            'lower(immutable_unaccent("VideoChannelModel"."name")) % lower(immutable_unaccent(' + escapedSearch + '))'
+          ),
+          Sequelize.literal(
+            'lower(immutable_unaccent("VideoChannelModel"."name")) LIKE lower(immutable_unaccent(' + escapedLikeSearch + '))'
+          )
+        ]
+      }
+      : null
+
     const query = {
       offset: options.start,
       limit: options.count,
@@ -408,7 +433,8 @@ export class VideoChannelModel extends Model<VideoChannelModel> {
           },
           required: true
         }
-      ]
+      ],
+      where
     }
 
     const scopes: string | ScopeOptions | (string | ScopeOptions)[] = [ ScopeNames.WITH_ACTOR ]

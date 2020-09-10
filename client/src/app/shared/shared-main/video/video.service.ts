@@ -1,11 +1,9 @@
-import { FfprobeData } from 'fluent-ffmpeg'
 import { Observable } from 'rxjs'
 import { catchError, map, switchMap } from 'rxjs/operators'
 import { HttpClient, HttpParams, HttpRequest } from '@angular/common/http'
 import { Injectable } from '@angular/core'
 import { ComponentPaginationLight, RestExtractor, RestService, ServerService, UserService } from '@app/core'
 import { objectToFormData } from '@app/helpers'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import {
   FeedFormat,
   NSFWPolicyType,
@@ -16,13 +14,15 @@ import {
   Video as VideoServerModel,
   VideoConstant,
   VideoDetails as VideoDetailsServerModel,
+  VideoFileMetadata,
   VideoFilter,
   VideoPrivacy,
   VideoSortField,
   VideoUpdate
 } from '@shared/models'
 import { environment } from '../../../../environments/environment'
-import { Account, AccountService } from '../account'
+import { Account } from '../account/account.model'
+import { AccountService } from '../account/account.service'
 import { VideoChannel, VideoChannelService } from '../video-channel'
 import { VideoDetails } from './video-details.model'
 import { VideoEdit } from './video-edit.model'
@@ -48,8 +48,7 @@ export class VideoService implements VideosProvider {
     private authHttp: HttpClient,
     private restExtractor: RestExtractor,
     private restService: RestService,
-    private serverService: ServerService,
-    private i18n: I18n
+    private serverService: ServerService
   ) {}
 
   getVideoViewUrl (uuid: string) {
@@ -97,6 +96,7 @@ export class VideoService implements VideosProvider {
       downloadEnabled: video.downloadEnabled,
       thumbnailfile: video.thumbnailfile,
       previewfile: video.previewfile,
+      pluginData: video.pluginData,
       scheduleUpdate,
       originallyPublishedAt
     }
@@ -275,7 +275,7 @@ export class VideoService implements VideosProvider {
 
   getVideoFileMetadata (metadataUrl: string) {
     return this.authHttp
-               .get<FfprobeData>(metadataUrl)
+               .get<VideoFileMetadata>(metadataUrl)
                .pipe(
                  catchError(err => this.restExtractor.handleError(err))
                )
@@ -339,23 +339,25 @@ export class VideoService implements VideosProvider {
     const base = [
       {
         id: VideoPrivacy.PRIVATE,
-        label: this.i18n('Only I can see this video')
+        description: $localize`Only I can see this video`
       },
       {
         id: VideoPrivacy.UNLISTED,
-        label: this.i18n('Only people with the private link can see this video')
+        description: $localize`Only shareable via a private link`
       },
       {
         id: VideoPrivacy.PUBLIC,
-        label: this.i18n('Anyone can see this video')
+        description: $localize`Anyone can see this video`
       },
       {
         id: VideoPrivacy.INTERNAL,
-        label: this.i18n('Only users of this instance can see this video')
+        description: $localize`Only users of this instance can see this video`
       }
     ]
 
-    return base.filter(o => !!privacies.find(p => p.id === o.id))
+    return base
+      .filter(o => !!privacies.find(p => p.id === o.id)) // filter down to privacies that where in the input
+      .map(o => ({ ...privacies[o.id - 1], ...o })) // merge the input privacies that contain a label, and extend them with a description
   }
 
   nsfwPolicyToParam (nsfwPolicy: NSFWPolicyType) {

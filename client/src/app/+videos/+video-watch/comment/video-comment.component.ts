@@ -1,10 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core'
+
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core'
 import { MarkdownService, Notifier, UserService } from '@app/core'
 import { AuthService } from '@app/core/auth'
-import { Account, Actor, Video } from '@app/shared/shared-main'
+import { Account, Actor, DropdownAction, Video } from '@app/shared/shared-main'
+import { CommentReportComponent } from '@app/shared/shared-moderation/report-modals/comment-report.component'
+import { VideoComment, VideoCommentThreadTree } from '@app/shared/shared-video-comment'
 import { User, UserRight } from '@shared/models'
-import { VideoCommentThreadTree } from './video-comment-thread-tree.model'
-import { VideoComment } from './video-comment.model'
 
 @Component({
   selector: 'my-video-comment',
@@ -12,6 +13,8 @@ import { VideoComment } from './video-comment.model'
   styleUrls: ['./video-comment.component.scss']
 })
 export class VideoCommentComponent implements OnInit, OnChanges {
+  @ViewChild('commentReportModal') commentReportModal: CommentReportComponent
+
   @Input() video: Video
   @Input() comment: VideoComment
   @Input() parentComments: VideoComment[] = []
@@ -19,12 +22,16 @@ export class VideoCommentComponent implements OnInit, OnChanges {
   @Input() inReplyToCommentId: number
   @Input() highlightedComment = false
   @Input() firstInThread = false
+  @Input() redraftValue?: string
 
-  @Output() wantedToDelete = new EventEmitter<VideoComment>()
   @Output() wantedToReply = new EventEmitter<VideoComment>()
+  @Output() wantedToDelete = new EventEmitter<VideoComment>()
+  @Output() wantedToRedraft = new EventEmitter<VideoComment>()
   @Output() threadCreated = new EventEmitter<VideoCommentThreadTree>()
   @Output() resetReply = new EventEmitter()
   @Output() timestampClicked = new EventEmitter<number>()
+
+  prependModerationActions: DropdownAction<any>[]
 
   sanitizedCommentHTML = ''
   newParentComments: VideoComment[] = []
@@ -65,7 +72,10 @@ export class VideoCommentComponent implements OnInit, OnChanges {
       comment: createdComment,
       children: []
     })
+
     this.resetReply.emit()
+
+    this.redraftValue = undefined
   }
 
   onWantToReply (comment?: VideoComment) {
@@ -74,6 +84,10 @@ export class VideoCommentComponent implements OnInit, OnChanges {
 
   onWantToDelete (comment?: VideoComment) {
     this.wantedToDelete.emit(comment || this.comment)
+  }
+
+  onWantToRedraft (comment?: VideoComment) {
+    this.wantedToRedraft.emit(comment || this.comment)
   }
 
   isUserLoggedIn () {
@@ -97,8 +111,30 @@ export class VideoCommentComponent implements OnInit, OnChanges {
       )
   }
 
+  isRedraftableByUser () {
+    return (
+      this.comment.account &&
+      this.isUserLoggedIn() &&
+      this.user.account.id === this.comment.account.id &&
+      this.comment.totalReplies === 0
+    )
+  }
+
+  isReportableByUser () {
+    return (
+      this.comment.account &&
+      this.isUserLoggedIn() &&
+      this.comment.isDeleted === false &&
+      this.user.account.id !== this.comment.account.id
+    )
+  }
+
   switchToDefaultAvatar ($event: Event) {
     ($event.target as HTMLImageElement).src = Actor.GET_DEFAULT_AVATAR_URL()
+  }
+
+  isNotDeletedOrDeletedWithReplies () {
+    return !this.comment.isDeleted || this.comment.isDeleted && this.comment.totalReplies !== 0
   }
 
   private getUserIfNeeded (account: Account) {
@@ -117,7 +153,7 @@ export class VideoCommentComponent implements OnInit, OnChanges {
   }
 
   private async init () {
-    const html = await this.markdownService.textMarkdownToHTML(this.comment.text, true)
+    const html = await this.markdownService.textMarkdownToHTML(this.comment.text, true, true)
     this.sanitizedCommentHTML = await this.markdownService.processVideoTimestamps(html)
     this.newParentComments = this.parentComments.concat([ this.comment ])
 
@@ -127,5 +163,39 @@ export class VideoCommentComponent implements OnInit, OnChanges {
     } else {
       this.comment.account = null
     }
+
+    this.prependModerationActions = []
+
+    if (this.isReportableByUser()) {
+      this.prependModerationActions.push({
+        label: $localize`Report this comment`,
+        iconName: 'flag',
+        handler: () => this.showReportModal()
+      })
+    }
+
+    if (this.isRemovableByUser()) {
+      this.prependModerationActions.push({
+        label: $localize`Remove`,
+        iconName: 'delete',
+        handler: () => this.onWantToDelete()
+      })
+    }
+
+    if (this.isRedraftableByUser()) {
+      this.prependModerationActions.push({
+        label: $localize`Remove & re-draft`,
+        iconName: 'edit',
+        handler: () => this.onWantToRedraft()
+      })
+    }
+
+    if (this.prependModerationActions.length === 0) {
+      this.prependModerationActions = undefined
+    }
+  }
+
+  private showReportModal () {
+    this.commentReportModal.show()
   }
 }

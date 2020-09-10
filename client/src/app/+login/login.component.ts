@@ -3,9 +3,9 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angula
 import { ActivatedRoute } from '@angular/router'
 import { AuthService, Notifier, RedirectService, UserService } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
-import { FormReactive, FormValidatorService, LoginValidatorsService } from '@app/shared/shared-forms'
+import { LOGIN_PASSWORD_VALIDATOR, LOGIN_USERNAME_VALIDATOR } from '@app/shared/form-validators/login-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { RegisteredExternalAuthConfig, ServerConfig } from '@shared/models'
 import { firebaseAuth, firebaseClass, getFirebaseToken } from '../core/firebase'
 
@@ -33,14 +33,12 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
     protected formValidatorService: FormValidatorService,
     private route: ActivatedRoute,
     private modalService: NgbModal,
-    private loginValidatorsService: LoginValidatorsService,
     private authService: AuthService,
     private userService: UserService,
     private redirectService: RedirectService,
     private notifier: Notifier,
-    private hooks: HooksService,
-    private i18n: I18n
-  ) {
+    private hooks: HooksService
+    ) {
     super()
   }
 
@@ -68,8 +66,8 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
     }
 
     this.buildForm({
-      username: this.loginValidatorsService.LOGIN_USERNAME,
-      password: this.loginValidatorsService.LOGIN_PASSWORD
+      username: LOGIN_USERNAME_VALIDATOR,
+      password: LOGIN_PASSWORD_VALIDATOR
     })
   }
 
@@ -117,8 +115,8 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
           () => this.redirectService.redirectToPreviousRoute(),
 
           err => {
-            if (err.message.indexOf('credentials are invalid') !== -1) this.error = this.i18n('Incorrect username or password.')
-            else if (err.message.indexOf('blocked') !== -1) this.error = this.i18n('You account is blocked.')
+            if (err.message.indexOf('credentials are invalid') !== -1) this.error = $localize`Incorrect username or password.`
+            else if (err.message.indexOf('blocked') !== -1) this.error = $localize`You account is blocked.`
             else this.error = err.message
           }
         )
@@ -150,10 +148,9 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
     this.userService.askResetPassword(this.forgotPasswordEmail)
       .subscribe(
         () => {
-          const message = this.i18n(
-            'An email with the reset password instructions will be sent to {{email}}. The link will expire within 1 hour.',
-            { email: this.forgotPasswordEmail }
-          )
+          const message = $localize`An email with the reset password instructions will be sent to ${this.forgotPasswordEmail}.
+The link will expire within 1 hour.`
+
           this.notifier.success(message)
           this.hideForgotPasswordModal()
         },
@@ -185,8 +182,8 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
   }
 
   private handleError (err: any) {
-    if (err.message.indexOf('credentials are invalid') !== -1) this.error = this.i18n('Incorrect username or password.')
-    else if (err.message.indexOf('blocked') !== -1) this.error = this.i18n('Your account is blocked.')
+    if (err.message.indexOf('credentials are invalid') !== -1) this.error = $localize`Incorrect username or password.`
+    else if (err.message.indexOf('blocked') !== -1) this.error = $localize`Your account is blocked.`
     else this.error = err.message
   }
 }

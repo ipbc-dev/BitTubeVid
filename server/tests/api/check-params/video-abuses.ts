@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import 'mocha'
-
+import { AbuseState, VideoAbuseCreate } from '@shared/models'
 import {
   cleanupTests,
   createUser,
@@ -20,7 +20,8 @@ import {
   checkBadSortPagination,
   checkBadStartPagination
 } from '../../../../shared/extra-utils/requests/check-api-params'
-import { VideoAbuseState, VideoAbuseCreate } from '../../../../shared/models/videos'
+
+// FIXME: deprecated in 2.3. Remove this controller
 
 describe('Test video abuses API validators', function () {
   let server: ServerInfo
@@ -136,7 +137,7 @@ describe('Test video abuses API validators', function () {
       const fields = { reason: 'my super reason' }
 
       const res = await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 200 })
-      videoAbuseId = res.body.videoAbuse.id
+      videoAbuseId = res.body.abuse.id
     })
 
     it('Should fail with a wrong predefined reason', async function () {
@@ -147,12 +148,6 @@ describe('Test video abuses API validators', function () {
 
     it('Should fail with negative timestamps', async function () {
       const fields = { reason: 'my super reason', startAt: -1 }
-
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields })
-    })
-
-    it('Should fail mith misordered startAt/endAt', async function () {
-      const fields = { reason: 'my super reason', startAt: 5, endAt: 1 }
 
       await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields })
     })
@@ -190,7 +185,7 @@ describe('Test video abuses API validators', function () {
     })
 
     it('Should succeed with the correct params', async function () {
-      const body = { state: VideoAbuseState.ACCEPTED }
+      const body = { state: AbuseState.ACCEPTED }
       await updateVideoAbuse(server.url, server.accessToken, server.video.uuid, videoAbuseId, body)
     })
   })

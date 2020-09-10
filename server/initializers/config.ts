@@ -23,6 +23,7 @@ const CONFIG = {
     DBNAME: config.has('database.name') ? config.get<string>('database.name') : 'peertube' + config.get<string>('database.suffix'),
     HOSTNAME: config.get<string>('database.hostname'),
     PORT: config.get<number>('database.port'),
+    SSL: config.get<boolean>('database.ssl'),
     USERNAME: config.get<string>('database.username'),
     PASSWORD: config.get<string>('database.password'),
     POOL: {
@@ -127,7 +128,7 @@ const CONFIG = {
   CSP: {
     ENABLED: config.get<boolean>('csp.enabled'),
     REPORT_ONLY: config.get<boolean>('csp.report_only'),
-    REPORT_URI: config.get<boolean>('csp.report_uri')
+    REPORT_URI: config.get<string>('csp.report_uri')
   },
   TRACKER: {
     ENABLED: config.get<boolean>('tracker.enabled'),

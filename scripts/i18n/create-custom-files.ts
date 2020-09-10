@@ -1,6 +1,7 @@
-import { registerTSPaths } from '../../server/helpers/register-ts-paths'
 import { writeJSON } from 'fs-extra'
+import { values } from 'lodash'
 import { join } from 'path'
+import { registerTSPaths } from '../../server/helpers/register-ts-paths'
 import {
   buildLanguages,
   VIDEO_CATEGORIES,
@@ -11,7 +12,7 @@ import {
   VIDEO_PRIVACIES,
   VIDEO_STATES
 } from '../../server/initializers/constants'
-import { values } from 'lodash'
+import { I18N_LOCALES } from '../../shared/core-utils/i18n'
 
 registerTSPaths()
 
@@ -25,7 +26,7 @@ const playerKeys = {
   'peer': 'peer',
   'Go to the video page': 'Go to the video page',
   'Settings': 'Settings',
-  'Uses P2P, others may know you are watching this video.': 'Uses P2P, others may know you are watching this video.',
+  'Watching this video may reveal your IP address to others.': 'Watching this video may reveal your IP address to others.',
   'Copy the video URL': 'Copy the video URL',
   'Copy the video URL at the current time': 'Copy the video URL at the current time',
   'Copy embed code': 'Copy embed code',
@@ -48,27 +49,50 @@ values(VIDEO_CATEGORIES)
     'This video does not exist.',
     'We cannot fetch the video. Please try again later.',
     'Sorry',
-    'This video is not available because the remote instance is not responding.'
+    'This video is not available because the remote instance is not responding.',
+    'This playlist does not exist',
+    'We cannot fetch the playlist. Please try again later.',
+    'Playlist: {1}',
+    'By {1}',
+    'Unavailable video'
   ])
-  .forEach(v => serverKeys[v] = v)
+  .forEach(v => { serverKeys[v] = v })
 
 // More keys
 Object.assign(serverKeys, {
-  'Misc': 'Misc',
-  'Unknown': 'Unknown'
+  Misc: 'Misc',
+  Unknown: 'Unknown'
 })
 
 // ISO 639 keys
 const languageKeys: any = {}
 const languages = buildLanguages()
-Object.keys(languages).forEach(k => languageKeys[languages[k]] = languages[k])
+Object.keys(languages).forEach(k => { languageKeys[languages[k]] = languages[k] })
 
 Object.assign(serverKeys, languageKeys)
 
-Promise.all([
-  writeJSON(join(__dirname, '../../../client/src/locale/player.en-US.json'), playerKeys),
-  writeJSON(join(__dirname, '../../../client/src/locale/server.en-US.json'), serverKeys)
-]).catch(err => {
+writeAll().catch(err => {
   console.error(err)
   process.exit(-1)
 })
+
+async function writeAll () {
+  const localePath = join(__dirname, '../../../client/src/locale')
+
+  await writeJSON(join(localePath, 'player.en-US.json'), playerKeys, { spaces: 4 })
+  await writeJSON(join(localePath, 'server.en-US.json'), serverKeys, { spaces: 4 })
+
+  for (const key of Object.keys(I18N_LOCALES)) {
+    const playerJsonPath = join(localePath, `player.${key}.json`)
+    const translatedPlayer = require(playerJsonPath)
+
+    const newTranslatedPlayer = Object.assign({}, playerKeys, translatedPlayer)
+    await writeJSON(playerJsonPath, newTranslatedPlayer, { spaces: 4 })
+
+    const serverJsonPath = join(localePath, `server.${key}.json`)
+    const translatedServer = require(serverJsonPath)
+
+    const newTranslatedServer = Object.assign({}, serverKeys, translatedServer)
+    await writeJSON(serverJsonPath, newTranslatedServer, { spaces: 4 })
+  }
+}

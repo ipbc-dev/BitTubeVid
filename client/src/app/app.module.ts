@@ -5,7 +5,7 @@ import { BrowserModule } from '@angular/platform-browser'
 import { ServerService } from '@app/core'
 import localeOc from '@app/helpers/locales/oc'
 import { MetaLoader, MetaModule, MetaStaticLoader, PageTitlePositioning } from '@ngx-meta/core'
-import { buildFileLocale, getCompleteLocale, isDefaultLocale } from '@shared/models'
+import { buildFileLocale, getCompleteLocale, isDefaultLocale } from '@shared/core-utils/i18n'
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { CoreModule } from './core'
@@ -81,21 +81,7 @@ registerLocaleData(localeOc, 'oc')
     {
       provide: APP_BASE_HREF,
       useValue: '/'
-    },
-
-    {
-      provide: TRANSLATIONS,
-      useFactory: (locale: string) => {
-        // Default locale, nothing to translate
-        const completeLocale = getCompleteLocale(locale)
-        if (isDefaultLocale(completeLocale)) return ''
-
-        const fileLocale = buildFileLocale(locale)
-        return require(`raw-loader!../locale/angular.${fileLocale}.xlf`).default
-      },
-      deps: [ LOCALE_ID ]
-    },
-    { provide: TRANSLATIONS_FORMAT, useValue: 'xlf' }
+    }
   ]
 })
 export class AppModule {}

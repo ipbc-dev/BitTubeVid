@@ -1,9 +1,12 @@
 import { Subject, Subscription } from 'rxjs'
 import { CdkDragDrop } from '@angular/cdk/drag-drop'
-import { Component, OnDestroy, OnInit } from '@angular/core'
-import { ActivatedRoute } from '@angular/router'
-import { ComponentPagination, Notifier, ScreenService } from '@app/core'
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core'
+import { ActivatedRoute, Router } from '@angular/router'
+import { ComponentPagination, ConfirmService, Notifier, ScreenService } from '@app/core'
+import { DropdownAction } from '@app/shared/shared-main'
+import { VideoShareComponent } from '@app/shared/shared-share-modal'
 import { VideoPlaylist, VideoPlaylistElement, VideoPlaylistService } from '@app/shared/shared-video-playlist'
+import { VideoPlaylistType } from '@shared/models'
 
 @Component({
   selector: 'my-account-video-playlist-elements',
@@ -11,8 +14,12 @@ import { VideoPlaylist, VideoPlaylistElement, VideoPlaylistService } from '@app/
   styleUrls: [ './my-account-video-playlist-elements.component.scss' ]
 })
 export class MyAccountVideoPlaylistElementsComponent implements OnInit, OnDestroy {
+  @ViewChild('videoShareModal') videoShareModal: VideoShareComponent
+
   playlistElements: VideoPlaylistElement[] = []
   playlist: VideoPlaylist
+
+  playlistActions: DropdownAction<VideoPlaylist>[][] = []
 
   pagination: ComponentPagination = {
     currentPage: 1,
@@ -27,12 +34,29 @@ export class MyAccountVideoPlaylistElementsComponent implements OnInit, OnDestro
 
   constructor (
     private notifier: Notifier,
+    private router: Router,
+    private confirmService: ConfirmService,
     private route: ActivatedRoute,
     private screenService: ScreenService,
     private videoPlaylistService: VideoPlaylistService
   ) {}
 
   ngOnInit () {
+    this.playlistActions = [
+      [
+        {
+          label: $localize`Update playlist`,
+          iconName: 'edit',
+          linkBuilder: playlist => [ '/my-account', 'video-playlists', 'update', playlist.uuid ]
+        },
+        {
+          label: $localize`Delete playlist`,
+          iconName: 'delete',
+          handler: playlist => this.deleteVideoPlaylist(playlist)
+        }
+      ]
+    ]
+
     this.paramsSub = this.route.params.subscribe(routeParams => {
       this.videoPlaylistId = routeParams[ 'videoPlaylistId' ]
       this.loadElements()
@@ -88,6 +112,32 @@ export class MyAccountVideoPlaylistElementsComponent implements OnInit, OnDestro
 
   trackByFn (index: number, elem: VideoPlaylistElement) {
     return elem.id
+  }
+
+  isRegularPlaylist (playlist: VideoPlaylist) {
+    return playlist?.type.id === VideoPlaylistType.REGULAR
+  }
+
+  showShareModal () {
+    this.videoShareModal.show()
+  }
+
+  async deleteVideoPlaylist (videoPlaylist: VideoPlaylist) {
+    const res = await this.confirmService.confirm(
+      $localize`Do you really want to delete ${videoPlaylist.displayName}?`,
+      $localize`Delete`
+    )
+    if (res === false) return
+
+    this.videoPlaylistService.removeVideoPlaylist(videoPlaylist)
+      .subscribe(
+        () => {
+          this.router.navigate([ '/my-account', 'video-playlists' ])
+          this.notifier.success($localize`Playlist ${videoPlaylist.displayName} deleted.`)
+        },
+
+        error => this.notifier.error(error.message)
+      )
   }
 
   /**

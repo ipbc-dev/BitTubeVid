@@ -1,7 +1,7 @@
 import { Subject } from 'rxjs'
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core'
 import { ComponentPagination, hasMoreItems, Notifier } from '@app/core'
-import { UserNotificationType } from '@shared/models'
+import { UserNotificationType, AbuseState } from '@shared/models'
 import { UserNotification } from './user-notification.model'
 import { UserNotificationService } from './user-notification.service'
 
@@ -19,6 +19,7 @@ export class UserNotificationsComponent implements OnInit {
   @Output() notificationsLoaded = new EventEmitter()
 
   notifications: UserNotification[] = []
+  sortField = 'createdAt'
 
   // So we can access it in the template
   UserNotificationType = UserNotificationType
@@ -39,18 +40,26 @@ export class UserNotificationsComponent implements OnInit {
       totalItems: null
     }
 
-    this.loadMoreNotifications()
+    this.loadNotifications()
 
     if (this.markAllAsReadSubject) {
       this.markAllAsReadSubject.subscribe(() => this.markAllAsRead())
     }
   }
 
-  loadMoreNotifications () {
-    this.userNotificationService.listMyNotifications(this.componentPagination, undefined, this.ignoreLoadingBar)
+  loadNotifications (reset?: boolean) {
+    this.userNotificationService.listMyNotifications({
+      pagination: this.componentPagination,
+      ignoreLoadingBar: this.ignoreLoadingBar,
+      sort: {
+        field: this.sortField,
+        // if we order by creation date, we want DESC. all other fields are ASC (like unread).
+        order: this.sortField === 'createdAt' ? -1 : 1
+      }
+    })
         .subscribe(
           result => {
-            this.notifications = this.notifications.concat(result.data)
+            this.notifications = reset ? result.data : this.notifications.concat(result.data)
             this.componentPagination.totalItems = result.total
 
             this.notificationsLoaded.emit()
@@ -68,7 +77,7 @@ export class UserNotificationsComponent implements OnInit {
     this.componentPagination.currentPage++
 
     if (hasMoreItems(this.componentPagination)) {
-      this.loadMoreNotifications()
+      this.loadNotifications()
     }
   }
 
@@ -96,5 +105,19 @@ export class UserNotificationsComponent implements OnInit {
 
           err => this.notifier.error(err.message)
         )
+  }
+
+  changeSortColumn (column: string) {
+    this.componentPagination = {
+      currentPage: 1,
+      itemsPerPage: this.itemsPerPage,
+      totalItems: null
+    }
+    this.sortField = column
+    this.loadNotifications(true)
+  }
+
+  isAccepted (notification: UserNotification) {
+    return notification.abuse.state === AbuseState.ACCEPTED
   }
 }

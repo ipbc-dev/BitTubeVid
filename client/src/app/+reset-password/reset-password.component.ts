@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { Notifier, UserService } from '@app/core'
-import { FormReactive, FormValidatorService, ResetPasswordValidatorsService, UserValidatorsService } from '@app/shared/shared-forms'
-import { I18n } from '@ngx-translate/i18n-polyfill'
+import { RESET_PASSWORD_CONFIRM_VALIDATOR } from '@app/shared/form-validators/reset-password-validators'
+import { USER_PASSWORD_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 
 @Component({
   selector: 'my-login',
@@ -16,28 +17,25 @@ export class ResetPasswordComponent extends FormReactive implements OnInit {
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private resetPasswordValidatorsService: ResetPasswordValidatorsService,
-    private userValidatorsService: UserValidatorsService,
     private userService: UserService,
     private notifier: Notifier,
     private router: Router,
-    private route: ActivatedRoute,
-    private i18n: I18n
-  ) {
+    private route: ActivatedRoute
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      password: this.userValidatorsService.USER_PASSWORD,
-      'password-confirm': this.resetPasswordValidatorsService.RESET_PASSWORD_CONFIRM
+      password: USER_PASSWORD_VALIDATOR,
+      'password-confirm': RESET_PASSWORD_CONFIRM_VALIDATOR
     })
 
     this.userId = this.route.snapshot.queryParams['userId']
     this.verificationString = this.route.snapshot.queryParams['verificationString']
 
     if (!this.userId || !this.verificationString) {
-      this.notifier.error(this.i18n('Unable to find user id or verification string.'))
+      this.notifier.error($localize`Unable to find user id or verification string.`)
       this.router.navigate([ '/' ])
     }
   }
@@ -46,7 +44,7 @@ export class ResetPasswordComponent extends FormReactive implements OnInit {
     this.userService.resetPassword(this.userId, this.verificationString, this.form.value.password)
       .subscribe(
         () => {
-          this.notifier.success(this.i18n('Your password has been successfully reset!'))
+          this.notifier.success($localize`Your password has been successfully reset!`)
           this.router.navigate([ '/login' ])
         },
 

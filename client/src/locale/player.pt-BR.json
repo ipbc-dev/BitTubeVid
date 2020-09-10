@@ -7,14 +7,14 @@
     "peer": "par",
     "Go to the video page": "Vá para a página do vídeo",
     "Settings": "Configurações",
-    "Uses P2P, others may know you are watching this video.": "Usa P2P, outros podem saber que você está assistindo a esse vídeo.",
+    "Watching this video may reveal your IP address to others.": "Assistir a este vídeo pode revelar seu endereço IP para outras pessoas.",
     "Copy the video URL": "Copiar a URL do vídeo",
     "Copy the video URL at the current time": "Copiar a URL do vídeo no tempo atual",
     "Copy embed code": "Copiar código embutido",
     "Copy magnet URI": "Copiar link magnet",
     "Total downloaded: ": "Total baixado: ",
     "Total uploaded: ": "Total subido : ",
-    "Audio Player": "Reproduzir áudio",
+    "Audio Player": "Reprodutor de áudio",
     "Video Player": "Reprodutor de vídeo",
     "Play": "Reproduzir",
     "Pause": "Pausar",
@@ -96,5 +96,6 @@
     "Caption Settings Dialog": "Diálogo de configurações de legenda oculta",
     "Beginning of dialog window. Escape will cancel and close the window.": "Começo da janela do diálogo. A tecla Escape vai cancelar e fechar a janela.",
     "End of dialog window.": "Fim da janela do diálogo.",
-    "{1} is loading.": "{1} está carregando."
+    "{1} is loading.": "{1} está carregando.",
+    "Uses P2P, others may know you are watching this video.": "Usa P2P, outros podem saber que você está assistindo a esse vídeo."
 }

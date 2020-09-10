@@ -1,43 +1,50 @@
-import { constants, promises as fs } from 'fs'
 import * as express from 'express'
+import { constants, promises as fs } from 'fs'
 import { join } from 'path'
-import { root } from '../helpers/core-utils'
-import { ACCEPT_HEADERS, STATIC_MAX_AGE } from '../initializers/constants'
-import { asyncMiddleware, embedCSP } from '../middlewares'
-import { buildFileLocale, getCompleteLocale, is18nLocale, LOCALE_FILES } from '../../shared/models/i18n/i18n'
-import { ClientHtml } from '../lib/client-html'
-import { logger } from '../helpers/logger'
 import { CONFIG } from '@server/initializers/config'
+import { buildFileLocale, getCompleteLocale, is18nLocale, LOCALE_FILES } from '@shared/core-utils/i18n'
+import { root } from '../helpers/core-utils'
+import { logger } from '../helpers/logger'
+import { ACCEPT_HEADERS, STATIC_MAX_AGE } from '../initializers/constants'
+import { ClientHtml } from '../lib/client-html'
+import { asyncMiddleware, embedCSP } from '../middlewares'
 
 const clientsRouter = express.Router()
 
 const distPath = join(root(), 'client', 'dist')
-const embedPath = join(distPath, 'standalone', 'videos', 'embed.html')
 const testEmbedPath = join(distPath, 'standalone', 'videos', 'test-embed.html')
 
 // Special route that add OpenGraph and oEmbed tags
 // Do not use a template engine for a so little thing
+clientsRouter.use('/videos/watch/playlist/:id', asyncMiddleware(generateWatchPlaylistHtmlPage))
 clientsRouter.use('/videos/watch/:id', asyncMiddleware(generateWatchHtmlPage))
 clientsRouter.use('/accounts/:nameWithHost', asyncMiddleware(generateAccountHtmlPage))
 clientsRouter.use('/video-channels/:nameWithHost', asyncMiddleware(generateVideoChannelHtmlPage))
 
-const embedCSPMiddleware = CONFIG.CSP.ENABLED
-  ? embedCSP
-  : (req: express.Request, res: express.Response, next: express.NextFunction) => next()
+const embedMiddlewares = [
+  CONFIG.CSP.ENABLED
+    ? embedCSP
+    : (req: express.Request, res: express.Response, next: express.NextFunction) => next(),
 
-clientsRouter.use(
-  '/videos/embed',
-  embedCSPMiddleware,
-  (req: express.Request, res: express.Response) => {
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
     res.removeHeader('X-Frame-Options')
+
     // Don't cache HTML file since it's an index to the immutable JS/CSS files
-    res.sendFile(embedPath, { maxAge: 0 })
-  }
-)
-clientsRouter.use(
-  '/videos/test-embed',
-  (req: express.Request, res: express.Response) => res.sendFile(testEmbedPath)
-)
+    res.setHeader('Cache-Control', 'public, max-age=0')
+
+    next()
+  },
+
+  asyncMiddleware(generateEmbedHtmlPage)
+]
+
+clientsRouter.use('/videos/embed', ...embedMiddlewares)
+clientsRouter.use('/video-playlists/embed', ...embedMiddlewares)
+
+const testEmbedController = (req: express.Request, res: express.Response) => res.sendFile(testEmbedPath)
+
+clientsRouter.use('/videos/test-embed', testEmbedController)
+clientsRouter.use('/video-playlists/test-embed', testEmbedController)
 
 // Static HTML/CSS/JS client files
 const staticClientFiles = [
@@ -122,6 +129,12 @@ async function serveIndexHTML (req: express.Request, res: express.Response) {
   return res.status(404).end()
 }
 
+async function generateEmbedHtmlPage (req: express.Request, res: express.Response) {
+  const html = await ClientHtml.getEmbedHTML()
+
+  return sendHTML(html, res)
+}
+
 async function generateHTMLPage (req: express.Request, res: express.Response, paramLang?: string) {
   const html = await ClientHtml.getDefaultHTMLPage(req, res, paramLang)
 
@@ -130,6 +143,12 @@ async function generateHTMLPage (req: express.Request, res: express.Response, pa
 
 async function generateWatchHtmlPage (req: express.Request, res: express.Response) {
   const html = await ClientHtml.getWatchHTMLPage(req.params.id + '', req, res)
+
+  return sendHTML(html, res)
+}
+
+async function generateWatchPlaylistHtmlPage (req: express.Request, res: express.Response) {
+  const html = await ClientHtml.getWatchPlaylistHTMLPage(req.params.id + '', req, res)
 
   return sendHTML(html, res)
 }

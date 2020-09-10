@@ -3,43 +3,49 @@
  * Chocobozzz
  * Rigel Kent
  * Filip Bengtsson
+ * kimsible
+ * Kim
  * Felix Ableitner
  * Gérald Niel
- * Kim
+ * Jeff Huang
  * Phongpanot
  * Julien Maulny
  * Jorropo
  * Josh Morel
+ * Александр
  * BO41
+ * Berto Te
  * Francesc
+ * Tirifto
+ * mando laress
  * Frank Sträter
  * John Livingston
- * Tirifto
  * ButterflyOfFire
- * Jeff Huang
  * Xabi
  * buoyantair
  * josé m
- * Vodoyo Kamal
- * kimsible
- * Attila F
  * Balázs Úr
- * Caroline Chuong
  * Quentin PAGÈS
+ * Vodoyo Kamal
+ * Attila F
+ * Caroline Chuong
+ * Laurent Ettouati
  * Benjamin Bouvier
- * Berto Te
  * Jan Keromnes
+ * Kemal Oktay Aktoğan
  * Lucas Declercq
  * Slimane Selyan AMIRI
  * knuxify
  * matograine
- * Александр
  * Daniel Santos
  * David Libeau
  * Florent F
  * Luc Didry
  * Nassim Bounouas
+ * NorbiPeti
+ * Rafael Fontenelle
  * Viorel-Cătălin Răpițeanu
+ * Ahmed ABERWAG
  * Anne-Gaelle Moulun
  * BRAINS YUM
  * Belkacem Mohammed
@@ -55,32 +61,31 @@
  * Thomas Kuntz
  * William Lahti
  * Wirebrass
+ * Yury Bulka
  * Angristan
  * Chris Sakura 佐倉くりす on Youtube
  * DontUseGithub
  * GunChleoc
  * Marcin Mikołajczak
- * NorbiPeti
  * Okhin
  * Pierre-Alain TORET
  * Serge Victor
  * Thomas Citharel
  * clementbrizard
  * kaiyou
- * Ahmed ABERWAG
  * Alberto Teira
  * Andréas Livet
  * Andrés Maldonado
  * Aurélien Bertron
  * Ch
  * Hans Meiser
+ * Iñigo A
  * Jefferson Hernandez
- * Kemal Oktay Aktoğan
+ * Joan Montané
  * Kiro
  * LecygneNoir
  * Leopere
  * Manuela Silva
- * Rafael Fontenelle
  * Ugaitz
  * Yohan Boniface
  * am97
@@ -88,8 +93,10 @@
  * dada
  * frankdelange
  * jonathanraes
+ * test2a
  * Al-Hassan Abdel-Raouf
  * Andrew Morgan
+ * Antimidia
  * Arne Uplegger
  * Aurélien Béranger
  * Average Dude
@@ -103,7 +110,6 @@
  * Florian
  * Frank de Lange
  * Gaëtan Rizio
- * Joan Montané
  * Jocelyn Jaubert
  * Julien Lemaire
  * Lucas Teixeira
@@ -117,7 +123,9 @@
  * Quentin
  * Ronan
  * SerCom_KC
+ * Tzafrir Cohen
  * Valvin
+ * Waazdakka
  * ahmadsharifian
  * bopol
  * framail
@@ -135,6 +143,7 @@
  * Adnane Belmadiaf
  * Alexander F. Rødseth
  * Ali Alim
+ * Aman Sharma
  * Antoine Millet
  * Anton Latukha
  * Armando Lüscher
@@ -155,6 +164,7 @@
  * Clément Brizard
  * David Dobryakov
  * DeeJayBro
+ * Diazepan Medina
  * Edouard SCHWEISGUTH
  * Edwin Alberto Amado Baron
  * Emmanuel Pret
@@ -165,6 +175,7 @@
  * Florian CUNY
  * Girish Ramakrishnan
  * Glandos
+ * Guillaume Pérution-Kihli
  * Gérald CHATAGNON
  * Haelwenn (lanodan) Monnier
  * HesioZ
@@ -177,6 +188,7 @@
  * Jagannath Bhat
  * Jarosław Maciejewski
  * Jessica Fairchild
+ * Jinn Koriech
  * Jorge Silva
  * Jos
  * Julien Le Bras
@@ -227,14 +239,16 @@
  * Simon Gilliot
  * Simounet
  * Stefan Schüller
+ * Sumit Khanna
+ * Timothée Grégoire
  * Tomás Sebastián Romero
  * TrashMacNugget
  * Vagelis F
  * Vincent Stakenburg
+ * WhiredPlanck
  * Yann Sionneau
  * Yorwba
  * Yun
- * Yury Bulka
  * Zig-03
  * [ Bie ] Watcharapong Suriyawan
  * anmol26s
@@ -390,7 +404,8 @@
 # Icons
 
  * [Feather Icons](feathericons.com/) (MIT)
- * `playlist add`, `history`, `subscriptions`, `miscellaneous_services` by Material UI (Apache 2.0)
+ * `playlist add`, `history`, `subscriptions`, `miscellaneous-services.svg` by Material UI (Apache 2.0)
  * `support` by Chocobozzz (CC-BY)
  * `language` by Aaron Jin (CC-BY)
  * `video-language` by Rigel Kent (CC-BY)
+ * `peertube-x` by Solen DP (CC-BY)

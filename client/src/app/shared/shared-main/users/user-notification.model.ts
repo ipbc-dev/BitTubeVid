@@ -1,5 +1,14 @@
+import {
+  AbuseState,
+  ActorInfo,
+  FollowState,
+  UserNotification as UserNotificationServer,
+  UserNotificationType,
+  VideoInfo,
+  UserRight
+} from '@shared/models'
 import { Actor } from '../account/actor.model'
-import { ActorInfo, Avatar, FollowState, UserNotification as UserNotificationServer, UserNotificationType, VideoInfo } from '@shared/models'
+import { AuthUser } from '@app/core'
 
 export class UserNotification implements UserNotificationServer {
   id: number
@@ -25,9 +34,23 @@ export class UserNotification implements UserNotificationServer {
     video: VideoInfo
   }
 
-  videoAbuse?: {
+  abuse?: {
     id: number
-    video: VideoInfo
+    state: AbuseState
+
+    video?: VideoInfo
+
+    comment?: {
+      threadId: number
+
+      video: {
+        id: number
+        uuid: string
+        name: string
+      }
+    }
+
+    account?: ActorInfo
   }
 
   videoBlacklist?: {
@@ -55,14 +78,15 @@ export class UserNotification implements UserNotificationServer {
   // Additional fields
   videoUrl?: string
   commentUrl?: any[]
-  videoAbuseUrl?: string
+  abuseUrl?: string
+  abuseQueryParams?: { [id: string]: string } = {}
   videoAutoBlacklistUrl?: string
   accountUrl?: string
   videoImportIdentifier?: string
   videoImportUrl?: string
   instanceFollowUrl?: string
 
-  constructor (hash: UserNotificationServer) {
+  constructor (hash: UserNotificationServer, user: AuthUser) {
     this.id = hash.id
     this.type = hash.type
     this.read = hash.read
@@ -78,7 +102,7 @@ export class UserNotification implements UserNotificationServer {
       this.comment = hash.comment
       if (this.comment) this.setAvatarUrl(this.comment.account)
 
-      this.videoAbuse = hash.videoAbuse
+      this.abuse = hash.abuse
 
       this.videoBlacklist = hash.videoBlacklist
 
@@ -104,12 +128,28 @@ export class UserNotification implements UserNotificationServer {
         case UserNotificationType.COMMENT_MENTION:
           if (!this.comment) break
           this.accountUrl = this.buildAccountUrl(this.comment.account)
-          this.commentUrl = [ this.buildVideoUrl(this.comment.video), { threadId: this.comment.threadId } ]
+          this.commentUrl = this.buildCommentUrl(this.comment)
           break
 
-        case UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS:
-          this.videoAbuseUrl = '/admin/moderation/video-abuses/list'
-          this.videoUrl = this.buildVideoUrl(this.videoAbuse.video)
+        case UserNotificationType.NEW_ABUSE_FOR_MODERATORS:
+          this.abuseUrl = '/admin/moderation/abuses/list'
+          this.abuseQueryParams.search = '#' + this.abuse.id
+
+          if (this.abuse.video) this.videoUrl = this.buildVideoUrl(this.abuse.video)
+          else if (this.abuse.comment) this.commentUrl = this.buildCommentUrl(this.abuse.comment)
+          else if (this.abuse.account) this.accountUrl = this.buildAccountUrl(this.abuse.account)
+          break
+
+        case UserNotificationType.ABUSE_STATE_CHANGE:
+          this.abuseUrl = '/my-account/abuses'
+          this.abuseQueryParams.search = '#' + this.abuse.id
+          break
+
+        case UserNotificationType.ABUSE_NEW_MESSAGE:
+          this.abuseUrl = user.hasRight(UserRight.MANAGE_ABUSES)
+            ? '/admin/moderation/abuses/list'
+            : '/my-account/abuses'
+          this.abuseQueryParams.search = '#' + this.abuse.id
           break
 
         case UserNotificationType.VIDEO_AUTO_BLACKLIST_FOR_MODERATORS:
@@ -178,7 +218,11 @@ export class UserNotification implements UserNotificationServer {
     return videoImport.targetUrl || videoImport.magnetUri || videoImport.torrentName
   }
 
-  private setAvatarUrl (actor: { avatarUrl?: string, avatar?: Avatar }) {
+  private buildCommentUrl (comment: { video: { uuid: string }, threadId: number }) {
+    return [ this.buildVideoUrl(comment.video), { threadId: comment.threadId } ]
+  }
+
+  private setAvatarUrl (actor: { avatarUrl?: string, avatar?: { url?: string, path: string } }) {
     actor.avatarUrl = Actor.GET_ACTOR_AVATAR_URL(actor)
   }
 }

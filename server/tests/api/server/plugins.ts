@@ -11,7 +11,6 @@ import {
   getPlugin,
   getPluginPackageJSON,
   getPluginRegisteredSettings,
-  getPluginsCSS,
   getPublicSettings,
   installPlugin,
   killallServers,
@@ -30,14 +29,14 @@ import {
   wait,
   waitUntilLog
 } from '../../../../shared/extra-utils'
-import { PluginType } from '../../../../shared/models/plugins/plugin.type'
 import { PeerTubePluginIndex } from '../../../../shared/models/plugins/peertube-plugin-index.model'
-import { ServerConfig } from '../../../../shared/models/server'
 import { PeerTubePlugin } from '../../../../shared/models/plugins/peertube-plugin.model'
-import { User } from '../../../../shared/models/users'
 import { PluginPackageJson } from '../../../../shared/models/plugins/plugin-package-json.model'
-import { RegisteredServerSettings } from '../../../../shared/models/plugins/register-server-setting.model'
+import { PluginType } from '../../../../shared/models/plugins/plugin.type'
 import { PublicServerSetting } from '../../../../shared/models/plugins/public-server.setting'
+import { RegisteredServerSettings } from '../../../../shared/models/plugins/register-server-setting.model'
+import { ServerConfig } from '../../../../shared/models/server'
+import { User } from '../../../../shared/models/users'
 
 const expect = chai.expect
 
@@ -118,12 +117,6 @@ describe('Test plugins', function () {
     }
   })
 
-  it('Should have an empty global css', async function () {
-    const res = await getPluginsCSS(server.url)
-
-    expect(res.text).to.be.empty
-  })
-
   it('Should install a plugin and a theme', async function () {
     this.timeout(30000)
 
@@ -138,12 +131,6 @@ describe('Test plugins', function () {
       accessToken: server.accessToken,
       npmName: 'peertube-theme-background-red'
     })
-  })
-
-  it('Should have the correct global css', async function () {
-    const res = await getPluginsCSS(server.url)
-
-    expect(res.text).to.contain('background-color: red')
   })
 
   it('Should have the plugin loaded in the configuration', async function () {
@@ -385,12 +372,6 @@ describe('Test plugins', function () {
 
     expect(res.body.total).to.equal(0)
     expect(res.body.data).to.have.lengthOf(0)
-  })
-
-  it('Should have an empty global css', async function () {
-    const res = await getPluginsCSS(server.url)
-
-    expect(res.text).to.be.empty
   })
 
   it('Should list uninstalled plugins', async function () {

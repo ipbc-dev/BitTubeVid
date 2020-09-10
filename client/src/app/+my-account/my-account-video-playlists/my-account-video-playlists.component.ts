@@ -1,9 +1,8 @@
 import { Subject } from 'rxjs'
-import { debounceTime, flatMap } from 'rxjs/operators'
+import { debounceTime, mergeMap } from 'rxjs/operators'
 import { Component, OnInit } from '@angular/core'
 import { AuthService, ComponentPagination, ConfirmService, Notifier, User } from '@app/core'
 import { VideoPlaylist, VideoPlaylistService } from '@app/shared/shared-video-playlist'
-import { I18n } from '@ngx-translate/i18n-polyfill'
 import { VideoPlaylistType } from '@shared/models'
 
 @Component({
@@ -30,9 +29,8 @@ export class MyAccountVideoPlaylistsComponent implements OnInit {
     private authService: AuthService,
     private notifier: Notifier,
     private confirmService: ConfirmService,
-    private videoPlaylistService: VideoPlaylistService,
-    private i18n: I18n
-  ) {}
+    private videoPlaylistService: VideoPlaylistService
+    ) {}
 
   ngOnInit () {
     this.user = this.authService.getUser()
@@ -49,11 +47,8 @@ export class MyAccountVideoPlaylistsComponent implements OnInit {
 
   async deleteVideoPlaylist (videoPlaylist: VideoPlaylist) {
     const res = await this.confirmService.confirm(
-      this.i18n(
-        'Do you really want to delete {{playlistDisplayName}}?',
-        { playlistDisplayName: videoPlaylist.displayName }
-      ),
-      this.i18n('Delete')
+      $localize`Do you really want to delete ${videoPlaylist.displayName}?`,
+      $localize`Delete`
     )
     if (res === false) return
 
@@ -63,9 +58,7 @@ export class MyAccountVideoPlaylistsComponent implements OnInit {
           this.videoPlaylists = this.videoPlaylists
                                     .filter(p => p.id !== videoPlaylist.id)
 
-          this.notifier.success(
-            this.i18n('Playlist {{playlistDisplayName}} deleted.', { playlistDisplayName: videoPlaylist.displayName })
-          )
+          this.notifier.success($localize`Playlist ${videoPlaylist.displayName}} deleted.`)
         },
 
         error => this.notifier.error(error.message)
@@ -84,13 +77,18 @@ export class MyAccountVideoPlaylistsComponent implements OnInit {
     this.loadVideoPlaylists()
   }
 
+  resetSearch () {
+    this.videoPlaylistsSearch = ''
+    this.onVideoPlaylistSearchChanged()
+  }
+
   onVideoPlaylistSearchChanged () {
     this.videoPlaylistSearchChanged.next()
   }
 
   private loadVideoPlaylists (reset = false) {
     this.authService.userInformationLoaded
-        .pipe(flatMap(() => {
+        .pipe(mergeMap(() => {
           return this.videoPlaylistService.listAccountPlaylists(this.user.account, this.pagination, '-updatedAt', this.videoPlaylistsSearch)
         }))
         .subscribe(res => {
