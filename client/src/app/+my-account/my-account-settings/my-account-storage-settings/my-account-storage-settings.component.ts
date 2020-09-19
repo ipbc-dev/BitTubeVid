@@ -21,7 +21,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   @Input() reactiveUpdate = false
   @Input() notifyOnUpdate = true
   @Input() userInformationLoaded: Subject<any>
-  @Input() userQuotaObject: Object
+  // @Input() userQuotaObject: Object
 
   languageItems: SelectItem[] = []
   defaultNSFWPolicy: NSFWPolicyType
