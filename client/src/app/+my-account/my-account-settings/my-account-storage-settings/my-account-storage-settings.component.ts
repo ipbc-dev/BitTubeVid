@@ -92,6 +92,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (plans['success'] && plans['plans'].length > 0) {
         this.havePremium = true
         this.storagePlans = plans['plans']
+        console.log('ICEICE storagePlans: ', this.storagePlans)
       } else {
         this.havePremium = false
       }
@@ -119,6 +120,22 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         })
       }
     })
+    this.subscribeToPremiumStorageEvent()
+  }
+
+  subscribeToPremiumStorageEvent () {
+    const elem = document.body
+    console.log('ICEICE button element is: ', elem)
+    if (elem) {
+      elem.addEventListener('PurchaseSuccess', (event) => {
+        console.log('ICEICE event received with event: ', event)
+        this.updateDetails(event)
+      })
+    } else {
+      setTimeout(() => {
+        this.subscribeToPremiumStorageEvent()
+      }, 200)
+    }
   }
 
   getPlans () {
@@ -148,7 +165,6 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     console.log('ICEICE chosenPlanId is: ', chosenPlanId)
     if (chosenPlanId > -1) {
       this.storagePlans.forEach((plan: any) => {
-        console.log('ICEICE chacking plan: ', plan)
         if (plan.id == chosenPlanId) {
           this.chosenPlan = plan
         }
@@ -184,58 +200,64 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     return aux.toLocaleDateString()
   }
 
-  updateDetails (onlyKeys?: string[]) {
-    // console.log('ICEICE printing userInformationLoaded')
-    // console.log(this.userInformationLoaded)
-    // console.log('ICEICE printing userQuotaObject')
-    // console.log(this.userQuotaObject)
-    // console.log('ICEICE printing config.instance')
-    // console.log(this.configCopy)
-    const chosenPlanId = parseInt(this.form.value['storagePlan'], 10)
+  updateDetails (paymentInfo: any) {
     let confirmedData = true
     let chosenPlanDuration: any
     let chosenPlanPrice: any
     let chosenPlanTubePayId: any
+    let chosenPlanId: any
 
-    // console.log('Chosen plan is: ', chosenPlanId)
+    console.log('ICEICE paymentInfo is: ', paymentInfo)
     this.storagePlans.forEach((plan: any) => {
-      if (plan.id === chosenPlanId) {
+      console.log('Comparing {', plan.tubePayId , '} with {', paymentInfo.detail.product.id, '}')
+      if (plan.tubePayId == paymentInfo.detail.product.id) {
+        console.log('ICEICE comparison accepted')
         chosenPlanDuration = plan.duration
         chosenPlanPrice = plan.priceTube
         chosenPlanTubePayId = plan.tubePayId
+        chosenPlanId = plan.id
       }
     })
     /* Check if user wants to extend more than a year (not allowed) */
     // tslint:disable-next-line: max-line-length
-    if (this.userHavePremium && this.userPremiumPlan.planId === chosenPlanId && (Date.parse(this.userPremiumPlan.dateTo) + parseInt(chosenPlanDuration, 10) > Date.now() + 31556955999)) {
-      this.notifier.error('You can not extend your plan more than 1 year')
-      confirmedData = false
-    }
+    // if (this.userHavePremium && this.userPremiumPlan.planId === chosenPlanId && (Date.parse(this.userPremiumPlan.dateTo) + parseInt(chosenPlanDuration, 10) > Date.now() + 31556955999)) {
+    //   this.notifier.error('You can not extend your plan more than 1 year')
+    //   confirmedData = false
+    // }
     if (chosenPlanDuration === undefined || chosenPlanPrice === undefined || chosenPlanId <= -1) {
       this.notifier.error('Something went wrong')
       confirmedData = false
     }
 
-    /* TO-DO: Implement tubePay && security */
-    const paymentConfirmed = true /* Testing purposes */
-    if (paymentConfirmed && confirmedData && chosenPlanId > -1 && chosenPlanDuration !== undefined && chosenPlanPrice !== undefined) {
+    /* tubePay && security */
+    const paymentConfirmed = paymentInfo.detail.res.reportResponse.success
+    const payment_tx = paymentInfo.detail.res.reportResponse.tx_res.tx_hash
+    console.log('ICEICE PaymentConfirmed & confirmedData are: ', paymentConfirmed, confirmedData)
+    if (paymentConfirmed && confirmedData) {
       const postBody = {
         planId: chosenPlanId,
         duration: chosenPlanDuration,
         priceTube: chosenPlanPrice,
-        tubePayId: chosenPlanTubePayId
+        tubePayId: chosenPlanTubePayId,
+        payment_tx: payment_tx
       }
+      console.log('ICEICE going to call paymentPost with body: ', postBody)
       const postResponse = this.paymentPost(postBody)
-        .subscribe(
-          resp => {
-            if (resp['success'] && resp['data'] && resp['data'].active === true) {
-              this.startSubscriptions()
-            }
-          },
-
-          err => this.notifier.error(err.message)
+      .subscribe(
+        resp => {
+          console.log('ICEICE paymentPost response is: ', resp)
+          if (resp['success'] && resp['data'] && resp['data'].active === true) {
+            this.startSubscriptions()
+          }
+        },
+          err => {
+            this.notifier.error(err.message)
+            console.error(err.message)
+          }
         )
       console.log('ICEICE postResponse is: ', postResponse)
+    } else {
+      this.notifier.error('Something went wrong after the payment response')
     }
   }
 

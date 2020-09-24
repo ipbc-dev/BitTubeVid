@@ -15,7 +15,7 @@ import { UserModel } from './account/user'
 export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaymentModel> {
 
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
-  id!: number;
+  id!: number
 
   // @Column({ type: DataType.INTEGER, allowNull: false })
   // userId!: number;
@@ -48,25 +48,28 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
   premiumStoragePlan: PremiumStoragePlanModel
 
   @Column({ type: DataType.DATE, allowNull: false })
-  dateFrom!: number;
+  dateFrom!: number
 
   @Column({ type: DataType.DATE, allowNull: false })
-  dateTo!: number;
+  dateTo!: number
 
   @Column({ type: DataType.DECIMAL(32, 8), allowNull: false })
-  priceTube!: number;
+  priceTube!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  quota!: number;
+  quota!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  dailyQuota!: number;
+  dailyQuota!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  duration!: number;
+  duration!: number
+
+  @Column({ type: DataType.STRING, allowNull: false })
+  payment_tx!: string
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
-  active!: boolean;
+  active!: boolean
 
   static async getUserPayments (userId: number) {
     const paymentsResponse = await userPremiumStoragePaymentModel.findAll({

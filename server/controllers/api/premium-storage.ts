@@ -324,10 +324,10 @@ async function userPayPlan (req: express.Request, res: express.Response) {
       throw new Error(`Undefined or incorrect planId`)
     }
     // eslint-disable-next-line max-len
-    if (body.priceTube === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
+    if (body.priceTube === undefined || parseFloat(body.priceTube) !== parseFloat(chosenPlan.priceTube)) {
       throw new Error(`Undefined or incorrect priceTube body:${parseFloat(body.priceTube)}  chosen:${parseFloat(chosenPlan.priceTube)}`)
     }
-    if (body.duration === undefined || (typeof body.planId !== 'number' && typeof body.planId !== 'string') || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
+    if (body.duration === undefined || parseInt(body.duration) !== parseInt(chosenPlan.duration)) {
       throw new Error('Undefined or incorrect duration')
     }
     /* Checking previous plans and creating post data */
@@ -346,7 +346,8 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         priceTube: body.priceTube,
         duration: body.duration,
         quota: chosenPlan.quota,
-        dailyQuota: chosenPlan.dailyQuota
+        dailyQuota: chosenPlan.dailyQuota,
+        payment_tx: body.payment_tx
       }
       if (userActualPlan['planId'] > body.planId) {
         throw new Error("It's not possible to downgrade a plan before It's finished")
@@ -361,7 +362,8 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         priceTube: body.priceTube,
         duration: body.duration,
         quota: chosenPlan.quota,
-        dailyQuota: chosenPlan.dailyQuota
+        dailyQuota: chosenPlan.dailyQuota,
+        payment_tx: body.payment_tx
       }
     }
     /* Building body */
