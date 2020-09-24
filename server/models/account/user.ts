@@ -325,7 +325,7 @@ export class UserModel extends Model<UserModel> {
   videoQuotaDaily: number
 
   @AllowNull(false)
-  @Is('premiumStorageActive', value => throwIfNotValid(value, isUserPremiumStorageActiveValid, 'user premium storafe active'))
+  @Is('premiumStorageActive', value => throwIfNotValid(value, isUserPremiumStorageActiveValid, 'user premium storage active'))
   @Column(DataType.BOOLEAN)
   premiumStorageActive: boolean
 

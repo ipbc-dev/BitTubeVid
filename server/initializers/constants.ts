@@ -137,6 +137,7 @@ const JOB_ATTEMPTS: { [id in JobType]: number } = {
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
+  'premium-storage-checker': 1,
   'activitypub-refresher': 1,
   'video-redundancy': 1
 }
@@ -150,6 +151,7 @@ const JOB_CONCURRENCY: { [id in JobType]: number } = {
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
+  'premium-storage-checker': 1,
   'activitypub-refresher': 1,
   'video-redundancy': 1
 }
@@ -163,12 +165,16 @@ const JOB_TTL: { [id in JobType]: number } = {
   'video-import': 1000 * 3600 * 2, // 2 hours
   'email': 60000 * 10, // 10 minutes
   'videos-views': undefined, // Unlimited
+  'premium-storage-checker': undefined, // Unlimited
   'activitypub-refresher': 60000 * 10, // 10 minutes
   'video-redundancy': 1000 * 3600 * 3 // 3 hours
 }
 const REPEAT_JOBS: { [ id: string ]: EveryRepeatOptions | CronRepeatOptions } = {
   'videos-views': {
     cron: '1 * * * *' // At 1 minute past the hour
+  },
+  'premium-storage-checker': {
+    cron: '0 0 * * *' // At midnight every day
   }
 }
 
@@ -701,6 +707,7 @@ if (isTestInstance() === true) {
   SCHEDULER_INTERVALS_MS.updateVideos = 5000
   SCHEDULER_INTERVALS_MS.autoFollowIndexInstances = 5000
   REPEAT_JOBS['videos-views'] = { every: 5000 }
+  REPEAT_JOBS['premium-storage-checker'] = { every: 600000 }
 
   REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1
 

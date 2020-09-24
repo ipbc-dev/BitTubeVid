@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Column, DataType, Model, Table } from 'sequelize-typescript'
 
 @Table({
@@ -15,37 +16,37 @@ import { Column, DataType, Model, Table } from 'sequelize-typescript'
 })
 export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
-  id!: number;
+  id!: number
 
   @Column({ type: DataType.STRING(50), allowNull: false, unique: true })
-  name!: string;
+  name!: string
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  quota!: number;
+  quota!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  dailyQuota!: number;
+  dailyQuota!: number
 
   @Column({ type: DataType.DECIMAL(32, 8), allowNull: false })
-  priceTube!: number;
+  priceTube!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  duration!: number;
+  duration!: number
 
   @Column({ type: DataType.DECIMAL(32), allowNull: false })
-  expiration!: number;
+  expiration!: number
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
-  active!: boolean;
+  active!: boolean
 
   @Column({ type: DataType.STRING(15), allowNull: false, unique: true })
-  tubePayId!: string;
+  tubePayId!: string
 
   @Column({ type: DataType.STRING, allowNull: false, unique: true })
-  tubePaySecret!: string;
+  tubePaySecret!: string
 
   @Column({ type: DataType.STRING, allowNull: false })
-  tubePayOwnerContentName!: string;
+  tubePayOwnerContentName!: string
 
   static async getPlans () {
     return await PremiumStoragePlanModel.findAll({

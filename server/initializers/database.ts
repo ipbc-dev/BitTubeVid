@@ -37,6 +37,7 @@ import { VideoPlaylistElementModel } from '../models/video/video-playlist-elemen
 import { ThumbnailModel } from '../models/video/thumbnail'
 import { PremiumStoragePlanModel } from '../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../models/user-premium-storage-payments'
+import { premiumStorageSlowPayer } from '../models/premium-storage-slow-payer'
 import { PluginModel } from '../models/server/plugin'
 import { VideoShareModel } from '../models/video/video-share'
 import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
@@ -130,6 +131,7 @@ async function initDatabaseModels (silent: boolean) {
     ThumbnailModel,
     PremiumStoragePlanModel,
     userPremiumStoragePaymentModel,
+    premiumStorageSlowPayer,
     PluginModel
   ])
 
