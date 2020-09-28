@@ -81,7 +81,6 @@ export class User implements UserServerModel {
     this.abusesAcceptedCount = hash.abusesAcceptedCount
     this.abusesCreatedCount = hash.abusesCreatedCount
     this.videoCommentsCount = hash.videoCommentsCount
-    this.premiumStorageActive = hash.premiumStorageActive
 
     this.nsfwPolicy = hash.nsfwPolicy
     this.webTorrentEnabled = hash.webTorrentEnabled
