@@ -205,7 +205,7 @@ async function adminDeletePlan (req: express.Request, res: express.Response) {
 async function getUserBilling (req: express.Request, res: express.Response) {
   try {
     const user = res.locals.oauth.token.User
-    const userId = user.Account.id
+    const userId = user.id
     const billingResult = await userPremiumStoragePaymentModel.getUserPayments(userId)
     const billingResponse = billingResult.map(bill => bill.toJSON())
     return res.json({ success: true, billing: billingResponse })
@@ -269,7 +269,7 @@ async function getUserPayments (req: express.Request, res: express.Response) {
 async function getUserActivePayment (req: express.Request, res: express.Response) {
   try {
     const user = res.locals.oauth.token.User
-    const userId = user.Account.id
+    const userId = user.id
     const paymentResult = await userPremiumStoragePaymentModel.getUserActivePayment(userId)
     const paymentResponse = paymentResult.map(payment => payment.toJSON())
     if (paymentResponse !== undefined && paymentResponse !== null) {
@@ -302,7 +302,7 @@ async function getAllActivePayments (req: express.Request, res: express.Response
 async function userPayPlan (req: express.Request, res: express.Response) {
   try {
     const userToUpdate = res.locals.oauth.token.User
-    const userId = userToUpdate.Account.id
+    const userId = userToUpdate.id
     const body = req.body
     const plansInfo = await getPlansInfo()
     if (plansInfo.success === false) {
@@ -366,53 +366,28 @@ async function userPayPlan (req: express.Request, res: express.Response) {
         payment_tx: body.payment_tx
       }
     }
-    /* Building body */
-    // console.log('ICEICE body is: ', body)
-    // const apiReqBody = {
-    //   id: body.tubePayId,
-    //   host: WEBSERVER.URL,
-    //   auth: req.headers.authorization
-    // }
-    // const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubePurchaseProduct', {
-    //   method: 'post',
-    //   headers: new Headers({
-    //     'Content-Type': 'application/json'
-    //   }),
-    //   body: JSON.stringify(apiReqBody)
-    // })
-    // const firebaseApiResult = await firebaseApiRes.json()
-    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
-    const firebaseApiResult = { success: true }
-    if (firebaseApiResult.success) {
-      /* Adding payment record to DB */
-      const paymentResult = await userPremiumStoragePaymentModel.create(createData)
-      const paymentResponse = paymentResult.toJSON()
+    /* Adding payment record to DB */
+    const paymentResult = await userPremiumStoragePaymentModel.create(createData)
+    const paymentResponse = paymentResult.toJSON()
 
-      /* Set user Quota && dailyQuota in user table */
-      userToUpdate.videoQuota = chosenPlan.quota
-      userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
-      userToUpdate.premiumStorageActive = true
+    /* Set user Quota && dailyQuota in user table */
+    userToUpdate.videoQuota = chosenPlan.quota
+    userToUpdate.videoQuotaDaily = chosenPlan.dailyQuota
 
-      const updateUserResult = await userToUpdate.save()
-      // Destroy user token to refresh rights (maybe needed?)
-      // const deleteUserTokenResult = await deleteUserToken(userToUpdate.id)
-      // console.log('deleteUserTokenResult is: ', deleteUserTokenResult)
+    const updateUserResult = await userToUpdate.save()
 
-      if (updateUserResult === undefined && updateUserResult === null) {
-        throw new Error('Something went wrong updating user quota and dailyQuota')
-      } else {
-        /* Deactivate previous plan after insert the new one */
-        if (userActualPlan !== null) {
-          const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
-          if (deactivatePreviousPlan[0] !== 1) {
-            return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
-          }
+    if (updateUserResult === undefined && updateUserResult === null) {
+      throw new Error('Something went wrong updating user quota and dailyQuota')
+    } else {
+      /* Deactivate previous plan after insert the new one */
+      if (userActualPlan !== null) {
+        const deactivatePreviousPlan = await userPremiumStoragePaymentModel.deactivateUserPayment(userActualPlan['id'])
+        if (deactivatePreviousPlan[0] !== 1) {
+          return res.json({ success: true, extended: extended, data: paymentResponse, deactivatePreviousPlanWarning: deactivatePreviousPlan })
         }
       }
-      return res.json({ success: true, extended: extended, data: paymentResponse })
-    } else {
-      return res.json({ success: false, error: firebaseApiResult })
     }
+    return res.json({ success: true, extended: extended, data: paymentResponse })
 
   } catch (err) {
     return res.json({ success: false, error: err.message })
