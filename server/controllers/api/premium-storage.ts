@@ -7,23 +7,14 @@ import {
   // setDefaultPagination
 
 } from '../../middlewares'
-// import { CONFIG } from '@server/initializers/config' /* Usefull for CONFIG.USER.VIDEO_QUOTA && CONFIG.USER.VIDEO_QUOTA_DAILY */
 import { WEBSERVER } from '../../initializers/constants'
 import { UserRight } from '@server/../shared'
 import { ensureUserHasRight } from '@server/middlewares'
 import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
-// import { ValidationChain } from 'express-validator'
-// import { ContextBuilder } from 'express-validator/src/context-builder'
-// import { INTEGER } from 'sequelize/types'
-// import { logger } from '@server/helpers/logger'
-// import { logger } from '@server/helpers/logger'
-// import { UserModel } from '../../models/account/user'
-// import { updateUser } from '@shared/extra-utils/users/users'
-// import { deleteUserToken } from 'server/lib/oauth-model'
 const fetch = require('node-fetch')
 const Headers = fetch.Headers
-const firebaseApiUrl = 'http://localhost:5001/bittube-airtime-extension-dev/us-central1/'
+const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension.cloudfunctions.net/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
