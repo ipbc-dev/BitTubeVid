@@ -257,7 +257,6 @@ function updateUser (options: {
   emailVerified?: boolean
   videoQuota?: number
   videoQuotaDaily?: number
-  premiumStorageActive?: boolean
   password?: string
   adminFlags?: UserAdminFlag
   role?: UserRole
@@ -270,7 +269,6 @@ function updateUser (options: {
   if (options.emailVerified !== undefined && options.emailVerified !== null) toSend['emailVerified'] = options.emailVerified
   if (options.videoQuota !== undefined && options.videoQuota !== null) toSend['videoQuota'] = options.videoQuota
   if (options.videoQuotaDaily !== undefined && options.videoQuotaDaily !== null) toSend['videoQuotaDaily'] = options.videoQuotaDaily
-  if (options.premiumStorageActive !== undefined && options.premiumStorageActive !== null) toSend['premiumStorageActive'] = options.premiumStorageActive
   if (options.role !== undefined && options.role !== null) toSend['role'] = options.role
   if (options.adminFlags !== undefined && options.adminFlags !== null) toSend['adminFlags'] = options.adminFlags
 

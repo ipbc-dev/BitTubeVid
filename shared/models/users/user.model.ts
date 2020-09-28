@@ -39,7 +39,6 @@ export interface User {
   abusesCreatedCount?: number
 
   videoCommentsCount? : number
-  premiumStorageActive: boolean
 
   theme: string
 

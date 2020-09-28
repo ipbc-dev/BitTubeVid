@@ -53,7 +53,6 @@ import {
   isUserVideoLanguages,
   isUserVideoQuotaDailyValid,
   isUserVideoQuotaValid,
-  isUserPremiumStorageActiveValid,
   isUserVideosHistoryEnabledValid,
   isUserWebTorrentEnabledValid
 } from '../../helpers/custom-validators/users'
@@ -323,11 +322,6 @@ export class UserModel extends Model<UserModel> {
   @Is('UserVideoQuotaDaily', value => throwIfNotValid(value, isUserVideoQuotaDailyValid, 'video quota daily'))
   @Column(DataType.BIGINT)
   videoQuotaDaily: number
-
-  @AllowNull(false)
-  @Is('premiumStorageActive', value => throwIfNotValid(value, isUserPremiumStorageActiveValid, 'user premium storage active'))
-  @Column(DataType.BOOLEAN)
-  premiumStorageActive: boolean
 
   @AllowNull(false)
   @Default(DEFAULT_USER_THEME_NAME)
@@ -817,9 +811,6 @@ export class UserModel extends Model<UserModel> {
       videoQuotaUsedDaily: videoQuotaUsedDaily !== undefined
         ? parseInt(videoQuotaUsedDaily + '', 10)
         : undefined,
-      premiumStorageActive: this.premiumStorageActive !== undefined
-        ? this.premiumStorageActive
-        : false,
       videosCount: videosCount !== undefined
         ? parseInt(videosCount + '', 10)
         : undefined,
@@ -901,7 +892,7 @@ export class UserModel extends Model<UserModel> {
     return uploadedTotal < this.videoQuota && uploadedDaily < this.videoQuotaDaily
   }
 
-  private static generateUserQuotaBaseSQL (options: {
+  public static generateUserQuotaBaseSQL (options: {
     whereUserId: '$userId' | '"UserModel"."id"'
     withSelect: boolean
     where?: string
@@ -930,7 +921,7 @@ export class UserModel extends Model<UserModel> {
       ') t2'
   }
 
-  private static getTotalRawQuery (query: string, userId: number) {
+  public static getTotalRawQuery (query: string, userId: number) {
     const options = {
       bind: { userId },
       type: QueryTypes.SELECT as QueryTypes.SELECT
