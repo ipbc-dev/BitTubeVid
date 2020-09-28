@@ -6,12 +6,12 @@
   * Fixing minor bugs
 
 ## IMPORTANT NOTES
-  * **/!\ VERY IMPORTANT /!\\** We added a new table and some fields in order to save Premium Storage data.
-  In order to user this version, is important to follow next steps:
-    * Go inside your database using `sudo -u postgres psql peertube_prod` and run:
-     `ALTER TABLE "user" ADD COLUMN "premiumStorageActive" Boolean DEFAULT false;`
-     * Maybe, you will need also to run: `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO peertube;`
-     #### At this point, you can add as much storage plans as you want from Administrator UI!
+  * **/!\ VERY IMPORTANT /!\\** 
+  * ONLY ROOT USER CAN ADD PREMIUM STORAGE PLANS
+  * YOU NEED TO HAVE BITTUBE-AIRTIME-MODULE PLUGIN INSTALLED & UPGRADED
+  * YOU NEED TO LINK YOUR PLATFORM TO YOUR ACCOUNT BEFORE ACTIVATING PREMIUM STORAGE PLAN
+  * TO PREVENT PLAN DOWNGRADING (NOT ALLOWED) YOU NEED TO ADD THE PLANS IN ORDER FROM SMALLEST TO BIGGEST AMOUNT OF DATA
+  * You can create Plans with the same size and different durations but always respecting size order
 
 ## v0.2.5 (BitTube)
   * Based on Peertube V2.4.0
