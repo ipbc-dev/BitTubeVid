@@ -6,7 +6,7 @@ import { VideoChannelModel } from '@server/models/video/video-channel'
 import { MVideoBlacklistLightVideo, MVideoBlacklistVideo } from '@server/types/models/video/video-blacklist'
 import { MVideoImport, MVideoImportVideo } from '@server/types/models/video/video-import'
 import { AbuseState, EmailPayload, UserAbuse } from '@shared/models'
-import { SendEmailOptions } from '../../shared/models/server/emailer.model'
+import { SendEmailOptions } from "../../shared/models/server/SendEmailOptions"
 import { isTestInstance, root } from '../helpers/core-utils'
 import { bunyanLogger, logger } from '../helpers/logger'
 import { CONFIG, isEmailEnabled } from '../initializers/config'
@@ -557,6 +557,31 @@ class Emailer {
         fromEmail,
         body
       }
+    }
+
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageAboutToExpireJob (username: string, to: string, instanceName: string, daysToExpire: string) {
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is about to expire',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is about to expire in ${daysToExpire} days. Once this happen, we will start to delete some videos per day in your account.
+      Please, extend or upgrade your Premium Storage at your account settings`
+    }
+
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete) {
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is expired',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from account.
+      This will be repeated every day until you don't upgrade your storage.
+      Please, extend or upgrade your Premium Storage at your account settings`
     }
 
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })

@@ -317,7 +317,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       }
       if (config) {
         this.serverConfig = config
-        console.log('ICEICE config is: ', this.serverConfig)
       }
     })
   }

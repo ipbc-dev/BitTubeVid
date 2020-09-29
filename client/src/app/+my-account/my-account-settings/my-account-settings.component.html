@@ -20,7 +20,7 @@
   </div>
 </div>
 
-<div class="form-row mt-5"> <!-- storage settings grid -->
+<div *ngIf="isPremiumStorageEnabled()" class="form-row mt-5"> <!-- storage settings grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->
     <div i18n class="account-title">STORAGE SETTINGS</div>

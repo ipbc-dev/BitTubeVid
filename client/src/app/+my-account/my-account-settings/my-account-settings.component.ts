@@ -1,6 +1,7 @@
 import { ViewportScroller } from '@angular/common'
 import { AfterViewChecked, Component, OnInit } from '@angular/core'
-import { AuthService, Notifier, User, UserService } from '@app/core'
+import { AuthService, Notifier, User, UserService, ServerService } from '@app/core'
+
 
 @Component({
   selector: 'my-account-settings',
@@ -16,7 +17,8 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
     private viewportScroller: ViewportScroller,
     private userService: UserService,
     private authService: AuthService,
-    private notifier: Notifier
+    private notifier: Notifier,
+    private serverService: ServerService
     ) {}
 
   get userInformationLoaded () {
@@ -33,6 +35,7 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
 
       this.lastScrollHash = window.location.hash
     }
+
   }
 
   onAvatarChange (formData: FormData) {
@@ -46,5 +49,10 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
 
         err => this.notifier.error(err.message)
       )
+  }
+
+  isPremiumStorageEnabled () {
+    const isPremiumStorageEnabled = this.serverService.getTmpConfig().premium_storage.enabled
+    return isPremiumStorageEnabled
   }
 }

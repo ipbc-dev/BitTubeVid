@@ -137,7 +137,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       }),
       body: JSON.stringify(body)
     })
-    console.log('ICEICE firebaseApiRes is: ', firebaseApiRes)
+    console.log('ICEICE firebaseApiRes is: ', firebaseApiRes, await firebaseApiRes.text())
     const firebaseApiResult = await firebaseApiRes.json()
     if (firebaseApiResult.success) {
       const addResult = await PremiumStoragePlanModel.addPlan(
@@ -209,22 +209,6 @@ async function getPlans (req: express.Request, res: express.Response) {
   try {
     const plansResult = await PremiumStoragePlanModel.getPlans()
     const plansResponse = plansResult.map(plan => plan.toJSON())
-    // console.log('ICEICE WEBSERVER are: ', WEBSERVER)
-    // console.log('ICEICE req is: ', req)
-    /* body */
-    // const body = {
-    //   host: WEBSERVER.URL,
-    //   auth: req.headers.authorization
-    // }
-
-    // const firebaseApiResult = await fetch(firebaseApiUrl + 'peertubeGetAllProducts', {
-    //   method: 'post',
-    //   headers: new Headers({
-    //     'Content-Type': 'application/json'
-    //   }),
-    //   body: JSON.stringify(body)
-    // })
-    // console.log('ICEICE firebaseApiResult is: ', firebaseApiResult)
     return res.json({ success: true, plans: plansResponse })
   } catch (err) {
     return res.json({ success: false, error: err.message })

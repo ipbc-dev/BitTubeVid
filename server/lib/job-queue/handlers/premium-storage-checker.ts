@@ -1,20 +1,12 @@
-// import { Redis } from '../../redis'
 import { logger } from '../../../helpers/logger'
 import { Hooks } from '../../../lib/plugins/hooks'
-// import { VideoModel } from '../../../models/video/video'
-// import { VideoViewModel } from '../../../models/video/video-view'
-// import { isTestInstance } from '../../../helpers/core-utils'
-// import { federateVideoIfNeeded } from '../../activitypub/videos'
 import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
 import { premiumStorageSlowPayer } from '@server/models/premium-storage-slow-payer'
 import { UserModel } from '@server/models/account/user'
 import { VideoModel } from '@server/models/video/video'
 import { CONFIG } from '@server/initializers/config'
-import { WEBSERVER } from '@server/initializers/constants'
-// import { DestroyOptions } from 'sequelize'
-
-// const fetch = require('node-fetch')
-// const Headers = fetch.Headers
+import { Emailer } from '@server/lib/emailer'
+import { EmailPayload } from '@shared/models'
 
 const parallel = async (num, arr, func) => {
   const thread = (item) => {
@@ -35,8 +27,9 @@ const parallel = async (num, arr, func) => {
 
 async function processPremiumStorageChecker () {
   try {
+    const videosAmmountToDelete = 10
     await checkOutdatedPayments()
-    await cleanVideosFromSlowPayers()
+    await cleanVideosFromSlowPayers(videosAmmountToDelete)
   } catch (err) {
     logger.error(err)
   }
@@ -49,7 +42,7 @@ async function checkOutdatedPayments () {
   await parallel(1, activePayments, async (payment) => {
     // Check if the payment is outdated
     if (payment.dateTo < Date.now()) {
-      logger.info('ICEICE this payment is outdated')
+      logger.info('premiumStorageChecker found outdated payment: ', payment)
       await premiumStorageSlowPayer.addSlowPayer(payment.userId)
       await UserModel.update(
         {
@@ -63,42 +56,42 @@ async function checkOutdatedPayments () {
         }
       )
       await userPremiumStoragePaymentModel.deactivateUserPayment(payment.id)
-      logger.info('ICEICE slowPlayer successfuly added')
+      logger.info('premiumStorageChecker slowPlayer successfuly added')
+    } else {
+      if ((payment.dateTo + 604800000) < Date.now()) {
+        const userInfo = await UserModel.loadById(payment.userId) 
+        const emailPayload : EmailPayload = {
+            to: userInfo.email
+            locals?: { [key: string]: any }
+          
+            // override defaults
+            subject?: string
+            text?: string
+            from?: string | { name?: string, address: string }
+            replyTo?: string
+        }
+      }
+      Emailer.send
     }
   })
 }
 
-async function cleanVideosFromSlowPayers () {
+async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
   const slowPayersList = await premiumStorageSlowPayer.getAllSlowPayers()
-  // const apiUrl = WEBSERVER.URL + '/api/v1/'
   await parallel(1, slowPayersList, async (slowPayer) => {
     const userInfo = await UserModel.loadById(slowPayer.userId)
     const actorId = userInfo.Account.id
-    const userVideos = await VideoModel.listUserVideosForApi(actorId, 0, 15, "-createdAt")
+    const userVideos = await VideoModel.listUserVideosForApi(actorId, 0, videosAmmountToDelete, "-createdAt")
     const userVideoQuota = userInfo.videoQuota
-    // logger.info('ICEICE cleanVideosFromSlowPayers checking userINfo: ', userInfo)
-    // logger.info('ICEICE webserver is ', apiUrl)
-    // logger.info('ICEICE actorId is:', actorId)
-    logger.info('ICEICE userVideos are', userVideos.data)
-    // TO-DO:
-    //  1 - Get x number of videos from user (Do I need to get)
+    //  1 - Get x number of videos from user
     let userUsedVideoQuota
     for (const video of userVideos.data) {
       userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)
       if (userUsedVideoQuota > userVideoQuota) {
-        logger.info('TIme to remove video with title: ', video)
-
         // Delete video
         const res = await video.destroy()
         Hooks.runAction('action:api.video.deleted', { video })
-
-        // const query: DestroyOptions = {
-        //   where: {
-        //     uuid: video.uuid
-        //   }
-        // }
-        // const res = await VideoModel.load(query)
-        logger.info('ICEICE video removed: ', res)
+        logger.info('premiumStorageChecker video removed: ', res)
       }
     }
     userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)
@@ -107,6 +100,7 @@ async function cleanVideosFromSlowPayers () {
     }
   })
 }
+
 function getUserUsedQuota (userId) {
   // Don't use sequelize because we need to use a sub query
   const query = UserModel.generateUserQuotaBaseSQL({
