@@ -129,7 +129,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
     /* Adding some more info to body */
     body.host = WEBSERVER.URL
     body.auth = req.headers.authorization
-
+    // console.log('ICEICE going to call firebase with body: ', body)
     const firebaseApiRes = await fetch(firebaseApiUrl + 'peertubeAddProduct', {
       method: 'post',
       headers: new Headers({
@@ -137,7 +137,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       }),
       body: JSON.stringify(body)
     })
-    console.log('ICEICE firebaseApiRes is: ', firebaseApiRes, await firebaseApiRes.text())
+    // console.log('ICEICE firebaseApiRes is: ', firebaseApiRes)
     const firebaseApiResult = await firebaseApiRes.json()
     if (firebaseApiResult.success) {
       const addResult = await PremiumStoragePlanModel.addPlan(

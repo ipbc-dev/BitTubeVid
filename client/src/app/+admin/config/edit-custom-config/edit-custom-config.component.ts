@@ -323,11 +323,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   addPlanButtonClick () {
     if (!this.isAddPlanButtonDisabled()) {
-      console.log('ICEICE going to call addPlan with body. ', this.newStoragePlan)
       this.newStoragePlan.quota = this.newStoragePlan.quota * 1073741824 /* to bytes */
       this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota * 1073741824 /* to bytes */
       this.addPlan(this.newStoragePlan).subscribe(resp => {
-        console.log('ICEICE addPlanButtonClick response is: ', resp)
         if (resp['success']) {
           this.notifier.success('Your new plan has been successfully added')
           this.showAddPlanModal = false
@@ -335,6 +333,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
           this.subscribeConfigAndPlans()
         } else {
           this.notifier.error(resp['error'])
+          this.newStoragePlan.quota = this.newStoragePlan.quota / 1073741824 /* to bytes */
+          this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota / 1073741824 /* to bytes */
         }
       })
     }
@@ -403,9 +403,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       planId: rowData.id,
       tubePayId: rowData.tubePayId
     }
-    console.log('ICEICE calling onRowDelete function with data: ', body)
+    // console.log('ICEICE calling onRowDelete function with data: ', body)
     this.deletePlan(body).subscribe(resp => {
-      console.log('ICEICE deletePlan response is: ', resp)
+      // console.log('ICEICE deletePlan response is: ', resp)
       if (resp['success']) {
         this.subscribeConfigAndPlans()
         setTimeout(() => { this.notifier.success('Plan successfully deleted') } , 1000) /* Wait 1 sec for subscription */
@@ -421,7 +421,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   onRowEditSave (rowData: interfacePremiumStoragePlan) {
-    console.log('ICEICE calling onRowEditSave function with data: ', rowData)
+    // console.log('ICEICE calling onRowEditSave function with data: ', rowData)
     const body = {
       id: rowData.id,
       tubePayId: rowData.tubePayId,
@@ -433,9 +433,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       expiration: rowData.expiration,
       active: rowData.active
     }
-    console.log('ICEICE calling onRowEditSave function with body: ', body)
+    // console.log('ICEICE calling onRowEditSave function with body: ', body)
     this.updatePlan(body).subscribe(resp => {
-      console.log('ICEICE onRowEditSave updatePlan response is: ', resp)
+      // console.log('ICEICE onRowEditSave updatePlan response is: ', resp)
       if (resp['success']) {
         this.subscribeConfigAndPlans()
         this.notifier.success('Plan successfully updated')
@@ -446,14 +446,14 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   updatePlan (body: interfacePremiumStoragePlan) {
-    console.log('ICEICE going to call addPlan with body: ', body)
+    // console.log('ICEICE going to call addPlan with body: ', body)
     return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'update-plan', body)
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
   onRowEditCancel (rowData: any, ri: number) {
-    console.log('ICEICE calling onRowEditCancel function with data: ', rowData)
-    console.log('ICEICE ri is: ', ri)
+    // console.log('ICEICE calling onRowEditCancel function with data: ', rowData)
+    // console.log('ICEICE ri is: ', ri)
   }
 
   getResolutionKey (resolution: string) {
@@ -485,7 +485,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   async formValidated () {
-    console.log('ICEICE going to update config with form : ', this.form.getRawValue())
+    // console.log('ICEICE going to update config with form : ', this.form.getRawValue())
     this.configService.updateCustomConfig(this.form.getRawValue())
       .subscribe(
         res => {

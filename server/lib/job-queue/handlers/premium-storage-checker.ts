@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/indent */
 import { logger } from '../../../helpers/logger'
 import { Hooks } from '../../../lib/plugins/hooks'
 import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
@@ -6,7 +7,6 @@ import { UserModel } from '@server/models/account/user'
 import { VideoModel } from '@server/models/video/video'
 import { CONFIG } from '@server/initializers/config'
 import { Emailer } from '@server/lib/emailer'
-import { EmailPayload } from '@shared/models'
 
 const parallel = async (num, arr, func) => {
   const thread = (item) => {
@@ -42,7 +42,7 @@ async function checkOutdatedPayments () {
   await parallel(1, activePayments, async (payment) => {
     // Check if the payment is outdated
     if (payment.dateTo < Date.now()) {
-      logger.info('premiumStorageChecker found outdated payment: ', payment)
+      console.log('premiumStorageChecker found outdated payment: ', payment)
       await premiumStorageSlowPayer.addSlowPayer(payment.userId)
       await UserModel.update(
         {
@@ -56,23 +56,15 @@ async function checkOutdatedPayments () {
         }
       )
       await userPremiumStoragePaymentModel.deactivateUserPayment(payment.id)
-      logger.info('premiumStorageChecker slowPlayer successfuly added')
+      console.log('premiumStorageChecker slowPlayer successfuly added')
     } else {
-      if ((payment.dateTo + 604800000) < Date.now()) {
-        const userInfo = await UserModel.loadById(payment.userId) 
-        const emailPayload : EmailPayload = {
-            to: userInfo.email
-            locals?: { [key: string]: any }
-          
-            // override defaults
-            subject?: string
-            text?: string
-            from?: string | { name?: string, address: string }
-            replyTo?: string
-        }
+        const paymentDateToWeekLess = (payment.dateTo - 604800000) // a week in miliseconds
+      if (paymentDateToWeekLess < Date.now()) {
+        const userInfo = await UserModel.loadById(payment.userId)
+        Emailer.Instance.addPremiumStorageAboutToExpireJob(userInfo.username, userInfo.email, CONFIG.WEBSERVER.HOSTNAME, payment.dateTo - Date.now())
       }
-      Emailer.send
     }
+
   })
 }
 
@@ -83,6 +75,8 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
     const actorId = userInfo.Account.id
     const userVideos = await VideoModel.listUserVideosForApi(actorId, 0, videosAmmountToDelete, "-createdAt")
     const userVideoQuota = userInfo.videoQuota
+    // Send email
+    Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, CONFIG.WEBSERVER.HOSTNAME, videosAmmountToDelete)
     //  1 - Get x number of videos from user
     let userUsedVideoQuota
     for (const video of userVideos.data) {
@@ -91,7 +85,7 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
         // Delete video
         const res = await video.destroy()
         Hooks.runAction('action:api.video.deleted', { video })
-        logger.info('premiumStorageChecker video removed: ', res)
+        console.log('premiumStorageChecker video removed: ', res)
       }
     }
     userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)

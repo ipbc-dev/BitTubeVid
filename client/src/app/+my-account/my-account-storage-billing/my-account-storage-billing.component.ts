@@ -40,7 +40,7 @@ export class MyAccountStorageBillingComponent implements OnInit {
     forkJoin([
       this.getUserBilling()
     ]).subscribe(([ billingInfo ]) => {
-      console.log('ICEICE bills', billingInfo)
+      // console.log('ICEICE bills', billingInfo)
       if (billingInfo['success']) {
         this.billingInformation = billingInfo['billing']
       }

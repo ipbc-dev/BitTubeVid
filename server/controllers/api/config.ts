@@ -245,8 +245,8 @@ async function updateCustomConfig (req: express.Request, res: express.Response) 
   // camelCase to snake_case key + Force number conversion
   const toUpdateJSON = convertCustomConfigBody(req.body)
 
-  logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', CONFIG.CUSTOM_FILE)
-  logger.debug('ICEICE toUpdateJSON is: ', toUpdateJSON)
+  // logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', CONFIG.CUSTOM_FILE)
+  // logger.debug('ICEICE toUpdateJSON is: ', toUpdateJSON)
 
   await writeJSON(CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 })
 

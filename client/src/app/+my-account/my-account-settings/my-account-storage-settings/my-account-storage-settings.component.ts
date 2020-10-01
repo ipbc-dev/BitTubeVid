@@ -47,6 +47,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   ) {
     super()
     this.bytesPipe = new BytesPipe()
+    this.updateDetails = this.updateDetails.bind(this)
   }
 
   ngOnInit () {
@@ -58,6 +59,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
   ngOnDestroy () {
     this.formValuesWatcher?.unsubscribe()
+    if (document.body) document.body.removeEventListener('PurchaseSuccess', this.updateDetails)
   }
 
   startSubscriptions () {
@@ -69,8 +71,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       this.serverService.getConfig(),
       this.userInformationLoaded.pipe(first())
     ]).subscribe(([ plans, myPlan, languages, config ]) => {
-      console.log('ICEICE plans', plans)
-      console.log('ICEICE myPlan', myPlan)
+      // console.log('ICEICE plans', plans)
+      // console.log('ICEICE myPlan', myPlan)
       /* Check User storage plan */
       if (myPlan['success'] && myPlan['data'].length > 0) {
         this.userHavePremium = true
@@ -92,7 +94,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
       if (plans['success'] && plans['plans'].length > 0) {
         this.havePremium = true
         this.storagePlans = plans['plans']
-        console.log('ICEICE storagePlans: ', this.storagePlans)
+        // console.log('ICEICE storagePlans: ', this.storagePlans)
       } else {
         this.havePremium = false
       }
@@ -124,13 +126,10 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
   }
 
   subscribeToPremiumStorageEvent () {
-    const elem = document.body
-    console.log('ICEICE button element is: ', elem)
-    if (elem) {
-      elem.addEventListener('PurchaseSuccess', (event) => {
-        console.log('ICEICE event received with event: ', event)
-        this.updateDetails(event)
-      })
+    if (document.body) {
+      // console.log('ICEICE triggering subscribeToPremiumStorageEvent')
+      document.body.removeEventListener('PurchaseSuccess', this.updateDetails)
+      document.body.addEventListener('PurchaseSuccess', this.updateDetails)
     } else {
       setTimeout(() => {
         this.subscribeToPremiumStorageEvent()
@@ -162,7 +161,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
 
   premiumStoragePlanChange (ev: any) {
     const chosenPlanId: number = this.form.value['storagePlan']
-    console.log('ICEICE chosenPlanId is: ', chosenPlanId)
+    // console.log('ICEICE chosenPlanId is: ', chosenPlanId)
     if (chosenPlanId > -1) {
       this.storagePlans.forEach((plan: any) => {
         if (plan.id == chosenPlanId) {
@@ -172,7 +171,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     } else {
       this.chosenPlan = null
     }
-    console.log('After premiumStoragePlanChange chosenPlan is: ', this.chosenPlan)
+    // console.log('After premiumStoragePlanChange chosenPlan is: ', this.chosenPlan)
   }
 
   getUserPremiumPlanId () {
@@ -207,11 +206,11 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     let chosenPlanTubePayId: any
     let chosenPlanId: any
 
-    console.log('ICEICE paymentInfo is: ', paymentInfo)
+    // console.log('ICEICE paymentInfo is: ', paymentInfo)
     this.storagePlans.forEach((plan: any) => {
-      console.log('Comparing {', plan.tubePayId , '} with {', paymentInfo.detail.product.id, '}')
+      // console.log('Comparing {', plan.tubePayId , '} with {', paymentInfo.detail.product.id, '}')
       if (plan.tubePayId == paymentInfo.detail.product.id) {
-        console.log('ICEICE comparison accepted')
+        // console.log('ICEICE comparison accepted')
         chosenPlanDuration = plan.duration
         chosenPlanPrice = plan.priceTube
         chosenPlanTubePayId = plan.tubePayId
@@ -232,7 +231,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     /* tubePay && security */
     const paymentConfirmed = paymentInfo.detail.res.reportResponse.success
     const payment_tx = paymentInfo.detail.res.reportResponse.tx_res.tx_hash
-    console.log('ICEICE PaymentConfirmed & confirmedData are: ', paymentConfirmed, confirmedData)
+    // console.log('ICEICE PaymentConfirmed & confirmedData are: ', paymentConfirmed, confirmedData)
     if (paymentConfirmed && confirmedData) {
       const postBody = {
         planId: chosenPlanId,
@@ -241,11 +240,11 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
         tubePayId: chosenPlanTubePayId,
         payment_tx: payment_tx
       }
-      console.log('ICEICE going to call paymentPost with body: ', postBody)
+      // console.log('ICEICE going to call paymentPost with body: ', postBody)
       const postResponse = this.paymentPost(postBody)
       .subscribe(
         resp => {
-          console.log('ICEICE paymentPost response is: ', resp)
+          // console.log('ICEICE paymentPost response is: ', resp)
           if (resp['success'] && resp['data'] && resp['data'].active === true) {
             this.startSubscriptions()
           }
@@ -255,7 +254,7 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
             console.error(err.message)
           }
         )
-      console.log('ICEICE postResponse is: ', postResponse)
+      // console.log('ICEICE postResponse is: ', postResponse)
     } else {
       this.notifier.error('Something went wrong after the payment response')
     }
