@@ -92,6 +92,10 @@ storage:
   # If not, peertube will fallback to the default fil
   client_overrides: 'storage/client-overrides/'
 
+# Premium options
+premium_storage:
+    enabled: true
+
 log:
   level: 'info' # debug/info/warning/error
   rotation:

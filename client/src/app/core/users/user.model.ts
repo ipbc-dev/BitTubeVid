@@ -39,6 +39,7 @@ export class User implements UserServerModel {
 
   videosCount?: number
   videoCommentsCount?: number
+  premiumStorageActive: boolean
 
   abusesCount?: number
   abusesAcceptedCount?: number

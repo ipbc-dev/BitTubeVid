@@ -1,3 +1,4 @@
+import { environment } from 'src/environments/environment'
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { AuthService, Notifier, RedirectService, UserService } from '@app/core'
@@ -7,7 +8,6 @@ import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap'
 import { RegisteredExternalAuthConfig, ServerConfig } from '@shared/models'
 import { firebaseAuth, firebaseClass, getFirebaseToken } from '../core/firebase'
-import { environment } from 'src/environments/environment'
 
 @Component({
   selector: 'my-login',

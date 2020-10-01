@@ -84,6 +84,119 @@ ngb-tabset:not(.previews) ::ng-deep {
   }
 }
 
+.label-with-help{
+  display: block !important;
+}
+.storage-label, .storage-numeric-input{
+  display: inline-block !important;
+}
+.storage-label{
+  margin-left: 15px;
+  margin-bottom: 0;
+}
+
+:host .pTableSimpleCheckbox{
+  opacity: 1;
+  position: relative;
+  transform: scale(2);
+  margin: 6px;
+}
+/************************************/
+/* Add plan modal styles           */
+/**********************************/
+:host ::ng-deep .add-plan-modal{
+  .ui-dialog {
+    .ui-dialog-titlebar{
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--menuBackgroundColor) !important;
+    }
+    .ui-dialog-content{
+      min-width: 415px;
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--mainBackgroundColor) !important;
+      border-bottom: none;
+    }
+    .ui-dialog-footer{
+      background-color: var(--mainBackgroundColor);
+    }
+  }
+  input {
+    width: 300px !important;
+    padding-right: 2px;
+  }
+}
+/*********************************/
+/* Premium storage table styles */
+/*******************************/
+:host ::ng-deep .ui-table{
+  input[type="number"]{
+    width: 175px;
+    padding-left: 10px;
+    padding-right: 2px;
+  }
+}
+
+.row-edit-button{
+  margin-right: 0.5em;
+}
+
+.add-plan-button{
+  float: right;
+}
+
+:host ::ng-deep .row-save-button{
+  margin-right: 0.5em;
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}
+
+:host ::ng-deep .action-button-edit, :host ::ng-deep .row-save-button{
+  border: 1px solid !important;
+  border-color: var(--mainBackgroundColor) !important;
+  height: 33px !important;
+  border-radius: 3px;
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}
+
+:host ::ng-deep .row-cancel-button{
+  span{
+    background-color: #d9534f !important;
+    color: #ffffff !important;
+  }
+}
+/* Hovers */
+:host ::ng-deep .row-save-button:hover, :host ::ng-deep .row-cancel-button:hover{
+  span{
+    background-color: #e5e5e5 !important;
+    color: var(--greyForegroundColor) !important;
+  }
+}
+:host ::ng-deep .row-save-button:hover{
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}  
+:host ::ng-deep .row-edit-button, :host ::ng-deep .row-delete-button, :host ::ng-deep .row-save-button, :host ::ng-deep .row-cancel-button{
+  .action-button-edit:hover , .action-button-delete:hover, .grey-button:hover {
+    color: var(--greyForegroundColor) !important;
+    svg g g[stroke="#000000"] g{
+      stroke: var(--greyForegroundColor) !important;
+    }
+    path[stroke="#000000"]{
+      stroke: var(--greyForegroundColor) !important;
+    }
+    path[fill="#000000"]{
+      fill: var(--greyForegroundColor) !important;
+    }
+    rect[fill="#000000"]{
+      fill: var(--greyForegroundColor) !important;
+    }
+  }
+}
+
 .submit-error {
   margin-bottom: 20px;
 }

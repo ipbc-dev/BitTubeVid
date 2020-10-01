@@ -131,6 +131,9 @@ export class ServerService {
         }
       }
     },
+    premium_storage: {
+      enabled: false
+    },
     broadcastMessage: {
       enabled: false,
       message: '',

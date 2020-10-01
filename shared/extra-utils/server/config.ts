@@ -160,6 +160,9 @@ function updateCustomSubConfig (url: string, token: string, newConfig: DeepParti
         }
       }
     },
+    premium_storage: {
+      enabled: false
+    },
     broadcastMessage: {
       enabled: true,
       level: 'warning',

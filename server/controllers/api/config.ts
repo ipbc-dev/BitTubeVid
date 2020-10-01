@@ -17,6 +17,7 @@ import { PluginManager } from '../../lib/plugins/plugin-manager'
 import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
 import { asyncMiddleware, authenticate, ensureUserHasRight } from '../../middlewares'
 import { customConfigUpdateValidator } from '../../middlewares/validators/config'
+import { logger } from '@server/helpers/logger'
 
 const configRouter = express.Router()
 
@@ -180,6 +181,9 @@ async function getConfig (req: express.Request, res: express.Response) {
       }
     },
 
+    premium_storage: {
+      enabled: CONFIG.PREMIUM_STORAGE.ENABLED
+    },
     broadcastMessage: {
       enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,
       message: CONFIG.BROADCAST_MESSAGE.MESSAGE,
@@ -240,6 +244,9 @@ async function updateCustomConfig (req: express.Request, res: express.Response) 
 
   // camelCase to snake_case key + Force number conversion
   const toUpdateJSON = convertCustomConfigBody(req.body)
+
+  // logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', CONFIG.CUSTOM_FILE)
+  // logger.debug('ICEICE toUpdateJSON is: ', toUpdateJSON)
 
   await writeJSON(CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 })
 
@@ -445,6 +452,9 @@ function customConfig (): CustomConfig {
           indexUrl: CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
         }
       }
+    },
+    premium_storage: {
+      enabled: CONFIG.PREMIUM_STORAGE.ENABLED
     },
     broadcastMessage: {
       enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,

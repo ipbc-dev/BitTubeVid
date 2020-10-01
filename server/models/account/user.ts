@@ -892,7 +892,7 @@ export class UserModel extends Model<UserModel> {
     return uploadedTotal < this.videoQuota && uploadedDaily < this.videoQuotaDaily
   }
 
-  private static generateUserQuotaBaseSQL (options: {
+  public static generateUserQuotaBaseSQL (options: {
     whereUserId: '$userId' | '"UserModel"."id"'
     withSelect: boolean
     where?: string
@@ -921,7 +921,7 @@ export class UserModel extends Model<UserModel> {
       ') t2'
   }
 
-  private static getTotalRawQuery (query: string, userId: number) {
+  public static getTotalRawQuery (query: string, userId: number) {
     const options = {
       bind: { userId },
       type: QueryTypes.SELECT as QueryTypes.SELECT

@@ -1,8 +1,23 @@
 # Changelog
 
+## v0.2.5/v0.2.5-psm (BitTube-PremiumStorageModule)
+  * Based on Peertube V2.3.0
+  * Implementing paid Premium Storage functionality
+  * Fixing minor bugs
+
+## IMPORTANT NOTES
+  * **/!\ VERY IMPORTANT /!\\** 
+  * ONLY ROOT USER CAN ADD PREMIUM STORAGE PLANS
+  * YOU NEED TO HAVE BITTUBE-AIRTIME-MODULE PLUGIN INSTALLED & UPGRADED
+  * YOU NEED TO LINK YOUR PLATFORM TO YOUR ACCOUNT BEFORE ACTIVATING PREMIUM STORAGE PLAN
+  * TO PREVENT PLAN DOWNGRADING (NOT ALLOWED) YOU NEED TO ADD THE PLANS IN ORDER FROM SMALLEST TO BIGGEST AMOUNT OF DATA
+  * You can create Plans with the same size and different durations but always respecting size order
+  * You need to add a new variable 'premium_storage: { enabled: false }' in your production config file. There is an example in our default.yaml
+
 ## v0.2.5 (BitTube)
   * Based on Peertube V2.4.0
   * Fixing minor bugs
+  * Remember to update your config file
 ## v0.2.4 (BitTube)
   * Based on Peertube V2.3.0
   * Fixing minor bugs

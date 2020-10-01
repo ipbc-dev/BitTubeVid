@@ -24,6 +24,7 @@ import { processVideoTranscoding } from './handlers/video-transcoding'
 import { processActivityPubFollow } from './handlers/activitypub-follow'
 import { processVideoImport } from './handlers/video-import'
 import { processVideosViews } from './handlers/video-views'
+import { processPremiumStorageChecker } from './handlers/premium-storage-checker'
 import { refreshAPObject } from './handlers/activitypub-refresher'
 import { processVideoFileImport } from './handlers/video-file-import'
 import { processVideoRedundancy } from '@server/lib/job-queue/handlers/video-redundancy'
@@ -39,6 +40,7 @@ type CreateJobArgument =
   { type: 'video-import', payload: VideoImportPayload } |
   { type: 'activitypub-refresher', payload: RefreshPayload } |
   { type: 'videos-views', payload: {} } |
+  { type: 'premium-storage-checker', payload: {} } |
   { type: 'video-redundancy', payload: VideoRedundancyPayload }
 
 const handlers: { [id in JobType]: (job: Bull.Job) => Promise<any> } = {
@@ -51,6 +53,7 @@ const handlers: { [id in JobType]: (job: Bull.Job) => Promise<any> } = {
   'email': processEmail,
   'video-import': processVideoImport,
   'videos-views': processVideosViews,
+  'premium-storage-checker': processPremiumStorageChecker,
   'activitypub-refresher': refreshAPObject,
   'video-redundancy': processVideoRedundancy
 }
@@ -65,6 +68,7 @@ const jobTypes: JobType[] = [
   'video-file-import',
   'video-import',
   'videos-views',
+  'premium-storage-checker',
   'activitypub-refresher',
   'video-redundancy'
 ]
@@ -208,7 +212,10 @@ class JobQueue {
   private addRepeatableJobs () {
     this.queues['videos-views'].add({}, {
       repeat: REPEAT_JOBS['videos-views']
-    }).catch(err => logger.error('Cannot add repeatable job.', { err }))
+    }).catch(err => logger.error('Cannot add videos-views repeatable job.', { err }))
+    this.queues['premium-storage-checker'].add({}, {
+      repeat: REPEAT_JOBS['premium-storage-checker']
+    }).catch(err => logger.error('Cannot add premium-storage-checker repeatable job.', { err }))
   }
 
   private filterJobTypes (jobType?: JobType) {

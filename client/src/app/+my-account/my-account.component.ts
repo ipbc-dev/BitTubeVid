@@ -93,6 +93,11 @@ export class MyAccountComponent implements OnInit {
           iconName: 'user-x'
         },
         {
+          label: $localize`Premium storage billing`,
+          routerLink: '/my-account/premium-storage/billing',
+          iconName: 'history'
+        },
+        {
           label: $localize`Muted servers`,
           routerLink: '/my-account/blocklist/servers',
           iconName: 'peertube-x'

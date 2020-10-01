@@ -14,6 +14,7 @@ export type JobType =
   | 'email'
   | 'video-import'
   | 'videos-views'
+  | 'premium-storage-checker'
   | 'activitypub-refresher'
   | 'video-redundancy'
 

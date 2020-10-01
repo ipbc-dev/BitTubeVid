@@ -562,6 +562,32 @@ class Emailer {
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
   }
 
+  addPremiumStorageAboutToExpireJob (username: string, to: string, instanceName: string, daysToExpire: number) {
+    const days = Math.round(daysToExpire / 86400000)
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is about to expire',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is about to expire in ${days} days. Once this happen, we will start to delete some videos per day in your account.
+      Please, extend or upgrade your Premium Storage at your account settings`
+    }
+    logger.info('addPremiumStorageAboutToExpireJob going to send email with payload: ', emailPayload)
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete) {
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is expired',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account.
+      This will be repeated every day until you don't upgrade your storage.
+      Please, extend or upgrade your Premium Storage at your account settings`
+    }
+    logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload)
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
   async sendMail (options: EmailPayload) {
     if (!isEmailEnabled()) {
       throw new Error('Cannot send mail because SMTP is not configured.')

@@ -1,0 +1,75 @@
+@import '_variables';
+@import '_mixins';
+
+label {
+  font-weight: $font-regular;
+  font-size: 100%;
+}
+
+input[type=submit] {
+  @include peertube-button;
+  @include orange-button;
+
+  margin-top: 15px;
+}
+
+.peertube-select-container {
+  @include peertube-select-container(340px);
+
+  margin-bottom: 30px;
+}
+
+.form-group-select {
+  margin-bottom: 30px;
+}
+
+.storagePadding{
+  padding: 10px 0;
+}
+
+.padding-left-10{
+  padding-left: 10px;
+}
+
+.planTable{
+  .planTableHeader{
+    border-bottom: 1px solid;
+  }
+  .planField{
+    text-align: left;
+    padding: 5px 35px 5px 0;
+  }
+}
+
+:host ::ng-deep .button-tubePay{
+  .am-product-main{
+    margin-top: 15px;
+
+    .am-product-panel {
+      button{
+        font-weight: 600;
+        font-size: 15px;
+        height: 30px;
+        line-height: 30px;
+        border-radius: 3px;
+        text-align: center;
+        padding: 0 13px 0 13px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+    }
+
+    svg.type-icon{
+      margin-right: 5px !important;
+    }
+    svg.product-details-icon{
+      left: 5px;
+      top: -2px;
+
+    }
+    svg:not(.type-icon):not(.product-details-icon){
+      height: 15px;
+      margin: -3px 0 0 5px;
+    }
+  }
+}

@@ -20,12 +20,10 @@ import { AvatarModel } from '../models/avatar/avatar'
 import { OAuthClientModel } from '../models/oauth/oauth-client'
 import { OAuthTokenModel } from '../models/oauth/oauth-token'
 import { VideoRedundancyModel } from '../models/redundancy/video-redundancy'
-import { PluginModel } from '../models/server/plugin'
 import { ServerModel } from '../models/server/server'
 import { ServerBlocklistModel } from '../models/server/server-blocklist'
 import { ScheduleVideoUpdateModel } from '../models/video/schedule-video-update'
 import { TagModel } from '../models/video/tag'
-import { ThumbnailModel } from '../models/video/thumbnail'
 import { VideoModel } from '../models/video/video'
 import { VideoBlacklistModel } from '../models/video/video-blacklist'
 import { VideoCaptionModel } from '../models/video/video-caption'
@@ -36,6 +34,11 @@ import { VideoFileModel } from '../models/video/video-file'
 import { VideoImportModel } from '../models/video/video-import'
 import { VideoPlaylistModel } from '../models/video/video-playlist'
 import { VideoPlaylistElementModel } from '../models/video/video-playlist-element'
+import { ThumbnailModel } from '../models/video/thumbnail'
+import { PremiumStoragePlanModel } from '../models/premium-storage-plan'
+import { userPremiumStoragePaymentModel } from '../models/user-premium-storage-payments'
+import { premiumStorageSlowPayer } from '../models/premium-storage-slow-payer'
+import { PluginModel } from '../models/server/plugin'
 import { VideoShareModel } from '../models/video/video-share'
 import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
 import { VideoTagModel } from '../models/video/video-tag'
@@ -126,6 +129,9 @@ async function initDatabaseModels (silent: boolean) {
     VideoPlaylistModel,
     VideoPlaylistElementModel,
     ThumbnailModel,
+    PremiumStoragePlanModel,
+    userPremiumStoragePaymentModel,
+    premiumStorageSlowPayer,
     PluginModel
   ])
 

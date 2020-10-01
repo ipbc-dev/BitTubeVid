@@ -29,6 +29,7 @@ import { MyAccountProfileComponent } from './my-account-settings/my-account-prof
 import { MyAccountSettingsComponent } from './my-account-settings/my-account-settings.component'
 import { MyAccountSubscriptionsComponent } from './my-account-subscriptions/my-account-subscriptions.component'
 import { MyAccountVideoImportsComponent } from './my-account-video-imports/my-account-video-imports.component'
+import { MyAccountStorageSettingsComponent } from '@app/+my-account/my-account-settings/my-account-storage-settings/my-account-storage-settings.component'
 import { MyAccountVideoPlaylistCreateComponent } from './my-account-video-playlists/my-account-video-playlist-create.component'
 import { MyAccountVideoPlaylistElementsComponent } from './my-account-video-playlists/my-account-video-playlist-elements.component'
 import { MyAccountVideoPlaylistUpdateComponent } from './my-account-video-playlists/my-account-video-playlist-update.component'
@@ -36,6 +37,7 @@ import { MyAccountVideoPlaylistsComponent } from './my-account-video-playlists/m
 import { MyAccountVideosComponent } from './my-account-videos/my-account-videos.component'
 import { VideoChangeOwnershipComponent } from './my-account-videos/video-change-ownership/video-change-ownership.component'
 import { MyAccountComponent } from './my-account.component'
+import { MyAccountStorageBillingComponent } from '@app/+my-account/my-account-storage-billing/my-account-storage-billing.component'
 
 @NgModule({
   imports: [
@@ -71,9 +73,11 @@ import { MyAccountComponent } from './my-account.component'
     MyAccountOwnershipComponent,
     MyAccountAcceptOwnershipComponent,
     MyAccountVideoImportsComponent,
+    MyAccountStorageSettingsComponent,
     MyAccountDangerZoneComponent,
     MyAccountSubscriptionsComponent,
     MyAccountBlocklistComponent,
+    MyAccountStorageBillingComponent,
     MyAccountAbusesListComponent,
     MyAccountServerBlocklistComponent,
     MyAccountHistoryComponent,

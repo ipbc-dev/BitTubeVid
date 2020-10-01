@@ -9,6 +9,7 @@ import { SharedMainModule } from '@app/shared/shared-main'
 import { SharedModerationModule } from '@app/shared/shared-moderation'
 import { AdminRoutingModule } from './admin-routing.module'
 import { AdminComponent } from './admin.component'
+import { DialogModule } from 'primeng/dialog'
 import { ConfigComponent, EditCustomConfigComponent } from './config'
 import { ConfigService } from './config/shared/config.service'
 import { FollowersListComponent, FollowsComponent, VideoRedundanciesListComponent } from './follows'
@@ -39,6 +40,7 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     SharedAbuseListModule,
 
     TableModule,
+    DialogModule,
     SelectButtonModule,
     ChartModule
   ],

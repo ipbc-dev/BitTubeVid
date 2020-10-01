@@ -1,10 +1,12 @@
 import { Subscription } from 'rxjs'
 import { HttpEventType, HttpResponse } from '@angular/common/http'
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, AfterViewInit } from '@angular/core'
 import { Router } from '@angular/router'
-import { AuthService, CanComponentDeactivate, Notifier, ServerService, UserService } from '@app/core'
-import { scrollToTop } from '@app/helpers'
+import { AuthService, Notifier, ServerService, UserService } from '@app/core'
 import { FormValidatorService } from '@app/shared/shared-forms'
+import { scrollToTop } from '@app/helpers'
+import { CanComponentDeactivate } from '@app/core/routing/can-deactivate-guard.service'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 import { BytesPipe, VideoCaptionService, VideoEdit, VideoService } from '@app/shared/shared-main'
 import { LoadingBarService } from '@ngx-loading-bar/core'
 import { VideoPrivacy } from '@shared/models'
@@ -19,10 +21,11 @@ import { VideoSend } from './video-send'
     './video-send.scss'
   ]
 })
-export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy, CanComponentDeactivate {
+export class VideoUploadComponent extends VideoSend implements OnInit, AfterViewInit, OnDestroy, CanComponentDeactivate {
   @Output() firstStepDone = new EventEmitter<string>()
   @Output() firstStepError = new EventEmitter<void>()
   @ViewChild('videofileInput') videofileInput: ElementRef<HTMLInputElement>
+  @ViewChild('premiumStorageModal') premiumStorageModal: PremiumStorageModalComponent
 
   // So that it can be accessed in the template
   readonly SPECIAL_SCHEDULED_PRIVACY = VideoEdit.SPECIAL_SCHEDULED_PRIVACY
@@ -77,8 +80,16 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
         })
   }
 
+  ngAfterViewInit () {
+    // Do nothing?
+  }
+
   ngOnDestroy () {
     if (this.videoUploadObservable) this.videoUploadObservable.unsubscribe()
+  }
+
+  showPremiumStorageModal () {
+    this.premiumStorageModal.show()
   }
 
   canDeactivate () {
@@ -265,6 +276,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
       const msg = $localize`Your video quota is exceeded with this video (
 video size: ${videoSizeBytes}, used: ${videoQuotaUsedBytes}, quota: ${videoQuotaBytes})`
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }
@@ -285,6 +297,7 @@ video size: ${videoSizeBytes}, used: ${videoQuotaUsedBytes}, quota: ${videoQuota
       const msg = $localize`Your daily video quota is exceeded with this video (
 video size: ${videoSizeBytes}, used: ${quotaUsedDailyBytes}, quota: ${quotaDailyBytes})`
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }

@@ -63,6 +63,9 @@
   Congratulations! Your video is now available in your private library.
 </div>
 
+
+<premium-storage-modal #premiumStorageModal></premium-storage-modal>
+
 <!-- Hidden because we want to load the component -->
 <form [hidden]="!isUploadingVideo" novalidate [formGroup]="form" class="mb-3">
   <my-video-edit
