@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1599723397731,
+  "timestamp": 1601547599336,
   "index": "/client/kab/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/kab/index.html": "97d29e9fa78b0470f5a8f6ef2f2519b94ca7de80",
+    "/client/kab/index.html": "dad498c60e5675be5b930833671ebe6adef5e5e7",
     "/client/kab/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

@@ -278,6 +278,9 @@ describe('Test config', function () {
                         }
                     }
                 },
+                premium_storage: {
+                    enabled: false
+                },
                 broadcastMessage: {
                     enabled: true,
                     level: 'error',

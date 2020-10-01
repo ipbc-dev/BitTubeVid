@@ -475,6 +475,30 @@ class Emailer {
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
+    addPremiumStorageAboutToExpireJob(username, to, instanceName, daysToExpire) {
+        const days = Math.round(daysToExpire / 86400000);
+        const emailPayload = {
+            to: [to],
+            subject: 'Premium storage is about to expire',
+            text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is about to expire in ${days} days. Once this happen, we will start to delete some videos per day in your account.
+      Please, extend or upgrade your Premium Storage at your account settings`
+        };
+        logger_1.logger.info('addPremiumStorageAboutToExpireJob going to send email with payload: ', emailPayload);
+        return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+    }
+    addPremiumStorageExpiredJob(username, to, instanceName, videosToDelete) {
+        const emailPayload = {
+            to: [to],
+            subject: 'Premium storage is expired',
+            text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account.
+      This will be repeated every day until you don't upgrade your storage.
+      Please, extend or upgrade your Premium Storage at your account settings`
+        };
+        logger_1.logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload);
+        return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+    }
     sendMail(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!config_1.isEmailEnabled()) {

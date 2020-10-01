@@ -65,6 +65,9 @@ const CONFIG = {
         PLUGINS_DIR: core_utils_1.buildPath(config.get('storage.plugins')),
         CLIENT_OVERRIDES_DIR: core_utils_1.buildPath(config.get('storage.client_overrides'))
     },
+    PREMIUM_STORAGE: {
+        get ENABLED() { return config.get('premium_storage.enabled'); }
+    },
     WEBSERVER: {
         SCHEME: config.get('webserver.https') === true ? 'https' : 'http',
         WS: config.get('webserver.https') === true ? 'wss' : 'ws',

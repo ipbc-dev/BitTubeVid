@@ -14,6 +14,7 @@ const video_transcoding_1 = require("./handlers/video-transcoding");
 const activitypub_follow_1 = require("./handlers/activitypub-follow");
 const video_import_1 = require("./handlers/video-import");
 const video_views_1 = require("./handlers/video-views");
+const premium_storage_checker_1 = require("./handlers/premium-storage-checker");
 const activitypub_refresher_1 = require("./handlers/activitypub-refresher");
 const video_file_import_1 = require("./handlers/video-file-import");
 const video_redundancy_1 = require("@server/lib/job-queue/handlers/video-redundancy");
@@ -27,6 +28,7 @@ const handlers = {
     'email': email_1.processEmail,
     'video-import': video_import_1.processVideoImport,
     'videos-views': video_views_1.processVideosViews,
+    'premium-storage-checker': premium_storage_checker_1.processPremiumStorageChecker,
     'activitypub-refresher': activitypub_refresher_1.refreshAPObject,
     'video-redundancy': video_redundancy_1.processVideoRedundancy
 };
@@ -40,6 +42,7 @@ const jobTypes = [
     'video-file-import',
     'video-import',
     'videos-views',
+    'premium-storage-checker',
     'activitypub-refresher',
     'video-redundancy'
 ];
@@ -152,7 +155,10 @@ class JobQueue {
     addRepeatableJobs() {
         this.queues['videos-views'].add({}, {
             repeat: constants_1.REPEAT_JOBS['videos-views']
-        }).catch(err => logger_1.logger.error('Cannot add repeatable job.', { err }));
+        }).catch(err => logger_1.logger.error('Cannot add videos-views repeatable job.', { err }));
+        this.queues['premium-storage-checker'].add({}, {
+            repeat: constants_1.REPEAT_JOBS['premium-storage-checker']
+        }).catch(err => logger_1.logger.error('Cannot add premium-storage-checker repeatable job.', { err }));
     }
     filterJobTypes(jobType) {
         if (!jobType)

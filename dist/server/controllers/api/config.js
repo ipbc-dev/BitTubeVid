@@ -154,6 +154,9 @@ function getConfig(req, res) {
                     }
                 }
             },
+            premium_storage: {
+                enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
+            },
             broadcastMessage: {
                 enabled: config_1.CONFIG.BROADCAST_MESSAGE.ENABLED,
                 message: config_1.CONFIG.BROADCAST_MESSAGE.MESSAGE,
@@ -377,6 +380,9 @@ function customConfig() {
                     indexUrl: config_1.CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
                 }
             }
+        },
+        premium_storage: {
+            enabled: config_1.CONFIG.PREMIUM_STORAGE.ENABLED
         },
         broadcastMessage: {
             enabled: config_1.CONFIG.BROADCAST_MESSAGE.ENABLED,

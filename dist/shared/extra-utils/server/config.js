@@ -153,6 +153,9 @@ function updateCustomSubConfig(url, token, newConfig) {
                 }
             }
         },
+        premium_storage: {
+            enabled: false
+        },
         broadcastMessage: {
             enabled: true,
             level: 'warning',

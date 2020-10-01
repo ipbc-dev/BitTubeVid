@@ -105,6 +105,7 @@ const JOB_ATTEMPTS = {
     'video-import': 1,
     'email': 5,
     'videos-views': 1,
+    'premium-storage-checker': 1,
     'activitypub-refresher': 1,
     'video-redundancy': 1
 };
@@ -119,6 +120,7 @@ const JOB_CONCURRENCY = {
     'video-import': 1,
     'email': 5,
     'videos-views': 1,
+    'premium-storage-checker': 1,
     'activitypub-refresher': 1,
     'video-redundancy': 1
 };
@@ -133,6 +135,7 @@ const JOB_TTL = {
     'video-import': 1000 * 3600 * 2,
     'email': 60000 * 10,
     'videos-views': undefined,
+    'premium-storage-checker': undefined,
     'activitypub-refresher': 60000 * 10,
     'video-redundancy': 1000 * 3600 * 3
 };
@@ -140,6 +143,9 @@ exports.JOB_TTL = JOB_TTL;
 const REPEAT_JOBS = {
     'videos-views': {
         cron: '1 * * * *'
+    },
+    'premium-storage-checker': {
+        cron: '0 0 * * *'
     }
 };
 exports.REPEAT_JOBS = REPEAT_JOBS;
@@ -652,6 +658,7 @@ if (core_utils_1.isTestInstance() === true) {
     SCHEDULER_INTERVALS_MS.updateVideos = 5000;
     SCHEDULER_INTERVALS_MS.autoFollowIndexInstances = 5000;
     REPEAT_JOBS['videos-views'] = { every: 5000 };
+    REPEAT_JOBS['premium-storage-checker'] = { every: 600000 };
     REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1;
     exports.VIDEO_VIEW_LIFETIME = VIDEO_VIEW_LIFETIME = 1000;
     exports.CONTACT_FORM_LIFETIME = CONTACT_FORM_LIFETIME = 1000;

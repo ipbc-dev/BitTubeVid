@@ -24,12 +24,10 @@ const avatar_1 = require("../models/avatar/avatar");
 const oauth_client_1 = require("../models/oauth/oauth-client");
 const oauth_token_1 = require("../models/oauth/oauth-token");
 const video_redundancy_1 = require("../models/redundancy/video-redundancy");
-const plugin_1 = require("../models/server/plugin");
 const server_1 = require("../models/server/server");
 const server_blocklist_1 = require("../models/server/server-blocklist");
 const schedule_video_update_1 = require("../models/video/schedule-video-update");
 const tag_1 = require("../models/video/tag");
-const thumbnail_1 = require("../models/video/thumbnail");
 const video_1 = require("../models/video/video");
 const video_blacklist_1 = require("../models/video/video-blacklist");
 const video_caption_1 = require("../models/video/video-caption");
@@ -40,6 +38,11 @@ const video_file_1 = require("../models/video/video-file");
 const video_import_1 = require("../models/video/video-import");
 const video_playlist_1 = require("../models/video/video-playlist");
 const video_playlist_element_1 = require("../models/video/video-playlist-element");
+const thumbnail_1 = require("../models/video/thumbnail");
+const premium_storage_plan_1 = require("../models/premium-storage-plan");
+const user_premium_storage_payments_1 = require("../models/user-premium-storage-payments");
+const premium_storage_slow_payer_1 = require("../models/premium-storage-slow-payer");
+const plugin_1 = require("../models/server/plugin");
 const video_share_1 = require("../models/video/video-share");
 const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
 const video_tag_1 = require("../models/video/video-tag");
@@ -126,6 +129,9 @@ function initDatabaseModels(silent) {
             video_playlist_1.VideoPlaylistModel,
             video_playlist_element_1.VideoPlaylistElementModel,
             thumbnail_1.ThumbnailModel,
+            premium_storage_plan_1.PremiumStoragePlanModel,
+            user_premium_storage_payments_1.userPremiumStoragePaymentModel,
+            premium_storage_slow_payer_1.premiumStorageSlowPayer,
             plugin_1.PluginModel
         ]);
         yield checkPostgresExtensions();

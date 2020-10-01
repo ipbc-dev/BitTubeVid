@@ -118,6 +118,9 @@ describe('Test config API validators', function () {
                 }
             }
         },
+        premium_storage: {
+            enabled: false
+        },
         broadcastMessage: {
             enabled: true,
             dismissable: true,
