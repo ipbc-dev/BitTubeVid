@@ -62,7 +62,7 @@ export class MyAccountStorageBillingComponent implements OnInit {
   }
 
   getHRTime (timestamp: any) {
-    return `${timestamp / 2678400000} month/s`
+    return `${timestamp / 2678400000} month[s]`
   }
   // getIdentifier () {
   //   return 'MyAccountBlocklistComponent'

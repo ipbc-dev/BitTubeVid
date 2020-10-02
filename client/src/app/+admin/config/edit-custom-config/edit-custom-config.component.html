@@ -1043,7 +1043,7 @@
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.duration" [ngModelOptions]="{standalone: true}"
               >
-              <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month/s</label>
+              <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month[s]</label>
             </div>
 
             <div class="form-group">
@@ -1063,7 +1063,7 @@
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.expiration" [ngModelOptions]="{standalone: true}"
               >
-              <label *ngIf="newStoragePlan.expiration > 0" class="storage-label" for="newPlanExpiration">{{newStoragePlan.expiration / 2628000000}} month/s</label>
+              <label *ngIf="newStoragePlan.expiration > 0" class="storage-label" for="newPlanExpiration">{{newStoragePlan.expiration / 2628000000}} month[s]</label>
               <label *ngIf="newStoragePlan.expiration == 0" class="storage-label" for="newPlanExpiration" i18n >never</label>
             </div>
 
@@ -1194,7 +1194,7 @@
                   class="storage-input storage-numeric-input"
                   [(ngModel)]="newStoragePlan.duration" [ngModelOptions]="{standalone: true}"
                 >
-                <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month/s</label>
+                <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month[s]</label>
               </div>
 
               <div class="form-group">
@@ -1308,7 +1308,7 @@
                             <input pInputText type="number" min="1" step="2628000000" [(ngModel)]="rowPlan.updateData.duration" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.duration}} | {{numberRound(rowPlan.duration / 2628000000)}} month/s
+                            {{rowPlan.duration}} | {{numberRound(rowPlan.duration / 2628000000)}} month[s]
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1320,7 +1320,7 @@
                         </ng-template>
                         <ng-template pTemplate="output">
                           <div *ngIf="rowPlan.expiration > 0" >
-                            {{rowPlan.expiration}} | {{numberRound(rowPlan.expiration / 2628000000)}} month/s
+                            {{rowPlan.expiration}} | {{numberRound(rowPlan.expiration / 2628000000)}} month[s]
                           </div>
                           <div *ngIf="rowPlan.expiration == 0">
                             0 | Never
