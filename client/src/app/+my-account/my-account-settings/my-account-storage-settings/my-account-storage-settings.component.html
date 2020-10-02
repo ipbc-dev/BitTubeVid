@@ -31,7 +31,7 @@
   </div>
   
   <div class="form-group form-group-select">
-    <!-- <div *ngIf="userHavePremiumStorage()"> -->
+
       <label i18n for="storagePlan">Upgrade/Extend your storage plan</label>
       <my-help>
         <ng-template ptTemplate="customHtml">
@@ -40,33 +40,26 @@
           </ng-container>
         </ng-template>
       </my-help>
-    <!-- </div> -->
-    <!-- <div *ngIf="!userHavePremiumStorage()">
-      <label i18n for="storagePlan">Choose your storage plan</label>
-      <my-help>
-        <ng-template ptTemplate="customHtml">
-          <ng-container i18n>
-            You can get more storage paying with <strong>Tube Coin's</strong>
-          </ng-container>
-        </ng-template>
-      </my-help>
-    </div> -->
+
   
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
       <select formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
         <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
         <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
       </select>
-      <!-- - {{ getHRBytes(plan.dailyQuota) }}/daily by {{ plan.priceTube }} Tube's/month -->
     </div>
-    <!-- <div *ngIf="chosenPlan !== null" class="chosenPlanInfo">
-      <label class="storageLabel" for="spanQuota">Quota: </label><span id="spanQuota" class="storageSpan">{{ getHRBytes(chosenPlan.quota) }}</span>
-      <label class="storageLabel" for="spanDailyQuota">Daily Quota: </label><span id="spanDailyQuota" class="storageSpan">{{ getHRBytes(chosenPlan.dailyQuota) }}</span>
-      <label class="storageLabel" for="spanPrice">Price: </label><span id="spanPrice" class="storageSpan">{{ chosenPlan.priceTube }} Tubes</span>
-      <label class="storageLabel" for="spanDuration">Duration: </label><span id="spanDuration" class="storageSpan">{{ (chosenPlan.duration / 2628000000) }} month/s</span>
-    </div> -->
+
     <div *ngIf="chosenPlan !== null">
+
       <label i18n for="chosenPlanTable">Chosen plan info</label>
+      <my-help>
+        <ng-template ptTemplate="customHtml">
+          <ng-container i18n>
+            Values shown here are <strong>totals, not an aggregate</strong> over your default storage.
+          </ng-container>
+        </ng-template>
+      </my-help>
+
       <table class="planTable" id="chosenPlanTable">
         <tr class="planTableHeader">
           <th class="planField">Daily Quota</th>
@@ -77,13 +70,13 @@
         <tr class="planTableBody">
           <th class="planField">{{ getHRBytes(chosenPlan.dailyQuota) }}</th>
           <th class="planField">{{ getHRBytes(chosenPlan.quota) }}</th>
-          <th class="planField">{{ (chosenPlan.duration / 2628000000) }} month/s</th>
+          <th class="planField">{{ (chosenPlan.duration / 2628000000) }} month[s]</th>
           <th class="planField">{{ chosenPlan.priceTube }}</th>
         </tr>
       </table>
+
       <div *ngFor="let plan of storagePlans" >
         <div *ngIf="plan.tubePayId == chosenPlan.tubePayId" [attr.data-tubepay-product]="plan.tubePayId"  data-tubepay-type="peertube-premium-storage" class="button-tubePay">
-          <!-- <input type="submit" i18n-value [value]="getButtonValue()" [disabled]="isUpgradeDisabled()"> -->
         </div>
       </div>
     </div>

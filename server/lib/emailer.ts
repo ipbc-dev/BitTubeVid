@@ -575,17 +575,27 @@ class Emailer {
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
   }
 
-  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete) {
-    const emailPayload: EmailPayload = {
-      to: [ to ],
-      subject: 'Premium storage is expired',
-      text: `Hi ${username}!
-      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account.
+  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete, userVideos) {
+    try {
+      let removedVideosList = ''
+      for (const videoName of userVideos) {
+        removedVideosList += `
+      - ` + videoName
+      }
+      const emailPayload: EmailPayload = {
+        to: [ to ],
+        subject: 'Premium storage is expired',
+        text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account: 
+      ` + removedVideosList + `
       This will be repeated every day until you don't upgrade your storage.
       Please, extend or upgrade your Premium Storage at your account settings`
+      }
+      logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload)
+      return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+    } catch (err) {
+      console.error('Something went wrong with addPremiumStorageExpiredJob: ', err)
     }
-    logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload)
-    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
   }
 
   async sendMail (options: EmailPayload) {

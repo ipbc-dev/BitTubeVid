@@ -247,6 +247,8 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
           // console.log('ICEICE paymentPost response is: ', resp)
           if (resp['success'] && resp['data'] && resp['data'].active === true) {
             this.startSubscriptions()
+            const event = new Event('premiumStorageAddedSuccessfully')
+            document.body.dispatchEvent(event)
           }
         },
           err => {

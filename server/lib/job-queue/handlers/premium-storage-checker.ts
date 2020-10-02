@@ -75,18 +75,25 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
     const actorId = userInfo.Account.id
     const userVideos = await VideoModel.listUserVideosForApi(actorId, 0, videosAmmountToDelete, "-createdAt")
     const userVideoQuota = userInfo.videoQuota
-    // Send email
-    Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, CONFIG.WEBSERVER.HOSTNAME, videosAmmountToDelete)
+    let deletedVideosCounter = 0
+    const deletedVideosNames = []
     //  1 - Get x number of videos from user
     let userUsedVideoQuota
     for (const video of userVideos.data) {
       userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)
       if (userUsedVideoQuota > userVideoQuota) {
         // Delete video
-        const res = await video.destroy()
+        deletedVideosNames.push(video.name)
+        await video.destroy()
+        deletedVideosCounter++
         Hooks.runAction('action:api.video.deleted', { video })
-        console.log('premiumStorageChecker video removed: ', res)
       }
+    }
+    if (deletedVideosCounter > 0) {
+      // Send email
+      //   console.log('ICECIE videoNames are: ', deletedVideosNames)
+      //   console.log(`cleanVideosFromSlowPayers going to send email after deleting ${deletedVideosCounter} videos`)
+        Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, CONFIG.WEBSERVER.HOSTNAME, deletedVideosCounter, deletedVideosNames)
     }
     userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)
     if (userUsedVideoQuota <= userVideoQuota) {
