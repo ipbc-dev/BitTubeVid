@@ -487,17 +487,28 @@ class Emailer {
         logger_1.logger.info('addPremiumStorageAboutToExpireJob going to send email with payload: ', emailPayload);
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
-    addPremiumStorageExpiredJob(username, to, instanceName, videosToDelete) {
-        const emailPayload = {
-            to: [to],
-            subject: 'Premium storage is expired',
-            text: `Hi ${username}!
-      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account.
+    addPremiumStorageExpiredJob(username, to, instanceName, videosToDelete, userVideos) {
+        try {
+            let removedVideosList = '';
+            for (const videoName of userVideos) {
+                removedVideosList += `
+      - ` + videoName;
+            }
+            const emailPayload = {
+                to: [to],
+                subject: 'Premium storage is expired',
+                text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account: 
+      ` + removedVideosList + `
       This will be repeated every day until you don't upgrade your storage.
       Please, extend or upgrade your Premium Storage at your account settings`
-        };
-        logger_1.logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload);
-        return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+            };
+            logger_1.logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload);
+            return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
+        }
+        catch (err) {
+            console.error('Something went wrong with addPremiumStorageExpiredJob: ', err);
+        }
     }
     sendMail(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {

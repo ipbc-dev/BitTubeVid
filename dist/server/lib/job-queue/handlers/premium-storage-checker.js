@@ -80,15 +80,20 @@ function cleanVideosFromSlowPayers(videosAmmountToDelete) {
             const actorId = userInfo.Account.id;
             const userVideos = yield video_1.VideoModel.listUserVideosForApi(actorId, 0, videosAmmountToDelete, "-createdAt");
             const userVideoQuota = userInfo.videoQuota;
-            emailer_1.Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, config_1.CONFIG.WEBSERVER.HOSTNAME, videosAmmountToDelete);
+            let deletedVideosCounter = 0;
+            const deletedVideosNames = [];
             let userUsedVideoQuota;
             for (const video of userVideos.data) {
                 userUsedVideoQuota = yield getUserUsedQuota(slowPayer.userId);
                 if (userUsedVideoQuota > userVideoQuota) {
-                    const res = yield video.destroy();
+                    deletedVideosNames.push(video.name);
+                    yield video.destroy();
+                    deletedVideosCounter++;
                     hooks_1.Hooks.runAction('action:api.video.deleted', { video });
-                    console.log('premiumStorageChecker video removed: ', res);
                 }
+            }
+            if (deletedVideosCounter > 0) {
+                emailer_1.Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, config_1.CONFIG.WEBSERVER.HOSTNAME, deletedVideosCounter, deletedVideosNames);
             }
             userUsedVideoQuota = yield getUserUsedQuota(slowPayer.userId);
             if (userUsedVideoQuota <= userVideoQuota) {

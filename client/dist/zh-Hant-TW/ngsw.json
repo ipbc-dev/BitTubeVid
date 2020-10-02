@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1601547599269,
+  "timestamp": 1601655418263,
   "index": "/client/zh-Hant-TW/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/zh-Hant-TW/index.html": "6989ea6c5e905172af695197efd08704b0da207c",
+    "/client/zh-Hant-TW/index.html": "ecb5ff6eb6b82aca10098d9d8ff6aa14de80d086",
     "/client/zh-Hant-TW/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
