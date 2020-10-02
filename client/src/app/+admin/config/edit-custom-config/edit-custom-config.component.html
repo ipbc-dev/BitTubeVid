@@ -1092,143 +1092,25 @@
               </div>
           </p-footer>
       </p-dialog>
-        <!-- <div class="form-row mt-5">
-
-          <div class="form-group col-12 col-lg-4 col-xl-3">
-            <div i18n class="inner-form-title">ADD PLAN</div>
-          </div>
-
-          <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
-            <ng-container>
-
-              <div class="form-group">
-                <label i18n for="newPlanName">Name</label>
-                <my-help>
-                  <ng-template ptTemplate="customHtml">
-                    <ng-container i18n>
-                    This is the Name of the plan. It is a string with a maximun length of 50.<br /><br />
-                    Anyway, we recomend to use short & user friendly names
-                    </ng-container>
-                  </ng-template>
-                </my-help>
-                <input
-                  type="text" id="newPlanName" class="form-control"
-                  class="storage-input storage-text-input"
-                  [(ngModel)]="newStoragePlan.name" [ngModelOptions]="{standalone: true}"
-                >
-              </div>
-
-              <div class="form-group">
-                <div class="label-with-help">
-                  <label i18n for="newPlanQuota">Quota</label>
-                  <my-help>
-                    <ng-template ptTemplate="customHtml">
-                      <ng-container i18n>
-                        This value is the TOTAL amount of data that a user can upload with this plan.<br /><br />
-                        It's an integer in BYTES. For unlimited storage use -1
-                      </ng-container>
-                    </ng-template>
-                  </my-help>
-                </div>
-                <input
-                  type="number" min="-1" step="10737418240" id="newPlanQuota" class="form-control"
-                  class="storage-input storage-numeric-input"
-                  [(ngModel)]="newStoragePlan.quota" [ngModelOptions]="{standalone: true}"
-                >
-                <label *ngIf="newStoragePlan.quota > 0" class="storage-label" for="newPlanQuota">{{getHRBytes(newStoragePlan.quota)}}</label>
-              </div>
-
-              <div class="form-group">
-                <div class="label-with-help">
-                  <label i18n for="newPlanDailyQuota">Daily Quota</label>
-                  <my-help>
-                    <ng-template ptTemplate="customHtml">
-                      <ng-container i18n>
-                        This value is the DAILY amount of data that a user can upload with this plan.<br /><br />
-                        It's an integer in BYTES. For unlimited uploading use -1
-                      </ng-container>
-                    </ng-template>
-                  </my-help>
-                </div>
-                <input
-                  type="number" min="-1" step="1073741824" id="newPlanDailyQuota" class="form-control"
-                  class="storage-input storage-numeric-input"
-                  [(ngModel)]="newStoragePlan.dailyQuota" [ngModelOptions]="{standalone: true}"
-                >
-                <label *ngIf="newStoragePlan.dailyQuota > 0" class="storage-label" for="newPlanDailyQuota">{{getHRBytes(newStoragePlan.dailyQuota)}}</label>
-              </div>
-
-              <div class="form-group">
-                <div class="label-with-help">
-                  <label i18n for="newPlanPrice">Price</label>
-                  <my-help>
-                    <ng-template ptTemplate="customHtml">
-                      <ng-container i18n>
-                        This value is the Price in Tube Coins for this plan. <br /><br />
-                        It is a float with 8 decimals.
-                      </ng-container>
-                    </ng-template>
-                  </my-help>
-                </div>
-                <input
-                  type="number" min="0" step="1000" id="newPlanPrice" class="form-control"
-                  class="storage-input storage-numeric-input"
-                  [(ngModel)]="newStoragePlan.priceTube" [ngModelOptions]="{standalone: true}"
-                >
-              </div>
-
-              <div class="form-group">
-                <div class="label-with-help">
-                  <label i18n for="newPlanDuration">Duration</label>
-                  <my-help>
-                    <ng-template ptTemplate="customHtml">
-                      <ng-container i18n>
-                        This value is the Duration (lifespan) of this plan. It is an integer in miliseconds.<br /><br />
-                        Minimum value is 1 month and maximun 1 year.
-                      </ng-container>
-                    </ng-template>
-                  </my-help>
-                </div>
-                <input
-                  type="number" min="2628000000" max="31536000000" step="2628000000" id="newPlanDuration" class="form-control"
-                  class="storage-input storage-numeric-input"
-                  [(ngModel)]="newStoragePlan.duration" [ngModelOptions]="{standalone: true}"
-                >
-                <label *ngIf="newStoragePlan.duration > 0" class="storage-label" for="newPlanDuration">{{newStoragePlan.duration / 2628000000}} month[s]</label>
-              </div>
-
-              <div class="form-group">
-                <my-peertube-checkbox inputName="newPlanActivated" 
-                [(ngModel)]="newStoragePlan.active" [ngModelOptions]="{standalone: true}"
-                >
-                  <ng-template ptTemplate="label">
-                    <ng-container i18n>Active</ng-container>
-                  </ng-template>
-                  <ng-template ptTemplate="help">
-                    <ng-container i18n>
-                      You can create the plan activated or deactivated.<br /><br />
-                      You will be able to modify this value in future.
-                    </ng-container>
-                  </ng-template>
-                </my-peertube-checkbox>
-              </div>
-
-              <div class="form-row mt-4"> 
-                <div class="col-md-7 col-xl-5"></div>
-                <div class="col-md-5 col-xl-5">
-                  <input (click)="addPlanButtonClick()" type="submit" i18n-value value="Add plan" [disabled]="isAddPlanButtonDisabled()">
-                  <span class="form-error" i18n *ngIf="showAddButtonSubmitError()">It seems like some value is wrong, please, check it before resubmit.</span>
-                </div>
-              </div>
-
-            </ng-container>
-          </div>
-        </div> -->
         <!-- PLANS TABLE -->
         <div class="form-row mt-5">
 
           <div class="form-group col-12">
             <div i18n class="inner-form-title">AVAILABLE PLANS</div>
+          </div>
+
+          <div class="form-group col-12">
+            <div class="label-with-help">
+              <label i18n for="newPlanExpiration">IMPORTANT!</label>
+              <my-help>
+                <ng-template ptTemplate="customHtml">
+                  <ng-container i18n>
+                    You must add your plans in size order to avoid plan downgrading <br /><br />
+                    You can always add,edit or delete plans. They must be active for users to buy them.
+                  </ng-container>
+                </ng-template>
+              </my-help>
+            </div>
           </div>
 
           <div class="form-group col-12">
