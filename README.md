@@ -120,7 +120,7 @@ Be it as a user or an instance administrator, you can decide what your experienc
 
 ---
 
-<img src="https://raw.githubusercontent.com/ipbc-dev/BitTubeVid/tube/support/doc/images/premiumStorage.png" align="right" height="200px" max-width="25%"/>
+<img src="https://raw.githubusercontent.com/ipbc-dev/BitTubeVid/tube/support/doc/images/premiumStorage.png" align="right" height="200px" style="max-width: 25%"/>
 
 <h3 align="right">BitTube exclusive! Premium storage</h3>
 <p align="right">
