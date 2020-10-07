@@ -9,7 +9,7 @@
   * **/!\ VERY IMPORTANT /!\\** 
   * ONLY ROOT USER CAN ADD PREMIUM STORAGE PLANS
   * YOU NEED TO HAVE BITTUBE-AIRTIME-MODULE PLUGIN INSTALLED & UPGRADED
-  * YOU NEED TO LINK YOUR PLATFORM TO YOUR ACCOUNT BEFORE ACTIVATING PREMIUM STORAGE PLAN
+  * YOU NEED TO LINK YOUR PLATFORM TO YOUR ACCOUNT BEFORE ACTIVATING PREMIUM STORAGE PLAN (you will receive your payments there)
   * TO PREVENT PLAN DOWNGRADING (NOT ALLOWED) YOU NEED TO ADD THE PLANS IN ORDER FROM SMALLEST TO BIGGEST AMOUNT OF DATA
   * You can create Plans with the same size and different durations but always respecting size order
   * You need to add a new variable 'premium_storage: { enabled: false }' in your production config file. There is an example in our default.yaml
