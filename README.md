@@ -120,6 +120,15 @@ Be it as a user or an instance administrator, you can decide what your experienc
 
 ---
 
+<img src="https://raw.githubusercontent.com/ipbc-dev/BitTubeVid/tube/support/doc/images/subscribefollow.png" align="right" height="200px"/>
+
+<h3 align="right">BitTube exclusive! Premium storage</h3>
+<p align="right">
+Exclusively for BitTube instances in partnership with BitTube AirTime Module. Now you can add your own premium storage plans so that your users can expand their content in exchange for a subscription (you can decide how long it lasts). It also includes a daily routine that informs users by email when their subscription is about to expire and deletes 10 videos a day of each user who is not up to date with payment.
+</p>
+
+---
+
 <h3 align="right">Communities that help each other</h3>
 <p align="right">
 In addition to visitors using WebTorrent to share the load among them, instances can help each other by caching one another's videos. This way even small instances have a way to show content to a wider audience, as they will be shouldered by friend instances (more about that in our <a href="https://docs.joinpeertube.org/#/contribute-architecture?id=redundancy-between-instances">redundancy guide</a>).

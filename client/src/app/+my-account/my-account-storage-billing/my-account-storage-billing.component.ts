@@ -62,34 +62,6 @@ export class MyAccountStorageBillingComponent implements OnInit {
   }
 
   getHRTime (timestamp: any) {
-    return `${timestamp / 2678400000} month[s]`
+    return `${Math.round(timestamp / 2678400000)} month[s]`
   }
-  // getIdentifier () {
-  //   return 'MyAccountBlocklistComponent'
-  // }
-
-  // unblockAccount (accountBlock: AccountBlock) {
-  //   const blockedAccount = accountBlock.blockedAccount
-
-  //   this.blocklistService.unblockAccountByUser(blockedAccount)
-  //       .subscribe(
-  //         () => {
-  //           this.notifier.success(this.i18n('Account {{nameWithHost}} unmuted.', { nameWithHost: blockedAccount.nameWithHost }))
-
-  //           this.loadData()
-  //         }
-  //       )
-  // }
-
-  // protected loadData () {
-  //   return this.blocklistService.getUserAccountBlocklist(this.pagination, this.sort)
-  //     .subscribe(
-  //       resultList => {
-  //         this.blockedAccounts = resultList.data
-  //         this.totalRecords = resultList.total
-  //       },
-
-  //       err => this.notifier.error(err.message)
-  //     )
-  // }
 }
