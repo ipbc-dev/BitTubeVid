@@ -1270,6 +1270,74 @@
             </div>
           </ng-container>
         </div>
+        <!-- OVERVIEW -->
+        <div *ngIf="premiumStorageActive" id="premiumStorageOverview" class="overview form-row mt-5">
+          <div class="form-group col-12">
+            <div i18n class="inner-form-title">STORAGE OVERVIEW</div>
+          </div>
+
+          <ng-container class="form-group form-group-right col-12">
+            <div class="col-6 col-lg-4 col-xl-3">
+              <div class="card stat">
+                <div class="card-body">
+                  <p class="stat-value">{{ serverStats.totalLocalVideoFilesSize | bytes:1 }}</p>
+                  <p class="stat-label" i18n>of hosted video</p>
+                </div>
+                <i class="glyphicon glyphicon-film"></i>
+              </div>
+            </div>
+          </ng-container>
+
+
+          <ng-container class="form-group form-group-right col-12">
+            <div class="col-6 col-lg-4 col-xl-3">
+              <div class="card stat">
+                <div class="card-body">
+                  <p class="stat-value">{{ serverStats.premiumStorageStadistics.soldStorage | bytes:1 }}</p>
+                  <p class="stat-label" i18n>of sold storage</p>
+                </div>
+                <i class="glyphicon glyphicon-hdd"></i>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-container class="form-group form-group-right col-12">
+            <div class="col-6 col-lg-4 col-xl-3">
+              <div class="card stat">
+                <div class="card-body">
+                  <p class="stat-value">{{ serverStats.premiumStorageStadistics.activePayments }}</p>
+                  <p class="stat-label" i18n>users with active payments</p>
+                </div>
+                <i class="glyphicon glyphicon-user"></i>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-container class="form-group form-group-right col-12">
+            <div class="col-6 col-lg-4 col-xl-3">
+              <div class="card stat">
+                <div class="card-body">
+                  <p class="stat-value">{{ serverStats.premiumStorageStadistics.currentMonthIncome }}</p>
+                  <p class="stat-label" i18n>Tubes earned this month</p>
+                </div>
+                <i class="glyphicon glyphicon-piggy-bank"></i>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- <ng-container class="form-group form-group-right col-12">
+            <div class="col-6 col-lg-4 col-xl-3">
+              <div class="card stat">
+                <div class="card-body">
+                  <p class="stat-value">{{ serverStats.premiumStorageStadistics.lastMonthIncome }}</p>
+                  <p class="stat-label" i18n>Tubes earned last month</p>
+                </div>
+                <i class="glyphicon glyphicon-piggy-bank"></i>
+              </div>
+            </div>
+          </ng-container> -->
+
+        </div>
 
 
       </ng-template>

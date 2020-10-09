@@ -1,6 +1,14 @@
 import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt, DataType } from 'sequelize-typescript'
 import { PremiumStoragePlanModel } from './premium-storage-plan'
 import { UserModel } from './account/user'
+import { logger } from '@server/helpers/logger'
+
+interface statsObject {
+  activePayments: number
+  soldStorage: number
+  currentMonthIncome: number
+  lastMonthIncome: number
+}
 
 @Table({
   tableName: 'userPremiumStoragePayment',
@@ -70,6 +78,37 @@ export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaym
 
   @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
   active!: boolean
+
+  static async getStats () {
+    try {
+      const today = new Date()
+      const lastMonth = new Date("last day of last month").getMonth()
+      const payments = await this.getAllActivePayments()
+      const resp: statsObject = {
+        activePayments: 0,
+        soldStorage: 0,
+        currentMonthIncome: 0,
+        lastMonthIncome: 0
+      }
+      /* Calculating stadistics */
+      for (var payment of payments) {
+        const paymentMonth = new Date(payment.dateFrom).getMonth()
+        resp.activePayments++
+        resp.soldStorage = resp.soldStorage + parseInt(payment.quota.toString())
+        if (paymentMonth === today.getMonth()) { /* If payment belongs to this month */
+          resp.currentMonthIncome = resp.currentMonthIncome + parseFloat(payment.priceTube.toString())
+        }
+        if (paymentMonth === lastMonth) { /* If payment belongs to last month */
+          resp.lastMonthIncome = resp.lastMonthIncome + payment.priceTube
+        }
+      }
+      return resp
+    } catch (err) {
+      logger.error('ICEICE some error ocurred at getStats', err)
+      return err
+    }
+
+  }
 
   static async getUserPayments (userId: number) {
     const paymentsResponse = await userPremiumStoragePaymentModel.findAll({

@@ -49,6 +49,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   resolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
 
+  serverStats: any = null
   storagePlans: any[] = []
   planIndex: number = null
   premiumStorageActive = false
@@ -111,6 +112,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       { value: 4, label: '4' },
       { value: 8, label: '8' }
     ]
+    // Subcribe to serveStats
+    this.serverService.getServerStats()
+    .subscribe(res => {
+      this.serverStats = res
+    })
   }
 
   get videoQuotaOptions () {
@@ -317,6 +323,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       }
       if (config) {
         this.serverConfig = config
+        this.premiumStorageActive = config.premium_storage.enabled
       }
     })
   }

@@ -11,6 +11,7 @@ import { cacheRoute } from '../../../middlewares/cache'
 import { VideoFileModel } from '../../../models/video/video-file'
 import { CONFIG } from '../../../initializers/config'
 import { VideoRedundancyStrategyWithManual } from '@shared/models'
+import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
 
 const statsRouter = express.Router()
 
@@ -25,6 +26,7 @@ async function getStats (req: express.Request, res: express.Response) {
   const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = await UserModel.getStats()
   const { totalInstanceFollowers, totalInstanceFollowing } = await ActorFollowModel.getStats()
   const { totalLocalVideoFilesSize } = await VideoFileModel.getStats()
+  const premiumStorageStadistics = await userPremiumStoragePaymentModel.getStats()
 
   const strategies = CONFIG.REDUNDANCY.VIDEOS.STRATEGIES
                           .map(r => ({
@@ -56,6 +58,8 @@ async function getStats (req: express.Request, res: express.Response) {
 
     totalInstanceFollowers,
     totalInstanceFollowing,
+
+    premiumStorageStadistics,
 
     videosRedundancy: videosRedundancyStats
   }

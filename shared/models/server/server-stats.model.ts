@@ -17,6 +17,8 @@ export interface ServerStats {
   totalInstanceFollowers: number
   totalInstanceFollowing: number
 
+  premiumStorageStadistics: object
+
   videosRedundancy: VideosRedundancyStats[]
 }
 

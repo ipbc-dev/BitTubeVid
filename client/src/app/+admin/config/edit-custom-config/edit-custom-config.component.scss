@@ -196,7 +196,57 @@ ngb-tabset:not(.previews) ::ng-deep {
     }
   }
 }
-
+:host ::ng-deep .action-button-edit, :host ::ng-deep .action-button-delete{
+  padding: 0px 15px !important;
+}
 .submit-error {
   margin-bottom: 20px;
+}
+/* Premium Storage Overview */
+.overview {
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  .stat {
+    text-align: center;
+    margin-bottom: 1em;
+    overflow: hidden;
+  
+    .stat-value {
+      font-size: 2.25em;
+      line-height: 1em;
+      margin: 0;
+    }
+  
+    .stat-label {
+      font-size: 1.15em;
+      margin: 0;
+    }
+  
+    .glyphicon {
+      opacity: 0.12;
+      position: absolute;
+      left: 16px;
+      top: -24px;
+  
+      &.icon-bottom {
+        top: 4px;
+      }
+  
+      &::before {
+        font-size: 8em;
+      }
+    }
+  
+    .card-body {
+      z-index: 2;
+    }
+  }
+
+  .glyphicon{
+    font-size: 80%;
+    top: 4px !important;
+  }
+  
 }
