@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1602061700462,
+  "timestamp": 1602259979428,
   "index": "/client/vi-VN/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/vi-VN/index.html": "1201737e26ac6132c3877701c6eaf8e16251fca6",
+    "/client/vi-VN/index.html": "10838a4fe9cb92233b5d7111cf637231ac96f5e1",
     "/client/vi-VN/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

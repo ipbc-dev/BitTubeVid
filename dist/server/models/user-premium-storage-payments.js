@@ -6,7 +6,39 @@ const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const premium_storage_plan_1 = require("./premium-storage-plan");
 const user_1 = require("./account/user");
+const logger_1 = require("@server/helpers/logger");
 let userPremiumStoragePaymentModel = userPremiumStoragePaymentModel_1 = class userPremiumStoragePaymentModel extends sequelize_typescript_1.Model {
+    static getStats() {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            try {
+                const today = new Date();
+                const lastMonth = new Date("last day of last month").getMonth();
+                const payments = yield this.getAllActivePayments();
+                const resp = {
+                    activePayments: 0,
+                    soldStorage: 0,
+                    currentMonthIncome: 0,
+                    lastMonthIncome: 0
+                };
+                for (var payment of payments) {
+                    const paymentMonth = new Date(payment.dateFrom).getMonth();
+                    resp.activePayments++;
+                    resp.soldStorage = resp.soldStorage + parseInt(payment.quota.toString());
+                    if (paymentMonth === today.getMonth()) {
+                        resp.currentMonthIncome = resp.currentMonthIncome + parseFloat(payment.priceTube.toString());
+                    }
+                    if (paymentMonth === lastMonth) {
+                        resp.lastMonthIncome = resp.lastMonthIncome + payment.priceTube;
+                    }
+                }
+                return resp;
+            }
+            catch (err) {
+                logger_1.logger.error('ICEICE some error ocurred at getStats', err);
+                return err;
+            }
+        });
+    }
     static getUserPayments(userId) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const paymentsResponse = yield userPremiumStoragePaymentModel_1.findAll({

@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1602061700394,
+  "timestamp": 1602259979263,
   "index": "/client/ru-RU/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/ru-RU/index.html": "4a262f8933134dfa158d9e67ee8023a0b2ec8562",
+    "/client/ru-RU/index.html": "738032192ed9efab5c59da12afc73c218838c3cd",
     "/client/ru-RU/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

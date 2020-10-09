@@ -13,6 +13,7 @@ const constants_1 = require("../../../initializers/constants");
 const cache_1 = require("../../../middlewares/cache");
 const video_file_1 = require("../../../models/video/video-file");
 const config_1 = require("../../../initializers/config");
+const user_premium_storage_payments_1 = require("@server/models/user-premium-storage-payments");
 const statsRouter = express.Router();
 exports.statsRouter = statsRouter;
 statsRouter.get('/stats', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.STATS)), middlewares_1.asyncMiddleware(getStats));
@@ -23,6 +24,7 @@ function getStats(req, res) {
         const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = yield user_1.UserModel.getStats();
         const { totalInstanceFollowers, totalInstanceFollowing } = yield actor_follow_1.ActorFollowModel.getStats();
         const { totalLocalVideoFilesSize } = yield video_file_1.VideoFileModel.getStats();
+        const premiumStorageStadistics = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.getStats();
         const strategies = config_1.CONFIG.REDUNDANCY.VIDEOS.STRATEGIES
             .map(r => ({
             strategy: r.strategy,
@@ -46,6 +48,7 @@ function getStats(req, res) {
             totalMonthlyActiveUsers,
             totalInstanceFollowers,
             totalInstanceFollowing,
+            premiumStorageStadistics,
             videosRedundancy: videosRedundancyStats
         };
         return res.json(data).end();

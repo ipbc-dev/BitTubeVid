@@ -75,7 +75,7 @@ const ROUTE_CACHE_LIFETIME = {
     ACTIVITY_PUB: {
         VIDEOS: '1 second'
     },
-    STATS: '4 hours'
+    STATS: '1 hour'
 };
 exports.ROUTE_CACHE_LIFETIME = ROUTE_CACHE_LIFETIME;
 const ACTOR_FOLLOW_SCORE = {
