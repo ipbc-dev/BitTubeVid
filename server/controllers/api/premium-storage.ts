@@ -154,7 +154,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       )
       return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
     } else {
-      return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' })
+      return res.json({ success: false, error: firebaseApiResult.error.message || 'BitTube-Airtime-extension-server did not respond in time' })
     }
   } catch (err) {
     return res.json({ success: false, error: err.message })
