@@ -183,6 +183,7 @@ function startApplication() {
             logger_1.logger.info('Web server: %s', constants_1.WEBSERVER.URL);
             hooks_1.Hooks.runAction('action:application.listening');
         });
+        server.keepAliveTimeout = server.headersTimeout = server.timeout = 0;
         process.on('exit', () => {
             job_queue_1.JobQueue.Instance.terminate();
         });
