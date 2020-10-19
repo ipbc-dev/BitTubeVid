@@ -1012,18 +1012,18 @@
                 <my-help>
                   <ng-template ptTemplate="customHtml">
                     <ng-container i18n>
-                      This value is the Price in Tube Coins for this plan. <br /><br />
-                      It is a float with 8 decimals.
+                      Price in USD for this plan. It will be converted into TUBE coin on every payment<br /><br />
+                      It is a float with 2 decimals.
                     </ng-container>
                   </ng-template>
                 </my-help>
               </div>
               <input
-                type="number" min="0" step="1000" id="newPlanPrice" class="form-control"
+                type="number" min="0" step="1" id="newPlanPrice" class="form-control"
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.priceTube" [ngModelOptions]="{standalone: true}"
               >
-              <label for="newPlanPrice" class="storage-label" > Tubes </label>
+              <label for="newPlanPrice" class="storage-label" > USD </label>
             </div>
 
             <div class="form-group">
@@ -1123,7 +1123,7 @@
                   <th>Name</th>
                   <th style="width: 200px;">Quota</th>
                   <th style="width: 200px;">Daily Quota</th>
-                  <th style="width: 200px;">Price (TubeCoin)</th>
+                  <th style="width: 200px;">Price (USD)</th>
                   <th style="width: 220px;">Duration</th>
                   <th style="width: 220px;">Expiration</th>
                   <th style="width: 100px;">Active</th>
