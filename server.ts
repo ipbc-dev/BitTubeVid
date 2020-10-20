@@ -277,8 +277,6 @@ async function startApplication () {
     Hooks.runAction('action:application.listening')
   })
 
-  server.keepAliveTimeout = server.headersTimeout = server.timeout = 0
-
   process.on('exit', () => {
     JobQueue.Instance.terminate()
   })
