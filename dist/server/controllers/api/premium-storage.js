@@ -10,7 +10,7 @@ const premium_storage_plan_1 = require("../../models/premium-storage-plan");
 const user_premium_storage_payments_1 = require("../../models/user-premium-storage-payments");
 const fetch = require('node-fetch');
 const Headers = fetch.Headers;
-const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension.cloudfunctions.net/';
+const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension-dev.cloudfunctions.net/';
 const premiumStorageRouter = express.Router();
 exports.premiumStorageRouter = premiumStorageRouter;
 premiumStorageRouter.get('/plans', middlewares_1.asyncMiddleware(getPlans));
@@ -98,7 +98,7 @@ function adminAddPlan(req, res) {
                 return res.json({ success: true, added: addResult, firebase: firebaseApiResult });
             }
             else {
-                return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' });
+                return res.json({ success: false, error: firebaseApiResult.error.message || 'BitTube-Airtime-extension-server did not respond in time' });
             }
         }
         catch (err) {
