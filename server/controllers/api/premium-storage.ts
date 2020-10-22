@@ -14,7 +14,7 @@ import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
 const fetch = require('node-fetch')
 const Headers = fetch.Headers
-const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension.cloudfunctions.net/'
+const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension-dev.cloudfunctions.net/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
@@ -154,7 +154,7 @@ async function adminAddPlan (req: express.Request, res: express.Response) {
       )
       return res.json({ success: true, added: addResult, firebase: firebaseApiResult })
     } else {
-      return res.json({ success: false, error: 'BitTube-Airtime-extension-server did not respond in time' })
+      return res.json({ success: false, error: firebaseApiResult.error.message || 'BitTube-Airtime-extension-server did not respond in time' })
     }
   } catch (err) {
     return res.json({ success: false, error: err.message })

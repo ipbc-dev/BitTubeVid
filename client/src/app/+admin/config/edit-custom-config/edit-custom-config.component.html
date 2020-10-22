@@ -1012,18 +1012,18 @@
                 <my-help>
                   <ng-template ptTemplate="customHtml">
                     <ng-container i18n>
-                      This value is the Price in Tube Coins for this plan. <br /><br />
-                      It is a float with 8 decimals.
+                      Price in USD for this plan. It will be converted into TUBE coin on every payment<br /><br />
+                      It is a float with 2 decimals.
                     </ng-container>
                   </ng-template>
                 </my-help>
               </div>
               <input
-                type="number" min="0" step="1000" id="newPlanPrice" class="form-control"
+                type="number" min="0.01" step="1" id="newPlanPrice" class="form-control"
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.priceTube" [ngModelOptions]="{standalone: true}"
               >
-              <label for="newPlanPrice" class="storage-label" > Tubes </label>
+              <label for="newPlanPrice" class="storage-label" > USD </label>
             </div>
 
             <div class="form-group">
@@ -1123,7 +1123,7 @@
                   <th>Name</th>
                   <th style="width: 200px;">Quota</th>
                   <th style="width: 200px;">Daily Quota</th>
-                  <th style="width: 200px;">Price (TubeCoin)</th>
+                  <th style="width: 200px;">Price (USD)</th>
                   <th style="width: 220px;">Duration</th>
                   <th style="width: 220px;">Expiration</th>
                   <th style="width: 100px;">Active</th>
@@ -1176,10 +1176,10 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="1" step="1000" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="0.01" step="1" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.priceTube}}
+                            {{getFormattedPrice(rowPlan.priceTube)}}
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1318,7 +1318,7 @@
               <div class="card stat">
                 <div class="card-body">
                   <p class="stat-value">{{ serverStats.premiumStorageStadistics.currentMonthIncome }}</p>
-                  <p class="stat-label" i18n>Tubes earned this month</p>
+                  <p class="stat-label" i18n>USD earned this month</p>
                 </div>
                 <i class="glyphicon glyphicon-piggy-bank"></i>
               </div>
@@ -1330,7 +1330,7 @@
               <div class="card stat">
                 <div class="card-body">
                   <p class="stat-value">{{ serverStats.premiumStorageStadistics.lastMonthIncome }}</p>
-                  <p class="stat-label" i18n>Tubes earned last month</p>
+                  <p class="stat-label" i18n>USD earned last month</p>
                 </div>
                 <i class="glyphicon glyphicon-piggy-bank"></i>
               </div>

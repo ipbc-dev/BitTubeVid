@@ -45,7 +45,9 @@
     <div *ngIf="havePremiumStorage()" class="peertube-select-container">
       <select formControlName="storagePlan" id="storagePlan" class="form-control" (change)="premiumStoragePlanChange(this)">
         <option value="-1" [disabled]="userHavePremiumStorage()">Instance default</option>
-        <option *ngFor="let plan of storagePlans" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
+        <ng-container *ngFor="let plan of storagePlans">
+          <option *ngIf="plan.active" value={{plan.id}} [disabled]="isOptionDisabled(plan.id)" >{{ plan.name }}</option>
+        </ng-container>
       </select>
     </div>
 
@@ -65,13 +67,13 @@
           <th class="planField">Daily Quota</th>
           <th class="planField">Total Quota</th>
           <th class="planField">Duration</th>
-          <th class="planField">Price (Tubes)</th>
+          <th class="planField">Price (USD)</th>
         </tr>
         <tr class="planTableBody">
           <th class="planField">{{ getHRBytes(chosenPlan.dailyQuota) }}</th>
           <th class="planField">{{ getHRBytes(chosenPlan.quota) }}</th>
           <th class="planField">{{ (chosenPlan.duration / 2628000000) }} month[s]</th>
-          <th class="planField">{{ chosenPlan.priceTube }}</th>
+          <th class="planField">{{ getChosenPlanPrice() }}</th>
         </tr>
       </table>
 

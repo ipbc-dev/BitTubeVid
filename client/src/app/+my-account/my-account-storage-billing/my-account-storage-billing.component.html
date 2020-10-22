@@ -7,9 +7,9 @@
     <tr>
       <th>Bill Id</th>
       <th>Plan Name</th>
-      <th>Beginning day</th>
+      <th>Purchasing date</th>
       <th>Expiration date</th>
-      <th>Price (Tube's)</th>
+      <th>Price (USD)</th>
       <th>Daily Quota</th>
       <th>Total Quota</th>
       <th>LifeSpan</th>
@@ -22,7 +22,7 @@
       <th>{{bill.premiumStoragePlan.name}}</th>
       <th>{{getFormattedDate(bill.dateFrom)}}</th>
       <th>{{getFormattedDate(bill.dateTo)}}</th>
-      <th>{{bill.priceTube}}</th>
+      <th>{{getFormattedPrice(bill.priceTube)}}</th>
       <th>{{getHRBytes(bill.dailyQuota)}}</th>
       <th>{{getHRBytes(bill.quota)}}</th>
       <th>{{getHRTime(bill.duration)}}</th>
