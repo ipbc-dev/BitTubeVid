@@ -1019,7 +1019,7 @@
                 </my-help>
               </div>
               <input
-                type="number" min="0" step="1" id="newPlanPrice" class="form-control"
+                type="number" min="0.01" step="1" id="newPlanPrice" class="form-control"
                 class="storage-input storage-numeric-input"
                 [(ngModel)]="newStoragePlan.priceTube" [ngModelOptions]="{standalone: true}"
               >
@@ -1176,10 +1176,10 @@
                   <td>
                     <p-cellEditor>
                         <ng-template pTemplate="input">
-                            <input pInputText type="number" min="1" step="1000" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
+                            <input pInputText type="number" min="0.01" step="1" [(ngModel)]="rowPlan.updateData.priceTube" [ngModelOptions]="{standalone: true}">
                         </ng-template>
                         <ng-template pTemplate="output">
-                            {{rowPlan.priceTube}}
+                            {{getFormattedPrice(rowPlan.priceTube)}}
                         </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1318,7 +1318,7 @@
               <div class="card stat">
                 <div class="card-body">
                   <p class="stat-value">{{ serverStats.premiumStorageStadistics.currentMonthIncome }}</p>
-                  <p class="stat-label" i18n>Tubes earned this month</p>
+                  <p class="stat-label" i18n>USD earned this month</p>
                 </div>
                 <i class="glyphicon glyphicon-piggy-bank"></i>
               </div>
@@ -1330,7 +1330,7 @@
               <div class="card stat">
                 <div class="card-body">
                   <p class="stat-value">{{ serverStats.premiumStorageStadistics.lastMonthIncome }}</p>
-                  <p class="stat-label" i18n>Tubes earned last month</p>
+                  <p class="stat-label" i18n>USD earned last month</p>
                 </div>
                 <i class="glyphicon glyphicon-piggy-bank"></i>
               </div>

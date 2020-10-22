@@ -383,6 +383,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
                .pipe(catchError(res => this.restExtractor.handleError(res)))
   }
 
+  getFormattedPrice (price: any) {
+    return parseFloat(price).toFixed(2)
+  }
+
   getHRBytes (num: any) {
     try {
       if (num === null || num === undefined) return ''

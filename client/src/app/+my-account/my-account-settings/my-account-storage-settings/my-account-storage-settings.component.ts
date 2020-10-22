@@ -174,6 +174,10 @@ export class MyAccountStorageSettingsComponent extends FormReactive implements O
     // console.log('After premiumStoragePlanChange chosenPlan is: ', this.chosenPlan)
   }
 
+  getChosenPlanPrice () {
+    return parseFloat(this.chosenPlan.priceTube).toFixed(2)
+  }
+
   getUserPremiumPlanId () {
     return this.userPremiumPlan ? this.userPremiumPlan.planId : -1
   }

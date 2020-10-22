@@ -47,6 +47,10 @@ export class MyAccountStorageBillingComponent implements OnInit {
     })
   }
 
+  getFormattedPrice (price: any) {
+    return parseFloat(price).toFixed(2)
+  }
+
   getUserBilling () {
     return this.authHttp.get(MyAccountStorageBillingComponent.GET_PREMIUM_STORAGE_API_URL + '/billing-info')
     .pipe(catchError(res => this.restExtractor.handleError(res)))
