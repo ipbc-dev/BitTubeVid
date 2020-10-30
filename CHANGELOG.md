@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.5/v0.2.5-psm (BitTube-PremiumStorageModule)
+## v0.2.6-psm (BitTube-PremiumStorageModule)
   * Based on Peertube V2.3.0
   * Implementing paid Premium Storage functionality
   * Fixing minor bugs
