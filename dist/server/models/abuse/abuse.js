@@ -160,6 +160,8 @@ let AbuseModel = AbuseModel_1 = class AbuseModel extends sequelize_typescript_1.
             return null;
         const abuseModel = this.VideoCommentAbuse;
         const entity = abuseModel.VideoComment;
+        if (!entity)
+            return null;
         return {
             id: entity.id,
             threadId: entity.getThreadId(),
