@@ -466,6 +466,8 @@ export class AbuseModel extends Model<AbuseModel> {
     const abuseModel = this.VideoCommentAbuse
     const entity = abuseModel.VideoComment
 
+    if (!entity) return null
+
     return {
       id: entity.id,
       threadId: entity.getThreadId(),
