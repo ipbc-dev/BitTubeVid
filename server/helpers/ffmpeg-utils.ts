@@ -394,7 +394,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `fade,hwupload_cuda,scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `fade,hwupload_cuda,scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`
+    const size = options.isPortraitMode === true ? `vpp_qsv=framerate=30,scale_qsv=-1:${options.resolution}` : `vpp_qsv=framerate=30,scale_qsv=${options.resolution}:-1`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
@@ -417,7 +417,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
 
   command = command.input(options.audioPath)
                    // tslint:disable-next-line: max-line-length
-                   .videoFilter('fade,hwupload_cuda,scale_npp=w=iw:force_original_aspect_ratio=1:force_divisible_by=2') // Avoid "height not divisible by 2" error
+                   .videoFilter('framerate=30,scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
@@ -510,7 +510,7 @@ async function presetH264VeryFast (command: ffmpeg.FfmpegCommand, input: string,
 async function presetH264 (command: ffmpeg.FfmpegCommand, input: string, resolution: VideoResolution, fps?: number) {
   let localCommand = command
     .format('mp4')
-    .videoCodec('h264_nvenc')
+    .videoCodec('h264_qsv')
     // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
     // .outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
     // .outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
