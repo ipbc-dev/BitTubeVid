@@ -309,7 +309,7 @@ function buildx264Command(command, options) {
         }
         command = yield presetH264(command, options.inputPath, options.resolution, fps);
         if (options.resolution !== undefined) {
-            const size = options.isPortraitMode === true ? `vpp_qsv=framerate=30,scale_qsv=-1:${options.resolution}` : `vpp_qsv=framerate=30,scale_qsv=${options.resolution}:-1`;
+            const size = options.isPortraitMode === true ? `vpp_qsv=framerate=30,scale_qsv=${options.resolution}:-1` : `vpp_qsv=framerate=30,scale_qsv=-1:${options.resolution}`;
             command = command.videoFilter(size);
         }
         if (fps) {
