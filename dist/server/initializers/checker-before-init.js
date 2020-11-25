@@ -73,7 +73,7 @@ function checkFFmpeg(CONFIG) {
         const Ffmpeg = require('fluent-ffmpeg');
         const getAvailableCodecsPromise = core_utils_1.promisify0(Ffmpeg.getAvailableCodecs);
         const codecs = yield getAvailableCodecsPromise();
-        const canEncode = ['h264_nvenc'];
+        const canEncode = ['h264_qsv'];
         for (const codec of canEncode) {
             if (codecs[codec] === undefined) {
                 throw new Error('Unknown codec ' + codec + ' in FFmpeg.');

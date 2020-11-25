@@ -309,7 +309,7 @@ function buildx264Command(command, options) {
         }
         command = yield presetH264(command, options.inputPath, options.resolution, fps);
         if (options.resolution !== undefined) {
-            const size = options.isPortraitMode === true ? `fade,hwupload_cuda,scale_npp=w=${options.resolution}:force_original_aspect_ratio=1` : `fade,hwupload_cuda,scale_npp=h=${options.resolution}:force_original_aspect_ratio=1`;
+            const size = options.isPortraitMode === true ? `vpp_qsv=framerate=30,scale_qsv=-1:${options.resolution}` : `vpp_qsv=framerate=30,scale_qsv=${options.resolution}:-1`;
             command = command.videoFilter(size);
         }
         if (fps) {
@@ -327,7 +327,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter('fade,hwupload_cuda,scale_npp=w=iw:force_original_aspect_ratio=1:force_divisible_by=2')
+            .videoFilter('framerate=30,scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
@@ -390,7 +390,7 @@ function presetH264(command, input, resolution, fps) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let localCommand = command
             .format('mp4')
-            .videoCodec('h264_nvenc')
+            .videoCodec('h264_qsv')
             .outputOption('-map_metadata -1')
             .outputOption('-movflags faststart');
         const parsedAudio = yield audio.get(input);
