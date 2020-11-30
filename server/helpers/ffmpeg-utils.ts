@@ -394,7 +394,7 @@ async function buildx264Command (command: ffmpeg.FfmpegCommand, options: Transco
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw` : `vpp_qsv=w=h*cw/ch:h=${options.resolution}`
+    const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
@@ -417,7 +417,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
 
   command = command.input(options.audioPath)
                    // tslint:disable-next-line: max-line-length
-                   .videoFilter("\'scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2\'") // Avoid "height not divisible by 2" error
+                   .videoFilter('scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2,format=yuvj422p') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
