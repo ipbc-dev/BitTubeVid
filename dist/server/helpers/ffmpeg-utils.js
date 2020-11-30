@@ -327,7 +327,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter('"framerate=30,scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2"')
+            .videoFilter('vpp_qsv=trunc(iw/2)*2:trunc(ih/2)*2')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
