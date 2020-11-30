@@ -309,7 +309,7 @@ function buildx264Command(command, options) {
         }
         command = yield presetH264(command, options.inputPath, options.resolution, fps);
         if (options.resolution !== undefined) {
-            const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw` : `vpp_qsv=w=h*cw/ch:h=${options.resolution}`;
+            const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`;
             command = command.videoFilter(size);
         }
         if (fps) {
@@ -327,7 +327,7 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
         command = command.input(options.audioPath)
-            .videoFilter("\'scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2\'")
+            .videoFilter('scale_qsv=trunc(iw/2)*2:trunc(ih/2)*2,format=yuvj422p')
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
