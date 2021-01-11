@@ -44,6 +44,10 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
   z-index: inherit !important;
 }
 
+.btn-group > .btn:not(:first-child) {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
 
 .dropdown-menu {
   z-index: z(dropdown) + 1 !important;
@@ -63,6 +67,10 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
       color: pvar(--mainBackgroundColor) !important;
       background-color: pvar(--mainHoverColor);
       opacity: .9;
+    }
+
+    &:active {
+      color: pvar(--mainForegroundColor) !important;
     }
 
     &::after {
@@ -351,5 +359,27 @@ ngb-tooltip-window {
 
   input:placeholder-shown + .form-control-clear {
     display: none;
+  }
+}
+
+.callout {
+  padding: 1.25rem;
+  border: 1px solid #eee;
+  border-radius: .25rem;
+
+  & > label {
+    position: relative;
+    top: -5px;
+    left: -10px;
+    color: #6c757d !important;
+  }
+
+  &:not(.callout-light) {
+    border-left-width: .25rem;
+  }
+  
+  &.callout-info {
+    border-color: pvar(--mainColorLightest);
+    border-left-color: pvar(--mainColor);
   }
 }

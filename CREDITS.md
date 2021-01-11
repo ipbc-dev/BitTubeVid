@@ -4,49 +4,65 @@
  * Rigel Kent
  * Filip Bengtsson
  * kimsible
+ * Clemens Schielicke
+ * Simon Brosdetzko
+ * josé m
  * Kim
- * Felix Ableitner
- * Gérald Niel
+ * Berto Te
  * Jeff Huang
  * Phongpanot
+ * Felix Ableitner
+ * Александр
+ * Tirifto
+ * Gérald Niel
+ * kontrollanten
+ * Frank Sträter
  * Julien Maulny
+ * Mark Van den Borre
  * Jorropo
  * Josh Morel
- * Александр
  * BO41
- * Berto Te
+ * x
  * Francesc
- * Tirifto
+ * Laurent Ettouati
  * mando laress
- * Frank Sträter
+ * Slimane Selyan AMIRI
  * John Livingston
+ * Quentin PAGÈS
  * ButterflyOfFire
+ * Kimsible
  * Xabi
  * buoyantair
- * josé m
+ * Balázs Meskó
  * Balázs Úr
- * Quentin PAGÈS
+ * Jan Keromnes
+ * Luca Calcaterra
  * Vodoyo Kamal
+ * Zet
  * Attila F
  * Caroline Chuong
- * Laurent Ettouati
  * Benjamin Bouvier
- * Jan Keromnes
  * Kemal Oktay Aktoğan
  * Lucas Declercq
- * Slimane Selyan AMIRI
+ * chris@famichiki.tube
  * knuxify
  * matograine
+ * Alexander Ivanov
  * Daniel Santos
  * David Libeau
+ * Ewald Arnold
  * Florent F
  * Luc Didry
  * Nassim Bounouas
  * NorbiPeti
  * Rafael Fontenelle
+ * Thomas Citharel
+ * Tzafrir Cohen
  * Viorel-Cătălin Răpițeanu
+ * Adrià Martín
  * Ahmed ABERWAG
  * Anne-Gaelle Moulun
+ * Arman
  * BRAINS YUM
  * Belkacem Mohammed
  * Besnik Bleta
@@ -62,22 +78,36 @@
  * William Lahti
  * Wirebrass
  * Yury Bulka
+ * boris joeson
+ * test2a
+ * Ajeje Brazorf
  * Angristan
+ * Ch
  * Chris Sakura 佐倉くりす on Youtube
  * DontUseGithub
+ * Florian CUNY
  * GunChleoc
+ * Ihor Hordiichuk
+ * MahdiTurki
  * Marcin Mikołajczak
  * Okhin
  * Pierre-Alain TORET
+ * Porrumentzio
  * Serge Victor
- * Thomas Citharel
  * clementbrizard
+ * gohoso9454
  * kaiyou
+ * roberto marcolin
  * Alberto Teira
+ * Andrey
  * Andréas Livet
  * Andrés Maldonado
  * Aurélien Bertron
- * Ch
+ * Cedric F
+ * Daniele Garau
+ * Ehsan Gholami
+ * Eivind Ødegård
+ * Girish Ramakrishnan
  * Hans Meiser
  * Iñigo A
  * Jefferson Hernandez
@@ -86,22 +116,24 @@
  * LecygneNoir
  * Leopere
  * Manuela Silva
+ * Mélanie Chauvel
  * Ugaitz
+ * Vincent Finance
+ * Waazdakka
  * Yohan Boniface
  * am97
  * anotheranonymoususer
  * dada
  * frankdelange
  * jonathanraes
- * test2a
  * Al-Hassan Abdel-Raouf
  * Andrew Morgan
  * Antimidia
+ * Arco
  * Arne Uplegger
  * Aurélien Béranger
  * Average Dude
  * Axel Viala
- * Balázs Meskó
  * BitTube
  * Dashie
  * Dirk Kelly
@@ -123,15 +155,16 @@
  * Quentin
  * Ronan
  * SerCom_KC
- * Tzafrir Cohen
+ * Thai Localization
  * Valvin
- * Waazdakka
+ * Yogesh K S
  * ahmadsharifian
  * bopol
  * framail
  * les
  * libertas
  * merty
+ * qwerty
  * taziden
  * victor héry
  * Àngel Pérez Beroy
@@ -141,6 +174,8 @@
  * Adam Gauthier
  * Adam Magnier
  * Adnane Belmadiaf
+ * Agron
+ * Alejandro Criado-Pérez
  * Alexander F. Rødseth
  * Ali Alim
  * Aman Sharma
@@ -154,6 +189,7 @@
  * Ben Abbott
  * Ben Lubar
  * Benjamin EWFT
+ * Boo Teille
  * Brad Johnson
  * Cale
  * Charles de Lacombe
@@ -172,26 +208,29 @@
  * Erwan Croze
  * Fabio Agreles Bezerra
  * Fernandez, ReK2
- * Florian CUNY
- * Girish Ramakrishnan
  * Glandos
  * Guillaume Pérution-Kihli
  * Gérald CHATAGNON
  * Haelwenn (lanodan) Monnier
  * HesioZ
+ * Hozan Şahin
  * ICabaleiro
+ * Iker Garaialde
  * Ismaël Bouya
+ * Ivan Ip
  * Iván Cabaleiro
  * Jacen
  * Jacob
  * Jacques Foucry
  * Jagannath Bhat
  * Jarosław Maciejewski
+ * Jeena
  * Jessica Fairchild
  * Jinn Koriech
  * Jorge Silva
  * Jos
  * Julien Le Bras
+ * Juraj Liso
  * Knackie
  * Kody
  * Kyâne Pichou
@@ -210,6 +249,7 @@
  * Martin Trigaux
  * Mateusz Piotrowski
  * Mathieu Agopian
+ * Mathieu Brunot
  * Matthieu De Beule
  * Michael Koppmann
  * Miguel Mayol Tur
@@ -217,6 +257,7 @@
  * MrGiga
  * Mélanie Pin
  * Nathanaël J
+ * Net
  * Nicolas Fortin
  * Niklas Reimer
  * Nitesh Sawant
@@ -233,13 +274,17 @@
  * Raphaël Droz
  * Rebecca
  * Rech
+ * Rep Dolsay
  * Robin
  * Sankar
  * Sebastian Paweł Wolski
  * Simon Gilliot
  * Simounet
  * Stefan Schüller
+ * Steffen Möller
  * Sumit Khanna
+ * SupC
+ * Tanguy BERNARD
  * Timothée Grégoire
  * Tomás Sebastián Romero
  * TrashMacNugget
@@ -253,15 +298,19 @@
  * [ Bie ] Watcharapong Suriyawan
  * anmol26s
  * augier
+ * big gamer
  * bikepunk
  * bsky
  * ctlaltdefeat
  * dingycle
+ * eduard pintilie
  * jomo
  * libertysoft3
  * lsde
  * luz.paz
  * luzpaz
+ * madmath03
+ * mahdi
  * memorybox
  * mike stedman
  * morteza
@@ -269,7 +318,6 @@
  * numéro6
  * osauzet
  * potedeo
- * roberto marcolin
  * spf
  * tilllt
  * tomamplius
@@ -277,6 +325,7 @@
  * victor-long
  * xcffl
  * zacharystenger
+ * Артур Кирпо
  * ‮noisawe
  * abdhessuk
  * abidin24
@@ -399,6 +448,7 @@
 # Design
 
  * [Olivier Massain](https://dribbble.com/omassain)
+ * [Marie-Cécile Godwin Paccard](https://mcgodwin.com/)
 
 
 # Icons
@@ -409,3 +459,17 @@
  * `language` by Aaron Jin (CC-BY)
  * `video-language` by Rigel Kent (CC-BY)
  * `peertube-x` by Solen DP (CC-BY)
+
+
+# Contributors to our 2020 crowdfunding :heart:
+
+*We ran [a crowdfunding campaign](https://joinpeertube.org/roadmap) in 2020 to implement live streaming to the version 3.0.0 of PeerTube. Thanks to everyone who pitched in and shared the news!*
+
+
+
+
+# Contributors to our 2018 crowdfunding :heart:
+
+*We ran [a crowdfunding campaign](https://www.kisskissbankbank.com/en/projects/peertube-a-free-and-federated-video-platform) in 2018 to pave the road to the version 1.0.0 of PeerTube, with 1,379 backers. Thanks to everyone who pitched in and shared the news!*
+
+

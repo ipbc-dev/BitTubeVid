@@ -2,7 +2,8 @@ import { ViewportScroller } from '@angular/common'
 import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { ContactAdminModalComponent } from '@app/+about/about-instance/contact-admin-modal.component'
-import { ServerService } from '@app/core'
+import { Notifier } from '@app/core'
+import { copyToClipboard } from '../../../root-helpers/utils'
 import { InstanceService } from '@app/shared/shared-instance'
 import { ServerConfig } from '@shared/models'
 import { ResolverData } from './about-instance.resolver'
@@ -23,24 +24,25 @@ export class AboutInstanceComponent implements OnInit, AfterViewChecked {
     codeOfConduct: '',
     moderationInformation: '',
     administrator: '',
+    creationReason: '',
+    maintenanceLifetime: '',
+    businessModel: '',
     hardwareInformation: ''
   }
-
-  creationReason = ''
-  maintenanceLifetime = ''
-  businessModel = ''
 
   languages: string[] = []
   categories: string[] = []
 
   serverConfig: ServerConfig
 
+  initialized = false
+
   private lastScrollHash: string
 
   constructor (
     private viewportScroller: ViewportScroller,
     private route: ActivatedRoute,
-    private serverService: ServerService,
+    private notifier: Notifier,
     private instanceService: InstanceService
   ) {}
 
@@ -57,26 +59,22 @@ export class AboutInstanceComponent implements OnInit, AfterViewChecked {
   }
 
   async ngOnInit () {
-    this.serverConfig = this.serverService.getTmpConfig()
-    this.serverService.getConfig()
-        .subscribe(config => this.serverConfig = config)
+    const { about, languages, categories, serverConfig }: ResolverData = this.route.snapshot.data.instanceData
 
-    const { about, languages, categories }: ResolverData = this.route.snapshot.data.instanceData
+    this.serverConfig = serverConfig
 
     this.languages = languages
     this.categories = categories
 
     this.shortDescription = about.instance.shortDescription
 
-    this.creationReason = about.instance.creationReason
-    this.maintenanceLifetime = about.instance.maintenanceLifetime
-    this.businessModel = about.instance.businessModel
-
     this.html = await this.instanceService.buildHtml(about)
+
+    this.initialized = true
   }
 
   ngAfterViewChecked () {
-    if (window.location.hash && window.location.hash !== this.lastScrollHash) {
+    if (this.initialized && window.location.hash && window.location.hash !== this.lastScrollHash) {
       this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
 
       this.lastScrollHash = window.location.hash
@@ -85,5 +83,11 @@ export class AboutInstanceComponent implements OnInit, AfterViewChecked {
 
   openContactModal () {
     return this.contactAdminModal.show()
+  }
+
+  onClickCopyLink (anchor: HTMLAnchorElement) {
+    const link = anchor.href
+    copyToClipboard(link)
+    this.notifier.success(link, $localize `Link copied`)
   }
 }

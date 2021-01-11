@@ -35,7 +35,8 @@ import {
   VideoJSPluginOptions
 } from './peertube-videojs-typings'
 import { TranslationsManager } from './translations-manager'
-import { buildVideoOrPlaylistEmbed, buildVideoLink, copyToClipboard, getRtcConfig, isSafari, isIOS } from './utils'
+import { buildVideoOrPlaylistEmbed, buildVideoLink, getRtcConfig, isSafari, isIOS } from './utils'
+import { copyToClipboard } from '../../root-helpers/utils'
 
 // Change 'Playback Rate' to 'Speed' (smaller for our settings menu)
 (videojs.getComponent('PlaybackRateMenuButton') as any).prototype.controlText_ = 'Speed'
@@ -97,6 +98,8 @@ export interface CommonOptions extends CustomizationOptions {
 
   videoViewUrl: string
   embedUrl: string
+
+  isLive: boolean
 
   language?: string
 
@@ -226,7 +229,8 @@ export class PeertubePlayerManager {
         userWatching: commonOptions.userWatching,
         subtitle: commonOptions.subtitle,
         videoCaptions: commonOptions.videoCaptions,
-        stopTime: commonOptions.stopTime
+        stopTime: commonOptions.stopTime,
+        isLive: commonOptions.isLive
       }
     }
 
@@ -323,9 +327,9 @@ export class PeertubePlayerManager {
     const p2pMediaLoaderConfig = {
       loader: {
         trackerAnnounce,
-        segmentValidator: segmentValidatorFactory(options.p2pMediaLoader.segmentsSha256Url),
+        segmentValidator: segmentValidatorFactory(options.p2pMediaLoader.segmentsSha256Url, options.common.isLive),
         rtcConfig: getRtcConfig(),
-        requiredSegmentsPriority: 5,
+        requiredSegmentsPriority: 1,
         segmentUrlBuilder: segmentUrlBuilderFactory(redundancyUrlManager),
         useP2P: getStoredP2PEnabled(),
         consumeOnly
@@ -339,10 +343,8 @@ export class PeertubePlayerManager {
         const resolution = Math.min(level.height || 0, level.width || 0)
 
         const file = p2pMediaLoaderOptions.videoFiles.find(f => f.resolution.id === resolution)
-        if (!file) {
-          console.error('Cannot find video file for level %d.', level.height)
-          return level.height
-        }
+        // We don't have files for live videos
+        if (!file) return level.height
 
         let label = file.resolution.label
         if (file.fps >= 50) label += file.fps
@@ -353,7 +355,7 @@ export class PeertubePlayerManager {
         hlsjsConfig: {
           capLevelToPlayerSize: true,
           autoStartLoad: false,
-          liveSyncDurationCount: 7,
+          liveSyncDurationCount: 5,
           loader: new p2pMediaLoaderModule.Engine(p2pMediaLoaderConfig).createLoaderClass()
         }
       }

@@ -6,6 +6,7 @@ import { AbuseModel } from '@server/models/abuse/abuse'
 import { AbuseMessageModel } from '@server/models/abuse/abuse-message'
 import { getServerActor } from '@server/models/application/application'
 import { abusePredefinedReasonsMap } from '@shared/core-utils/abuse'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
 import { AbuseCreate, AbuseState, UserRight } from '../../../shared'
 import { getFormattedObjects } from '../../helpers/utils'
 import { sequelizeTypescript } from '../../initializers/database'
@@ -85,13 +86,7 @@ abuseRouter.delete('/:id/messages/:messageId',
 // ---------------------------------------------------------------------------
 
 export {
-  abuseRouter,
-
-  // FIXME: deprecated in 2.3. Remove these exports
-  listAbusesForAdmins,
-  updateAbuse,
-  deleteAbuse,
-  reportAbuse
+  abuseRouter
 }
 
 // ---------------------------------------------------------------------------
@@ -147,7 +142,7 @@ async function updateAbuse (req: express.Request, res: express.Response) {
 
   // Do not send the delete to other instances, we updated OUR copy of this abuse
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function deleteAbuse (req: express.Request, res: express.Response) {
@@ -159,7 +154,7 @@ async function deleteAbuse (req: express.Request, res: express.Response) {
 
   // Do not send the delete to other instances, we delete OUR copy of this abuse
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function reportAbuse (req: express.Request, res: express.Response) {
@@ -249,5 +244,5 @@ async function deleteAbuseMessage (req: express.Request, res: express.Response) 
     return abuseMessage.destroy({ transaction: t })
   })
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }

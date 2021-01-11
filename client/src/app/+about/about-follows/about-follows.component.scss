@@ -16,3 +16,10 @@ a {
 .no-results {
   justify-content: flex-start;
 }
+
+.showMore {
+  @include peertube-button-link;
+  @include grey-button;
+  
+  margin-top: 1%;
+}

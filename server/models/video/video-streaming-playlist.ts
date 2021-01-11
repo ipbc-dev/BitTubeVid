@@ -40,7 +40,7 @@ import { logger } from '@server/helpers/logger'
     }
   ]
 })
-export class VideoStreamingPlaylistModel extends Model<VideoStreamingPlaylistModel> {
+export class VideoStreamingPlaylistModel extends Model {
   @CreatedAt
   createdAt: Date
 
@@ -153,6 +153,17 @@ export class VideoStreamingPlaylistModel extends Model<VideoStreamingPlaylistMod
     return VideoStreamingPlaylistModel.findByPk(id, options)
   }
 
+  static loadHLSPlaylistByVideo (videoId: number) {
+    const options = {
+      where: {
+        type: VideoStreamingPlaylistType.HLS,
+        videoId
+      }
+    }
+
+    return VideoStreamingPlaylistModel.findOne(options)
+  }
+
   static getHlsPlaylistFilename (resolution: number) {
     return resolution + '.m3u8'
   }
@@ -173,7 +184,9 @@ export class VideoStreamingPlaylistModel extends Model<VideoStreamingPlaylistMod
     return join(STATIC_PATHS.STREAMING_PLAYLISTS.HLS, videoUUID, VideoStreamingPlaylistModel.getHlsPlaylistFilename(resolution))
   }
 
-  static getHlsSha256SegmentsStaticPath (videoUUID: string) {
+  static getHlsSha256SegmentsStaticPath (videoUUID: string, isLive: boolean) {
+    if (isLive) return join('/live', 'segments-sha256', videoUUID)
+
     return join(STATIC_PATHS.STREAMING_PLAYLISTS.HLS, videoUUID, VideoStreamingPlaylistModel.getHlsSha256SegmentsFilename())
   }
 

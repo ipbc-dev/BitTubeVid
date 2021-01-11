@@ -1,40 +1,43 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import * as chai from 'chai'
 import 'mocha'
+import * as chai from 'chai'
+import { FfprobeData } from 'fluent-ffmpeg'
 import { omit } from 'lodash'
-import { getMaxBitrate, VideoDetails, VideoResolution, VideoState } from '../../../../shared/models/videos'
-import {
-  audio,
-  canDoQuickTranscode,
-  getVideoFileBitrate,
-  getVideoFileFPS,
-  getVideoFileResolution,
-  getMetadataFromFile
-} from '../../../helpers/ffmpeg-utils'
+import { join } from 'path'
+import { VIDEO_TRANSCODING_FPS } from '../../../../server/initializers/constants'
 import {
   buildAbsoluteFixturePath,
+  buildServerDirectory,
   cleanupTests,
   doubleFollow,
   flushAndRunMultipleServers,
   generateHighBitrateVideo,
   generateVideoWithFramerate,
   getMyVideos,
+  getServerFileSize,
   getVideo,
   getVideoFileMetadataUrl,
   getVideosList,
   makeGetRequest,
-  root,
   ServerInfo,
   setAccessTokensToServers,
-  uploadVideo, uploadVideoAndGetId,
+  updateCustomSubConfig,
+  uploadVideo,
+  uploadVideoAndGetId,
   waitJobs,
   webtorrentAdd
 } from '../../../../shared/extra-utils'
-import { join } from 'path'
-import { VIDEO_TRANSCODING_FPS } from '../../../../server/initializers/constants'
-import { FfprobeData } from 'fluent-ffmpeg'
-import { VideoFileMetadata } from '@shared/models/videos/video-file-metadata'
+import { getMaxBitrate, VideoDetails, VideoResolution, VideoState } from '../../../../shared/models/videos'
+import {
+  canDoQuickTranscode,
+  getAudioStream,
+  getMetadataFromFile,
+  getVideoFileBitrate,
+  getVideoFileFPS,
+  getVideoFileResolution
+} from '../../../helpers/ffprobe-utils'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 
@@ -83,7 +86,7 @@ describe('Test video transcoding', function () {
   })
 
   it('Should transcode video on server 2', async function () {
-    this.timeout(60000)
+    this.timeout(120000)
 
     const videoAttributes = {
       name: 'my super name for server 2',
@@ -133,8 +136,8 @@ describe('Test video transcoding', function () {
 
       expect(videoDetails.files).to.have.lengthOf(4)
 
-      const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4')
-      const probe = await audio.get(path)
+      const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-240.mp4'))
+      const probe = await getAudioStream(path)
 
       if (probe.audioStream) {
         expect(probe.audioStream['codec_name']).to.be.equal('aac')
@@ -164,8 +167,8 @@ describe('Test video transcoding', function () {
       const videoDetails: VideoDetails = res2.body
 
       expect(videoDetails.files).to.have.lengthOf(4)
-      const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4')
-      const probe = await audio.get(path)
+      const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-240.mp4'))
+      const probe = await getAudioStream(path)
       expect(probe).to.not.have.property('audioStream')
     }
   })
@@ -189,10 +192,13 @@ describe('Test video transcoding', function () {
       const videoDetails: VideoDetails = res2.body
 
       expect(videoDetails.files).to.have.lengthOf(4)
+
       const fixturePath = buildAbsoluteFixturePath(videoAttributes.fixture)
-      const fixtureVideoProbe = await audio.get(fixturePath)
-      const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4')
-      const videoProbe = await audio.get(path)
+      const fixtureVideoProbe = await getAudioStream(fixturePath)
+      const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-240.mp4'))
+
+      const videoProbe = await getAudioStream(path)
+
       if (videoProbe.audioStream && fixtureVideoProbe.audioStream) {
         const toOmit = [ 'max_bit_rate', 'duration', 'duration_ts', 'nb_frames', 'start_time', 'start_pts' ]
         expect(omit(videoProbe.audioStream, toOmit)).to.be.deep.equal(omit(fixtureVideoProbe.audioStream, toOmit))
@@ -228,13 +234,13 @@ describe('Test video transcoding', function () {
       expect(videoDetails.files[3].fps).to.be.below(31)
 
       for (const resolution of [ '240', '360', '480' ]) {
-        const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-' + resolution + '.mp4')
+        const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-' + resolution + '.mp4'))
         const fps = await getVideoFileFPS(path)
 
         expect(fps).to.be.below(31)
       }
 
-      const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-720.mp4')
+      const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-720.mp4'))
       const fps = await getVideoFileFPS(path)
 
       expect(fps).to.be.above(58).and.below(62)
@@ -275,7 +281,7 @@ describe('Test video transcoding', function () {
       expect(videoToFindInList).to.be.undefined
 
       // Server 1 should not have the video yet
-      await getVideo(servers[0].url, videoId, 404)
+      await getVideo(servers[0].url, videoId, HttpStatusCode.NOT_FOUND_404)
     }
 
     await waitJobs(servers)
@@ -322,7 +328,8 @@ describe('Test video transcoding', function () {
       const video = res.body.data.find(v => v.name === videoAttributes.name)
 
       for (const resolution of [ '240', '360', '480', '720', '1080' ]) {
-        const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-' + resolution + '.mp4')
+        const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-' + resolution + '.mp4'))
+
         const bitrate = await getVideoFileBitrate(path)
         const fps = await getVideoFileFPS(path)
         const resolution2 = await getVideoFileResolution(path)
@@ -394,8 +401,8 @@ describe('Test video transcoding', function () {
 
       expect(videoDetails.files).to.have.lengthOf(1)
 
-      await makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: 200 })
-      await makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: 200 })
+      await makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: HttpStatusCode.OK_200 })
+      await makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: HttpStatusCode.OK_200 })
 
       const magnetUri = videoDetails.files[0].magnetUri
       expect(magnetUri).to.contain('.mp4')
@@ -419,8 +426,8 @@ describe('Test video transcoding', function () {
 
       expect(videoDetails.files).to.have.lengthOf(1)
 
-      await makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: 200 })
-      await makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: 200 })
+      await makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: HttpStatusCode.OK_200 })
+      await makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: HttpStatusCode.OK_200 })
 
       const magnetUri = videoDetails.files[0].magnetUri
       expect(magnetUri).to.contain('.mp4')
@@ -428,7 +435,7 @@ describe('Test video transcoding', function () {
   })
 
   it('Should downscale to the closest divisor standard framerate', async function () {
-    this.timeout(160000)
+    this.timeout(200000)
 
     let tempFixturePath: string
 
@@ -455,16 +462,51 @@ describe('Test video transcoding', function () {
       const video = res.body.data.find(v => v.name === videoAttributes.name)
 
       {
-        const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4')
+        const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-240.mp4'))
         const fps = await getVideoFileFPS(path)
         expect(fps).to.be.equal(25)
       }
 
       {
-        const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-720.mp4')
+        const path = buildServerDirectory(servers[1], join('videos', video.uuid + '-720.mp4'))
         const fps = await getVideoFileFPS(path)
         expect(fps).to.be.equal(59)
       }
+    }
+  })
+
+  it('Should not transcode to an higher bitrate than the original file', async function () {
+    this.timeout(160000)
+
+    const config = {
+      transcoding: {
+        enabled: true,
+        resolutions: {
+          '240p': true,
+          '360p': true,
+          '480p': true,
+          '720p': true,
+          '1080p': true
+        },
+        webtorrent: { enabled: true },
+        hls: { enabled: true }
+      }
+    }
+    await updateCustomSubConfig(servers[1].url, servers[1].accessToken, config)
+
+    const videoAttributes = {
+      name: 'low bitrate',
+      fixture: 'low-bitrate.mp4'
+    }
+
+    const resUpload = await uploadVideo(servers[1].url, servers[1].accessToken, videoAttributes)
+    const videoUUID = resUpload.body.video.uuid
+
+    await waitJobs(servers)
+
+    const resolutions = [ 240, 360, 480, 720, 1080 ]
+    for (const r of resolutions) {
+      expect(await getServerFileSize(servers[1], `videos/${videoUUID}-${r}.mp4`)).to.be.below(60000)
     }
   })
 
@@ -475,8 +517,8 @@ describe('Test video transcoding', function () {
     await waitJobs(servers)
 
     {
-      const path = join(root(), 'test' + servers[1].internalServerNumber, 'videos', videoUUID + '-240.mp4')
-      const metadata = await getMetadataFromFile<VideoFileMetadata>(path)
+      const path = buildServerDirectory(servers[1], join('videos', videoUUID + '-240.mp4'))
+      const metadata = await getMetadataFromFile(path)
 
       // expected format properties
       for (const p of [

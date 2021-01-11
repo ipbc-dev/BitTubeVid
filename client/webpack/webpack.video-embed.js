@@ -4,8 +4,7 @@ const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin')
-const ExtractTextPlugin = require('extract-text-webpack-plugin')
-const PurifyCSSPlugin = require('purifycss-webpack')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = function () {
   const configuration = {
@@ -64,29 +63,29 @@ module.exports = function () {
 
         {
           test: /\.(sass|scss)$/,
-          use: ExtractTextPlugin.extract({
-            fallback: 'style-loader',
-            use: [
-              {
-                loader: 'css-loader',
-                options: {
+          use: [
+            MiniCssExtractPlugin.loader,
+
+            {
+              loader: 'css-loader',
+              options: {
+                sourceMap: true,
+                importLoaders: 1
+              }
+            },
+
+            {
+              loader: 'sass-loader',
+              options: {
+                sassOptions: {
                   sourceMap: true,
-                  importLoaders: 1
-                }
-              },
-              {
-                loader: 'sass-loader',
-                options: {
-                  sassOptions: {
-                    sourceMap: true,
-                    includePaths: [
-                      helpers.root('src/sass/include')
-                    ]
-                  }
+                  includePaths: [
+                    helpers.root('src/sass/include')
+                  ]
                 }
               }
-            ]
-          })
+            }
+          ]
         },
 
         {
@@ -111,21 +110,10 @@ module.exports = function () {
     },
 
     plugins: [
-      new ExtractTextPlugin({
+      new MiniCssExtractPlugin({
         filename: process.env.ANALYZE_BUNDLE === 'true'
           ? '[name].css'
           : '[name].[hash].css'
-      }),
-
-      new PurifyCSSPlugin({
-        paths: [
-          helpers.root('src/standalone/videos/embed.ts'),
-          helpers.root('src/standalone/videos/test-embed.html')
-        ],
-        purifyOptions: {
-          minify: true,
-          whitelist: [ '*vjs*', '*video-js*' ]
-        }
       }),
 
       new HtmlWebpackPlugin({
@@ -134,7 +122,15 @@ module.exports = function () {
         title: 'PeerTube',
         chunksSortMode: 'auto',
         inject: 'body',
-        chunks: ['video-embed']
+        chunks: ['video-embed'],
+        minify: {
+          collapseWhitespace: true,
+          removeComments: false,
+          removeRedundantAttributes: true,
+          removeScriptTypeAttributes: true,
+          removeStyleLinkTypeAttributes: true,
+          useShortDoctype: true
+        }
       }),
 
       new HtmlWebpackPlugin({

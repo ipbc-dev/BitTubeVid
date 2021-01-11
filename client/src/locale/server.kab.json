@@ -31,6 +31,8 @@
     "Published": "Yeffeɣ-d",
     "To transcode": "",
     "To import": "Kter",
+    "Waiting for livestream": "Waiting for livestream",
+    "Livestream ended": "Livestream ended",
     "Pending": "Yegguni",
     "Success": "Yedda",
     "Failed": "Yerreẓ",
@@ -240,5 +242,7 @@
     "Yoruba": "Tayurubit",
     "Zhuang": "Zhuang",
     "Chinese": "Tacinwatt",
-    "Zulu": "Tazulut"
+    "Zulu": "Tazulut",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode"
 }

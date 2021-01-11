@@ -1,14 +1,16 @@
+import { AuthUser } from '@app/core'
+import { Account } from '@app/shared/shared-main/account/account.model'
+import { Actor } from '@app/shared/shared-main/account/actor.model'
+import { VideoChannel } from '@app/shared/shared-main/video-channel/video-channel.model'
 import {
   AbuseState,
   ActorInfo,
   FollowState,
   UserNotification as UserNotificationServer,
   UserNotificationType,
-  VideoInfo,
-  UserRight
+  UserRight,
+  VideoInfo
 } from '@shared/models'
-import { Actor } from '../account/actor.model'
-import { AuthUser } from '@app/core'
 
 export class UserNotification implements UserNotificationServer {
   id: number
@@ -95,22 +97,22 @@ export class UserNotification implements UserNotificationServer {
     // To prevent a notification popup crash in case of bug, wrap it inside a try/catch
     try {
       this.video = hash.video
-      if (this.video) this.setAvatarUrl(this.video.channel)
+      if (this.video) this.setVideoChannelAvatarUrl(this.video.channel)
 
       this.videoImport = hash.videoImport
 
       this.comment = hash.comment
-      if (this.comment) this.setAvatarUrl(this.comment.account)
+      if (this.comment) this.setAccountAvatarUrl(this.comment.account)
 
       this.abuse = hash.abuse
 
       this.videoBlacklist = hash.videoBlacklist
 
       this.account = hash.account
-      if (this.account) this.setAvatarUrl(this.account)
+      if (this.account) this.setAccountAvatarUrl(this.account)
 
       this.actorFollow = hash.actorFollow
-      if (this.actorFollow) this.setAvatarUrl(this.actorFollow.follower)
+      if (this.actorFollow) this.setAccountAvatarUrl(this.actorFollow.follower)
 
       this.createdAt = hash.createdAt
       this.updatedAt = hash.updatedAt
@@ -211,7 +213,7 @@ export class UserNotification implements UserNotificationServer {
   }
 
   private buildVideoImportUrl () {
-    return '/my-account/video-imports'
+    return '/my-library/video-imports'
   }
 
   private buildVideoImportIdentifier (videoImport: { targetUrl?: string, magnetUri?: string, torrentName?: string }) {
@@ -222,7 +224,11 @@ export class UserNotification implements UserNotificationServer {
     return [ this.buildVideoUrl(comment.video), { threadId: comment.threadId } ]
   }
 
-  private setAvatarUrl (actor: { avatarUrl?: string, avatar?: { url?: string, path: string } }) {
-    actor.avatarUrl = Actor.GET_ACTOR_AVATAR_URL(actor)
+  private setAccountAvatarUrl (actor: { avatarUrl?: string, avatar?: { url?: string, path: string } }) {
+    actor.avatarUrl = Account.GET_ACTOR_AVATAR_URL(actor)
+  }
+
+  private setVideoChannelAvatarUrl (actor: { avatarUrl?: string, avatar?: { url?: string, path: string } }) {
+    actor.avatarUrl = VideoChannel.GET_ACTOR_AVATAR_URL(actor)
   }
 }

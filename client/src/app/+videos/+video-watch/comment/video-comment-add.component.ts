@@ -4,7 +4,7 @@ import { Router } from '@angular/router'
 import { Notifier, User } from '@app/core'
 import { VIDEO_COMMENT_TEXT_VALIDATOR } from '@app/shared/form-validators/video-comment-validators'
 import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
-import { Video } from '@app/shared/shared-main'
+import { Video, Account } from '@app/shared/shared-main'
 import { VideoComment, VideoCommentService } from '@app/shared/shared-video-comment'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
 import { VideoCommentCreate } from '@shared/models'
@@ -43,9 +43,18 @@ export class VideoCommentAddComponent extends FormReactive implements OnChanges,
   }
 
   get emojiMarkupList () {
-    const emojiMarkup = require('markdown-it-emoji/lib/data/light.json')
+    const emojiMarkupObjectList = require('markdown-it-emoji/lib/data/light.json')
 
-    return emojiMarkup
+    // Populate emoji-markup-list from object to array to avoid keys alphabetical order
+    const emojiMarkupArrayList = []
+    for (const emojiMarkupName in emojiMarkupObjectList) {
+      if (emojiMarkupName) {
+        const emoji = emojiMarkupObjectList[emojiMarkupName]
+        emojiMarkupArrayList.push([emoji, emojiMarkupName])
+      }
+    }
+
+    return emojiMarkupArrayList
   }
 
   ngOnInit () {
@@ -89,7 +98,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnChanges,
 
   openEmojiModal (event: any) {
     event.preventDefault()
-    this.modalService.open(this.emojiModal, { backdrop: true })
+    this.modalService.open(this.emojiModal, { backdrop: true, size: 'lg' })
   }
 
   hideModals () {
@@ -136,7 +145,7 @@ export class VideoCommentAddComponent extends FormReactive implements OnChanges,
 
   getAvatarUrl () {
     if (this.user) return this.user.accountAvatarUrl
-    return window.location.origin + '/client/assets/images/default-avatar.png'
+    return Account.GET_DEFAULT_AVATAR_URL()
   }
 
   gotoLogin () {
@@ -183,7 +192,11 @@ export class VideoCommentAddComponent extends FormReactive implements OnChanges,
         this.textareaElement.nativeElement.focus()
       }
 
+      // Scroll to textarea
       this.textareaElement.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+
+      // Use the native textarea autosize according to the text's break lines
+      this.textareaElement.nativeElement.dispatchEvent(new Event('input'))
     })
 
     this.form.patchValue({ text })

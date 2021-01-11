@@ -1,24 +1,26 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import * as chai from 'chai'
 import 'mocha'
-import { ServerStats } from '../../../../shared/models/server/server-stats.model'
+import * as chai from 'chai'
 import {
   cleanupTests,
   createUser,
   doubleFollow,
   flushAndRunMultipleServers,
   follow,
-  ServerInfo, unfollow,
+  ServerInfo,
+  unfollow,
+  updateCustomSubConfig,
   uploadVideo,
+  userLogin,
   viewVideo,
-  wait,
-  userLogin
+  wait
 } from '../../../../shared/extra-utils'
 import { setAccessTokensToServers } from '../../../../shared/extra-utils/index'
+import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
 import { getStats } from '../../../../shared/extra-utils/server/stats'
 import { addVideoCommentThread } from '../../../../shared/extra-utils/videos/video-comments'
-import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
+import { ServerStats } from '../../../../shared/models/server/server-stats.model'
 
 const expect = chai.expect
 
@@ -31,7 +33,9 @@ describe('Test stats (excluding redundancy)', function () {
 
   before(async function () {
     this.timeout(60000)
+
     servers = await flushAndRunMultipleServers(3)
+
     await setAccessTokensToServers(servers)
 
     await doubleFollow(servers[0], servers[1])
@@ -128,6 +132,80 @@ describe('Test stats (excluding redundancy)', function () {
       expect(data.totalWeeklyActiveUsers).to.equal(2)
       expect(data.totalMonthlyActiveUsers).to.equal(2)
     }
+  })
+
+  it('Should correctly count video file sizes if transcoding is enabled', async function () {
+    this.timeout(60000)
+
+    await updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+      transcoding: {
+        enabled: true,
+        webtorrent: {
+          enabled: true
+        },
+        hls: {
+          enabled: true
+        },
+        resolutions: {
+          '0p': false,
+          '240p': false,
+          '360p': false,
+          '480p': false,
+          '720p': false,
+          '1080p': false,
+          '2160p': false
+        }
+      }
+    })
+
+    await uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video', fixture: 'video_short.webm' })
+
+    await waitJobs(servers)
+
+    {
+      const res = await getStats(servers[1].url)
+      const data: ServerStats = res.body
+      expect(data.totalLocalVideoFilesSize).to.equal(0)
+    }
+
+    {
+      const res = await getStats(servers[0].url)
+      const data: ServerStats = res.body
+      expect(data.totalLocalVideoFilesSize).to.be.greaterThan(300000)
+      expect(data.totalLocalVideoFilesSize).to.be.lessThan(400000)
+    }
+  })
+
+  it('Should have the correct AP stats', async function () {
+    this.timeout(60000)
+
+    await updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+      transcoding: {
+        enabled: false
+      }
+    })
+
+    const res1 = await getStats(servers[1].url)
+    const first = res1.body as ServerStats
+
+    for (let i = 0; i < 10; i++) {
+      await uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video' })
+    }
+
+    await waitJobs(servers)
+
+    const res2 = await getStats(servers[1].url)
+    const second: ServerStats = res2.body
+
+    expect(second.totalActivityPubMessagesProcessed).to.be.greaterThan(first.totalActivityPubMessagesProcessed)
+
+    await wait(5000)
+
+    const res3 = await getStats(servers[1].url)
+    const third: ServerStats = res3.body
+
+    expect(third.totalActivityPubMessagesWaiting).to.equal(0)
+    expect(third.activityPubMessagesProcessedPerSecond).to.be.lessThan(second.activityPubMessagesProcessedPerSecond)
   })
 
   after(async function () {

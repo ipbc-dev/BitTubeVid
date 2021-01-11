@@ -1,5 +1,5 @@
 import { SortMeta } from 'primeng/api'
-import { filter, switchMap } from 'rxjs/operators'
+import { switchMap } from 'rxjs/operators'
 import { buildVideoLink, buildVideoOrPlaylistEmbed } from 'src/assets/player/utils'
 import { environment } from 'src/environments/environment'
 import { AfterViewInit, Component, OnInit } from '@angular/core'
@@ -25,16 +25,16 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
   videoBlocklistActions: DropdownAction<VideoBlacklist>[][] = []
 
   constructor (
+    protected route: ActivatedRoute,
+    protected router: Router,
     private notifier: Notifier,
     private serverService: ServerService,
     private confirmService: ConfirmService,
     private videoBlocklistService: VideoBlockService,
     private markdownRenderer: MarkdownService,
     private sanitizer: DomSanitizer,
-    private videoService: VideoService,
-    private route: ActivatedRoute,
-    private router: Router
-    ) {
+    private videoService: VideoService
+  ) {
     super()
 
     this.videoBlocklistActions = [
@@ -104,18 +104,11 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
         })
 
     this.initialize()
-
-    this.route.queryParams
-      .pipe(filter(params => params.search !== undefined && params.search !== null))
-      .subscribe(params => {
-        this.search = params.search
-        this.setTableFilter(params.search)
-        this.loadData()
-      })
+    this.listenToSearchChange()
   }
 
   ngAfterViewInit () {
-    if (this.search) this.setTableFilter(this.search)
+    if (this.search) this.setTableFilter(this.search, false)
   }
 
   /* Table filter functions */
@@ -145,12 +138,6 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
     return Video.buildClientUrl(videoBlock.video.uuid)
   }
 
-  booleanToText (value: boolean) {
-    if (value === true) return $localize`yes`
-
-    return $localize`no`
-  }
-
   toHtml (text: string) {
     return this.markdownRenderer.textMarkdownToHTML(text)
   }
@@ -174,7 +161,7 @@ export class VideoBlockListComponent extends RestTable implements OnInit, AfterV
   getVideoEmbed (entry: VideoBlacklist) {
     return buildVideoOrPlaylistEmbed(
       buildVideoLink({
-        baseUrl: `${environment.embedUrl}/videos/embed/${entry.video.uuid}`,
+        baseUrl: `${environment.originServerUrl}/videos/embed/${entry.video.uuid}`,
         title: false,
         warningTitle: false
       })

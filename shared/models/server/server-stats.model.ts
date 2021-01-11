@@ -20,6 +20,10 @@ export interface ServerStats {
   premiumStorageStadistics: object
 
   videosRedundancy: VideosRedundancyStats[]
+
+  totalActivityPubMessagesProcessed: number
+  activityPubMessagesProcessedPerSecond: number
+  totalActivityPubMessagesWaiting: number
 }
 
 export interface VideosRedundancyStats {

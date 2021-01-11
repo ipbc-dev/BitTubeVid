@@ -5,13 +5,23 @@ export const serverFilterHookObject = {
   // (used by the trending page, recently-added page, local page etc)
   'filter:api.videos.list.params': true,
   'filter:api.videos.list.result': true,
+
+  // Filter params/result used to list account videos for the REST API
+  'filter:api.accounts.videos.list.params': true,
+  'filter:api.accounts.videos.list.result': true,
+
+  // Filter params/result used to list channel videos for the REST API
+  'filter:api.video-channels.videos.list.params': true,
+  'filter:api.video-channels.videos.list.result': true,
+
   // Filter the result of the get function
   // Used to get detailed video information (video watch page for example)
   'filter:api.video.get.result': true,
 
-  // Filter the result of the accept upload, import via torrent or url functions
+  // Filter the result of the accept upload/live, import via torrent/url functions
   // If this function returns false then the upload is aborted with an error
   'filter:api.video.upload.accept.result': true,
+  'filter:api.live-video.create.accept.result': true,
   'filter:api.video.pre-import-url.accept.result': true,
   'filter:api.video.pre-import-torrent.accept.result': true,
   'filter:api.video.post-import-url.accept.result': true,
@@ -53,6 +63,9 @@ export const serverActionHookObject = {
   'action:api.video.uploaded': true,
   // Fired when a local video is viewed
   'action:api.video.viewed': true,
+
+  // Fired when a live video is created
+  'action:api.live-video.created': true,
 
   // Fired when a thread is created
   'action:api.video-thread.created': true,

@@ -165,7 +165,7 @@ registerSetting({
   name: 'admin-name',
   label: 'Admin name',
   type: 'input',
-  // type: input | input-checkbox | input-textarea | markdown-text | markdown-enhanced
+  // type: input | input-checkbox | input-password | input-textarea | markdown-text | markdown-enhanced
   default: 'my super name'
 })
 
@@ -644,8 +644,8 @@ and republish it on NPM. Remember that the BitTube index will take into account 
 
 
 ## Plugin & Theme hooks/helpers API
-[comment]: <> (question , join peertube)
-See the dedicated documentation: https://docs.joinpeertube.org/#/api-plugins
+
+See the dedicated documentation: https://docs.joinpeertube.org/api-plugins
 
 
 ## Tips
@@ -667,7 +667,7 @@ registerHook({
   }
 })
 ```
-  * Don't try to require parent PeerTube modules, only use `peertubeHelpers`. If you need another helper or a specific hook, please [create an issue](https://github.com/Chocobozzz/PeerTube/issues/new)
+  * Don't try to require parent PeerTube modules, only use `peertubeHelpers`. If you need another helper or a specific hook, please [create an issue](https://github.com/Chocobozzz/PeerTube/issues/new/choose)
   * Don't use PeerTube dependencies. Use your own :)
 
 If your plugin is broken with a new PeerTube release, update your code and the `peertubeEngine` field of your `package.json` field.

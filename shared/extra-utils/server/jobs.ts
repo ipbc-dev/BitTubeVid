@@ -1,31 +1,40 @@
 import * as request from 'supertest'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
+import { makeGetRequest } from '../../../shared/extra-utils'
 import { Job, JobState, JobType } from '../../models'
 import { wait } from '../miscs/miscs'
 import { ServerInfo } from './servers'
-import { makeGetRequest } from '../../../shared/extra-utils'
 
-function getJobsList (url: string, accessToken: string, state: JobState) {
-  const path = '/api/v1/jobs/' + state
+function buildJobsUrl (state?: JobState) {
+  let path = '/api/v1/jobs'
+
+  if (state) path += '/' + state
+
+  return path
+}
+
+function getJobsList (url: string, accessToken: string, state?: JobState) {
+  const path = buildJobsUrl(state)
 
   return request(url)
     .get(path)
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ' + accessToken)
-    .expect(200)
+    .expect(HttpStatusCode.OK_200)
     .expect('Content-Type', /json/)
 }
 
 function getJobsListPaginationAndSort (options: {
   url: string
   accessToken: string
-  state: JobState
   start: number
   count: number
   sort: string
+  state?: JobState
   jobType?: JobType
 }) {
   const { url, accessToken, state, start, count, sort, jobType } = options
-  const path = '/api/v1/jobs/' + state
+  const path = buildJobsUrl(state)
 
   const query = {
     start,
@@ -38,7 +47,7 @@ function getJobsListPaginationAndSort (options: {
     url,
     path,
     token: accessToken,
-    statusCodeExpected: 200,
+    statusCodeExpected: HttpStatusCode.OK_200,
     query
   })
 }

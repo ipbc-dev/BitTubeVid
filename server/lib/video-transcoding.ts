@@ -1,29 +1,28 @@
-import { HLS_STREAMING_PLAYLIST_DIRECTORY, P2P_MEDIA_LOADER_PEER_VERSION, WEBSERVER } from '../initializers/constants'
-import { basename, extname as extnameUtil, join } from 'path'
-import {
-  canDoQuickTranscode,
-  getDurationFromVideoFile,
-  getMetadataFromFile,
-  getVideoFileFPS,
-  transcode,
-  TranscodeOptions,
-  TranscodeOptionsType
-} from '../helpers/ffmpeg-utils'
 import { copyFile, ensureDir, move, remove, stat } from 'fs-extra'
-import { logger } from '../helpers/logger'
-import { VideoResolution } from '../../shared/models/videos'
-import { VideoFileModel } from '../models/video/video-file'
-import { updateMasterHLSPlaylist, updateSha256Segments } from './hls'
-import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
-import { VideoStreamingPlaylistType } from '../../shared/models/videos/video-streaming-playlist.type'
-import { CONFIG } from '../initializers/config'
-import { MStreamingPlaylistFilesVideo, MVideoFile, MVideoWithAllFiles, MVideoWithFile } from '@server/types/models'
+import { basename, extname as extnameUtil, join } from 'path'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
+import { MStreamingPlaylistFilesVideo, MVideoFile, MVideoWithAllFiles, MVideoWithFile } from '@server/types/models'
+import { VideoResolution } from '../../shared/models/videos'
+import { VideoStreamingPlaylistType } from '../../shared/models/videos/video-streaming-playlist.type'
+import { transcode, TranscodeOptions, TranscodeOptionsType } from '../helpers/ffmpeg-utils'
+import { canDoQuickTranscode, getDurationFromVideoFile, getMetadataFromFile, getVideoFileFPS } from '../helpers/ffprobe-utils'
+import { logger } from '../helpers/logger'
+import { CONFIG } from '../initializers/config'
+import { HLS_STREAMING_PLAYLIST_DIRECTORY, P2P_MEDIA_LOADER_PEER_VERSION, WEBSERVER } from '../initializers/constants'
+import { VideoFileModel } from '../models/video/video-file'
+import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
+import { updateMasterHLSPlaylist, updateSha256VODSegments } from './hls'
 import { generateVideoStreamingPlaylistName, getVideoFilename, getVideoFilePath } from './video-paths'
+import { availableEncoders } from './video-transcoding-profiles'
 
 /**
- * Optimize the original video file and replace it. The resolution is not changed.
+ *
+ * Functions that run transcoding functions, update the database, cleanup files, create torrent files...
+ * Mainly called by the job queue
+ *
  */
+
+// Optimize the original video file and replace it. The resolution is not changed.
 async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileArg?: MVideoFile) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const newExtname = '.mp4'
@@ -38,8 +37,13 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
 
   const transcodeOptions: TranscodeOptions = {
     type: transcodeType,
+
     inputPath: videoInputPath,
     outputPath: videoTranscodedPath,
+
+    availableEncoders,
+    profile: 'default',
+
     resolution: inputVideoFile.resolution
   }
 
@@ -55,6 +59,8 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
     const videoOutputPath = getVideoFilePath(video, inputVideoFile)
 
     await onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
+
+    return transcodeType
   } catch (err) {
     // Auto destruction...
     video.destroy().catch(err => logger.error('Cannot destruct video after transcoding failure.', { err }))
@@ -63,9 +69,7 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   }
 }
 
-/**
- * Transcode the original video file to a lower resolution.
- */
+// Transcode the original video file to a lower resolution.
 async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoResolution, isPortrait: boolean) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const extname = '.mp4'
@@ -85,14 +89,23 @@ async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoR
   const transcodeOptions = resolution === VideoResolution.H_NOVIDEO
     ? {
       type: 'only-audio' as 'only-audio',
+
       inputPath: videoInputPath,
       outputPath: videoTranscodedPath,
+
+      availableEncoders,
+      profile: 'default',
+
       resolution
     }
     : {
       type: 'video' as 'video',
       inputPath: videoInputPath,
       outputPath: videoTranscodedPath,
+
+      availableEncoders,
+      profile: 'default',
+
       resolution,
       isPortraitMode: isPortrait
     }
@@ -102,6 +115,7 @@ async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoR
   return onVideoFileTranscoding(video, newVideoFile, videoTranscodedPath, videoOutputPath)
 }
 
+// Merge an image with an audio file to create a video
 async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: VideoResolution) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const newExtname = '.mp4'
@@ -118,8 +132,13 @@ async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: Video
 
   const transcodeOptions = {
     type: 'merge-audio' as 'merge-audio',
+
     inputPath: tmpPreviewPath,
     outputPath: videoTranscodedPath,
+
+    availableEncoders,
+    profile: 'default',
+
     audioPath: audioInputPath,
     resolution
   }
@@ -146,34 +165,109 @@ async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: Video
   return onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
 }
 
-async function generateHlsPlaylist (video: MVideoWithFile, resolution: VideoResolution, copyCodecs: boolean, isPortraitMode: boolean) {
+// Concat TS segments from a live video to a fragmented mp4 HLS playlist
+async function generateHlsPlaylistFromTS (options: {
+  video: MVideoWithFile
+  concatenatedTsFilePath: string
+  resolution: VideoResolution
+  isPortraitMode: boolean
+  isAAC: boolean
+}) {
+  return generateHlsPlaylistCommon({
+    video: options.video,
+    resolution: options.resolution,
+    isPortraitMode: options.isPortraitMode,
+    inputPath: options.concatenatedTsFilePath,
+    type: 'hls-from-ts' as 'hls-from-ts',
+    isAAC: options.isAAC
+  })
+}
+
+// Generate an HLS playlist from an input file, and update the master playlist
+function generateHlsPlaylist (options: {
+  video: MVideoWithFile
+  videoInputPath: string
+  resolution: VideoResolution
+  copyCodecs: boolean
+  isPortraitMode: boolean
+}) {
+  return generateHlsPlaylistCommon({
+    video: options.video,
+    resolution: options.resolution,
+    copyCodecs: options.copyCodecs,
+    isPortraitMode: options.isPortraitMode,
+    inputPath: options.videoInputPath,
+    type: 'hls' as 'hls'
+  })
+}
+
+// ---------------------------------------------------------------------------
+
+export {
+  generateHlsPlaylist,
+  generateHlsPlaylistFromTS,
+  optimizeOriginalVideofile,
+  transcodeNewResolution,
+  mergeAudioVideofile
+}
+
+// ---------------------------------------------------------------------------
+
+async function onVideoFileTranscoding (video: MVideoWithFile, videoFile: MVideoFile, transcodingPath: string, outputPath: string) {
+  const stats = await stat(transcodingPath)
+  const fps = await getVideoFileFPS(transcodingPath)
+  const metadata = await getMetadataFromFile(transcodingPath)
+
+  await move(transcodingPath, outputPath, { overwrite: true })
+
+  videoFile.size = stats.size
+  videoFile.fps = fps
+  videoFile.metadata = metadata
+
+  await createTorrentAndSetInfoHash(video, videoFile)
+
+  await VideoFileModel.customUpsert(videoFile, 'video', undefined)
+  video.VideoFiles = await video.$get('VideoFiles')
+
+  return video
+}
+
+async function generateHlsPlaylistCommon (options: {
+  type: 'hls' | 'hls-from-ts'
+  video: MVideoWithFile
+  inputPath: string
+  resolution: VideoResolution
+  copyCodecs?: boolean
+  isAAC?: boolean
+  isPortraitMode: boolean
+}) {
+  const { type, video, inputPath, resolution, copyCodecs, isPortraitMode, isAAC } = options
+
   const baseHlsDirectory = join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid)
   await ensureDir(join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid))
-
-  const videoFileInput = copyCodecs
-    ? video.getWebTorrentFile(resolution)
-    : video.getMaxQualityFile()
-
-  const videoOrStreamingPlaylist = videoFileInput.getVideoOrStreamingPlaylist()
-  const videoInputPath = getVideoFilePath(videoOrStreamingPlaylist, videoFileInput)
 
   const outputPath = join(baseHlsDirectory, VideoStreamingPlaylistModel.getHlsPlaylistFilename(resolution))
   const videoFilename = generateVideoStreamingPlaylistName(video.uuid, resolution)
 
   const transcodeOptions = {
-    type: 'hls' as 'hls',
-    inputPath: videoInputPath,
+    type,
+
+    inputPath,
     outputPath,
+
+    availableEncoders,
+    profile: 'default',
+
     resolution,
     copyCodecs,
     isPortraitMode,
+
+    isAAC,
 
     hlsPlaylist: {
       videoFilename
     }
   }
-
-  logger.debug('Will run transcode.', { transcodeOptions })
 
   await transcode(transcodeOptions)
 
@@ -182,8 +276,8 @@ async function generateHlsPlaylist (video: MVideoWithFile, resolution: VideoReso
   const [ videoStreamingPlaylist ] = await VideoStreamingPlaylistModel.upsert({
     videoId: video.id,
     playlistUrl,
-    segmentsSha256Url: WEBSERVER.URL + VideoStreamingPlaylistModel.getHlsSha256SegmentsStaticPath(video.uuid),
-    p2pMediaLoaderInfohashes: VideoStreamingPlaylistModel.buildP2PMediaLoaderInfoHashes(playlistUrl, video.VideoFiles),
+    segmentsSha256Url: WEBSERVER.URL + VideoStreamingPlaylistModel.getHlsSha256SegmentsStaticPath(video.uuid, video.isLive),
+    p2pMediaLoaderInfohashes: [],
     p2pMediaLoaderPeerVersion: P2P_MEDIA_LOADER_PEER_VERSION,
 
     type: VideoStreamingPlaylistType.HLS
@@ -210,44 +304,15 @@ async function generateHlsPlaylist (video: MVideoWithFile, resolution: VideoReso
   await VideoFileModel.customUpsert(newVideoFile, 'streaming-playlist', undefined)
   videoStreamingPlaylist.VideoFiles = await videoStreamingPlaylist.$get('VideoFiles')
 
+  videoStreamingPlaylist.p2pMediaLoaderInfohashes = VideoStreamingPlaylistModel.buildP2PMediaLoaderInfoHashes(
+    playlistUrl, videoStreamingPlaylist.VideoFiles
+  )
+  await videoStreamingPlaylist.save()
+
   video.setHLSPlaylist(videoStreamingPlaylist)
 
   await updateMasterHLSPlaylist(video)
-  await updateSha256Segments(video)
+  await updateSha256VODSegments(video)
 
-  return video
-}
-
-// ---------------------------------------------------------------------------
-
-export {
-  generateHlsPlaylist,
-  optimizeOriginalVideofile,
-  transcodeNewResolution,
-  mergeAudioVideofile
-}
-
-// ---------------------------------------------------------------------------
-
-async function onVideoFileTranscoding (video: MVideoWithFile, videoFile: MVideoFile, transcodingPath: string, outputPath: string) {
-  const stats = await stat(transcodingPath)
-  const fps = await getVideoFileFPS(transcodingPath)
-  const metadata = await getMetadataFromFile(transcodingPath)
-
-  await move(transcodingPath, outputPath)
-
-  videoFile.size = stats.size
-  videoFile.fps = fps
-  videoFile.metadata = metadata
-
-  await createTorrentAndSetInfoHash(video, videoFile)
-
-  const updatedVideoFile = await videoFile.save()
-
-  // Add it if this is a new created file
-  if (video.VideoFiles.some(f => f.id === videoFile.id) === false) {
-    video.VideoFiles.push(updatedVideoFile)
-  }
-
-  return video
+  return outputPath
 }

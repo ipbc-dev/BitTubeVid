@@ -20,7 +20,8 @@
 
   .video-thumbnail-watch-later-overlay,
   .video-thumbnail-label-overlay,
-  .video-thumbnail-duration-overlay {
+  .video-thumbnail-duration-overlay,
+  .video-thumbnail-live-overlay {
     @include static-thumbnail-overlay;
 
     border-radius: 3px;
@@ -41,11 +42,21 @@
     &.danger { background-color: red; }
   }
 
-  .video-thumbnail-duration-overlay {
+  .video-thumbnail-duration-overlay,
+  .video-thumbnail-live-overlay {
     position: absolute;
     padding: 0 3px;
     right: 5px;
     bottom: 5px;
+  }
+
+  .video-thumbnail-live-overlay {
+    font-weight: $font-semibold;
+    color: #fff;
+
+    &:not(.live-ended) {
+      background-color: rgba(224, 8, 8, 0.7);
+    }
   }
 
   .video-thumbnail-actions-overlay {

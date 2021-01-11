@@ -88,7 +88,7 @@ rm -f "./client/dist/embed-stats.json"
   # archive creation + signing
   zip -r "BitTubeVid/$zip_name" "${directories_to_archive[@]}"
   # gpg --armor --detach-sign -u "$maintainer_public_key" "BitTubeVid/$zip_name"
-  XZ_OPT=-e9 tar cfJ "BitTubeVid/$tar_name" "${directories_to_archive[@]}"
+  XZ_OPT="-e9 - T0" tar cfJ "BitTubeVid/$tar_name" "${directories_to_archive[@]}"
   # gpg --armor --detach-sign -u "$maintainer_public_key" "BitTubeVid/$tar_name"
 
   # temporary setup destruction

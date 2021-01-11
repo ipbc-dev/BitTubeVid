@@ -4,7 +4,7 @@ import { ToastModule } from 'primeng/toast'
 import { CommonModule } from '@angular/common'
 import { NgModule, Optional, SkipSelf } from '@angular/core'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
-import { UserNotificationSocket } from '@app/core/notification/user-notification-socket.service'
+import { PeerTubeSocket } from '@app/core/notification/peertube-socket.service'
 import { HooksService } from '@app/core/plugins/hooks.service'
 import { PluginService } from '@app/core/plugins/plugin.service'
 import { UnloggedGuard } from '@app/core/routing/unlogged-guard.service'
@@ -12,6 +12,7 @@ import { LoadingBarModule } from '@ngx-loading-bar/core'
 import { LoadingBarHttpClientModule } from '@ngx-loading-bar/http-client'
 import { LoadingBarRouterModule } from '@ngx-loading-bar/router'
 import { AuthService } from './auth'
+import { ScopedTokensService } from './scoped-tokens'
 import { ConfirmService } from './confirm'
 import { CheatSheetComponent } from './hotkeys'
 import { MenuService } from './menu'
@@ -57,6 +58,7 @@ import { LocalStorageService, ScreenService, SessionStorageService } from './wra
 
   providers: [
     AuthService,
+    ScopedTokensService,
     ConfirmService,
     ServerService,
     ThemeService,
@@ -84,7 +86,7 @@ import { LocalStorageService, ScreenService, SessionStorageService } from './wra
     RedirectService,
     Notifier,
     MessageService,
-    UserNotificationSocket,
+    PeerTubeSocket,
     ServerConfigResolver,
     CanDeactivateGuard
   ]

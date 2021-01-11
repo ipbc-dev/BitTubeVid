@@ -7,6 +7,7 @@ import { ensureDir, remove, writeFile } from 'fs-extra'
 import * as request from 'request'
 import { createWriteStream } from 'fs'
 import { CONFIG } from '@server/initializers/config'
+import { HttpStatusCode } from '../../shared/core-utils/miscs/http-error-codes'
 
 export type YoutubeDLInfo = {
   name?: string
@@ -34,6 +35,11 @@ const processOptions = {
 function getYoutubeDLInfo (url: string, opts?: string[]): Promise<YoutubeDLInfo> {
   return new Promise<YoutubeDLInfo>((res, rej) => {
     let args = opts || [ '-j', '--flat-playlist' ]
+
+    if (CONFIG.IMPORT.VIDEOS.HTTP.FORCE_IPV4) {
+      args.push('--force-ipv4')
+    }
+
     args = wrapWithProxyOptions(args)
 
     safeGetYoutubeDL()
@@ -138,7 +144,7 @@ async function updateYoutubeDLBinary () {
   const binDirectory = join(root(), 'node_modules', 'youtube-dl', 'bin')
   const bin = join(binDirectory, 'youtube-dl')
   const detailsPath = join(binDirectory, 'details')
-  const url = 'https://yt-dl.org/downloads/latest/youtube-dl'
+  const url = process.env.YOUTUBE_DL_DOWNLOAD_HOST || 'https://yt-dl.org/downloads/latest/youtube-dl'
 
   await ensureDir(binDirectory)
 
@@ -149,7 +155,7 @@ async function updateYoutubeDLBinary () {
         return res()
       }
 
-      if (result.statusCode !== 302) {
+      if (result.statusCode !== HttpStatusCode.FOUND_302) {
         logger.error('youtube-dl update error: did not get redirect for the latest version link. Status %d', result.statusCode)
         return res()
       }
@@ -159,12 +165,17 @@ async function updateYoutubeDLBinary () {
       const newVersion = /yt-dl\.org\/downloads\/(\d{4}\.\d\d\.\d\d(\.\d)?)\/youtube-dl/.exec(url)[1]
 
       downloadFile.on('response', result => {
-        if (result.statusCode !== 200) {
+        if (result.statusCode !== HttpStatusCode.OK_200) {
           logger.error('Cannot update youtube-dl: new version response is not 200, it\'s %d.', result.statusCode)
           return res()
         }
 
-        downloadFile.pipe(createWriteStream(bin, { mode: 493 }))
+        const writeStream = createWriteStream(bin, { mode: 493 }).on('error', err => {
+          logger.error('youtube-dl update error in write stream', { err })
+          return res()
+        })
+
+        downloadFile.pipe(writeStream)
       })
 
       downloadFile.on('error', err => {

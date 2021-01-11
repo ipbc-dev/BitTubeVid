@@ -20,7 +20,7 @@ import * as cli from 'commander'
 process.title = 'peertube'
 
 // Create our main app
-const app = express()
+const app = express().disable("x-powered-by")
 
 // ----------- Core checker -----------
 import { checkMissedConfig, checkFFmpeg, checkNodeVersion } from './server/initializers/checker-before-init'
@@ -98,10 +98,12 @@ import {
   staticRouter,
   lazyStaticRouter,
   servicesRouter,
+  liveRouter,
   pluginsRouter,
   webfingerRouter,
   trackerRouter,
-  createWebsocketTrackerServer, botsRouter
+  createWebsocketTrackerServer,
+  botsRouter
 } from './server/controllers'
 import { advertiseDoNotTrack } from './server/middlewares/dnt'
 import { Redis } from './server/lib/redis'
@@ -119,6 +121,8 @@ import { updateStreamingPlaylistsInfohashesIfNeeded } from './server/lib/hls'
 import { PluginsCheckScheduler } from './server/lib/schedulers/plugins-check-scheduler'
 import { Hooks } from './server/lib/plugins/hooks'
 import { PluginManager } from './server/lib/plugins/plugin-manager'
+import { LiveManager } from './server/lib/live-manager'
+import { HttpStatusCode } from './shared/core-utils/miscs/http-error-codes'
 
 // ----------- Command line -----------
 
@@ -139,14 +143,14 @@ if (isTestInstance()) {
 }
 
 // For the logger
-morgan.token<express.Request>('remote-addr', req => {
+morgan.token('remote-addr', (req: express.Request) => {
   if (CONFIG.LOG.ANONYMIZE_IP === true || req.get('DNT') === '1') {
     return anonymize(req.ip, 16, 16)
   }
 
   return req.ip
 })
-morgan.token<express.Request>('user-agent', req => {
+morgan.token('user-agent', (req: express.Request) => {
   if (req.get('DNT') === '1') {
     return useragent.parse(req.get('user-agent')).family
   }
@@ -183,6 +187,9 @@ app.use(apiRoute, apiRouter)
 // Services (oembed...)
 app.use('/services', servicesRouter)
 
+// Live streaming
+app.use('/live', liveRouter)
+
 // Plugins & themes
 app.use('/', pluginsRouter)
 
@@ -204,7 +211,7 @@ if (cli.client) app.use('/', clientsRouter)
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
   const err = new Error('Not Found')
-  err['status'] = 404
+  err['status'] = HttpStatusCode.NOT_FOUND_404
   next(err)
 })
 
@@ -218,7 +225,7 @@ app.use(function (err, req, res, next) {
   const sql = err.parent ? err.parent.sql : undefined
 
   logger.error('Error in controller.', { err: error, sql })
-  return res.status(err.status || 500).end()
+  return res.status(err.status || HttpStatusCode.INTERNAL_SERVER_ERROR_500).end()
 })
 
 const server = createWebsocketTrackerServer(app)
@@ -242,7 +249,7 @@ async function startApplication () {
   Emailer.Instance.init()
 
   await Promise.all([
-    Emailer.Instance.checkConnectionOrDie(),
+    Emailer.Instance.checkConnection(),
     JobQueue.Instance.init()
   ])
 
@@ -271,9 +278,12 @@ async function startApplication () {
 
   if (cli.plugins) await PluginManager.Instance.registerPluginsAndThemes()
 
+  LiveManager.Instance.init()
+  if (CONFIG.LIVE.ENABLED) LiveManager.Instance.run()
+
   // Make server listening
   server.listen(port, hostname, () => {
-    logger.info('Server listening on %s:%d', hostname, port)
+    logger.info('HTTP server listening on %s:%d', hostname, port)
     logger.info('Web server: %s', WEBSERVER.URL)
 
     Hooks.runAction('action:application.listening')

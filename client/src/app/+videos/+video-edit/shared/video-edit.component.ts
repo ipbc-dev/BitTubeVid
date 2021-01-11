@@ -20,10 +20,11 @@ import {
 import { FormReactiveValidationMessages, FormValidatorService, SelectChannelItem } from '@app/shared/shared-forms'
 import { InstanceService } from '@app/shared/shared-instance'
 import { VideoCaptionEdit, VideoEdit, VideoService } from '@app/shared/shared-main'
-import { ServerConfig, VideoConstant, VideoPrivacy } from '@shared/models'
+import { ServerConfig, VideoConstant, LiveVideo, VideoPrivacy } from '@shared/models'
 import { RegisterClientFormFieldOptions, RegisterClientVideoFieldOptions } from '@shared/models/plugins/register-client-form-field.model'
 import { I18nPrimengCalendarService } from './i18n-primeng-calendar.service'
 import { VideoCaptionAddModalComponent } from './video-caption-add-modal.component'
+import { VideoEditType } from './video-edit.type'
 
 type VideoLanguages = VideoConstant<string> & { group?: string }
 
@@ -40,7 +41,8 @@ export class VideoEditComponent implements OnInit, OnDestroy {
   @Input() schedulePublicationPossible = true
   @Input() videoCaptions: (VideoCaptionEdit & { captionPath?: string })[] = []
   @Input() waitTranscodingEnabled = true
-  @Input() type: 'import-url' | 'import-torrent' | 'upload' | 'update'
+  @Input() type: VideoEditType
+  @Input() liveVideo: LiveVideo
 
   @ViewChild('videoCaptionAddModal', { static: true }) videoCaptionAddModal: VideoCaptionAddModalComponent
 
@@ -100,6 +102,16 @@ export class VideoEditComponent implements OnInit, OnDestroy {
                .map(c => c.language.id)
   }
 
+  isWaitTranscodingDisplayed () {
+    if (!this.waitTranscodingEnabled) return false
+
+    if (this.liveVideo) {
+      return this.form.value['saveReplay'] === true
+    }
+
+    return true
+  }
+
   updateForm () {
     const defaultValues: any = {
       nsfw: 'false',
@@ -124,7 +136,10 @@ export class VideoEditComponent implements OnInit, OnDestroy {
       previewfile: null,
       support: VIDEO_SUPPORT_VALIDATOR,
       schedulePublicationAt: VIDEO_SCHEDULE_PUBLICATION_AT_VALIDATOR,
-      originallyPublishedAt: VIDEO_ORIGINALLY_PUBLISHED_AT_VALIDATOR
+      originallyPublishedAt: VIDEO_ORIGINALLY_PUBLISHED_AT_VALIDATOR,
+      liveStreamKey: null,
+      permanentLive: null,
+      saveReplay: null
     }
 
     this.formValidatorService.updateForm(
@@ -144,6 +159,7 @@ export class VideoEditComponent implements OnInit, OnDestroy {
 
     this.trackChannelChange()
     this.trackPrivacyChange()
+    this.trackLivePermanentFieldChange()
   }
 
   ngOnInit () {
@@ -236,6 +252,14 @@ export class VideoEditComponent implements OnInit, OnDestroy {
     this.videoCaptionAddModal.show()
   }
 
+  isSaveReplayEnabled () {
+    return this.serverConfig.live.allowReplay
+  }
+
+  isPermanentLiveEnabled () {
+    return this.form.value['permanentLive'] === true
+  }
+
   private sortVideoCaptions () {
     this.videoCaptions.sort((v1, v2) => {
       if (v1.language.label < v2.language.label) return -1
@@ -320,7 +344,12 @@ export class VideoEditComponent implements OnInit, OnDestroy {
             const currentSupport = this.form.value[ 'support' ]
 
             // First time we set the channel?
-            if (isNaN(oldChannelId) && !currentSupport) return this.updateSupportField(newChannel.support)
+            if (isNaN(oldChannelId)) {
+              // Fill support if it's empty
+              if (!currentSupport) this.updateSupportField(newChannel.support)
+
+              return
+            }
 
             const oldChannel = this.userVideoChannels.find(c => c.id === oldChannelId)
             if (!newChannel || !oldChannel) {
@@ -335,6 +364,24 @@ export class VideoEditComponent implements OnInit, OnDestroy {
             // Update the support text with our new channel
             this.updateSupportField(newChannel.support)
           })
+        }
+      )
+  }
+
+  private trackLivePermanentFieldChange () {
+    // We will update the "support" field depending on the channel
+    this.form.controls['permanentLive']
+      .valueChanges
+      .subscribe(
+        permanentLive => {
+          const saveReplayControl = this.form.controls['saveReplay']
+
+          if (permanentLive === true) {
+            saveReplayControl.setValue(false)
+            saveReplayControl.disable()
+          } else {
+            saveReplayControl.enable()
+          }
         }
       )
   }

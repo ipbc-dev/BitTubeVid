@@ -7,6 +7,7 @@ import { getOrCreateActorAndServerAndModel } from '../lib/activitypub/actor'
 import { loadActorUrlOrGetFromWebfinger } from '../helpers/webfinger'
 import { isActorDeleteActivityValid } from '@server/helpers/custom-validators/activitypub/actor'
 import { getAPId } from '@server/helpers/activitypub'
+import { HttpStatusCode } from '../../shared/core-utils/miscs/http-error-codes'
 
 async function checkSignature (req: Request, res: Response, next: NextFunction) {
   try {
@@ -28,11 +29,11 @@ async function checkSignature (req: Request, res: Response, next: NextFunction) 
     const activity: ActivityDelete = req.body
     if (isActorDeleteActivityValid(activity) && activity.object === activity.actor) {
       logger.debug('Handling signature error on actor delete activity', { err })
-      return res.sendStatus(204)
+      return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
     }
 
     logger.warn('Error in ActivityPub signature checker.', { err })
-    return res.sendStatus(403)
+    return res.sendStatus(HttpStatusCode.FORBIDDEN_403)
   }
 }
 
@@ -63,11 +64,20 @@ async function checkHttpSignature (req: Request, res: Response) {
   const sig = req.headers[HTTP_SIGNATURE.HEADER_NAME] as string
   if (sig && sig.startsWith('Signature ') === true) req.headers[HTTP_SIGNATURE.HEADER_NAME] = sig.replace(/^Signature /, '')
 
-  const parsed = parseHTTPSignature(req, HTTP_SIGNATURE.CLOCK_SKEW_SECONDS)
+  let parsed: any
+
+  try {
+    parsed = parseHTTPSignature(req, HTTP_SIGNATURE.CLOCK_SKEW_SECONDS)
+  } catch (err) {
+    logger.warn('Invalid signature because of exception in signature parser', { reqBody: req.body, err })
+
+    res.status(HttpStatusCode.FORBIDDEN_403).json({ error: err.message })
+    return false
+  }
 
   const keyId = parsed.keyId
   if (!keyId) {
-    res.sendStatus(403)
+    res.sendStatus(HttpStatusCode.FORBIDDEN_403)
     return false
   }
 
@@ -84,7 +94,7 @@ async function checkHttpSignature (req: Request, res: Response) {
   if (verified !== true) {
     logger.warn('Signature from %s is invalid', actorUrl, { parsed })
 
-    res.sendStatus(403)
+    res.sendStatus(HttpStatusCode.FORBIDDEN_403)
     return false
   }
 
@@ -97,7 +107,7 @@ async function checkJsonLDSignature (req: Request, res: Response) {
   const signatureObject: ActivityPubSignature = req.body.signature
 
   if (!signatureObject || !signatureObject.creator) {
-    res.sendStatus(403)
+    res.sendStatus(HttpStatusCode.FORBIDDEN_403)
     return false
   }
 
@@ -111,7 +121,7 @@ async function checkJsonLDSignature (req: Request, res: Response) {
   if (verified !== true) {
     logger.warn('Signature not verified.', req.body)
 
-    res.sendStatus(403)
+    res.sendStatus(HttpStatusCode.FORBIDDEN_403)
     return false
   }
 

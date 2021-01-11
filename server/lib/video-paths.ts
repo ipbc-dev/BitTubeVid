@@ -9,7 +9,7 @@ import { extractVideo } from '@server/helpers/video'
 function getVideoFilename (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile) {
   const video = extractVideo(videoOrPlaylist)
 
-  if (isStreamingPlaylist(videoOrPlaylist)) {
+  if (videoFile.isHLS()) {
     return generateVideoStreamingPlaylistName(video.uuid, videoFile.resolution)
   }
 
@@ -25,9 +25,10 @@ function generateWebTorrentVideoName (uuid: string, resolution: number, extname:
 }
 
 function getVideoFilePath (videoOrPlaylist: MVideo | MStreamingPlaylistVideo, videoFile: MVideoFile, isRedundancy = false) {
-  if (isStreamingPlaylist(videoOrPlaylist)) {
+  if (videoFile.isHLS()) {
     const video = extractVideo(videoOrPlaylist)
-    return join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid, getVideoFilename(videoOrPlaylist, videoFile))
+
+    return join(getHLSDirectory(video), getVideoFilename(videoOrPlaylist, videoFile))
   }
 
   const baseDir = isRedundancy ? CONFIG.STORAGE.REDUNDANCY_DIR : CONFIG.STORAGE.VIDEOS_DIR
