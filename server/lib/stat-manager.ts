@@ -6,6 +6,7 @@ import { VideoModel } from '@server/models/video/video'
 import { VideoCommentModel } from '@server/models/video/video-comment'
 import { VideoFileModel } from '@server/models/video/video-file'
 import { ServerStats, VideoRedundancyStrategyWithManual } from '@shared/models'
+import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
 
 class StatsManager {
 
@@ -29,6 +30,7 @@ class StatsManager {
     const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = await UserModel.getStats()
     const { totalInstanceFollowers, totalInstanceFollowing } = await ActorFollowModel.getStats()
     const { totalLocalVideoFilesSize } = await VideoFileModel.getStats()
+    const { premiumStorageStadistics } = await userPremiumStoragePaymentModel.getStats()
 
     const videosRedundancyStats = await this.buildRedundancyStats()
 
@@ -49,6 +51,8 @@ class StatsManager {
       totalInstanceFollowing,
 
       videosRedundancy: videosRedundancyStats,
+
+      premiumStorageStadistics,
 
       totalActivityPubMessagesProcessed: this.inboxMessagesProcessed,
       activityPubMessagesProcessedPerSecond: this.buildActivityPubMessagesProcessedPerSecond(),
