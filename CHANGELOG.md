@@ -1,6 +1,6 @@
 # Changelog
 ## v0.3.0 (BitTube)
-  * Based on Peertube V3.0.0
+  * Based on Peertube V3.0.1
   * Please, check Peertube V3.0.0 release important notes below before installing this package
   * Adding LiveStreams
 ## v0.2.6-psm (BitTube-PremiumStorageModule)
@@ -45,6 +45,29 @@
 
 
 ## Peertube v2.2.0
+## v3.0.1
+
+### SECURITY
+
+ * **Important** Fix retrieving data of another user if the username contains `_` when fetching *my information*
+
+### Docker
+
+ * Fix [upgrade documentation](https://docs.joinpeertube.org/install-docker?id=upgrade)
+ * Add live RTMP port in docker compose
+
+### Bug fixes
+
+ * Fix account feed URL
+ * Log RTMP server error (address already in use)
+ * Fix NPM theme links in admin theme page
+ * Don't reject AP actors with empty description
+ * Fix twitter admin config description
+ * Fix duplicate entry in job list page
+ * Fix `nl-NL` broken admin config page
+ * Fix bad tracker client IP when using a reverse proxy
+
+
 ## v3.0.0
 
 **Since v2.4.0**
