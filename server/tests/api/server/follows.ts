@@ -302,7 +302,7 @@ describe('Test follows', function () {
   })
 
   it('Should upload a video on server 2 and 3 and propagate only the video of server 2', async function () {
-    this.timeout(35000)
+    this.timeout(60000)
 
     await uploadVideo(servers[1].url, servers[1].accessToken, { name: 'server2' })
     await uploadVideo(servers[2].url, servers[2].accessToken, { name: 'server3' })
@@ -558,7 +558,7 @@ describe('Test follows', function () {
       const caption1: VideoCaption = res.body.data[0]
       expect(caption1.language.id).to.equal('ar')
       expect(caption1.language.label).to.equal('Arabic')
-      expect(caption1.captionPath).to.equal('/static/video-captions/' + video4.uuid + '-ar.vtt')
+      expect(caption1.captionPath).to.equal('/lazy-static/video-captions/' + video4.uuid + '-ar.vtt')
       await testCaptionFile(servers[0].url, caption1.captionPath, 'Subtitle good 2.')
     })
 

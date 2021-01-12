@@ -8,8 +8,13 @@ import { Actor } from '@app/shared/actor/actor.model'
 
 @Component({
   selector: 'my-instance-account-blocklist',
+<<<<<<< Updated upstream
   styleUrls: [ '../moderation.component.scss', './instance-account-blocklist.component.scss' ],
   templateUrl: './instance-account-blocklist.component.html'
+=======
+  styleUrls: [ '../../../shared/shared-moderation/moderation.scss', '../../../shared/shared-moderation/account-blocklist.component.scss' ],
+  templateUrl: '../../../shared/shared-moderation/account-blocklist.component.html'
+>>>>>>> Stashed changes
 })
 export class InstanceAccountBlocklistComponent extends RestTable implements OnInit {
   blockedAccounts: AccountBlock[] = []

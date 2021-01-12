@@ -1,9 +1,15 @@
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core'
 import { LogsService } from '@app/+admin/system/logs/logs.service'
 import { Notifier } from '@app/core'
+<<<<<<< Updated upstream
 import { LogRow } from '@app/+admin/system/logs/log-row.model'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { LogLevel } from '@shared/models/server/log-level.type'
+=======
+import { LogLevel } from '@shared/models'
+import { LogRow } from './log-row.model'
+import { LogsService } from './logs.service'
+>>>>>>> Stashed changes
 
 @Component({
   templateUrl: './logs.component.html',
@@ -15,7 +21,7 @@ export class LogsComponent implements OnInit {
   loading = false
 
   logs: LogRow[] = []
-  timeChoices: { id: string, label: string }[] = []
+  timeChoices: { id: string, label: string, dateFormat: string }[] = []
   levelChoices: { id: LogLevel, label: string }[] = []
   logTypeChoices: { id: 'audit' | 'standard', label: string }[] = []
 
@@ -25,8 +31,7 @@ export class LogsComponent implements OnInit {
 
   constructor (
     private logsService: LogsService,
-    private notifier: Notifier,
-    private i18n: I18n
+    private notifier: Notifier
   ) { }
 
   ngOnInit (): void {
@@ -78,15 +83,18 @@ export class LogsComponent implements OnInit {
     this.timeChoices = [
       {
         id: lastWeek.toISOString(),
-        label: this.i18n('Last week')
+        label: $localize`Last week`,
+        dateFormat: 'shortDate'
       },
       {
         id: lastDay.toISOString(),
-        label: this.i18n('Last day')
+        label: $localize`Last day`,
+        dateFormat: 'short'
       },
       {
         id: lastHour.toISOString(),
-        label: this.i18n('Last hour')
+        label: $localize`Last hour`,
+        dateFormat: 'mediumTime'
       }
     ]
 
@@ -97,19 +105,19 @@ export class LogsComponent implements OnInit {
     this.levelChoices = [
       {
         id: 'debug',
-        label: this.i18n('Debug')
+        label: $localize`debug`
       },
       {
         id: 'info',
-        label: this.i18n('Info')
+        label: $localize`info`
       },
       {
         id: 'warn',
-        label: this.i18n('Warning')
+        label: $localize`warning`
       },
       {
         id: 'error',
-        label: this.i18n('Error')
+        label: $localize`error`
       }
     ]
 
@@ -120,11 +128,11 @@ export class LogsComponent implements OnInit {
     this.logTypeChoices = [
       {
         id: 'standard',
-        label: this.i18n('Standard logs')
+        label: $localize`Standard logs`
       },
       {
         id: 'audit',
-        label: this.i18n('Audit logs')
+        label: $localize`Audit logs`
       }
     ]
 

@@ -1,20 +1,39 @@
+<<<<<<< Updated upstream
 import { join } from 'path'
 import { JobType, VideoRateType, VideoResolution, VideoState } from '../../shared/models'
+=======
+import { randomInt } from '../../shared/core-utils/miscs/miscs'
+import { CronRepeatOptions, EveryRepeatOptions } from 'bull'
+import { randomBytes } from 'crypto'
+import { invert } from 'lodash'
+import { join } from 'path'
+import {
+  AbuseState,
+  JobType,
+  VideoImportState,
+  VideoPrivacy,
+  VideoRateType,
+  VideoResolution,
+  VideoState,
+  VideoTranscodingFPS
+} from '../../shared/models'
+>>>>>>> Stashed changes
 import { ActivityPubActorType } from '../../shared/models/activitypub'
 import { FollowState } from '../../shared/models/actors'
-import { VideoAbuseState, VideoImportState, VideoPrivacy, VideoTranscodingFPS } from '../../shared/models/videos'
-// Do not use barrels, remain constants as independent as possible
-import { isTestInstance, sanitizeHost, sanitizeUrl, root } from '../helpers/core-utils'
 import { NSFWPolicyType } from '../../shared/models/videos/nsfw-policy.type'
-import { invert } from 'lodash'
-import { CronRepeatOptions, EveryRepeatOptions } from 'bull'
 import { VideoPlaylistPrivacy } from '../../shared/models/videos/playlist/video-playlist-privacy.model'
 import { VideoPlaylistType } from '../../shared/models/videos/playlist/video-playlist-type.model'
+// Do not use barrels, remain constants as independent as possible
+import { isTestInstance, root, sanitizeHost, sanitizeUrl } from '../helpers/core-utils'
 import { CONFIG, registerConfigChangedHandler } from './config'
 
 // ---------------------------------------------------------------------------
 
+<<<<<<< Updated upstream
 const LAST_MIGRATION_VERSION = 510
+=======
+const LAST_MIGRATION_VERSION = 570
+>>>>>>> Stashed changes
 
 // ---------------------------------------------------------------------------
 
@@ -41,19 +60,22 @@ const WEBSERVER = {
   SCHEME: '',
   WS: '',
   HOSTNAME: '',
-  PORT: 0
+  PORT: 0,
+  RTMP_URL: ''
 }
 
 // Sortable columns per schema
 const SORTABLE_COLUMNS = {
-  USERS: [ 'id', 'username', 'videoQuotaUsed', 'createdAt' ],
+  USERS: [ 'id', 'username', 'videoQuotaUsed', 'createdAt', 'lastLoginDate', 'role' ],
   USER_SUBSCRIPTIONS: [ 'id', 'createdAt' ],
   ACCOUNTS: [ 'createdAt' ],
   JOBS: [ 'createdAt' ],
-  VIDEO_ABUSES: [ 'id', 'createdAt', 'state' ],
   VIDEO_CHANNELS: [ 'id', 'name', 'updatedAt', 'createdAt' ],
   VIDEO_IMPORTS: [ 'createdAt' ],
+
   VIDEO_COMMENT_THREADS: [ 'createdAt', 'totalReplies' ],
+  VIDEO_COMMENTS: [ 'createdAt' ],
+
   VIDEO_RATES: [ 'createdAt' ],
   BLACKLISTS: [ 'id', 'name', 'duration', 'views', 'likes', 'dislikes', 'uuid', 'createdAt' ],
   FOLLOWERS: [ 'createdAt', 'state', 'score' ],
@@ -64,12 +86,14 @@ const SORTABLE_COLUMNS = {
   VIDEOS_SEARCH: [ 'name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match' ],
   VIDEO_CHANNELS_SEARCH: [ 'match', 'displayName', 'createdAt' ],
 
+  ABUSES: [ 'id', 'createdAt', 'state' ],
+
   ACCOUNTS_BLOCKLIST: [ 'createdAt' ],
   SERVERS_BLOCKLIST: [ 'createdAt' ],
 
-  USER_NOTIFICATIONS: [ 'createdAt' ],
+  USER_NOTIFICATIONS: [ 'createdAt', 'read' ],
 
-  VIDEO_PLAYLISTS: [ 'displayName', 'createdAt', 'updatedAt' ],
+  VIDEO_PLAYLISTS: [ 'name', 'displayName', 'createdAt', 'updatedAt' ],
 
   PLUGINS: [ 'name', 'createdAt', 'updatedAt' ],
 
@@ -93,7 +117,7 @@ const ROUTE_CACHE_LIFETIME = {
   ACTIVITY_PUB: {
     VIDEOS: '1 second' // 1 second, cache concurrent requests after a broadcast for example
   },
-  STATS: '4 hours'
+  STATS: '1 hour'
 }
 
 // ---------------------------------------------------------------------------
@@ -126,8 +150,10 @@ const JOB_ATTEMPTS: { [id in JobType]: number } = {
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
+  'premium-storage-checker': 1,
   'activitypub-refresher': 1,
-  'video-redundancy': 1
+  'video-redundancy': 1,
+  'video-live-ending': 1
 }
 const JOB_CONCURRENCY: { [id in JobType]: number } = {
   'activitypub-http-broadcast': 1,
@@ -139,8 +165,10 @@ const JOB_CONCURRENCY: { [id in JobType]: number } = {
   'video-import': 1,
   'email': 5,
   'videos-views': 1,
+  'premium-storage-checker': 1,
   'activitypub-refresher': 1,
-  'video-redundancy': 1
+  'video-redundancy': 1,
+  'video-live-ending': 10
 }
 const JOB_TTL: { [id in JobType]: number } = {
   'activitypub-http-broadcast': 60000 * 10, // 10 minutes
@@ -152,12 +180,17 @@ const JOB_TTL: { [id in JobType]: number } = {
   'video-import': 1000 * 3600 * 2, // 2 hours
   'email': 60000 * 10, // 10 minutes
   'videos-views': undefined, // Unlimited
+  'premium-storage-checker': undefined, // Unlimited
   'activitypub-refresher': 60000 * 10, // 10 minutes
-  'video-redundancy': 1000 * 3600 * 3 // 3 hours
+  'video-redundancy': 1000 * 3600 * 3, // 3 hours
+  'video-live-ending': 1000 * 60 * 10 // 10 minutes
 }
 const REPEAT_JOBS: { [ id: string ]: EveryRepeatOptions | CronRepeatOptions } = {
   'videos-views': {
-    cron: '1 * * * *' // At 1 minute past the hour
+    cron: randomInt(1, 20) + ' * * * *' // Between 1-20 minutes past the hour
+  },
+  'premium-storage-checker': {
+    cron: '0 0 * * *' // At midnight every day
   }
 }
 
@@ -175,7 +208,8 @@ const SCHEDULER_INTERVALS_MS = {
   checkPlugins: CONFIG.PLUGINS.INDEX.CHECK_LATEST_VERSIONS_INTERVAL,
   autoFollowIndexInstances: 60000 * 60 * 24, // 1 day
   removeOldViews: 60000 * 60 * 24, // 1 day
-  removeOldHistory: 60000 * 60 * 24 // 1 day
+  removeOldHistory: 60000 * 60 * 24, // 1 day
+  updateInboxStats: 1000 * 60// 1 minute
 }
 
 // ---------------------------------------------------------------------------
@@ -191,9 +225,12 @@ const CONSTRAINTS_FIELDS = {
     VIDEO_LANGUAGES: { max: 500 }, // Array length
     BLOCKED_REASON: { min: 3, max: 250 } // Length
   },
-  VIDEO_ABUSES: {
+  ABUSES: {
     REASON: { min: 2, max: 3000 }, // Length
     MODERATION_COMMENT: { min: 2, max: 3000 } // Length
+  },
+  ABUSE_MESSAGES: {
+    MESSAGE: { min: 2, max: 3000 } // Length
   },
   VIDEO_BLACKLIST: {
     REASON: { min: 2, max: 300 } // Length
@@ -250,7 +287,7 @@ const CONSTRAINTS_FIELDS = {
     VIEWS: { min: 0 },
     LIKES: { min: 0 },
     DISLIKES: { min: 0 },
-    FILE_SIZE: { min: 10 },
+    FILE_SIZE: { min: -1 },
     URL: { min: 3, max: 2000 } // Length
   },
   VIDEO_PLAYLISTS: {
@@ -269,7 +306,7 @@ const CONSTRAINTS_FIELDS = {
     PRIVATE_KEY: { min: 10, max: 5000 }, // Length
     URL: { min: 3, max: 2000 }, // Length
     AVATAR: {
-      EXTNAME: [ '.png', '.jpeg', '.jpg' ],
+      EXTNAME: [ '.png', '.jpeg', '.jpg', '.gif' ],
       FILE_SIZE: {
         max: 2 * 1024 * 1024 // 2MB
       }
@@ -298,7 +335,11 @@ const CONSTRAINTS_FIELDS = {
   }
 }
 
-let VIDEO_VIEW_LIFETIME = 60000 * 60 // 1 hour
+const VIEW_LIFETIME = {
+  VIDEO: 60000 * 60, // 1 hour
+  LIVE: 60000 * 5 // 5 minutes
+}
+
 let CONTACT_FORM_LIFETIME = 60000 * 60 // 1 hour
 
 const VIDEO_TRANSCODING_FPS: VideoTranscodingFPS = {
@@ -308,6 +349,17 @@ const VIDEO_TRANSCODING_FPS: VideoTranscodingFPS = {
   AVERAGE: 30,
   MAX: 60,
   KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720 // We keep the original FPS on high resolutions (720 minimum)
+}
+
+const VIDEO_TRANSCODING_ENCODERS = {
+  VIDEO: [ 'libx264' ],
+
+  // Try the first one, if not available try the second one etc
+  AUDIO: [
+    // we favor VBR, if a good AAC encoder is available
+    'libfdk_aac',
+    'aac'
+  ]
 }
 
 const DEFAULT_AUDIO_RESOLUTION = VideoResolution.H_480P
@@ -356,39 +408,41 @@ const VIDEO_LICENCES = {
 
 const VIDEO_LANGUAGES: { [id: string]: string } = {}
 
-const VIDEO_PRIVACIES = {
+const VIDEO_PRIVACIES: { [ id in VideoPrivacy ]: string } = {
   [VideoPrivacy.PUBLIC]: 'Public',
   [VideoPrivacy.UNLISTED]: 'Unlisted',
   [VideoPrivacy.PRIVATE]: 'Private',
   [VideoPrivacy.INTERNAL]: 'Internal'
 }
 
-const VIDEO_STATES = {
+const VIDEO_STATES: { [ id in VideoState ]: string } = {
   [VideoState.PUBLISHED]: 'Published',
   [VideoState.TO_TRANSCODE]: 'To transcode',
-  [VideoState.TO_IMPORT]: 'To import'
+  [VideoState.TO_IMPORT]: 'To import',
+  [VideoState.WAITING_FOR_LIVE]: 'Waiting for livestream',
+  [VideoState.LIVE_ENDED]: 'Livestream ended'
 }
 
-const VIDEO_IMPORT_STATES = {
+const VIDEO_IMPORT_STATES: { [ id in VideoImportState ]: string } = {
   [VideoImportState.FAILED]: 'Failed',
   [VideoImportState.PENDING]: 'Pending',
   [VideoImportState.SUCCESS]: 'Success',
   [VideoImportState.REJECTED]: 'Rejected'
 }
 
-const VIDEO_ABUSE_STATES = {
-  [VideoAbuseState.PENDING]: 'Pending',
-  [VideoAbuseState.REJECTED]: 'Rejected',
-  [VideoAbuseState.ACCEPTED]: 'Accepted'
+const ABUSE_STATES: { [ id in AbuseState ]: string } = {
+  [AbuseState.PENDING]: 'Pending',
+  [AbuseState.REJECTED]: 'Rejected',
+  [AbuseState.ACCEPTED]: 'Accepted'
 }
 
-const VIDEO_PLAYLIST_PRIVACIES = {
+const VIDEO_PLAYLIST_PRIVACIES: { [ id in VideoPlaylistPrivacy ]: string } = {
   [VideoPlaylistPrivacy.PUBLIC]: 'Public',
   [VideoPlaylistPrivacy.UNLISTED]: 'Unlisted',
   [VideoPlaylistPrivacy.PRIVATE]: 'Private'
 }
 
-const VIDEO_PLAYLIST_TYPES = {
+const VIDEO_PLAYLIST_TYPES: { [ id in VideoPlaylistType ]: string } = {
   [VideoPlaylistType.REGULAR]: 'Regular',
   [VideoPlaylistType.WATCH_LATER]: 'Watch later'
 }
@@ -403,12 +457,15 @@ const MIMETYPES = {
       'audio/x-ms-wma': '.wma',
       'audio/wav': '.wav',
       'audio/x-flac': '.flac',
-      'audio/flac': '.flac'
+      'audio/flac': '.flac',
+      '‎audio/aac': '.aac',
+      'audio/ac3': '.ac3'
     },
     EXT_MIMETYPE: null as { [ id: string ]: string }
   },
   VIDEO: {
-    MIMETYPE_EXT: null as { [ id: string ]: string },
+    MIMETYPE_EXT: null as { [ id: string ]: string | string[] },
+    MIMETYPES_REGEX: null as string,
     EXT_MIMETYPE: null as { [ id: string ]: string }
   },
   IMAGE: {
@@ -485,6 +542,10 @@ const HTTP_SIGNATURE = {
   HEADER_NAME: 'signature',
   ALGORITHM: 'rsa-sha256',
   HEADERS_TO_SIGN: [ '(request-target)', 'host', 'date', 'digest' ],
+  REQUIRED_HEADERS: {
+    ALL: [ '(request-target)', 'host', 'date' ],
+    POST: [ '(request-target)', 'host', 'date', 'digest' ]
+  },
   CLOCK_SKEW_SECONDS: 1800
 }
 
@@ -528,8 +589,8 @@ const STATIC_DOWNLOAD_PATHS = {
 }
 const LAZY_STATIC_PATHS = {
   AVATARS: '/lazy-static/avatars/',
-  PREVIEWS: '/static/previews/',
-  VIDEO_CAPTIONS: '/static/video-captions/'
+  PREVIEWS: '/lazy-static/previews/',
+  VIDEO_CAPTIONS: '/lazy-static/video-captions/'
 }
 
 // Cache control
@@ -583,9 +644,26 @@ const LRU_CACHE = {
 const HLS_STREAMING_PLAYLIST_DIRECTORY = join(CONFIG.STORAGE.STREAMING_PLAYLISTS_DIR, 'hls')
 const HLS_REDUNDANCY_DIRECTORY = join(CONFIG.STORAGE.REDUNDANCY_DIR, 'hls')
 
+const VIDEO_LIVE = {
+  EXTENSION: '.ts',
+  CLEANUP_DELAY: 1000 * 60 * 5, // 5 minutes
+  SEGMENT_TIME_SECONDS: 4, // 4 seconds
+  SEGMENTS_LIST_SIZE: 15, // 15 maximum segments in live playlist
+  REPLAY_DIRECTORY: 'replay',
+  EDGE_LIVE_DELAY_SEGMENTS_NOTIFICATION: 4,
+  RTMP: {
+    CHUNK_SIZE: 60000,
+    GOP_CACHE: true,
+    PING: 60,
+    PING_TIMEOUT: 30,
+    BASE_PATH: 'live'
+  }
+}
+
 const MEMOIZE_TTL = {
   OVERVIEWS_SAMPLE: 1000 * 3600 * 4, // 4 hours
-  INFO_HASH_EXISTS: 1000 * 3600 * 12 // 12 hours
+  INFO_HASH_EXISTS: 1000 * 3600 * 12, // 12 hours
+  LIVE_ABLE_TO_UPLOAD: 1000 * 60 // 1 minute
 }
 
 const MEMOIZE_LENGTH = {
@@ -605,7 +683,8 @@ const REDUNDANCY = {
 const ACCEPT_HEADERS = [ 'html', 'application/json' ].concat(ACTIVITY_PUB.POTENTIAL_ACCEPT_HEADERS)
 
 const ASSETS_PATH = {
-  DEFAULT_AUDIO_BACKGROUND: join(root(), 'dist', 'server', 'assets', 'default-audio-background.jpg')
+  DEFAULT_AUDIO_BACKGROUND: join(root(), 'dist', 'server', 'assets', 'default-audio-background.jpg'),
+  DEFAULT_LIVE_BACKGROUND: join(root(), 'dist', 'server', 'assets', 'default-live-background.jpg')
 }
 
 // ---------------------------------------------------------------------------
@@ -632,7 +711,12 @@ const AUDIT_LOG_FILENAME = 'peertube-audit.log'
 const TRACKER_RATE_LIMITS = {
   INTERVAL: 60000 * 5, // 5 minutes
   ANNOUNCES_PER_IP_PER_INFOHASH: 15, // maximum announces per torrent in the interval
+<<<<<<< Updated upstream
   ANNOUNCES_PER_IP: 30 // maximum announces for all our torrents in the interval
+=======
+  ANNOUNCES_PER_IP: 30, // maximum announces for all our torrents in the interval
+  BLOCK_IP_LIFETIME: 60000 * 3 // 3 minutes
+>>>>>>> Stashed changes
 }
 
 const P2P_MEDIA_LOADER_PEER_VERSION = 2
@@ -673,20 +757,28 @@ if (isTestInstance() === true) {
   SCHEDULER_INTERVALS_MS.removeOldViews = 5000
   SCHEDULER_INTERVALS_MS.updateVideos = 5000
   SCHEDULER_INTERVALS_MS.autoFollowIndexInstances = 5000
+  SCHEDULER_INTERVALS_MS.updateInboxStats = 5000
   REPEAT_JOBS['videos-views'] = { every: 5000 }
+  REPEAT_JOBS['premium-storage-checker'] = { every: 600000 }
 
   REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1
 
-  VIDEO_VIEW_LIFETIME = 1000 // 1 second
+  VIEW_LIFETIME.VIDEO = 1000 // 1 second
+  VIEW_LIFETIME.LIVE = 1000 * 5 // 5 second
   CONTACT_FORM_LIFETIME = 1000 // 1 second
 
   JOB_ATTEMPTS['email'] = 1
 
   FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE = 3000
   MEMOIZE_TTL.OVERVIEWS_SAMPLE = 3000
+  MEMOIZE_TTL.LIVE_ABLE_TO_UPLOAD = 3000
   OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD = 2
 
   PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 5000
+
+  VIDEO_LIVE.CLEANUP_DELAY = 5000
+  VIDEO_LIVE.SEGMENT_TIME_SECONDS = 2
+  VIDEO_LIVE.EDGE_LIVE_DELAY_SEGMENTS_NOTIFICATION = 1
 }
 
 updateWebserverUrls()
@@ -702,6 +794,7 @@ registerConfigChangedHandler(() => {
 export {
   WEBSERVER,
   API_VERSION,
+  VIDEO_LIVE,
   PEERTUBE_VERSION,
   LAZY_STATIC_PATHS,
   HLS_REDUNDANCY_DIRECTORY,
@@ -726,6 +819,7 @@ export {
   ACTOR_FOLLOW_SCORE,
   PREVIEWS_SIZE,
   REMOTE_SCHEME,
+  VIDEO_TRANSCODING_ENCODERS,
   FOLLOW_STATES,
   DEFAULT_USER_THEME_NAME,
   SERVER_ACTOR_NAME,
@@ -757,7 +851,7 @@ export {
   VIDEO_RATE_TYPES,
   VIDEO_TRANSCODING_FPS,
   FFMPEG_NICE,
-  VIDEO_ABUSE_STATES,
+  ABUSE_STATES,
   VIDEO_CHANNELS,
   LRU_CACHE,
   JOB_REQUEST_TIMEOUT,
@@ -775,7 +869,7 @@ export {
   JOB_COMPLETED_LIFETIME,
   HTTP_SIGNATURE,
   VIDEO_IMPORT_STATES,
-  VIDEO_VIEW_LIFETIME,
+  VIEW_LIFETIME,
   CONTACT_FORM_LIFETIME,
   VIDEO_PLAYLIST_PRIVACIES,
   PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME,
@@ -788,23 +882,58 @@ export {
 
 function buildVideoMimetypeExt () {
   const data = {
+    // streamable formats that warrant cross-browser compatibility
     'video/webm': '.webm',
-    'video/ogg': '.ogv',
+    // We'll add .ogg if additional extensions are enabled
+    // We could add .ogg here but since it could be an audio file,
+    // it would be confusing for users because PeerTube will refuse their file (based on the mimetype)
+    'video/ogg': [ '.ogv' ],
     'video/mp4': '.mp4'
   }
 
   if (CONFIG.TRANSCODING.ENABLED) {
     if (CONFIG.TRANSCODING.ALLOW_ADDITIONAL_EXTENSIONS) {
+      data['video/ogg'].push('.ogg')
+
       Object.assign(data, {
-        'video/quicktime': '.mov',
-        'video/x-msvideo': '.avi',
-        'video/x-flv': '.flv',
         'video/x-matroska': '.mkv',
-        'video/avi': '.avi',
+
+        // Developed by Apple
+        'video/quicktime': [ '.mov', '.qt', '.mqv' ], // often used as output format by editing software
         'video/x-m4v': '.m4v',
+        'video/m4v': '.m4v',
+
+        // Developed by the Adobe Flash Platform
+        'video/x-flv': '.flv',
+        'video/x-f4v': '.f4v', // replacement for flv
+
+        // Developed by Microsoft
+        'video/x-ms-wmv': '.wmv',
+        'video/x-msvideo': '.avi',
+        'video/avi': '.avi',
+
+        // Developed by 3GPP
+        // common video formats for cell phones
+        'video/3gpp': [ '.3gp', '.3gpp' ],
+        'video/3gpp2': [ '.3g2', '.3gpp2' ],
+
+        // Developed by FFmpeg/Mplayer
+        'application/x-nut': '.nut',
+
+        // The standard video format used by many Sony and Panasonic HD camcorders.
+        // It is also used for storing high definition video on Blu-ray discs.
+        'video/mp2t': '.mts',
+        'video/m2ts': '.m2ts',
+
+        // Old formats reliant on MPEG-1/MPEG-2
+        'video/mpv': '.mpv',
+        'video/mpeg2': '.m2v',
+        'video/mpeg': [ '.m1v', '.mpg', '.mpe', '.mpeg', '.vob' ],
+        'video/dvd': '.vob',
+
         // Could be anything
         'application/octet-stream': null,
-        'video/m4v': '.m4v'
+        'application/mxf': '.mxf' // often used as exchange format by editing software
       })
     }
 
@@ -819,22 +948,47 @@ function buildVideoMimetypeExt () {
 function updateWebserverUrls () {
   WEBSERVER.URL = sanitizeUrl(CONFIG.WEBSERVER.SCHEME + '://' + CONFIG.WEBSERVER.HOSTNAME + ':' + CONFIG.WEBSERVER.PORT)
   WEBSERVER.HOST = sanitizeHost(CONFIG.WEBSERVER.HOSTNAME + ':' + CONFIG.WEBSERVER.PORT, REMOTE_SCHEME.HTTP)
-  WEBSERVER.SCHEME = CONFIG.WEBSERVER.SCHEME
   WEBSERVER.WS = CONFIG.WEBSERVER.WS
+
+  WEBSERVER.SCHEME = CONFIG.WEBSERVER.SCHEME
   WEBSERVER.HOSTNAME = CONFIG.WEBSERVER.HOSTNAME
   WEBSERVER.PORT = CONFIG.WEBSERVER.PORT
+
+  WEBSERVER.RTMP_URL = 'rtmp://' + CONFIG.WEBSERVER.HOSTNAME + ':' + CONFIG.LIVE.RTMP.PORT + '/' + VIDEO_LIVE.RTMP.BASE_PATH
 }
 
 function updateWebserverConfig () {
   MIMETYPES.VIDEO.MIMETYPE_EXT = buildVideoMimetypeExt()
-  MIMETYPES.VIDEO.EXT_MIMETYPE = invert(MIMETYPES.VIDEO.MIMETYPE_EXT)
+  MIMETYPES.VIDEO.MIMETYPES_REGEX = buildMimetypesRegex(MIMETYPES.VIDEO.MIMETYPE_EXT)
+
   ACTIVITY_PUB.URL_MIME_TYPES.VIDEO = Object.keys(MIMETYPES.VIDEO.MIMETYPE_EXT)
 
-  CONSTRAINTS_FIELDS.VIDEOS.EXTNAME = buildVideosExtname()
+  MIMETYPES.VIDEO.EXT_MIMETYPE = buildVideoExtMimetype(MIMETYPES.VIDEO.MIMETYPE_EXT)
+
+  CONSTRAINTS_FIELDS.VIDEOS.EXTNAME = Object.keys(MIMETYPES.VIDEO.EXT_MIMETYPE)
 }
 
-function buildVideosExtname () {
-  return Object.keys(MIMETYPES.VIDEO.EXT_MIMETYPE)
+function buildVideoExtMimetype (obj: { [ id: string ]: string | string[] }) {
+  const result: { [id: string]: string } = {}
+
+  for (const mimetype of Object.keys(obj)) {
+    const value = obj[mimetype]
+    if (!value) continue
+
+    const extensions = Array.isArray(value) ? value : [ value ]
+
+    for (const extension of extensions) {
+      result[extension] = mimetype
+    }
+  }
+
+  return result
+}
+
+function buildMimetypesRegex (obj: { [id: string]: string | string[] }) {
+  return Object.keys(obj)
+    .map(m => `(${m})`)
+    .join('|')
 }
 
 function loadLanguages () {
@@ -861,7 +1015,9 @@ function buildLanguages () {
     jsl: true, // Japanese sign language
     sfs: true, // South African sign language
     swl: true, // Swedish sign language
-    rsl: true, // Russian sign language: true
+    rsl: true, // Russian sign language
+
+    kab: true, // Kabyle
 
     epo: true, // Esperanto
     tlh: true, // Klingon

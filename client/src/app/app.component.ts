@@ -9,6 +9,7 @@ import { Hotkey, HotkeysService } from 'angular2-hotkeys'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { PlatformLocation, ViewportScroller } from '@angular/common'
 import { PluginService } from '@app/core/plugins/plugin.service'
+<<<<<<< Updated upstream
 import { HooksService } from '@app/core/plugins/hooks.service'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
 import { POP_STATE_MODAL_DISMISS } from '@app/shared/misc/constants'
@@ -19,6 +20,18 @@ import { ServerConfig, UserRole } from '@shared/models'
 import { User } from '@app/shared'
 import { InstanceService } from '@app/shared/instance/instance.service'
 import { MenuService } from './core/menu/menu.service'
+=======
+import { CustomModalComponent } from '@app/modal/custom-modal.component'
+import { InstanceConfigWarningModalComponent } from '@app/modal/instance-config-warning-modal.component'
+import { WelcomeModalComponent } from '@app/modal/welcome-modal.component'
+import { NgbConfig, NgbModal } from '@ng-bootstrap/ng-bootstrap'
+import { peertubeLocalStorage } from '@root-helpers/peertube-web-storage'
+import { getShortLocale, is18nPath } from '@shared/core-utils/i18n'
+import { BroadcastMessageLevel, ServerConfig, UserRole } from '@shared/models'
+import { MenuService } from './core/menu/menu.service'
+import { POP_STATE_MODAL_DISMISS } from './helpers'
+import { InstanceService } from './shared/shared-instance'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-app',
@@ -35,7 +48,12 @@ export class AppComponent implements OnInit, AfterViewInit {
   private serverConfig: ServerConfig
 
   constructor (
+<<<<<<< Updated upstream
     private i18n: I18n,
+=======
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(LOCALE_ID) private localeId: string,
+>>>>>>> Stashed changes
     private viewportScroller: ViewportScroller,
     private router: Router,
     private authService: AuthService,
@@ -50,8 +68,15 @@ export class AppComponent implements OnInit, AfterViewInit {
     private hooks: HooksService,
     private location: PlatformLocation,
     private modalService: NgbModal,
+<<<<<<< Updated upstream
+=======
+    private markdownService: MarkdownService,
+    private ngbConfig: NgbConfig,
+>>>>>>> Stashed changes
     public menu: MenuService
-  ) { }
+  ) {
+    this.ngbConfig.animation = false
+  }
 
   get instanceName () {
     return this.serverConfig.instance.name
@@ -97,6 +122,16 @@ export class AppComponent implements OnInit, AfterViewInit {
     return this.authService.isLoggedIn()
   }
 
+<<<<<<< Updated upstream
+=======
+  hideBroadcastMessage () {
+    peertubeLocalStorage.setItem(AppComponent.BROADCAST_MESSAGE_KEY, this.serverConfig.broadcastMessage.message)
+
+    this.broadcastMessage = null
+    this.screenService.isBroadcastMessageDisplayed = false
+  }
+
+>>>>>>> Stashed changes
   private initRouteEvents () {
     let resetScroll = true
     const eventsObs = this.router.events
@@ -104,12 +139,17 @@ export class AppComponent implements OnInit, AfterViewInit {
     const scrollEvent = eventsObs.pipe(filter((e: Event): e is Scroll => e instanceof Scroll))
 
     scrollEvent.subscribe(e => {
-      if (e.position) {
-        return this.viewportScroller.scrollToPosition(e.position)
+      // scrollToAnchor first to preserve anchor position when using history navigation
+      if (e.anchor) {
+        setTimeout(() => {
+          this.viewportScroller.scrollToAnchor(e.anchor)
+        })
+
+        return
       }
 
-      if (e.anchor) {
-        return this.viewportScroller.scrollToAnchor(e.anchor)
+      if (e.position) {
+        return this.viewportScroller.scrollToPosition(e.position)
       }
 
       if (resetScroll) {
@@ -161,10 +201,46 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     eventsObs.pipe(
       filter((e: Event): e is GuardsCheckStart => e instanceof GuardsCheckStart),
-      filter(() => this.screenService.isInSmallView())
-    ).subscribe(() => this.menu.isMenuDisplayed = false) // User clicked on a link in the menu, change the page
+      filter(() => this.screenService.isInSmallView() || this.screenService.isInTouchScreen())
+    ).subscribe(() => this.menu.setMenuDisplay(false)) // User clicked on a link in the menu, change the page
   }
 
+<<<<<<< Updated upstream
+=======
+  private injectBroadcastMessage () {
+    concat(
+      this.serverService.getConfig().pipe(first()),
+      this.serverService.configReloaded
+    ).subscribe(async config => {
+      this.broadcastMessage = null
+      this.screenService.isBroadcastMessageDisplayed = false
+
+      const messageConfig = config.broadcastMessage
+
+      if (messageConfig.enabled) {
+        // Already dismissed this message?
+        if (messageConfig.dismissable && localStorage.getItem(AppComponent.BROADCAST_MESSAGE_KEY) === messageConfig.message) {
+          return
+        }
+
+        const classes: { [id in BroadcastMessageLevel]: string } = {
+          info: 'alert-info',
+          warning: 'alert-warning',
+          error: 'alert-danger'
+        }
+
+        this.broadcastMessage = {
+          message: await this.markdownService.completeMarkdownToHTML(messageConfig.message),
+          dismissable: messageConfig.dismissable,
+          class: classes[messageConfig.level]
+        }
+
+        this.screenService.isBroadcastMessageDisplayed = true
+      }
+    })
+  }
+
+>>>>>>> Stashed changes
   private injectJS () {
     // Inject JS
     this.serverService.getConfig()
@@ -232,37 +308,37 @@ export class AppComponent implements OnInit, AfterViewInit {
       new Hotkey(['/', 's'], (event: KeyboardEvent): boolean => {
         document.getElementById('search-video').focus()
         return false
-      }, undefined, this.i18n('Focus the search bar')),
+      }, undefined, $localize`Focus the search bar`),
 
       new Hotkey('b', (event: KeyboardEvent): boolean => {
         this.menu.toggleMenu()
         return false
-      }, undefined, this.i18n('Toggle the left menu')),
+      }, undefined, $localize`Toggle the left menu`),
 
       new Hotkey('g o', (event: KeyboardEvent): boolean => {
         this.router.navigate([ '/videos/overview' ])
         return false
-      }, undefined, this.i18n('Go to the discover videos page')),
+      }, undefined, $localize`Go to the discover videos page`),
 
       new Hotkey('g t', (event: KeyboardEvent): boolean => {
         this.router.navigate([ '/videos/trending' ])
         return false
-      }, undefined, this.i18n('Go to the trending videos page')),
+      }, undefined, $localize`Go to the trending videos page`),
 
       new Hotkey('g r', (event: KeyboardEvent): boolean => {
         this.router.navigate([ '/videos/recently-added' ])
         return false
-      }, undefined, this.i18n('Go to the recently added videos page')),
+      }, undefined, $localize`Go to the recently added videos page`),
 
       new Hotkey('g l', (event: KeyboardEvent): boolean => {
         this.router.navigate([ '/videos/local' ])
         return false
-      }, undefined, this.i18n('Go to the local videos page')),
+      }, undefined, $localize`Go to the local videos page`),
 
       new Hotkey('g u', (event: KeyboardEvent): boolean => {
         this.router.navigate([ '/videos/upload' ])
         return false
-      }, undefined, this.i18n('Go to the videos upload page'))
+      }, undefined, $localize`Go to the videos upload page`)
     ])
   }
 }

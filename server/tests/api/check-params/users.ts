@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import { omit } from 'lodash'
 import 'mocha'
+import { expect } from 'chai'
+import { omit } from 'lodash'
 import { join } from 'path'
 import { User, UserRole, VideoImport, VideoImportState } from '../../../../shared'
-
 import {
   addVideoChannel,
   blockUser,
@@ -14,6 +14,7 @@ import {
   flushAndRunServer,
   getMyUserInformation,
   getMyUserVideoRating,
+  getUserScopedTokens,
   getUsersList,
   immutableAssign,
   killallServers,
@@ -23,6 +24,7 @@ import {
   makeUploadRequest,
   registerUser,
   removeUser,
+  renewUserScopedTokens,
   reRunServer,
   ServerInfo,
   setAccessTokensToServers,
@@ -31,17 +33,17 @@ import {
   uploadVideo,
   userLogin
 } from '../../../../shared/extra-utils'
+import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
 import {
   checkBadCountPagination,
   checkBadSortPagination,
   checkBadStartPagination
 } from '../../../../shared/extra-utils/requests/check-api-params'
-import { getMagnetURI, getMyVideoImports, getYoutubeVideoUrl, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
-import { VideoPrivacy } from '../../../../shared/models/videos'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
-import { expect } from 'chai'
+import { getGoodVideoUrl, getMagnetURI, getMyVideoImports, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
 import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
-import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
+import { VideoPrivacy } from '../../../../shared/models/videos'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 describe('Test users API validators', function () {
   const path = '/api/v1/users/'
@@ -166,7 +168,7 @@ describe('Test users API validators', function () {
       await makeGetRequest({
         url: server.url,
         path,
-        statusCodeExpected: 401
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
       })
     })
 
@@ -175,7 +177,7 @@ describe('Test users API validators', function () {
         url: server.url,
         path,
         token: userAccessToken,
-        statusCodeExpected: 403
+        statusCodeExpected: HttpStatusCode.FORBIDDEN_403
       })
     })
   })
@@ -269,7 +271,7 @@ describe('Test users API validators', function () {
         path: path,
         token: server.accessToken,
         fields,
-        statusCodeExpected: 200
+        statusCodeExpected: HttpStatusCode.OK_200
       })
     })
 
@@ -285,20 +287,32 @@ describe('Test users API validators', function () {
         path,
         token: 'super token',
         fields: baseCorrectParams,
-        statusCodeExpected: 401
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
       })
     })
 
     it('Should fail if we add a user with the same username', async function () {
       const fields = immutableAssign(baseCorrectParams, { username: 'user1' })
 
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
+      })
     })
 
     it('Should fail if we add a user with the same email', async function () {
       const fields = immutableAssign(baseCorrectParams, { email: 'user1@example.com' })
 
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
+      })
     })
 
     it('Should fail without a videoQuota', async function () {
@@ -345,7 +359,7 @@ describe('Test users API validators', function () {
         path,
         token: server.accessToken,
         fields,
-        statusCodeExpected: 409
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
       })
     })
 
@@ -358,7 +372,7 @@ describe('Test users API validators', function () {
           path,
           token: moderatorAccessToken,
           fields,
-          statusCodeExpected: 403
+          statusCodeExpected: HttpStatusCode.FORBIDDEN_403
         })
       }
     })
@@ -371,7 +385,7 @@ describe('Test users API validators', function () {
         path,
         token: moderatorAccessToken,
         fields,
-        statusCodeExpected: 200
+        statusCodeExpected: HttpStatusCode.OK_200
       })
     })
 
@@ -381,7 +395,7 @@ describe('Test users API validators', function () {
         path,
         token: server.accessToken,
         fields: baseCorrectParams,
-        statusCodeExpected: 200
+        statusCodeExpected: HttpStatusCode.OK_200
       })
     })
 
@@ -398,7 +412,7 @@ describe('Test users API validators', function () {
         password: 'my super password',
         videoQuota: 42000000
       }
-      await makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: 403 })
+      await makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: HttpStatusCode.FORBIDDEN_403 })
     })
   })
 
@@ -444,7 +458,13 @@ describe('Test users API validators', function () {
         password: 'super'.repeat(61)
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 401 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + 'me',
+        token: userAccessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
+      })
     })
 
     it('Should fail with an invalid NSFW policy attribute', async function () {
@@ -485,7 +505,13 @@ describe('Test users API validators', function () {
         password: 'my super password'
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + 'me', token: 'super token', fields, statusCodeExpected: 401 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + 'me',
+        token: 'super token',
+        fields,
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
+      })
     })
 
     it('Should fail with a too long description', async function () {
@@ -557,7 +583,13 @@ describe('Test users API validators', function () {
         noWelcomeModal: true
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 204 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + 'me',
+        token: userAccessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
+      })
     })
 
     it('Should succeed without password change with the correct params', async function () {
@@ -566,7 +598,13 @@ describe('Test users API validators', function () {
         autoPlayVideo: false
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 204 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + 'me',
+        token: userAccessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
+      })
     })
   })
 
@@ -597,7 +635,7 @@ describe('Test users API validators', function () {
         path: path + '/me/avatar/pick',
         fields,
         attaches,
-        statusCodeExpected: 401
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
       })
     })
 
@@ -612,23 +650,56 @@ describe('Test users API validators', function () {
         token: server.accessToken,
         fields,
         attaches,
-        statusCodeExpected: 200
+        statusCodeExpected: HttpStatusCode.OK_200
       })
+    })
+  })
+
+  describe('When managing my scoped tokens', function () {
+
+    it('Should fail to get my scoped tokens with an non authenticated user', async function () {
+      await getUserScopedTokens(server.url, null, HttpStatusCode.UNAUTHORIZED_401)
+    })
+
+    it('Should fail to get my scoped tokens with a bad token', async function () {
+      await getUserScopedTokens(server.url, 'bad', HttpStatusCode.UNAUTHORIZED_401)
+
+    })
+
+    it('Should succeed to get my scoped tokens', async function () {
+      await getUserScopedTokens(server.url, server.accessToken)
+    })
+
+    it('Should fail to renew my scoped tokens with an non authenticated user', async function () {
+      await renewUserScopedTokens(server.url, null, HttpStatusCode.UNAUTHORIZED_401)
+    })
+
+    it('Should fail to renew my scoped tokens with a bad token', async function () {
+      await renewUserScopedTokens(server.url, 'bad', HttpStatusCode.UNAUTHORIZED_401)
+    })
+
+    it('Should succeed to renew my scoped tokens', async function () {
+      await renewUserScopedTokens(server.url, server.accessToken)
     })
   })
 
   describe('When getting a user', function () {
 
     it('Should fail with an non authenticated user', async function () {
-      await makeGetRequest({ url: server.url, path: path + userId, token: 'super token', statusCodeExpected: 401 })
+      await makeGetRequest({
+        url: server.url,
+        path: path + userId,
+        token: 'super token',
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
+      })
     })
 
     it('Should fail with a non admin user', async function () {
-      await makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 403 })
+      await makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: HttpStatusCode.FORBIDDEN_403 })
     })
 
     it('Should succeed with the correct params', async function () {
-      await makeGetRequest({ url: server.url, path: path + userId, token: server.accessToken, statusCodeExpected: 200 })
+      await makeGetRequest({ url: server.url, path: path + userId, token: server.accessToken, statusCodeExpected: HttpStatusCode.OK_200 })
     })
   })
 
@@ -689,7 +760,13 @@ describe('Test users API validators', function () {
         videoQuota: 42
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + userId, token: 'super token', fields, statusCodeExpected: 401 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + userId,
+        token: 'super token',
+        fields,
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
+      })
     })
 
     it('Should fail when updating root role', async function () {
@@ -716,7 +793,7 @@ describe('Test users API validators', function () {
         path: path + moderatorId,
         token: moderatorAccessToken,
         fields,
-        statusCodeExpected: 403
+        statusCodeExpected: HttpStatusCode.FORBIDDEN_403
       })
     })
 
@@ -730,7 +807,7 @@ describe('Test users API validators', function () {
         path: path + userId,
         token: moderatorAccessToken,
         fields,
-        statusCodeExpected: 204
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
       })
     })
 
@@ -742,13 +819,19 @@ describe('Test users API validators', function () {
         role: UserRole.USER
       }
 
-      await makePutBodyRequest({ url: server.url, path: path + userId, token: server.accessToken, fields, statusCodeExpected: 204 })
+      await makePutBodyRequest({
+        url: server.url,
+        path: path + userId,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
+      })
     })
   })
 
   describe('When getting my information', function () {
     it('Should fail with a non authenticated user', async function () {
-      await getMyUserInformation(server.url, 'fake_token', 401)
+      await getMyUserInformation(server.url, 'fake_token', HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should success with the correct parameters', async function () {
@@ -758,15 +841,15 @@ describe('Test users API validators', function () {
 
   describe('When getting my video rating', function () {
     it('Should fail with a non authenticated user', async function () {
-      await getMyUserVideoRating(server.url, 'fake_token', videoId, 401)
+      await getMyUserVideoRating(server.url, 'fake_token', videoId, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should fail with an incorrect video uuid', async function () {
-      await getMyUserVideoRating(server.url, server.accessToken, 'blabla', 400)
+      await getMyUserVideoRating(server.url, server.accessToken, 'blabla', HttpStatusCode.BAD_REQUEST_400)
     })
 
     it('Should fail with an unknown video', async function () {
-      await getMyUserVideoRating(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', 404)
+      await getMyUserVideoRating(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', HttpStatusCode.NOT_FOUND_404)
     })
 
     it('Should succeed with the correct parameters', async function () {
@@ -790,51 +873,57 @@ describe('Test users API validators', function () {
     })
 
     it('Should fail with a unauthenticated user', async function () {
-      await makeGetRequest({ url: server.url, path, statusCodeExpected: 401 })
+      await makeGetRequest({ url: server.url, path, statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401 })
     })
 
     it('Should fail with a another user', async function () {
-      await makeGetRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: 403 })
+      await makeGetRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: HttpStatusCode.FORBIDDEN_403 })
     })
 
     it('Should fail with a bad type', async function () {
-      await makeGetRequest({ url: server.url, path, token: userAccessToken, query: { rating: 'toto ' }, statusCodeExpected: 400 })
+      await makeGetRequest({
+        url: server.url,
+        path,
+        token: userAccessToken,
+        query: { rating: 'toto ' },
+        statusCodeExpected: HttpStatusCode.BAD_REQUEST_400
+      })
     })
 
     it('Should succeed with the correct params', async function () {
-      await makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 200 })
+      await makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: HttpStatusCode.OK_200 })
     })
   })
 
   describe('When blocking/unblocking/removing user', function () {
     it('Should fail with an incorrect id', async function () {
-      await removeUser(server.url, 'blabla', server.accessToken, 400)
-      await blockUser(server.url, 'blabla', server.accessToken, 400)
-      await unblockUser(server.url, 'blabla', server.accessToken, 400)
+      await removeUser(server.url, 'blabla', server.accessToken, HttpStatusCode.BAD_REQUEST_400)
+      await blockUser(server.url, 'blabla', server.accessToken, HttpStatusCode.BAD_REQUEST_400)
+      await unblockUser(server.url, 'blabla', server.accessToken, HttpStatusCode.BAD_REQUEST_400)
     })
 
     it('Should fail with the root user', async function () {
-      await removeUser(server.url, rootId, server.accessToken, 400)
-      await blockUser(server.url, rootId, server.accessToken, 400)
-      await unblockUser(server.url, rootId, server.accessToken, 400)
+      await removeUser(server.url, rootId, server.accessToken, HttpStatusCode.BAD_REQUEST_400)
+      await blockUser(server.url, rootId, server.accessToken, HttpStatusCode.BAD_REQUEST_400)
+      await unblockUser(server.url, rootId, server.accessToken, HttpStatusCode.BAD_REQUEST_400)
     })
 
     it('Should return 404 with a non existing id', async function () {
-      await removeUser(server.url, 4545454, server.accessToken, 404)
-      await blockUser(server.url, 4545454, server.accessToken, 404)
-      await unblockUser(server.url, 4545454, server.accessToken, 404)
+      await removeUser(server.url, 4545454, server.accessToken, HttpStatusCode.NOT_FOUND_404)
+      await blockUser(server.url, 4545454, server.accessToken, HttpStatusCode.NOT_FOUND_404)
+      await unblockUser(server.url, 4545454, server.accessToken, HttpStatusCode.NOT_FOUND_404)
     })
 
     it('Should fail with a non admin user', async function () {
-      await removeUser(server.url, userId, userAccessToken, 403)
-      await blockUser(server.url, userId, userAccessToken, 403)
-      await unblockUser(server.url, userId, userAccessToken, 403)
+      await removeUser(server.url, userId, userAccessToken, HttpStatusCode.FORBIDDEN_403)
+      await blockUser(server.url, userId, userAccessToken, HttpStatusCode.FORBIDDEN_403)
+      await unblockUser(server.url, userId, userAccessToken, HttpStatusCode.FORBIDDEN_403)
     })
 
     it('Should fail on a moderator with a moderator', async function () {
-      await removeUser(server.url, moderatorId, moderatorAccessToken, 403)
-      await blockUser(server.url, moderatorId, moderatorAccessToken, 403)
-      await unblockUser(server.url, moderatorId, moderatorAccessToken, 403)
+      await removeUser(server.url, moderatorId, moderatorAccessToken, HttpStatusCode.FORBIDDEN_403)
+      await blockUser(server.url, moderatorId, moderatorAccessToken, HttpStatusCode.FORBIDDEN_403)
+      await unblockUser(server.url, moderatorId, moderatorAccessToken, HttpStatusCode.FORBIDDEN_403)
     })
 
     it('Should succeed on a user with a moderator', async function () {
@@ -845,7 +934,7 @@ describe('Test users API validators', function () {
 
   describe('When deleting our account', function () {
     it('Should fail with with the root account', async function () {
-      await deleteMe(server.url, server.accessToken, 400)
+      await deleteMe(server.url, server.accessToken, HttpStatusCode.BAD_REQUEST_400)
     })
   })
 
@@ -908,7 +997,7 @@ describe('Test users API validators', function () {
         path: registrationPath,
         token: server.accessToken,
         fields,
-        statusCodeExpected: 409
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
       })
     })
 
@@ -920,7 +1009,7 @@ describe('Test users API validators', function () {
         path: registrationPath,
         token: server.accessToken,
         fields,
-        statusCodeExpected: 409
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
       })
     })
 
@@ -932,7 +1021,7 @@ describe('Test users API validators', function () {
         path: registrationPath,
         token: server.accessToken,
         fields,
-        statusCodeExpected: 409
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
       })
     })
 
@@ -967,7 +1056,13 @@ describe('Test users API validators', function () {
 
       const fields = immutableAssign(baseCorrectParams, { channel: { name: 'existing_channel', displayName: 'toto' } })
 
-      await makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields, statusCodeExpected: 409 })
+      await makePostBodyRequest({
+        url: server.url,
+        path: registrationPath,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
+      })
     })
 
     it('Should succeed with the correct params', async function () {
@@ -978,7 +1073,7 @@ describe('Test users API validators', function () {
         path: registrationPath,
         token: server.accessToken,
         fields: fields,
-        statusCodeExpected: 204
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
       })
     })
 
@@ -994,14 +1089,14 @@ describe('Test users API validators', function () {
         path: registrationPath,
         token: serverWithRegistrationDisabled.accessToken,
         fields,
-        statusCodeExpected: 403
+        statusCodeExpected: HttpStatusCode.FORBIDDEN_403
       })
     })
   })
 
   describe('When registering multiple users on a server with users limit', function () {
     it('Should fail when after 3 registrations', async function () {
-      await registerUser(server.url, 'user42', 'super password', 403)
+      await registerUser(server.url, 'user42', 'super password', HttpStatusCode.FORBIDDEN_403)
     })
   })
 
@@ -1014,7 +1109,7 @@ describe('Test users API validators', function () {
         videoQuota: 42
       })
 
-      await uploadVideo(server.url, server.accessToken, {}, 403)
+      await uploadVideo(server.url, server.accessToken, {}, HttpStatusCode.PAYLOAD_TOO_LARGE_413)
     })
 
     it('Should fail with a registered user having too many videos', async function () {
@@ -1032,7 +1127,7 @@ describe('Test users API validators', function () {
       await uploadVideo(server.url, userAccessToken, videoAttributes)
       await uploadVideo(server.url, userAccessToken, videoAttributes)
       await uploadVideo(server.url, userAccessToken, videoAttributes)
-      await uploadVideo(server.url, userAccessToken, videoAttributes, 403)
+      await uploadVideo(server.url, userAccessToken, videoAttributes, HttpStatusCode.PAYLOAD_TOO_LARGE_413)
     })
 
     it('Should fail to import with HTTP/Torrent/magnet', async function () {
@@ -1042,7 +1137,7 @@ describe('Test users API validators', function () {
         channelId: 1,
         privacy: VideoPrivacy.PUBLIC
       }
-      await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { targetUrl: getYoutubeVideoUrl() }))
+      await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { targetUrl: getGoodVideoUrl() }))
       await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { magnetUri: getMagnetURI() }))
       await importVideo(server.url, server.accessToken, immutableAssign(baseAttributes, { torrentfile: 'video-720p.torrent' as any }))
 
@@ -1063,7 +1158,7 @@ describe('Test users API validators', function () {
   })
 
   describe('When having a daily video quota', function () {
-    it('Should fail with a user having too many videos', async function () {
+    it('Should fail with a user having too many videos daily', async function () {
       await updateUser({
         url: server.url,
         userId: rootId,
@@ -1071,7 +1166,7 @@ describe('Test users API validators', function () {
         videoQuotaDaily: 42
       })
 
-      await uploadVideo(server.url, server.accessToken, {}, 403)
+      await uploadVideo(server.url, server.accessToken, {}, HttpStatusCode.PAYLOAD_TOO_LARGE_413)
     })
   })
 
@@ -1085,7 +1180,7 @@ describe('Test users API validators', function () {
         videoQuotaDaily: 1024 * 1024 * 1024
       })
 
-      await uploadVideo(server.url, server.accessToken, {}, 403)
+      await uploadVideo(server.url, server.accessToken, {}, HttpStatusCode.PAYLOAD_TOO_LARGE_413)
     })
 
     it('Should fail if exceeding daily quota', async function () {
@@ -1097,7 +1192,7 @@ describe('Test users API validators', function () {
         videoQuotaDaily: 42
       })
 
-      await uploadVideo(server.url, server.accessToken, {}, 403)
+      await uploadVideo(server.url, server.accessToken, {}, HttpStatusCode.PAYLOAD_TOO_LARGE_413)
     })
   })
 
@@ -1119,7 +1214,13 @@ describe('Test users API validators', function () {
     it('Should success with the correct params', async function () {
       const fields = { email: 'admin@example.com' }
 
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
+      })
     })
   })
 
@@ -1141,7 +1242,13 @@ describe('Test users API validators', function () {
     it('Should succeed with the correct params', async function () {
       const fields = { email: 'admin@example.com' }
 
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.NO_CONTENT_204
+      })
     })
   })
 

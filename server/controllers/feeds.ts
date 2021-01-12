@@ -1,21 +1,23 @@
 import * as express from 'express'
+import * as Feed from 'pfeed'
+import { buildNSFWFilter } from '../helpers/express-utils'
+import { CONFIG } from '../initializers/config'
 import { FEEDS, ROUTE_CACHE_LIFETIME, THUMBNAILS_SIZE, WEBSERVER } from '../initializers/constants'
 import {
   asyncMiddleware,
   commonVideosFiltersValidator,
-  setDefaultSort,
+  feedsFormatValidator,
+  setDefaultVideosSort,
+  setFeedFormatContentType,
   videoCommentsFeedsValidator,
   videoFeedsValidator,
   videosSortValidator,
-  feedsFormatValidator,
-  setFeedFormatContentType
+  videoSubscriptionFeedsValidator
 } from '../middlewares'
-import { VideoModel } from '../models/video/video'
-import * as Feed from 'pfeed'
 import { cacheRoute } from '../middlewares/cache'
+import { VideoModel } from '../models/video/video'
 import { VideoCommentModel } from '../models/video/video-comment'
-import { buildNSFWFilter } from '../helpers/express-utils'
-import { CONFIG } from '../initializers/config'
+import { VideoFilter } from '../../shared/models/videos/video-query.type'
 
 const feedsRouter = express.Router()
 
@@ -33,7 +35,7 @@ feedsRouter.get('/feeds/video-comments.:format',
 
 feedsRouter.get('/feeds/videos.:format',
   videosSortValidator,
-  setDefaultSort,
+  setDefaultVideosSort,
   feedsFormatValidator,
   setFeedFormatContentType,
   asyncMiddleware(cacheRoute({
@@ -46,6 +48,21 @@ feedsRouter.get('/feeds/videos.:format',
   asyncMiddleware(generateVideoFeed)
 )
 
+feedsRouter.get('/feeds/subscriptions.:format',
+  videosSortValidator,
+  setDefaultVideosSort,
+  feedsFormatValidator,
+  setFeedFormatContentType,
+  asyncMiddleware(cacheRoute({
+    headerBlacklist: [
+      'Content-Type'
+    ]
+  })(ROUTE_CACHE_LIFETIME.FEEDS)),
+  commonVideosFiltersValidator,
+  asyncMiddleware(videoSubscriptionFeedsValidator),
+  asyncMiddleware(generateVideoFeedForSubscriptions)
+)
+
 // ---------------------------------------------------------------------------
 
 export {
@@ -56,7 +73,6 @@ export {
 
 async function generateVideoCommentsFeed (req: express.Request, res: express.Response) {
   const start = 0
-
   const video = res.locals.videoAll
   const videoId: number = video ? video.id : undefined
 
@@ -97,7 +113,6 @@ async function generateVideoCommentsFeed (req: express.Request, res: express.Res
 
 async function generateVideoFeed (req: express.Request, res: express.Response) {
   const start = 0
-
   const account = res.locals.account
   const videoChannel = res.locals.videoChannel
   const nsfw = buildNSFWFilter(res, req.query.nsfw)
@@ -118,20 +133,99 @@ async function generateVideoFeed (req: express.Request, res: express.Response) {
 
   const feed = initFeed(name, description)
 
+  const options = {
+    accountId: account ? account.id : null,
+    videoChannelId: videoChannel ? videoChannel.id : null
+  }
+
   const resultList = await VideoModel.listForApi({
     start,
     count: FEEDS.COUNT,
     sort: req.query.sort,
     includeLocalVideos: true,
     nsfw,
-    filter: req.query.filter,
+    filter: req.query.filter as VideoFilter,
     withFiles: true,
-    accountId: account ? account.id : null,
-    videoChannelId: videoChannel ? videoChannel.id : null
+    ...options
   })
 
-  // Adding video items to the feed, one at a time
-  resultList.data.forEach(video => {
+  addVideosToFeed(feed, resultList.data)
+
+  // Now the feed generation is done, let's send it!
+  return sendFeed(feed, req, res)
+}
+
+async function generateVideoFeedForSubscriptions (req: express.Request, res: express.Response) {
+  const start = 0
+  const account = res.locals.account
+  const nsfw = buildNSFWFilter(res, req.query.nsfw)
+  const name = account.getDisplayName()
+  const description = account.description
+
+  const feed = initFeed({
+    name,
+    description,
+    resourceType: 'videos',
+    queryString: new URL(WEBSERVER.URL + req.url).search
+  })
+
+  const resultList = await VideoModel.listForApi({
+    start,
+    count: FEEDS.COUNT,
+    sort: req.query.sort,
+    includeLocalVideos: false,
+    nsfw,
+    filter: req.query.filter as VideoFilter,
+    withFiles: true,
+
+    followerActorId: res.locals.user.Account.Actor.id,
+    user: res.locals.user
+  })
+
+  addVideosToFeed(feed, resultList.data)
+
+  // Now the feed generation is done, let's send it!
+  return sendFeed(feed, req, res)
+}
+
+function initFeed (parameters: {
+  name: string
+  description: string
+  resourceType?: 'videos' | 'video-comments'
+  queryString?: string
+}) {
+  const webserverUrl = WEBSERVER.URL
+  const { name, description, resourceType, queryString } = parameters
+
+  return new Feed({
+    title: name,
+    description,
+    // updated: TODO: somehowGetLatestUpdate, // optional, default = today
+    id: webserverUrl,
+    link: webserverUrl,
+    image: webserverUrl + '/client/assets/images/icons/icon-96x96.png',
+    favicon: webserverUrl + '/client/assets/images/favicon.png',
+    copyright: `All rights reserved, unless otherwise specified in the terms specified at ${webserverUrl}/about` +
+    ` and potential licenses granted by each content's rightholder.`,
+    generator: `Toraifōsu`, // ^.~
+    feedLinks: {
+      json: `${webserverUrl}/feeds/${resourceType}.json${queryString}`,
+      atom: `${webserverUrl}/feeds/${resourceType}.atom${queryString}`,
+      rss: `${webserverUrl}/feeds/${resourceType}.xml${queryString}`
+    },
+    author: {
+      name: 'Instance admin of ' + CONFIG.INSTANCE.NAME,
+      email: CONFIG.ADMIN.EMAIL,
+      link: `${webserverUrl}/about`
+    }
+  })
+}
+
+function addVideosToFeed (feed, videos: VideoModel[]) {
+  /**
+   * Adding video items to the feed object, one at a time
+   */
+  for (const video of videos) {
     const formattedVideoFiles = video.getFormattedVideoFilesJSON()
 
     const torrents = formattedVideoFiles.map(videoFile => ({
@@ -201,6 +295,7 @@ async function generateVideoFeed (req: express.Request, res: express.Response) {
         }
       ]
     })
+<<<<<<< Updated upstream
   })
 
   // Now the feed generation is done, let's send it!
@@ -232,6 +327,9 @@ function initFeed (name: string, description: string) {
       link: `${webserverUrl}/about`
     }
   })
+=======
+  }
+>>>>>>> Stashed changes
 }
 
 function sendFeed (feed, req: express.Request, res: express.Response) {

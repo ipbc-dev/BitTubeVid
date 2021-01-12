@@ -1,10 +1,20 @@
 import * as express from 'express'
 import * as RateLimit from 'express-rate-limit'
+import { tokensRouter } from '@server/controllers/api/users/token'
+import { Hooks } from '@server/lib/plugins/hooks'
+import { MUser, MUserAccountDefault } from '@server/types/models'
 import { UserCreate, UserRight, UserRole, UserUpdate } from '../../../../shared'
+import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
+import { UserRegister } from '../../../../shared/models/users/user-register.model'
+import { auditLoggerFactory, getAuditIdFromRes, UserAuditView } from '../../../helpers/audit-logger'
 import { logger } from '../../../helpers/logger'
 import { generateRandomString, getFormattedObjects } from '../../../helpers/utils'
+import { CONFIG } from '../../../initializers/config'
 import { WEBSERVER } from '../../../initializers/constants'
+import { sequelizeTypescript } from '../../../initializers/database'
 import { Emailer } from '../../../lib/emailer'
+import { Notifier } from '../../../lib/notifier'
+import { deleteUserToken } from '../../../lib/oauth-model'
 import { Redis } from '../../../lib/redis'
 import { createUserAccountAndChannelAndPlaylist, sendVerifyUserEmail } from '../../../lib/user'
 import {
@@ -20,6 +30,7 @@ import {
   userAutocompleteValidator,
   usersAddValidator,
   usersGetValidator,
+  usersListValidator,
   usersRegisterValidator,
   usersRemoveValidator,
   usersSortValidator,
@@ -34,16 +45,14 @@ import {
   usersVerifyEmailValidator
 } from '../../../middlewares/validators'
 import { UserModel } from '../../../models/account/user'
-import { auditLoggerFactory, getAuditIdFromRes, UserAuditView } from '../../../helpers/audit-logger'
 import { meRouter } from './me'
 import { firebaseRouter } from './firebase'
-import { deleteUserToken } from '../../../lib/oauth-model'
+import { myAbusesRouter } from './my-abuses'
 import { myBlocklistRouter } from './my-blocklist'
-import { myVideoPlaylistsRouter } from './my-video-playlists'
 import { myVideosHistoryRouter } from './my-history'
 import { myNotificationsRouter } from './my-notifications'
-import { Notifier } from '../../../lib/notifier'
 import { mySubscriptionsRouter } from './my-subscriptions'
+<<<<<<< Updated upstream
 import { CONFIG } from '../../../initializers/config'
 import { sequelizeTypescript } from '../../../initializers/database'
 import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
@@ -51,6 +60,10 @@ import { UserRegister } from '../../../../shared/models/users/user-register.mode
 import { MUser, MUserAccountDefault } from '@server/typings/models'
 import { Hooks } from '@server/lib/plugins/hooks'
 import { tokensRouter } from '@server/controllers/api/users/token'
+=======
+import { myVideoPlaylistsRouter } from './my-video-playlists'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 const auditLogger = auditLoggerFactory('users')
 
@@ -74,6 +87,7 @@ usersRouter.use('/', mySubscriptionsRouter)
 usersRouter.use('/', myBlocklistRouter)
 usersRouter.use('/', myVideosHistoryRouter)
 usersRouter.use('/', myVideoPlaylistsRouter)
+usersRouter.use('/', myAbusesRouter)
 usersRouter.use('/', meRouter)
 usersRouter.use('/', firebaseRouter)
 
@@ -176,6 +190,7 @@ export {
 
 async function createUser (req: express.Request, res: express.Response) {
   const body: UserCreate = req.body
+
   const userToCreate = new UserModel({
     username: body.username,
     password: body.password,
@@ -194,7 +209,10 @@ async function createUser (req: express.Request, res: express.Response) {
     userToCreate.password = await generateRandomString(20)
   }
 
-  const { user, account, videoChannel } = await createUserAccountAndChannelAndPlaylist({ userToCreate: userToCreate })
+  const { user, account, videoChannel } = await createUserAccountAndChannelAndPlaylist({
+    userToCreate,
+    channelNames: body.channelName && { name: body.channelName, displayName: body.channelName }
+  })
 
   auditLogger.create(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
   logger.info('User %s with its channel and account created.', body.username)
@@ -251,7 +269,7 @@ async function registerUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.registered', { body, user, account, videoChannel })
 
-  return res.type('json').status(204).end()
+  return res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function unblockUser (req: express.Request, res: express.Response) {
@@ -261,7 +279,7 @@ async function unblockUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.unblocked', { user })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function blockUser (req: express.Request, res: express.Response) {
@@ -272,7 +290,7 @@ async function blockUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.blocked', { user })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 function getUser (req: express.Request, res: express.Response) {
@@ -294,13 +312,13 @@ async function listUsers (req: express.Request, res: express.Response) {
 async function removeUser (req: express.Request, res: express.Response) {
   const user = res.locals.user
 
-  await user.destroy()
-
   auditLogger.delete(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
+
+  await user.destroy()
 
   Hooks.runAction('action:api.user.deleted', { user })
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function updateUser (req: express.Request, res: express.Response) {
@@ -328,7 +346,7 @@ async function updateUser (req: express.Request, res: express.Response) {
 
   // Don't need to send this update to followers, these attributes are not federated
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function askResetUserPassword (req: express.Request, res: express.Response) {
@@ -338,7 +356,7 @@ async function askResetUserPassword (req: express.Request, res: express.Response
   const url = WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString
   await Emailer.Instance.addPasswordResetEmailJob(user.email, url)
 
-  return res.status(202).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function resetUserPassword (req: express.Request, res: express.Response) {
@@ -346,8 +364,9 @@ async function resetUserPassword (req: express.Request, res: express.Response) {
   user.password = req.body.password
 
   await user.save()
+  await Redis.Instance.removePasswordVerificationString(user.id)
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function reSendVerifyUserEmail (req: express.Request, res: express.Response) {
@@ -355,7 +374,7 @@ async function reSendVerifyUserEmail (req: express.Request, res: express.Respons
 
   await sendVerifyUserEmail(user)
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function verifyUserEmail (req: express.Request, res: express.Response) {
@@ -369,7 +388,7 @@ async function verifyUserEmail (req: express.Request, res: express.Response) {
 
   await user.save()
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function changeUserBlock (res: express.Response, user: MUserAccountDefault, block: boolean, reason?: string) {

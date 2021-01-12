@@ -4,9 +4,21 @@
     Notification preferences
   </a>
 
-  <button class="btn" [disabled]="!hasUnreadNotifications()" (click)="markAllAsRead()">
+  <div class="peertube-select-container peertube-select-button ml-2 mr-2">
+    <select [(ngModel)]="notificationSortType" (ngModelChange)="onChangeSortColumn()" class="form-control">
+      <option value="undefined" disabled>Sort by</option>
+      <option value="createdAt" i18n>Newest first</option>
+      <option value="read" [disabled]="!hasUnreadNotifications()" i18n>Unread first</option>
+    </select>
+  </div>
+
+  <button class="btn ml-auto" [disabled]="!hasUnreadNotifications()" (click)="markAllAsRead()">
     <ng-container *ngIf="hasUnreadNotifications()">
+<<<<<<< Updated upstream
       <my-global-icon iconName="inbox-full"></my-global-icon>
+=======
+      <my-global-icon iconName="tick" aria-hidden="true"></my-global-icon>
+>>>>>>> Stashed changes
 
       <span i18n>Mark all as read</span>
     </ng-container>

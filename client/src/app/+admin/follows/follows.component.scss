@@ -5,6 +5,11 @@
   margin-right: 30px;
 }
 
+<<<<<<< Updated upstream
 .empty-table-message {
   @include empty-state;
+=======
+.badge {
+  @include table-badge;
+>>>>>>> Stashed changes
 }

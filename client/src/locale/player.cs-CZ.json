@@ -7,13 +7,17 @@
     "peer": "peer",
     "Go to the video page": "Přejít na stránku s videem",
     "Settings": "Nastavení",
-    "Uses P2P, others may know you are watching this video.": "Používá P2P, ostatní mohou vědět, že přehráváte toto video.",
+    "Watching this video may reveal your IP address to others.": "Watching this video may reveal your IP address to others.",
     "Copy the video URL": "Kopírovat URL adresu videa",
     "Copy the video URL at the current time": "Kopírovat URL adresu videa v aktuálním čase",
     "Copy embed code": "Kopírovat kód pro vložení na stránku",
     "Copy magnet URI": "Zkopírovat URI magnetu",
     "Total downloaded: ": "Celkem stažených: ",
     "Total uploaded: ": "Celkem nahraných: ",
+    "From servers: ": "From servers: ",
+    "From peers: ": "From peers: ",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode",
     "Audio Player": "Hudební přehrávač",
     "Video Player": "Videopřehrávač",
     "Play": "Přehrát",
@@ -96,5 +100,6 @@
     "Caption Settings Dialog": "Okno nastavení poznámek",
     "Beginning of dialog window. Escape will cancel and close the window.": "Začátek dialogového okna. Klávesa Escape zruší a zavře toto okno.",
     "End of dialog window.": "Konec dialogového okna.",
-    "{1} is loading.": "{1} se načítá."
+    "{1} is loading.": "{1} se načítá.",
+    "Uses P2P, others may know you are watching this video.": "Používá P2P, ostatní mohou vědět, že přehráváte toto video."
 }

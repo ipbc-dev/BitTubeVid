@@ -4,11 +4,12 @@ import { logger } from '../../helpers/logger'
 import { areValidationErrors } from './utils'
 import { isNpmPluginNameValid, isPluginNameValid, isPluginTypeValid, isPluginVersionValid } from '../../helpers/custom-validators/plugins'
 import { PluginManager } from '../../lib/plugins/plugin-manager'
-import { isBooleanValid, isSafePath, toBooleanOrNull, exists } from '../../helpers/custom-validators/misc'
+import { isBooleanValid, isSafePath, toBooleanOrNull, exists, toIntOrNull } from '../../helpers/custom-validators/misc'
 import { PluginModel } from '../../models/server/plugin'
 import { InstallOrUpdatePlugin } from '../../../shared/models/plugins/install-plugin.model'
 import { PluginType } from '../../../shared/models/plugins/plugin.type'
 import { CONFIG } from '../../initializers/config'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const getPluginValidator = (pluginType: PluginType, withVersion = true) => {
   const validators: (ValidationChain | express.Handler)[] = [
@@ -30,8 +31,8 @@ const getPluginValidator = (pluginType: PluginType, withVersion = true) => {
       const npmName = PluginModel.buildNpmName(req.params.pluginName, pluginType)
       const plugin = PluginManager.Instance.getRegisteredPluginOrTheme(npmName)
 
-      if (!plugin) return res.sendStatus(404)
-      if (withVersion && plugin.version !== req.params.pluginVersion) return res.sendStatus(404)
+      if (!plugin) return res.sendStatus(HttpStatusCode.NOT_FOUND_404)
+      if (withVersion && plugin.version !== req.params.pluginVersion) return res.sendStatus(HttpStatusCode.NOT_FOUND_404)
 
       res.locals.registeredPlugin = plugin
 
@@ -49,10 +50,10 @@ const getExternalAuthValidator = [
     if (areValidationErrors(req, res)) return
 
     const plugin = res.locals.registeredPlugin
-    if (!plugin.registerHelpersStore) return res.sendStatus(404)
+    if (!plugin.registerHelpersStore) return res.sendStatus(HttpStatusCode.NOT_FOUND_404)
 
     const externalAuth = plugin.registerHelpersStore.getExternalAuths().find(a => a.authName === req.params.authName)
-    if (!externalAuth) return res.sendStatus(404)
+    if (!externalAuth) return res.sendStatus(HttpStatusCode.NOT_FOUND_404)
 
     res.locals.externalAuth = externalAuth
 
@@ -75,6 +76,7 @@ const pluginStaticDirectoryValidator = [
 const listPluginsValidator = [
   query('pluginType')
     .optional()
+    .customSanitizer(toIntOrNull)
     .custom(isPluginTypeValid).withMessage('Should have a valid plugin type'),
   query('uninstalled')
     .optional()
@@ -105,7 +107,7 @@ const installOrUpdatePluginValidator = [
 
     const body: InstallOrUpdatePlugin = req.body
     if (!body.path && !body.npmName) {
-      return res.status(400)
+      return res.status(HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Should have either a npmName or a path' })
                 .end()
     }
@@ -136,9 +138,9 @@ const existingPluginValidator = [
 
     const plugin = await PluginModel.loadByNpmName(req.params.npmName)
     if (!plugin) {
-      return res.status(404)
-         .json({ error: 'Plugin not found' })
-         .end()
+      return res.status(HttpStatusCode.NOT_FOUND_404)
+                .json({ error: 'Plugin not found' })
+                .end()
     }
 
     res.locals.plugin = plugin
@@ -165,6 +167,7 @@ const listAvailablePluginsValidator = [
     .exists().withMessage('Should have a valid search'),
   query('pluginType')
     .optional()
+    .customSanitizer(toIntOrNull)
     .custom(isPluginTypeValid).withMessage('Should have a valid plugin type'),
   query('currentPeerTubeEngine')
     .optional()
@@ -176,9 +179,9 @@ const listAvailablePluginsValidator = [
     if (areValidationErrors(req, res)) return
 
     if (CONFIG.PLUGINS.INDEX.ENABLED === false) {
-      return res.status(400)
-        .json({ error: 'Plugin index is not enabled' })
-        .end()
+      return res.status(HttpStatusCode.BAD_REQUEST_400)
+                .json({ error: 'Plugin index is not enabled' })
+                .end()
     }
 
     return next()

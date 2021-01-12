@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import { omit } from 'lodash'
 import 'mocha'
+import { omit } from 'lodash'
 import { join } from 'path'
-import { VideoPrivacy } from '../../../../shared/models/videos/video-privacy.enum'
 import {
   cleanupTests,
   createUser,
@@ -23,7 +22,9 @@ import {
   checkBadSortPagination,
   checkBadStartPagination
 } from '../../../../shared/extra-utils/requests/check-api-params'
-import { getMagnetURI, getYoutubeVideoUrl } from '../../../../shared/extra-utils/videos/video-imports'
+import { getMagnetURI, getGoodVideoUrl } from '../../../../shared/extra-utils/videos/video-imports'
+import { VideoPrivacy } from '../../../../shared/models/videos/video-privacy.enum'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 describe('Test video imports API validator', function () {
   const path = '/api/v1/videos/imports'
@@ -70,7 +71,7 @@ describe('Test video imports API validator', function () {
     })
 
     it('Should success with the correct parameters', async function () {
-      await makeGetRequest({ url: server.url, path: myPath, statusCodeExpected: 200, token: server.accessToken })
+      await makeGetRequest({ url: server.url, path: myPath, statusCodeExpected: HttpStatusCode.OK_200, token: server.accessToken })
     })
   })
 
@@ -79,7 +80,7 @@ describe('Test video imports API validator', function () {
 
     before(function () {
       baseCorrectParams = {
-        targetUrl: getYoutubeVideoUrl(),
+        targetUrl: getGoodVideoUrl(),
         name: 'my super name',
         category: 5,
         licence: 1,
@@ -103,7 +104,13 @@ describe('Test video imports API validator', function () {
 
     it('Should fail without a target url', async function () {
       const fields = omit(baseCorrectParams, 'targetUrl')
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 400 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.BAD_REQUEST_400
+      })
     })
 
     it('Should fail with a bad target url', async function () {
@@ -249,15 +256,13 @@ describe('Test video imports API validator', function () {
     it('Should succeed with the correct parameters', async function () {
       this.timeout(30000)
 
-      {
-        await makePostBodyRequest({
-          url: server.url,
-          path,
-          token: server.accessToken,
-          fields: baseCorrectParams,
-          statusCodeExpected: 200
-        })
-      }
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields: baseCorrectParams,
+        statusCodeExpected: HttpStatusCode.OK_200
+      })
     })
 
     it('Should forbid to import http videos', async function () {
@@ -279,7 +284,7 @@ describe('Test video imports API validator', function () {
         path,
         token: server.accessToken,
         fields: baseCorrectParams,
-        statusCodeExpected: 409
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
       })
     })
 
@@ -300,14 +305,27 @@ describe('Test video imports API validator', function () {
       let fields = omit(baseCorrectParams, 'targetUrl')
       fields = immutableAssign(fields, { magnetUri: getMagnetURI() })
 
-      await makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 })
+      await makePostBodyRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
+      })
 
       fields = omit(fields, 'magnetUri')
       const attaches = {
         torrentfile: join(__dirname, '..', '..', 'fixtures', 'video-720p.torrent')
       }
 
-      await makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches, statusCodeExpected: 409 })
+      await makeUploadRequest({
+        url: server.url,
+        path,
+        token: server.accessToken,
+        fields,
+        attaches,
+        statusCodeExpected: HttpStatusCode.CONFLICT_409
+      })
     })
   })
 

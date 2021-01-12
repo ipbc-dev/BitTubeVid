@@ -1,3 +1,4 @@
+import { FindOptions, Includeable, IncludeOptions, Op, Transaction, WhereOptions } from 'sequelize'
 import {
   AllowNull,
   BeforeDestroy,
@@ -15,32 +16,48 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
+import { ModelCache } from '@server/models/model-cache'
 import { Account, AccountSummary } from '../../../shared/models/actors'
 import { isAccountDescriptionValid } from '../../helpers/custom-validators/accounts'
+import { CONSTRAINTS_FIELDS, SERVER_ACTOR_NAME, WEBSERVER } from '../../initializers/constants'
 import { sendDeleteActor } from '../../lib/activitypub/send'
+import {
+  MAccount,
+  MAccountActor,
+  MAccountAP,
+  MAccountDefault,
+  MAccountFormattable,
+  MAccountSummaryFormattable,
+  MChannelActor
+} from '../../types/models'
 import { ActorModel } from '../activitypub/actor'
+import { ActorFollowModel } from '../activitypub/actor-follow'
 import { ApplicationModel } from '../application/application'
+import { AvatarModel } from '../avatar/avatar'
 import { ServerModel } from '../server/server'
+import { ServerBlocklistModel } from '../server/server-blocklist'
 import { getSort, throwIfNotValid } from '../utils'
+import { VideoModel } from '../video/video'
 import { VideoChannelModel } from '../video/video-channel'
 import { VideoCommentModel } from '../video/video-comment'
-import { UserModel } from './user'
-import { AvatarModel } from '../avatar/avatar'
 import { VideoPlaylistModel } from '../video/video-playlist'
-import { CONSTRAINTS_FIELDS, SERVER_ACTOR_NAME, WEBSERVER } from '../../initializers/constants'
-import { FindOptions, IncludeOptions, Op, Transaction, WhereOptions } from 'sequelize'
 import { AccountBlocklistModel } from './account-blocklist'
+<<<<<<< Updated upstream
 import { ServerBlocklistModel } from '../server/server-blocklist'
 import { ActorFollowModel } from '../activitypub/actor-follow'
 import { MAccountActor, MAccountAP, MAccountDefault, MAccountFormattable, MAccountSummaryFormattable } from '../../typings/models'
 import * as Bluebird from 'bluebird'
 import { ModelCache } from '@server/models/model-cache'
+=======
+import { UserModel } from './user'
+>>>>>>> Stashed changes
 
 export enum ScopeNames {
   SUMMARY = 'SUMMARY'
 }
 
 export type SummaryOptions = {
+  actorRequired?: boolean // Default: true
   whereActor?: WhereOptions
   withAccountBlockerIds?: number[]
 }
@@ -63,28 +80,29 @@ export type SummaryOptions = {
       required: false
     }
 
-    const query: FindOptions = {
-      attributes: [ 'id', 'name' ],
-      include: [
-        {
-          attributes: [ 'id', 'preferredUsername', 'url', 'serverId', 'avatarId' ],
-          model: ActorModel.unscoped(),
-          required: true,
-          where: whereActor,
-          include: [
-            serverInclude,
+    const queryInclude: Includeable[] = [
+      {
+        attributes: [ 'id', 'preferredUsername', 'url', 'serverId', 'avatarId' ],
+        model: ActorModel.unscoped(),
+        required: options.actorRequired ?? true,
+        where: whereActor,
+        include: [
+          serverInclude,
 
-            {
-              model: AvatarModel.unscoped(),
-              required: false
-            }
-          ]
-        }
-      ]
+          {
+            model: AvatarModel.unscoped(),
+            required: false
+          }
+        ]
+      }
+    ]
+
+    const query: FindOptions = {
+      attributes: [ 'id', 'name', 'actorId' ]
     }
 
     if (options.withAccountBlockerIds) {
-      query.include.push({
+      queryInclude.push({
         attributes: [ 'id' ],
         model: AccountBlocklistModel.unscoped(),
         as: 'BlockedAccounts',
@@ -110,6 +128,8 @@ export type SummaryOptions = {
       ]
     }
 
+    query.include = queryInclude
+
     return query
   }
 }))
@@ -128,7 +148,7 @@ export type SummaryOptions = {
     }
   ]
 })
-export class AccountModel extends Model<AccountModel> {
+export class AccountModel extends Model {
 
   @AllowNull(false)
   @Column
@@ -226,6 +246,7 @@ export class AccountModel extends Model<AccountModel> {
     }
 
     await ActorFollowModel.removeFollowsOf(instance.Actor.id, options.transaction)
+
     if (instance.isOwned()) {
       return sendDeleteActor(instance.Actor, options.transaction)
     }
@@ -233,11 +254,11 @@ export class AccountModel extends Model<AccountModel> {
     return undefined
   }
 
-  static load (id: number, transaction?: Transaction): Bluebird<MAccountDefault> {
+  static load (id: number, transaction?: Transaction): Promise<MAccountDefault> {
     return AccountModel.findByPk(id, { transaction })
   }
 
-  static loadByNameWithHost (nameWithHost: string): Bluebird<MAccountDefault> {
+  static loadByNameWithHost (nameWithHost: string): Promise<MAccountDefault> {
     const [ accountName, host ] = nameWithHost.split('@')
 
     if (!host || host === WEBSERVER.HOST) return AccountModel.loadLocalByName(accountName)
@@ -245,7 +266,7 @@ export class AccountModel extends Model<AccountModel> {
     return AccountModel.loadByNameAndHost(accountName, host)
   }
 
-  static loadLocalByName (name: string): Bluebird<MAccountDefault> {
+  static loadLocalByName (name: string): Promise<MAccountDefault> {
     const fun = () => {
       const query = {
         where: {
@@ -285,7 +306,7 @@ export class AccountModel extends Model<AccountModel> {
     })
   }
 
-  static loadByNameAndHost (name: string, host: string): Bluebird<MAccountDefault> {
+  static loadByNameAndHost (name: string, host: string): Promise<MAccountDefault> {
     const query = {
       include: [
         {
@@ -310,7 +331,7 @@ export class AccountModel extends Model<AccountModel> {
     return AccountModel.findOne(query)
   }
 
-  static loadByUrl (url: string, transaction?: Transaction): Bluebird<MAccountDefault> {
+  static loadByUrl (url: string, transaction?: Transaction): Promise<MAccountDefault> {
     const query = {
       include: [
         {
@@ -343,7 +364,34 @@ export class AccountModel extends Model<AccountModel> {
       })
   }
 
+<<<<<<< Updated upstream
   static listLocalsForSitemap (sort: string): Bluebird<MAccountActor[]> {
+=======
+  static loadAccountIdFromVideo (videoId: number): Promise<MAccount> {
+    const query = {
+      include: [
+        {
+          attributes: [ 'id', 'accountId' ],
+          model: VideoChannelModel.unscoped(),
+          required: true,
+          include: [
+            {
+              attributes: [ 'id', 'channelId' ],
+              model: VideoModel.unscoped(),
+              where: {
+                id: videoId
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+    return AccountModel.findOne(query)
+  }
+
+  static listLocalsForSitemap (sort: string): Promise<MAccountActor[]> {
+>>>>>>> Stashed changes
     const query = {
       attributes: [ ],
       offset: 0,
@@ -362,6 +410,10 @@ export class AccountModel extends Model<AccountModel> {
     return AccountModel
       .unscoped()
       .findAll(query)
+  }
+
+  getClientUrl () {
+    return WEBSERVER.URL + '/accounts/' + this.Actor.getIdentifier()
   }
 
   toFormattedJSON (this: MAccountFormattable): Account {
@@ -409,6 +461,10 @@ export class AccountModel extends Model<AccountModel> {
 
   getDisplayName () {
     return this.name
+  }
+
+  getLocalUrl (this: MAccountActor | MChannelActor) {
+    return WEBSERVER.URL + `/accounts/` + this.Actor.preferredUsername
   }
 
   isBlocked () {

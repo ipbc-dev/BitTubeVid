@@ -3,7 +3,14 @@
     type="text" id="search-video" name="search-video" #searchVideo i18n-placeholder placeholder="Search videos, channels…"
     [(ngModel)]="search" (ngModelChange)="onSearchChange()" (keyup)="handleKey($event)" (keydown.enter)="doSearch()"
   >
+<<<<<<< Updated upstream
   <span class="icon icon-search" (click)="doSearch()"></span>
+=======
+  <my-global-icon
+    title="Search" i18n-title role="button"
+    iconName="search" class="icon icon-search" (click)="doSearch()" (keydown.enter)="doSearch()"
+  ></my-global-icon>
+>>>>>>> Stashed changes
 
   <div class="position-absolute jump-to-suggestions">
     <!-- suggestions -->

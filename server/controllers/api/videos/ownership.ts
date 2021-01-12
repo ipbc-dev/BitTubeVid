@@ -18,7 +18,12 @@ import { getFormattedObjects } from '../../../helpers/utils'
 import { changeVideoChannelShare } from '../../../lib/activitypub/share'
 import { sendUpdateVideo } from '../../../lib/activitypub/send'
 import { VideoModel } from '../../../models/video/video'
+<<<<<<< Updated upstream
 import { MVideoFullLight } from '@server/typings/models'
+=======
+import { MVideoFullLight } from '@server/types/models'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 const ownershipVideoRouter = express.Router()
 
@@ -80,7 +85,9 @@ async function giveVideoOwnership (req: express.Request, res: express.Response) 
   })
 
   logger.info('Ownership change for video %s created.', videoInstance.name)
-  return res.type('json').status(204).end()
+  return res.type('json')
+            .status(HttpStatusCode.NO_CONTENT_204)
+            .end()
 }
 
 async function listVideoOwnership (req: express.Request, res: express.Response) {
@@ -119,7 +126,7 @@ async function acceptOwnership (req: express.Request, res: express.Response) {
     videoChangeOwnership.status = VideoChangeOwnershipStatus.ACCEPTED
     await videoChangeOwnership.save({ transaction: t })
 
-    return res.sendStatus(204)
+    return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
   })
 }
 
@@ -130,6 +137,6 @@ async function refuseOwnership (req: express.Request, res: express.Response) {
     videoChangeOwnership.status = VideoChangeOwnershipStatus.REFUSED
     await videoChangeOwnership.save({ transaction: t })
 
-    return res.sendStatus(204)
+    return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
   })
 }

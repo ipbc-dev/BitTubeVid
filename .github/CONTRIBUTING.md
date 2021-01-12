@@ -4,12 +4,26 @@ Interested in contributing? Awesome!
 
 **This guide will present you the following contribution topics:**
 
-  * [Translate](#translate)
-  * [Give your feedback](#give-your-feedback)
-  * [Write documentation](#write-documentation)
-  * [Improve the website](#improve-the-website)
-  * [Develop](#develop)
-  * [Write a plugin or a theme](#plugins--themes)
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+
+- [Translate](#translate)
+- [Give your feedback](#give-your-feedback)
+- [Write documentation](#write-documentation)
+- [Improve the website](#improve-the-website)
+- [Develop](#develop)
+  - [Prerequisites](#prerequisites)
+  - [Online development](#online-development)
+  - [Server side](#server-side)
+  - [Client side](#client-side)
+  - [Client and server side](#client-and-server-side)
+  - [Testing the federation of PeerTube servers](#testing-the-federation-of-peertube-servers)
+  - [Unit tests](#unit-tests)
+  - [Emails](#emails)
+- [Plugins & Themes](#plugins--themes)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Translate
 
@@ -30,7 +44,7 @@ You can help to write the documentation of the REST API, code, architecture,
 demonstrations.
 
 For the REST API you can see the documentation in [/support/doc/api](https://github.com/Chocobozzz/PeerTube/tree/develop/support/doc/api) directory.
-Then, you can just open the `openapi.yaml` file in a special editor like [http://editor.swagger.io/](http://editor.swagger.io/) to easily see and edit the documentation.
+Then, you can just open the `openapi.yaml` file in a special editor like [http://editor.swagger.io/](http://editor.swagger.io/) to easily see and edit the documentation. You can also use [redoc-cli](https://github.com/Redocly/redoc/blob/master/cli/README.md) and run `redoc-cli serve --watch support/doc/api/openapi.yaml` to see the final result.
 
 Some hints:
  * Routes are defined in [/server/controllers/](https://github.com/Chocobozzz/PeerTube/tree/develop/server/controllers) directory
@@ -49,24 +63,27 @@ It is not hosted on GitHub but on [Framasoft](https://framasoft.org/)'s own [Git
 
 ## Develop
 
-Don't hesitate to talk about features you want to develop by creating/commenting an issue
-before you start working on them :).
+Always talk about features you want to develop by creating/finding and commenting the issue tackling your problem
+before you start working on it, and inform the community that you begin coding by claiming the issue.
+
+Once you are ready to show your code to ask for feedback, submit a *draft* Pull Request.
+Once you are ready for a code review before merge, submit a Pull Request. In any case, please
+link your PR to the issues it solves by using the GitHub syntax: "fixes #issue_number".
 
 ### Prerequisites
 
 First, you should use a server or PC with at least 4GB of RAM. Less RAM may lead to crashes.
 
-Make sure that you have followed
+1) Make sure that you have followed
 [the steps](/support/doc/dependencies.md)
 to install the dependencies.
-
-Fork the github repository,
-and then clone the sources and install node modules:
-
+1) Install [parallel](https://www.gnu.org/software/parallel/) to be able to run tests.
+1) Fork the Github repository.
+1) Run the following commands.
 ```
 $ git clone https://github.com/Chocobozzz/PeerTube
-$ git remote add me git@github.com:YOUR_GITHUB_USERNAME/PeerTube.git
 $ cd PeerTube
+$ git remote add me git@github.com:YOUR_GITHUB_USERNAME/PeerTube.git
 $ yarn install --pure-lockfile
 ```
 
@@ -146,7 +163,47 @@ and the web server is automatically restarted.
 $ npm run dev
 ```
 
-### Testing the federation of PeerTube servers
+### Testing
+
+Your code contributions must pass the tests before they can be merged. Tests ensure most of the application behaves
+as expected and respect the syntax conventions. They will run upon PR submission as part of our CI, but running them beforehand yourself will get you faster feedback and save CI runner time for others.
+
+PeerTube mainly features backend and plugin tests, found in `server/tests`.
+
+#### Unit tests
+
+Create a PostgreSQL user **with the same name as your username** in order to avoid using the *postgres* user.
+
+Then, we can create the databases (if they don't already exist):
+
+```
+$ sudo -u postgres createuser you_username --createdb --superuser
+$ npm run clean:server:test
+```
+
+Build the application and run the unit/integration tests:
+
+```
+$ npm run build -- --light
+$ npm test
+```
+
+If you just want to run 1 test (which is what you want to debug a specific test rapidly):
+
+```
+$ TS_NODE_FILES=true npm run mocha -- --exit -r ts-node/register -r tsconfig-paths/register --bail server/tests/api/videos/single-server.ts
+```
+
+While testing, you might want to display a server's logs:
+
+```
+NODE_APP_INSTANCE=1 NODE_ENV=test npm run parse-log -- --level debug | less +GF
+```
+
+Instance configurations are in `config/test-{1,2,3,4,5,6}.yaml`.
+Note that only instance 2 has transcoding enabled.
+
+#### Testing the federation of PeerTube servers
 
 Create a PostgreSQL user **with the same name as your username** in order to avoid using the *postgres* user.
 Then, we can create the databases (if they don't already exist):
@@ -174,32 +231,12 @@ with the `root` as username and `test{1,2,3}` for the password.
 
 Instance configurations are in `config/test-{1,2,3}.yaml`.
 
-### Unit tests
+### Emails
 
-Create a PostgreSQL user **with the same name as your username** in order to avoid using the *postgres* user.
+To test emails with PeerTube:
 
-Then, we can create the databases (if they don't already exist):
-
-```
-$ sudo -u postgres createuser you_username --createdb --superuser
-$ npm run clean:server:test
-```
-
-Build the application and run the unit/integration tests:
-
-```
-$ npm run build -- --light
-$ npm test
-```
-
-If you just want to run 1 test:
-
-```
-$ npm run mocha -- --exit -r ts-node/register -r tsconfig-paths/register --bail server/tests/api/index.ts
-```
-
-Instance configurations are in `config/test-{1,2,3,4,5,6}.yaml`.
-Note that only instance 2 has transcoding enabled.
+ * Run [mailslurper](http://mailslurper.com/)
+ * Run PeerTube using mailslurper SMTP port: `NODE_CONFIG='{ "smtp": { "hostname": "localhost", "port": 2500, "tls": false } }' NODE_ENV=test npm start`
 
 ## Plugins & Themes
 

@@ -6,7 +6,7 @@ import './upnext/end-card'
 import './upnext/upnext-plugin'
 import './bezels/bezels-plugin'
 import './peertube-plugin'
-import './videojs-components/next-video-button'
+import './videojs-components/next-previous-video-button'
 import './videojs-components/p2p-info-button'
 import './videojs-components/peertube-link-button'
 import './videojs-components/peertube-load-progress-bar'
@@ -18,16 +18,25 @@ import './videojs-components/settings-menu-item'
 import './videojs-components/settings-panel'
 import './videojs-components/settings-panel-child'
 import './videojs-components/theater-button'
+import './playlist/playlist-plugin'
 import videojs from 'video.js'
-import { isDefaultLocale } from '../../../../shared/models/i18n/i18n'
-import { VideoFile } from '../../../../shared/models/videos'
+import { isDefaultLocale } from '@shared/core-utils/i18n'
+import { VideoFile } from '@shared/models'
 import { RedundancyUrlManager } from './p2p-media-loader/redundancy-url-manager'
 import { segmentUrlBuilderFactory } from './p2p-media-loader/segment-url-builder'
 import { segmentValidatorFactory } from './p2p-media-loader/segment-validator'
 import { getStoredP2PEnabled } from './peertube-player-local-storage'
-import { P2PMediaLoaderPluginOptions, UserWatching, VideoJSCaption, VideoJSPluginOptions } from './peertube-videojs-typings'
+import {
+  NextPreviousVideoButtonOptions,
+  P2PMediaLoaderPluginOptions,
+  PlaylistPluginOptions,
+  UserWatching,
+  VideoJSCaption,
+  VideoJSPluginOptions
+} from './peertube-videojs-typings'
 import { TranslationsManager } from './translations-manager'
-import { buildVideoEmbed, buildVideoLink, copyToClipboard, getRtcConfig, isIOS, isSafari } from './utils'
+import { buildVideoOrPlaylistEmbed, buildVideoLink, getRtcConfig, isSafari, isIOS } from './utils'
+import { copyToClipboard } from '../../root-helpers/utils'
 
 // Change 'Playback Rate' to 'Speed' (smaller for our settings menu)
 (videojs.getComponent('PlaybackRateMenuButton') as any).prototype.controlText_ = 'Speed'
@@ -70,7 +79,15 @@ export interface CommonOptions extends CustomizationOptions {
   onPlayerElementChange: (element: HTMLVideoElement) => void
 
   autoplay: boolean
-  nextVideo?: Function
+
+  nextVideo?: () => void
+  hasNextVideo?: () => boolean
+
+  previousVideo?: () => void
+  hasPreviousVideo?: () => boolean
+
+  playlist?: PlaylistPluginOptions
+
   videoDuration: number
   enableHotkeys: boolean
   inactivityTimeout: number
@@ -81,6 +98,8 @@ export interface CommonOptions extends CustomizationOptions {
 
   videoViewUrl: string
   embedUrl: string
+
+  isLive: boolean
 
   language?: string
 
@@ -100,6 +119,12 @@ export type PeertubePlayerManagerOptions = {
 export class PeertubePlayerManager {
   private static playerElementClassName: string
   private static onPlayerChange: (player: videojs.Player) => void
+
+  private static alreadyPlayed = false
+
+  static initState () {
+    PeertubePlayerManager.alreadyPlayed = false
+  }
 
   static async initialize (mode: PlayerMode, options: PeertubePlayerManagerOptions, onPlayerChange: (player: videojs.Player) => void) {
     let p2pMediaLoader: any
@@ -134,6 +159,10 @@ export class PeertubePlayerManager {
         player.one('error', () => {
           if (!alreadyFallback) self.maybeFallbackToWebTorrent(mode, player, options)
           alreadyFallback = true
+        })
+
+        player.one('play', () => {
+          PeertubePlayerManager.alreadyPlayed = true
         })
 
         self.addContextMenu(mode, player, options.common.embedUrl)
@@ -186,6 +215,7 @@ export class PeertubePlayerManager {
     p2pMediaLoaderModule?: any
   ): videojs.PlayerOptions {
     const commonOptions = options.common
+    const isHLS = mode === 'p2p-media-loader'
 
     let autoplay = this.getAutoPlayValue(commonOptions.autoplay)
     let html5 = {}
@@ -199,15 +229,20 @@ export class PeertubePlayerManager {
         userWatching: commonOptions.userWatching,
         subtitle: commonOptions.subtitle,
         videoCaptions: commonOptions.videoCaptions,
-        stopTime: commonOptions.stopTime
+        stopTime: commonOptions.stopTime,
+        isLive: commonOptions.isLive
       }
+    }
+
+    if (commonOptions.playlist) {
+      plugins.playlist = commonOptions.playlist
     }
 
     if (commonOptions.enableHotkeys === true) {
       PeertubePlayerManager.addHotkeysOptions(plugins)
     }
 
-    if (mode === 'p2p-media-loader') {
+    if (isHLS) {
       const { hlsjs } = PeertubePlayerManager.addP2PMediaLoaderOptions(plugins, options, p2pMediaLoaderModule)
 
       html5 = hlsjs.html5
@@ -245,7 +280,12 @@ export class PeertubePlayerManager {
           captions: commonOptions.captions,
           peertubeLink: commonOptions.peertubeLink,
           theaterButton: commonOptions.theaterButton,
-          nextVideo: commonOptions.nextVideo
+
+          nextVideo: commonOptions.nextVideo,
+          hasNextVideo: commonOptions.hasNextVideo,
+
+          previousVideo: commonOptions.previousVideo,
+          hasPreviousVideo: commonOptions.hasPreviousVideo
         }) as any // FIXME: typings
       }
     }
@@ -287,9 +327,9 @@ export class PeertubePlayerManager {
     const p2pMediaLoaderConfig = {
       loader: {
         trackerAnnounce,
-        segmentValidator: segmentValidatorFactory(options.p2pMediaLoader.segmentsSha256Url),
+        segmentValidator: segmentValidatorFactory(options.p2pMediaLoader.segmentsSha256Url, options.common.isLive),
         rtcConfig: getRtcConfig(),
-        requiredSegmentsPriority: 5,
+        requiredSegmentsPriority: 1,
         segmentUrlBuilder: segmentUrlBuilderFactory(redundancyUrlManager),
         useP2P: getStoredP2PEnabled(),
         consumeOnly
@@ -300,7 +340,11 @@ export class PeertubePlayerManager {
     }
     const hlsjs = {
       levelLabelHandler: (level: { height: number, width: number }) => {
-        const file = p2pMediaLoaderOptions.videoFiles.find(f => f.resolution.id === level.height)
+        const resolution = Math.min(level.height || 0, level.width || 0)
+
+        const file = p2pMediaLoaderOptions.videoFiles.find(f => f.resolution.id === resolution)
+        // We don't have files for live videos
+        if (!file) return level.height
 
         let label = file.resolution.label
         if (file.fps >= 50) label += file.fps
@@ -311,7 +355,7 @@ export class PeertubePlayerManager {
         hlsjsConfig: {
           capLevelToPlayerSize: true,
           autoStartLoad: false,
-          liveSyncDurationCount: 7,
+          liveSyncDurationCount: 5,
           loader: new p2pMediaLoaderModule.Engine(p2pMediaLoaderConfig).createLoaderClass()
         }
       }
@@ -327,8 +371,12 @@ export class PeertubePlayerManager {
     const commonOptions = options.common
     const webtorrentOptions = options.webtorrent
 
+    const autoplay = this.getAutoPlayValue(commonOptions.autoplay) === 'play'
+      ? true
+      : false
+
     const webtorrent = {
-      autoplay: commonOptions.autoplay,
+      autoplay,
       videoDuration: commonOptions.videoDuration,
       playerElement: commonOptions.playerElement,
       videoFiles: webtorrentOptions.videoFiles,
@@ -340,9 +388,14 @@ export class PeertubePlayerManager {
 
   private static getControlBarChildren (mode: PlayerMode, options: {
     peertubeLink: boolean
-    theaterButton: boolean,
-    captions: boolean,
+    theaterButton: boolean
+    captions: boolean
+
     nextVideo?: Function
+    hasNextVideo?: () => boolean
+
+    previousVideo?: Function
+    hasPreviousVideo?: () => boolean
   }) {
     const settingEntries = []
     const loadProgressBar = mode === 'webtorrent' ? 'peerTubeLoadProgressBar' : 'loadProgressBar'
@@ -352,15 +405,39 @@ export class PeertubePlayerManager {
     if (options.captions === true) settingEntries.push('captionsButton')
     settingEntries.push('resolutionMenuButton')
 
-    const children = {
-      'playToggle': {}
+    const children = {}
+
+    if (options.previousVideo) {
+      const buttonOptions: NextPreviousVideoButtonOptions = {
+        type: 'previous',
+        handler: options.previousVideo,
+        isDisabled: () => {
+          if (!options.hasPreviousVideo) return false
+
+          return !options.hasPreviousVideo()
+        }
+      }
+
+      Object.assign(children, {
+        'previousVideoButton': buttonOptions
+      })
     }
 
+    Object.assign(children, { playToggle: {} })
+
     if (options.nextVideo) {
-      Object.assign(children, {
-        'nextVideoButton': {
-          handler: options.nextVideo
+      const buttonOptions: NextPreviousVideoButtonOptions = {
+        type: 'next',
+        handler: options.nextVideo,
+        isDisabled: () => {
+          if (!options.hasNextVideo) return false
+
+          return !options.hasNextVideo()
         }
+      }
+
+      Object.assign(children, {
+        'nextVideoButton': buttonOptions
       })
     }
 
@@ -432,7 +509,7 @@ export class PeertubePlayerManager {
       {
         label: player.localize('Copy embed code'),
         listener: () => {
-          copyToClipboard(buildVideoEmbed(videoEmbedUrl))
+          copyToClipboard(buildVideoOrPlaylistEmbed(videoEmbedUrl))
         }
       }
     ]
@@ -452,6 +529,17 @@ export class PeertubePlayerManager {
   private static addHotkeysOptions (plugins: VideoJSPluginOptions) {
     Object.assign(plugins, {
       hotkeys: {
+<<<<<<< Updated upstream
+=======
+        skipInitialFocus: true,
+        enableInactiveFocus: false,
+        captureDocumentHotkeys: true,
+        documentHotkeysFocusElementFilter: (e: HTMLElement) => {
+          const tagName = e.tagName.toLowerCase()
+          return e.id === 'content' || tagName === 'body' || tagName === 'video'
+        },
+
+>>>>>>> Stashed changes
         enableVolumeScroll: false,
         enableModifiersForNumbers: false,
 
@@ -511,12 +599,11 @@ export class PeertubePlayerManager {
   private static getAutoPlayValue (autoplay: any) {
     if (autoplay !== true) return autoplay
 
-    // Giving up with iOS
-    if (isIOS()) return false
-
-    // We have issues with autoplay and Safari.
-    // any that tries to play using auto mute seems to work
-    if (isSafari()) return 'any'
+    // On first play, disable autoplay to avoid issues
+    // But if the player already played videos, we can safely autoplay next ones
+    if (isIOS() || isSafari()) {
+      return PeertubePlayerManager.alreadyPlayed ? 'play' : false
+    }
 
     return 'play'
   }

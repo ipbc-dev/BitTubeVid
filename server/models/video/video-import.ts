@@ -13,15 +13,19 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { CONSTRAINTS_FIELDS, VIDEO_IMPORT_STATES } from '../../initializers/constants'
-import { getSort, throwIfNotValid } from '../utils'
-import { ScopeNames as VideoModelScopeNames, VideoModel } from './video'
-import { isVideoImportStateValid, isVideoImportTargetUrlValid } from '../../helpers/custom-validators/video-imports'
+import { MVideoImportDefault, MVideoImportFormattable } from '@server/types/models/video/video-import'
 import { VideoImport, VideoImportState } from '../../../shared'
+import { isVideoImportStateValid, isVideoImportTargetUrlValid } from '../../helpers/custom-validators/video-imports'
 import { isVideoMagnetUriValid } from '../../helpers/custom-validators/videos'
+import { CONSTRAINTS_FIELDS, VIDEO_IMPORT_STATES } from '../../initializers/constants'
 import { UserModel } from '../account/user'
+<<<<<<< Updated upstream
 import * as Bluebird from 'bluebird'
 import { MVideoImportDefault, MVideoImportFormattable } from '@server/typings/models/video/video-import'
+=======
+import { getSort, throwIfNotValid } from '../utils'
+import { ScopeNames as VideoModelScopeNames, VideoModel } from './video'
+>>>>>>> Stashed changes
 
 @DefaultScope(() => ({
   include: [
@@ -52,7 +56,7 @@ import { MVideoImportDefault, MVideoImportFormattable } from '@server/typings/mo
     }
   ]
 })
-export class VideoImportModel extends Model<VideoImportModel> {
+export class VideoImportModel extends Model {
   @CreatedAt
   createdAt: Date
 
@@ -120,7 +124,7 @@ export class VideoImportModel extends Model<VideoImportModel> {
     return undefined
   }
 
-  static loadAndPopulateVideo (id: number): Bluebird<MVideoImportDefault> {
+  static loadAndPopulateVideo (id: number): Promise<MVideoImportDefault> {
     return VideoImportModel.findByPk(id)
   }
 

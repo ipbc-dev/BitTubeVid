@@ -19,7 +19,7 @@ import { MUserAccountId, MUserId } from '@server/typings/models'
     }
   ]
 })
-export class UserVideoHistoryModel extends Model<UserVideoHistoryModel> {
+export class UserVideoHistoryModel extends Model {
   @CreatedAt
   createdAt: Date
 

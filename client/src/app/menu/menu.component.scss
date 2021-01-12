@@ -1,6 +1,39 @@
 @import '_variables';
 @import '_mixins';
 
+$menu-link-icon-size: 22px;
+$menu-link-icon-margin-right: 18px;
+
+@mixin menu-link {
+  display: flex;
+  align-items: center;
+  padding-left: $menu-lateral-padding;
+  color: pvar(--menuForegroundColor);
+  cursor: pointer;
+  font-size: 16px;
+  white-space: normal;
+  word-break: break-word;
+  padding-right: 20px;
+  transition: background-color .1s ease-in-out;
+
+  &.active {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+
+  &:hover, &.focus-visible {
+    background-color: rgba(255, 255, 255, 0.10);
+  }
+
+  my-global-icon {
+    @include apply-svg-color(#808080);
+
+    display: flex;
+    width: $menu-link-icon-size;
+    height: $menu-link-icon-size;
+    margin-right: $menu-link-icon-margin-right;
+  }
+}
+
 .menu-wrapper {
   position: fixed;
   height: calc(100vh - #{$header-height});
@@ -13,15 +46,24 @@
 menu {
   @include ellipsis;
 
+<<<<<<< Updated upstream
   background-color: var(--menuBackgroundColor);
   margin: 0;
   padding: 0;
   height: 100%;
   overflow-x: hidden;
   color: var(--menuForegroundColor);
+=======
+  background-color: pvar(--menuBackgroundColor);
+  color: pvar(--menuForegroundColor);
+
+>>>>>>> Stashed changes
   display: flex;
   flex-direction: column;
+  height: 100%;
   width: 100%;
+  margin: 0;
+  padding: 0;
 
   &:focus, &:hover {
     overflow-y: auto;
@@ -31,7 +73,7 @@ menu {
     overflow-y: auto;
   }
 
-  &.logged-in {
+  &.is-logged-in {
     .panel-block {
       margin-bottom: 20px;
     }
@@ -40,87 +82,231 @@ menu {
       margin-bottom: 15px;
     }
   }
+}
 
-  .top-menu {
-    flex-grow: 1;
-    width: $menu-width;
-  }
+.top-menu {
+  flex-grow: 1;
+  width: $menu-width;
+}
 
-  .logged-in-block {
-    height: 100px;
-    background-color: rgba(255, 255, 255, 0.15);
+.logged-in-block {
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.15);
+
+  > div:first-child {
+    height: 80px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
+    justify-content: left;
 
-    .logged-in-info {
-      @include ellipsis;
+    .logged-in-more {
+      $main-radius: 25px;
 
-      flex-grow: 1;
+      margin-left: 13px;
+      border-radius: $main-radius;
+      transition: all .1s ease-in-out;
+      cursor: pointer;
 
+<<<<<<< Updated upstream
       .logged-in-display-name {
         font-size: 16px;
         font-weight: $font-semibold;
         color: var(--menuForegroundColor);
         cursor: pointer;
+=======
+      *, & {
+        line-height: 1;
+      }
+>>>>>>> Stashed changes
 
-        @include disable-default-a-behaviour;
+      &.show {
+        background-color: rgba(255, 255, 255, 0.20);
+        box-shadow: inset 0 3px 5px rgba(0, 0, 0, .325);
       }
 
-      .logged-in-username {
-        @include ellipsis;
+      @mixin display-hints($is-mobile: false) {
+        background-color: rgba(255, 255, 255, 0.15);
 
-        font-size: 13px;
-        color: #C6C6C6;
-        max-width: 140px;
-        cursor: pointer;
+        @if $is-mobile {
+          .dropdown-toggle-indicator {
+            display: inherit !important;
+          }
+          .dropdown-toggle:first-child {
+            padding-right: 30px !important;
+          }
+        }
       }
-    }
 
-    .logged-in-more {
-      margin-right: 20px;
+      &:hover {
+        @include display-hints;
+      }
 
-      my-global-icon.dropdown-toggle {
-        cursor: pointer;
+      /* smartphones and touchscreens */
+      @media (hover: none) and (pointer: coarse) {
+        @include display-hints($is-mobile: true);
 
+        /* fill space when on mobile */
+        max-width: calc(100% - 80px);
+        .dropdown-toggle {
+          max-width: 100%;
+        }
+        .logged-in-info {
+          max-width: calc(100% - 45px) !important;
+        }
+
+      }
+
+      .dropdown-toggle-indicator {
+        position: relative;
+        width: 0;
+        display: none;
+
+        span {
+          position: absolute;
+          right: -35px;
+          top: -8px;
+          color: grey;
+          width: $main-radius;
+        }
+      }
+
+      .dropdown-toggle {
         &::after {
           border: none;
         }
+      }
 
+<<<<<<< Updated upstream
         ::ng-deep {
           @include apply-svg-color(var(--menuForegroundColor));
+=======
+      .dropdown-toggle:first-child {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 7px;
+      }
+
+      img {
+        @include avatar(34px);
+
+        margin-right: 10px;
+      }
+
+      .logged-in-info {
+        max-width: 105px;
+
+        flex-grow: 1;
+
+        .logged-in-display-name,
+        .logged-in-username {
+          @include ellipsis;
+        }
+
+        .logged-in-display-name {
+          font-size: 16px;
+          font-weight: $font-semibold;
+          color: pvar(--menuForegroundColor);
+
+          @include disable-default-a-behaviour;
+        }
+
+        .logged-in-username {
+          font-size: 13px;
+          color: #C6C6C6;
+          margin-top: 3px;
+>>>>>>> Stashed changes
+        }
+      }
+    }
+
+    my-notification {
+      margin-left: auto;
+      margin-right: 15px;
+    }
+  }
+
+  .logged-in-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border-top: 1px solid var(--greyForegroundColor);
+
+    a {
+      @include menu-link;
+      @include disable-default-a-behaviour;
+
+      $icon-size: 13px;
+      $additional-margin: ($menu-link-icon-size - $icon-size) / 2;
+
+      font-size: 14px;
+      width: 100%;
+      min-height: 35px;
+
+      my-global-icon {
+        width: $icon-size;
+        height: $icon-size;
+
+        // Keep aligned with other icons
+        margin-left: $additional-margin;
+
+        &[iconName="channel"] {
+          margin-top: -2px;
+        }
+      }
+
+      &.active,
+      &:hover,
+      &:focus-visible {
+        my-global-icon {
+          @include apply-svg-color(var(--menuForegroundColor));
+        }
+      }
+
+      &.active {
+        $border-left-width: 4px;
+
+        font-weight: $font-semibold;
+        border-left: $border-left-width solid var(--mainColor);
+
+        my-global-icon {
+          margin-left: $additional-margin - $border-left-width;
         }
       }
     }
   }
+}
 
-  .button-block {
-    margin: 30px 25px 35px 25px;
+.login-buttons-block {
+  margin: 30px 25px 35px 25px;
 
-    .login-button {
-      @include peertube-button-link;
-      @include orange-button;
+  .login-button {
+    @include peertube-button-link;
+    @include orange-button;
 
-      display: block;
-      width: 100%;
-      margin-bottom: 10px;
-    }
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+  }
 
-    .create-account-button {
-      @include peertube-button-link;
+  .create-account-button {
+    @include peertube-button-link;
 
-      display: block;
-      width: 100%;
+    display: block;
+    width: 100%;
 
-      color: #fff;
-      background-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.25);
 
-      &:hover {
-        background-color: rgba(255, 255, 255, 0.28);
-      }
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.28);
     }
   }
+}
+
+.in-my-library,
+.on-instance,
+.footer-block {
+  margin-bottom: 15px;
 
   .block-title {
     text-transform: uppercase;
@@ -128,6 +314,7 @@ menu {
     font-size: 13px;
     margin-bottom: 25px;
     margin-left: 26px;
+<<<<<<< Updated upstream
   }
 
   .panel-block {
@@ -151,58 +338,75 @@ menu {
       &.active {
         background-color: rgba(255, 255, 255, 0.15);
       }
+=======
+>>>>>>> Stashed changes
 
-      &:hover, &.focus-visible {
-        background-color: rgba(255, 255, 255, 0.10);
+    @include ellipsis;
+
+    margin-right: 30px;
+  }
+
+  a {
+    @include menu-link;
+    @include disable-default-a-behaviour;
+
+    min-height: 40px;
+
+    my-global-icon {
+      &[iconName="playlists"] {
+        height: 24px;
+        width: 24px;
+
+        margin-right: 16px;
       }
 
-      my-global-icon {
-        @include apply-svg-color(#808080);
-
-        display: flex;
-        width: 22px;
-        height: 22px;
-        margin-right: 18px;
-
-        &[iconName="playlists"] {
-          height: 24px;
-          width: 24px;
-
-          margin-right: 16px;
-        }
-
-        &[iconName="videos"] {
-          position: relative;
-          right: -1px;
-        }
-      }
-
-      .icon {
-        @include icon(22px);
-
-        margin-right: 18px;
+      &[iconName="videos"] {
+        position: relative;
+        right: -1px;
       }
     }
   }
+}
 
-  .footer {
-    width: $menu-width;
-    padding-bottom: 15px;
+.footer {
+  width: $menu-width;
+  padding-bottom: 15px;
 
-    .bottom-links {
+  .bottom-links {
+    display: flex;
+    flex-direction: column;
+    padding: 0 $menu-lateral-padding;
+  }
+
+  $footer-links-base-opacity: .8;
+
+  .footer-links {
+    &, > div {
       display: flex;
-      flex-direction: column;
-      padding: 0 $menu-lateral-padding;
+      flex-wrap: wrap;
     }
 
-    $footer-links-base-opacity: .8;
+    a, span[role=button] {
+      display: inline-block;
+      text-decoration: none;
+      color: pvar(--menuForegroundColor);
+      opacity: $footer-links-base-opacity;
+      white-space: nowrap;
+      font-size: 90%;
+      font-weight: 500;
+      line-height: 1.4rem;
+      margin-right: 8px;
 
-    .footer-links {
-      &, > div {
-        display: flex;
-        flex-wrap: wrap;
-      }
+      &.inline-global-icon {
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        height: 1.4rem;
 
+        my-global-icon {
+          @include apply-svg-color(pvar(--menuForegroundColor));
+
+<<<<<<< Updated upstream
       a, span[role=button] {
         display: inline-block;
         text-decoration: none;
@@ -228,17 +432,33 @@ menu {
             height: 90%;
             margin-right: .2rem;
           }
+=======
+          display: flex;
+          width: auto;
+          height: 90%;
+          margin-right: .2rem;
+>>>>>>> Stashed changes
         }
       }
     }
+  }
 
-    .footer-copyleft small a {
-      @include disable-default-a-behaviour;
+  .footer-copyleft small a {
+    @include disable-default-a-behaviour;
 
+<<<<<<< Updated upstream
       color: var(--mainBackgroundColor);
       opacity: $footer-links-base-opacity - .2;
     }
+=======
+    color: pvar(--menuForegroundColor);
+    opacity: $footer-links-base-opacity - .2;
+>>>>>>> Stashed changes
   }
+}
+
+.dropdown {
+  z-index: #{z('menu') + 1} !important;
 }
 
 .dropdown-menu {
@@ -277,6 +497,12 @@ menu {
     my-global-icon.hover-display-toggle {
       display: none;
     }
+
+    &.settings-sensitive {
+      my-global-icon ::ng-deep svg {
+        margin-top: 2px !important;
+      }
+    }
   }
 }
 
@@ -286,6 +512,7 @@ menu {
   color: #6c757d;
 }
 
+<<<<<<< Updated upstream
 .icon {
   @include disable-outline;
   @include icon(22px);
@@ -342,6 +569,8 @@ input:checked + label {
   }
 }
 
+=======
+>>>>>>> Stashed changes
 @media screen and (max-width: $mobile-view) {
   .menu-wrapper {
     width: 100% !important;
@@ -353,5 +582,15 @@ input:checked + label {
 
   .top-menu, .footer {
     width: 100% !important;
+  }
+
+  .dropdown-menu {
+    width: calc(100vw - 30px);
+  }
+
+  .dropdown-item:hover, .dropdown-item:active {
+    &.settings-sensitive my-global-icon ::ng-deep svg {
+      margin-top: 0px !important;
+    }
   }
 }

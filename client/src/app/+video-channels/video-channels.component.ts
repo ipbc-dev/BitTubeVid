@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
+<<<<<<< Updated upstream
 import { VideoChannel } from '@app/shared/video-channel/video-channel.model'
 import { VideoChannelService } from '@app/shared/video-channel/video-channel.service'
 import { RestExtractor } from '@app/shared'
@@ -11,6 +12,12 @@ import { SubscribeButtonComponent } from '@app/shared/user-subscription/subscrib
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ListOverflowItem } from '@app/shared/misc/list-overflow.component'
 import { ScreenService } from '@app/shared/misc/screen.service'
+=======
+import { AuthService, Notifier, RestExtractor, ScreenService } from '@app/core'
+import { ListOverflowItem, VideoChannel, VideoChannelService } from '@app/shared/shared-main'
+import { SubscribeButtonComponent } from '@app/shared/shared-user-subscription'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 @Component({
   templateUrl: './video-channels.component.html',
@@ -27,7 +34,6 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
   private routeSub: Subscription
 
   constructor (
-    private i18n: I18n,
     private route: ActivatedRoute,
     private notifier: Notifier,
     private authService: AuthService,
@@ -43,7 +49,10 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
                           map(params => params[ 'videoChannelName' ]),
                           distinctUntilChanged(),
                           switchMap(videoChannelName => this.videoChannelService.getVideoChannel(videoChannelName)),
-                          catchError(err => this.restExtractor.redirectTo404IfNotFound(err, [ 400, 404 ]))
+                          catchError(err => this.restExtractor.redirectTo404IfNotFound(err, [
+                            HttpStatusCode.BAD_REQUEST_400,
+                            HttpStatusCode.NOT_FOUND_404
+                          ]))
                         )
                         .subscribe(videoChannel => {
                           this.videoChannel = videoChannel
@@ -63,14 +72,14 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
           this.subscribeButton.unsubscribe() :
           this.subscribeButton.subscribe()
         return false
-      }, undefined, this.i18n('Subscribe to the account'))
+      }, undefined, $localize`Subscribe to the account`)
     ]
     if (this.isUserLoggedIn()) this.hotkeysService.add(this.hotkeys)
 
     this.links = [
-      { label: this.i18n('VIDEOS'), routerLink: 'videos' },
-      { label: this.i18n('VIDEO PLAYLISTS'), routerLink: 'video-playlists' },
-      { label: this.i18n('ABOUT'), routerLink: 'about' }
+      { label: $localize`VIDEOS`, routerLink: 'videos' },
+      { label: $localize`VIDEO PLAYLISTS`, routerLink: 'video-playlists' },
+      { label: $localize`ABOUT`, routerLink: 'about' }
     ]
   }
 
@@ -95,6 +104,6 @@ export class VideoChannelsComponent implements OnInit, OnDestroy {
   }
 
   activateCopiedMessage () {
-    this.notifier.success(this.i18n('Username copied'))
+    this.notifier.success($localize`Username copied`)
   }
 }

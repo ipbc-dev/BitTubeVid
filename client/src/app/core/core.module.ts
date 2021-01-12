@@ -2,12 +2,20 @@ import { CommonModule } from '@angular/common'
 import { NgModule, Optional, SkipSelf } from '@angular/core'
 import { FormsModule } from '@angular/forms'
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'
+<<<<<<< Updated upstream
 import { RouterModule } from '@angular/router'
+=======
+import { PeerTubeSocket } from '@app/core/notification/peertube-socket.service'
+import { HooksService } from '@app/core/plugins/hooks.service'
+import { PluginService } from '@app/core/plugins/plugin.service'
+import { UnloggedGuard } from '@app/core/routing/unlogged-guard.service'
+>>>>>>> Stashed changes
 import { LoadingBarModule } from '@ngx-loading-bar/core'
 import { LoadingBarHttpClientModule } from '@ngx-loading-bar/http-client'
 import { LoadingBarRouterModule } from '@ngx-loading-bar/router'
 
 import { AuthService } from './auth'
+import { ScopedTokensService } from './scoped-tokens'
 import { ConfirmService } from './confirm'
 import { throwIfAlreadyLoaded } from './module-import-guard'
 import { LoginGuard, RedirectService, UserRightGuard } from './routing'
@@ -57,6 +65,7 @@ import { HooksService } from '@app/core/plugins/hooks.service'
 
   providers: [
     AuthService,
+    ScopedTokensService,
     ConfirmService,
     ServerService,
     ThemeService,
@@ -71,8 +80,14 @@ import { HooksService } from '@app/core/plugins/hooks.service'
     RedirectService,
     Notifier,
     MessageService,
+<<<<<<< Updated upstream
     UserNotificationSocket,
     ServerConfigResolver
+=======
+    PeerTubeSocket,
+    ServerConfigResolver,
+    CanDeactivateGuard
+>>>>>>> Stashed changes
   ]
 })
 export class CoreModule {

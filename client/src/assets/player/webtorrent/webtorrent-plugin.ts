@@ -74,7 +74,7 @@ class WebTorrentPlugin extends Plugin {
     this.startTime = timeToInt(options.startTime)
 
     // Disable auto play on iOS
-    this.autoplay = options.autoplay && isIOS() === false
+    this.autoplay = options.autoplay
     this.playerRefusedP2P = !getStoredP2PEnabled()
 
     this.videoFiles = options.videoFiles
@@ -132,11 +132,15 @@ class WebTorrentPlugin extends Plugin {
     done: () => void = () => { /* empty */ }
   ) {
     // Automatically choose the adapted video file
-    if (videoFile === undefined) {
+    if (!videoFile) {
       const savedAverageBandwidth = getAverageBandwidthInStore()
       videoFile = savedAverageBandwidth
         ? this.getAppropriateFile(savedAverageBandwidth)
         : this.pickAverageVideoFile()
+    }
+
+    if (!videoFile) {
+      throw Error(`Can't update video file since videoFile is undefined.`)
     }
 
     // Don't add the same video file once again
@@ -329,11 +333,6 @@ class WebTorrentPlugin extends Plugin {
   private tryToPlay (done?: (err?: Error) => void) {
     if (!done) done = function () { /* empty */ }
 
-    // Try in mute mode because we have issues with Safari
-    if (isSafari() && this.player.muted() === false) {
-      this.player.muted(true)
-    }
-
     const playPromise = this.player.play()
     if (playPromise !== undefined) {
       return playPromise.then(() => done())
@@ -365,7 +364,7 @@ class WebTorrentPlugin extends Plugin {
     if (this.videoFiles === undefined || this.videoFiles.length === 0) return undefined
     if (this.videoFiles.length === 1) return this.videoFiles[0]
 
-    // Don't change the torrent is the play was ended
+    // Don't change the torrent if the player ended
     if (this.torrent && this.torrent.progress === 1 && this.player.ended()) return this.currentVideoFile
 
     if (!averageDownloadSpeed) averageDownloadSpeed = this.getAndSaveActualDownloadSpeed()
@@ -489,6 +488,7 @@ class WebTorrentPlugin extends Plugin {
       if (this.webtorrent.downloadSpeed !== 0) this.downloadSpeeds.push(this.webtorrent.downloadSpeed)
 
       return this.player.trigger('p2pInfo', {
+        source: 'webtorrent',
         http: {
           downloadSpeed: 0,
           uploadSpeed: 0,

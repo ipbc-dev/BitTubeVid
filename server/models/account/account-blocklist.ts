@@ -1,10 +1,16 @@
-import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt } from 'sequelize-typescript'
-import { AccountModel } from './account'
-import { getSort, searchAttribute } from '../utils'
-import { AccountBlock } from '../../../shared/models/blocklist'
 import { Op } from 'sequelize'
+<<<<<<< Updated upstream
 import * as Bluebird from 'bluebird'
 import { MAccountBlocklist, MAccountBlocklistAccounts, MAccountBlocklistFormattable } from '@server/typings/models'
+=======
+import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt } from 'sequelize-typescript'
+import { MAccountBlocklist, MAccountBlocklistAccounts, MAccountBlocklistFormattable } from '@server/types/models'
+import { AccountBlock } from '../../../shared/models'
+import { ActorModel } from '../activitypub/actor'
+import { ServerModel } from '../server/server'
+import { getSort, searchAttribute } from '../utils'
+import { AccountModel } from './account'
+>>>>>>> Stashed changes
 
 enum ScopeNames {
   WITH_ACCOUNTS = 'WITH_ACCOUNTS'
@@ -39,7 +45,7 @@ enum ScopeNames {
     }
   ]
 })
-export class AccountBlocklistModel extends Model<AccountBlocklistModel> {
+export class AccountBlocklistModel extends Model {
 
   @CreatedAt
   createdAt: Date
@@ -100,7 +106,7 @@ export class AccountBlocklistModel extends Model<AccountBlocklistModel> {
                                 })
   }
 
-  static loadByAccountAndTarget (accountId: number, targetAccountId: number): Bluebird<MAccountBlocklist> {
+  static loadByAccountAndTarget (accountId: number, targetAccountId: number): Promise<MAccountBlocklist> {
     const query = {
       where: {
         accountId,
@@ -149,6 +155,45 @@ export class AccountBlocklistModel extends Model<AccountBlocklistModel> {
       })
   }
 
+<<<<<<< Updated upstream
+=======
+  static listHandlesBlockedBy (accountIds: number[]): Promise<string[]> {
+    const query = {
+      attributes: [ 'id' ],
+      where: {
+        accountId: {
+          [Op.in]: accountIds
+        }
+      },
+      include: [
+        {
+          attributes: [ 'id' ],
+          model: AccountModel.unscoped(),
+          required: true,
+          as: 'BlockedAccount',
+          include: [
+            {
+              attributes: [ 'preferredUsername' ],
+              model: ActorModel.unscoped(),
+              required: true,
+              include: [
+                {
+                  attributes: [ 'host' ],
+                  model: ServerModel.unscoped(),
+                  required: true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
+    return AccountBlocklistModel.findAll(query)
+      .then(entries => entries.map(e => `${e.BlockedAccount.Actor.preferredUsername}@${e.BlockedAccount.Actor.Server.host}`))
+  }
+
+>>>>>>> Stashed changes
   toFormattedJSON (this: MAccountBlocklistFormattable): AccountBlock {
     return {
       byAccount: this.ByAccount.toFormattedJSON(),

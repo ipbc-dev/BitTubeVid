@@ -38,9 +38,11 @@ ENV NODE_CONFIG_DIR /config
 VOLUME /data
 VOLUME /config
 
-COPY ./support/docker/production/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+COPY ./support/docker/production/entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Expose API and RTMP
+EXPOSE 9000 1935
 
 # Run the application
 CMD ["npm", "start"]
-EXPOSE 9000

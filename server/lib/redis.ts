@@ -7,8 +7,14 @@ import {
   USER_EMAIL_VERIFY_LIFETIME,
   USER_PASSWORD_RESET_LIFETIME,
   USER_PASSWORD_CREATE_LIFETIME,
+<<<<<<< Updated upstream
   VIDEO_VIEW_LIFETIME,
   WEBSERVER
+=======
+  VIEW_LIFETIME,
+  WEBSERVER,
+  TRACKER_RATE_LIMITS
+>>>>>>> Stashed changes
 } from '../initializers/constants'
 import { CONFIG } from '../initializers/config'
 
@@ -83,6 +89,10 @@ class Redis {
     return generatedString
   }
 
+  async removePasswordVerificationString (userId: number) {
+    return this.removeValue(this.generateResetPasswordKey(userId))
+  }
+
   async getResetPasswordLink (userId: number) {
     return this.getValue(this.generateResetPasswordKey(userId))
   }
@@ -113,8 +123,12 @@ class Redis {
 
   /* ************ Views per IP ************ */
 
-  setIPVideoView (ip: string, videoUUID: string) {
-    return this.setValue(this.generateViewKey(ip, videoUUID), '1', VIDEO_VIEW_LIFETIME)
+  setIPVideoView (ip: string, videoUUID: string, isLive: boolean) {
+    const lifetime = isLive
+      ? VIEW_LIFETIME.LIVE
+      : VIEW_LIFETIME.VIDEO
+
+    return this.setValue(this.generateViewKey(ip, videoUUID), '1', lifetime)
   }
 
   async doesVideoIPViewExist (ip: string, videoUUID: string) {
@@ -196,7 +210,7 @@ class Redis {
   }
 
   private generateVideoViewKey (videoId: number, hour?: number) {
-    if (!hour) hour = new Date().getHours()
+    if (hour === undefined || hour === null) hour = new Date().getHours()
 
     return `video-view-${videoId}-h${hour}`
   }
@@ -269,6 +283,16 @@ class Redis {
         if (err) return rej(err)
 
         if (ok !== 'OK') return rej(new Error('Redis set result is not OK.'))
+
+        return res()
+      })
+    })
+  }
+
+  private removeValue (key: string) {
+    return new Promise<void>((res, rej) => {
+      this.client.del(this.prefix + key, err => {
+        if (err) return rej(err)
 
         return res()
       })

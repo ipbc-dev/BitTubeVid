@@ -1,4 +1,8 @@
+<<<<<<< Updated upstream
 import { VideoPrivacy } from '@shared/models'
+=======
+import { VideoPrivacy } from '../videos/video-privacy.enum'
+>>>>>>> Stashed changes
 
 export interface PluginVideoPrivacyManager {
   // PUBLIC = 1

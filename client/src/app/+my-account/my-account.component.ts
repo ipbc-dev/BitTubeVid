@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { ServerService } from '@app/core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { TopMenuDropdownParam } from '@app/shared/menu/top-menu-dropdown.component'
 import { ServerConfig } from '@shared/models'
+=======
+import { AuthUser, ScreenService } from '@app/core'
+import { TopMenuDropdownParam } from '../shared/shared-main/misc/top-menu-dropdown.component'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-my-account',
@@ -11,19 +16,13 @@ import { ServerConfig } from '@shared/models'
 })
 export class MyAccountComponent implements OnInit {
   menuEntries: TopMenuDropdownParam[] = []
-
-  private serverConfig: ServerConfig
+  user: AuthUser
 
   constructor (
-    private serverService: ServerService,
-    private i18n: I18n
-  ) { }
+    private screenService: ScreenService
+    ) { }
 
-  ngOnInit (): void {
-    this.serverConfig = this.serverService.getTmpConfig()
-    this.serverService.getConfig()
-        .subscribe(config => this.serverConfig = config)
-
+<<<<<<< Updated upstream
     const libraryEntries: TopMenuDropdownParam = {
       label: this.i18n('My library'),
       children: [
@@ -54,54 +53,70 @@ export class MyAccountComponent implements OnInit {
         }
       ]
     }
+=======
+  get isBroadcastMessageDisplayed () {
+    return this.screenService.isBroadcastMessageDisplayed
+  }
+>>>>>>> Stashed changes
 
-    if (this.isVideoImportEnabled()) {
-      libraryEntries.children.push({
-        label: 'My imports',
-        routerLink: '/my-account/video-imports',
-        iconName: 'cloud-download'
-      })
-    }
+  ngOnInit (): void {
+    this.buildMenu()
+  }
 
-    const miscEntries: TopMenuDropdownParam = {
-      label: this.i18n('Misc'),
+  private buildMenu () {
+    const moderationEntries: TopMenuDropdownParam = {
+      label: $localize`Moderation`,
       children: [
         {
-          label: this.i18n('Muted accounts'),
+          label: $localize`Muted accounts`,
           routerLink: '/my-account/blocklist/accounts',
-          iconName: 'user'
+          iconName: 'user-x'
         },
         {
+<<<<<<< Updated upstream
           label: this.i18n('Muted instances'),
-          routerLink: '/my-account/blocklist/servers',
-          iconName: 'server'
+=======
+          label: $localize`Premium storage billing`,
+          routerLink: '/my-account/premium-storage/billing',
+          iconName: 'history'
         },
         {
+          label: $localize`Muted servers`,
+>>>>>>> Stashed changes
+          routerLink: '/my-account/blocklist/servers',
+          iconName: 'peertube-x'
+        },
+        {
+<<<<<<< Updated upstream
           label: this.i18n('Ownership changes'),
           routerLink: '/my-account/ownership',
           iconName: 'im-with-her'
+=======
+          label: $localize`Abuse reports`,
+          routerLink: '/my-account/abuses',
+          iconName: 'flag'
+>>>>>>> Stashed changes
         }
       ]
     }
 
     this.menuEntries = [
       {
-        label: this.i18n('My settings'),
+        label: $localize`Settings`,
         routerLink: '/my-account/settings'
       },
+
       {
-        label: this.i18n('My notifications'),
+        label: $localize`Notifications`,
         routerLink: '/my-account/notifications'
       },
-      libraryEntries,
-      miscEntries
+
+      {
+        label: $localize`Applications`,
+        routerLink: '/my-account/applications'
+      },
+
+      moderationEntries
     ]
   }
-
-  isVideoImportEnabled () {
-    const importConfig = this.serverConfig.import.videos
-
-    return importConfig.http.enabled || importConfig.torrent.enabled
-  }
-
 }

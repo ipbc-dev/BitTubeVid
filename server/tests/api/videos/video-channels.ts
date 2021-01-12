@@ -401,6 +401,50 @@ describe('Test video channels', function () {
     }
   })
 
+<<<<<<< Updated upstream
+=======
+  it('Should report correct videos count', async function () {
+    const res = await getAccountVideoChannelsList({
+      url: servers[0].url,
+      accountName: userInfo.account.name + '@' + userInfo.account.host,
+      withStats: true
+    })
+    const channels: VideoChannel[] = res.body.data
+
+    const totoChannel = channels.find(c => c.name === 'toto_channel')
+    const rootChannel = channels.find(c => c.name === 'root_channel')
+
+    expect(rootChannel.videosCount).to.equal(1)
+    expect(totoChannel.videosCount).to.equal(0)
+  })
+
+  it('Should search among account video channels', async function () {
+    {
+      const res = await getAccountVideoChannelsList({
+        url: servers[0].url,
+        accountName: userInfo.account.name + '@' + userInfo.account.host,
+        search: 'root'
+      })
+      expect(res.body.total).to.equal(1)
+
+      const channels = res.body.data
+      expect(channels).to.have.lengthOf(1)
+    }
+
+    {
+      const res = await getAccountVideoChannelsList({
+        url: servers[0].url,
+        accountName: userInfo.account.name + '@' + userInfo.account.host,
+        search: 'does not exist'
+      })
+      expect(res.body.total).to.equal(0)
+
+      const channels = res.body.data
+      expect(channels).to.have.lengthOf(0)
+    }
+  })
+
+>>>>>>> Stashed changes
   after(async function () {
     await cleanupTests(servers)
   })

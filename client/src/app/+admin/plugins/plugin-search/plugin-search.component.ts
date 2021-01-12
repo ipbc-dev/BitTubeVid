@@ -1,7 +1,14 @@
 import { Component, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { Notifier, ServerService } from '@app/core'
 import { ConfirmService } from '../../../core'
 import { I18n } from '@ngx-translate/i18n-polyfill'
+=======
+import { ActivatedRoute, Router } from '@angular/router'
+import { PluginApiService } from '@app/+admin/plugins/shared/plugin-api.service'
+import { ComponentPagination, ConfirmService, hasMoreItems, Notifier } from '@app/core'
+import { PeerTubePluginIndex } from '@shared/models/plugins/peertube-plugin-index.model'
+>>>>>>> Stashed changes
 import { PluginType } from '@shared/models/plugins/plugin.type'
 import { PluginApiService } from '@app/+admin/plugins/shared/plugin-api.service'
 import { ComponentPagination, hasMoreItems } from '@app/shared/rest/component-pagination.model'
@@ -42,15 +49,13 @@ export class PluginSearchComponent implements OnInit {
   private searchSubject = new Subject<string>()
 
   constructor (
-    private server: ServerService,
-    private i18n: I18n,
-    private pluginService: PluginApiService,
+    private pluginApiService: PluginApiService,
     private notifier: Notifier,
     private confirmService: ConfirmService,
     private router: Router,
     private route: ActivatedRoute
   ) {
-    this.pluginTypeOptions = this.pluginService.getPluginTypeOptions()
+    this.pluginTypeOptions = this.pluginApiService.getPluginTypeOptions()
   }
 
   ngOnInit () {
@@ -88,7 +93,7 @@ export class PluginSearchComponent implements OnInit {
   loadMorePlugins () {
     this.isSearching = true
 
-    this.pluginService.searchAvailablePlugins(this.pluginType, this.pagination, this.sort, this.search)
+    this.pluginApiService.searchAvailablePlugins(this.pluginType, this.pagination, this.sort, this.search)
         .subscribe(
           res => {
             this.isSearching = false
@@ -102,7 +107,7 @@ export class PluginSearchComponent implements OnInit {
           err => {
             console.error(err)
 
-            const message = this.i18n('The plugin index is not available. Please retry later.')
+            const message = $localize`The plugin index is not available. Please retry later.`
             this.notifier.error(message)
           }
         )
@@ -120,24 +125,28 @@ export class PluginSearchComponent implements OnInit {
     return !!this.installing[plugin.npmName]
   }
 
+  getPluginOrThemeHref (name: string) {
+    return this.pluginApiService.getPluginOrThemeHref(this.pluginType, name)
+  }
+
   async install (plugin: PeerTubePluginIndex) {
     if (this.installing[plugin.npmName]) return
 
     const res = await this.confirmService.confirm(
-      this.i18n('Please only install plugins or themes you trust, since they can execute any code on your instance.'),
-      this.i18n('Install {{pluginName}}?', { pluginName: plugin.name })
+      $localize`Please only install plugins or themes you trust, since they can execute any code on your instance.`,
+      $localize`Install ${plugin.name}?`
     )
     if (res === false) return
 
     this.installing[plugin.npmName] = true
 
-    this.pluginService.install(plugin.npmName)
+    this.pluginApiService.install(plugin.npmName)
         .subscribe(
           () => {
             this.installing[plugin.npmName] = false
             this.pluginInstalled = true
 
-            this.notifier.success(this.i18n('{{pluginName}} installed.', { pluginName: plugin.name }))
+            this.notifier.success($localize`${plugin.name} installed.`)
 
             plugin.installed = true
           },

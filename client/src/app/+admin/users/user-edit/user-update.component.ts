@@ -1,8 +1,21 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
+<<<<<<< Updated upstream
 import { Subscription } from 'rxjs'
 import { AuthService, Notifier } from '@app/core'
 import { ServerService } from '../../../core'
+=======
+import { ConfigService } from '@app/+admin/config/shared/config.service'
+import { AuthService, Notifier, ScreenService, ServerService, User, UserService } from '@app/core'
+import {
+  USER_EMAIL_VALIDATOR,
+  USER_ROLE_VALIDATOR,
+  USER_VIDEO_QUOTA_DAILY_VALIDATOR,
+  USER_VIDEO_QUOTA_VALIDATOR
+} from '@app/shared/form-validators/user-validators'
+import { FormValidatorService } from '@app/shared/shared-forms'
+import { User as UserType, UserAdminFlag, UserRole, UserUpdate } from '@shared/models'
+>>>>>>> Stashed changes
 import { UserEdit } from './user-edit'
 import { User as UserType, UserUpdate, UserRole } from '../../../../../../shared'
 import { I18n } from '@ngx-translate/i18n-polyfill'
@@ -30,13 +43,11 @@ export class UserUpdateComponent extends UserEdit implements OnInit, OnDestroy {
     protected configService: ConfigService,
     protected screenService: ScreenService,
     protected auth: AuthService,
-    private userValidatorsService: UserValidatorsService,
     private route: ActivatedRoute,
     private router: Router,
     private notifier: Notifier,
-    private userService: UserService,
-    private i18n: I18n
-  ) {
+    private userService: UserService
+    ) {
     super()
 
     this.buildQuotaOptions()
@@ -52,11 +63,19 @@ export class UserUpdateComponent extends UserEdit implements OnInit, OnDestroy {
     }
 
     this.buildForm({
+<<<<<<< Updated upstream
       email: this.userValidatorsService.USER_EMAIL,
       role: this.userValidatorsService.USER_ROLE,
       videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
       videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY,
       byPassAutoBlacklist: null
+=======
+      email: USER_EMAIL_VALIDATOR,
+      role: USER_ROLE_VALIDATOR,
+      videoQuota: USER_VIDEO_QUOTA_VALIDATOR,
+      videoQuotaDaily: USER_VIDEO_QUOTA_DAILY_VALIDATOR,
+      byPassAutoBlock: null
+>>>>>>> Stashed changes
     }, defaultValues)
 
     this.paramsSub = this.route.params.subscribe(routeParams => {
@@ -85,7 +104,7 @@ export class UserUpdateComponent extends UserEdit implements OnInit, OnDestroy {
 
     this.userService.updateUser(this.user.id, userUpdate).subscribe(
       () => {
-        this.notifier.success(this.i18n('User {{username}} updated.', { username: this.user.username }))
+        this.notifier.success($localize`User ${this.user.username} updated.`)
         this.router.navigate([ '/admin/users/list' ])
       },
 
@@ -102,15 +121,13 @@ export class UserUpdateComponent extends UserEdit implements OnInit, OnDestroy {
   }
 
   getFormButtonTitle () {
-    return this.i18n('Update user')
+    return $localize`Update user`
   }
 
   resetPassword () {
     this.userService.askResetPassword(this.user.email).subscribe(
       () => {
-        this.notifier.success(
-          this.i18n('An email asking for password reset has been sent to {{username}}.', { username: this.user.username })
-        )
+        this.notifier.success($localize`An email asking for password reset has been sent to ${this.user.username}.`)
       },
 
       err => this.error = err.message

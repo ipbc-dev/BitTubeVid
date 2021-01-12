@@ -2,9 +2,34 @@ import * as Sequelize from 'sequelize'
 import { ResultList } from '../../shared/models'
 import { VideoCommentThreadTree } from '../../shared/models/videos/video-comment.model'
 import { VideoCommentModel } from '../models/video/video-comment'
+<<<<<<< Updated upstream
 import { getVideoCommentActivityPubUrl } from './activitypub/url'
 import { sendCreateVideoComment } from './activitypub/send'
 import { MAccountDefault, MComment, MCommentOwnerVideoReply, MVideoFullLight } from '../typings/models'
+=======
+import { MAccountDefault, MComment, MCommentOwnerVideo, MCommentOwnerVideoReply, MVideoFullLight } from '../types/models'
+import { sendCreateVideoComment, sendDeleteVideoComment } from './activitypub/send'
+import { getLocalVideoCommentActivityPubUrl } from './activitypub/url'
+import { Hooks } from './plugins/hooks'
+
+async function removeComment (videoCommentInstance: MCommentOwnerVideo) {
+  const videoCommentInstanceBefore = cloneDeep(videoCommentInstance)
+
+  await sequelizeTypescript.transaction(async t => {
+    if (videoCommentInstance.isOwned() || videoCommentInstance.Video.isOwned()) {
+      await sendDeleteVideoComment(videoCommentInstance, t)
+    }
+
+    markCommentAsDeleted(videoCommentInstance)
+
+    await videoCommentInstance.save()
+  })
+
+  logger.info('Video comment %d deleted.', videoCommentInstance.id)
+
+  Hooks.runAction('action:api.video-comment.deleted', { comment: videoCommentInstanceBefore })
+}
+>>>>>>> Stashed changes
 
 async function createVideoComment (obj: {
   text: string
@@ -29,7 +54,7 @@ async function createVideoComment (obj: {
     url: new Date().toISOString()
   }, { transaction: t, validate: false })
 
-  comment.url = getVideoCommentActivityPubUrl(obj.video, comment)
+  comment.url = getLocalVideoCommentActivityPubUrl(obj.video, comment)
 
   const savedComment: MCommentOwnerVideoReply = await comment.save({ transaction: t })
   savedComment.InReplyToVideoComment = obj.inReplyToComment

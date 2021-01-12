@@ -1,6 +1,6 @@
 import { VideoTranscodingFPS } from './video-transcoding-fps.model'
 
-export enum VideoResolution {
+export const enum VideoResolution {
   H_NOVIDEO = 0,
   H_240P = 240,
   H_360P = 360,
@@ -78,7 +78,7 @@ export function getTargetBitrate (resolution: VideoResolution, fps: number, fpsT
   // Example outputs:
   // 1080p10: 2420 kbps, 1080p30: 3300 kbps, 1080p60: 4620 kbps
   //  720p10: 1283 kbps,  720p30: 1750 kbps,  720p60: 2450 kbps
-  return baseBitrate + (fps - fpsTranscodingConstants.AVERAGE) * (maxBitrateDifference / maxFpsDifference)
+  return Math.floor(baseBitrate + (fps - fpsTranscodingConstants.AVERAGE) * (maxBitrateDifference / maxFpsDifference))
 }
 
 /**

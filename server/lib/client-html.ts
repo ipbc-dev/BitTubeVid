@@ -1,21 +1,71 @@
 import * as express from 'express'
+<<<<<<< Updated upstream
 import { buildFileLocale, getDefaultLocale, is18nLocale, POSSIBLE_LOCALES } from '../../shared/models/i18n/i18n'
 import { CUSTOM_HTML_TAG_COMMENTS, EMBED_SIZE, PLUGIN_GLOBAL_CSS_PATH, WEBSERVER } from '../initializers/constants'
-import { join } from 'path'
-import { escapeHTML, sha256 } from '../helpers/core-utils'
-import { VideoModel } from '../models/video/video'
-import validator from 'validator'
-import { VideoPrivacy } from '../../shared/models/videos'
+=======
 import { readFile } from 'fs-extra'
-import { getActivityStreamDuration } from '../models/video/video-format-utils'
+>>>>>>> Stashed changes
+import { join } from 'path'
+import validator from 'validator'
+import { buildFileLocale, getDefaultLocale, is18nLocale, POSSIBLE_LOCALES } from '../../shared/core-utils/i18n/i18n'
+import { HttpStatusCode } from '../../shared/core-utils/miscs/http-error-codes'
+import { VideoPlaylistPrivacy, VideoPrivacy } from '../../shared/models/videos'
+import { escapeHTML, isTestInstance, sha256 } from '../helpers/core-utils'
+import { logger } from '../helpers/logger'
+import { CONFIG } from '../initializers/config'
+import {
+  ACCEPT_HEADERS,
+  AVATARS_SIZE,
+  CUSTOM_HTML_TAG_COMMENTS,
+  EMBED_SIZE,
+  FILES_CONTENT_HASH,
+  PLUGIN_GLOBAL_CSS_PATH,
+  WEBSERVER
+} from '../initializers/constants'
 import { AccountModel } from '../models/account/account'
+import { VideoModel } from '../models/video/video'
 import { VideoChannelModel } from '../models/video/video-channel'
+<<<<<<< Updated upstream
 import * as Bluebird from 'bluebird'
 import { CONFIG } from '../initializers/config'
 import { logger } from '../helpers/logger'
 import { MAccountActor, MChannelActor, MVideo } from '../typings/models'
+=======
+import { getActivityStreamDuration } from '../models/video/video-format-utils'
+import { VideoPlaylistModel } from '../models/video/video-playlist'
+import { MAccountActor, MChannelActor } from '../types/models'
 
-export class ClientHtml {
+type Tags = {
+  ogType: string
+  twitterCard: 'player' | 'summary' | 'summary_large_image'
+  schemaType: string
+
+  list?: {
+    numberOfItems: number
+  }
+
+  siteName: string
+  title: string
+  url: string
+  originUrl: string
+  description: string
+
+  embed?: {
+    url: string
+    createdAt: string
+    duration?: string
+    views?: number
+  }
+>>>>>>> Stashed changes
+
+  image: {
+    url: string
+    width?: number
+    height?: number
+  }
+}
+
+class ClientHtml {
 
   private static htmlCache: { [path: string]: string } = {}
 
@@ -39,7 +89,7 @@ export class ClientHtml {
   static async getWatchHTMLPage (videoId: string, req: express.Request, res: express.Response) {
     // Let Angular application handle errors
     if (!validator.isInt(videoId) && !validator.isUUID(videoId, 4)) {
-      res.status(404)
+      res.status(HttpStatusCode.NOT_FOUND_404)
       return ClientHtml.getIndexHTML(req, res)
     }
 
@@ -50,13 +100,107 @@ export class ClientHtml {
 
     // Let Angular application handle errors
     if (!video || video.privacy === VideoPrivacy.PRIVATE || video.privacy === VideoPrivacy.INTERNAL || video.VideoBlacklist) {
-      res.status(404)
+      res.status(HttpStatusCode.NOT_FOUND_404)
       return html
     }
 
     let customHtml = ClientHtml.addTitleTag(html, escapeHTML(video.name))
     customHtml = ClientHtml.addDescriptionTag(customHtml, escapeHTML(video.description))
-    customHtml = ClientHtml.addVideoOpenGraphAndOEmbedTags(customHtml, video)
+
+    const url = WEBSERVER.URL + video.getWatchStaticPath()
+    const originUrl = video.url
+    const title = escapeHTML(video.name)
+    const siteName = escapeHTML(CONFIG.INSTANCE.NAME)
+    const description = escapeHTML(video.description)
+
+    const image = {
+      url: WEBSERVER.URL + video.getPreviewStaticPath()
+    }
+
+    const embed = {
+      url: WEBSERVER.URL + video.getEmbedStaticPath(),
+      createdAt: video.createdAt.toISOString(),
+      duration: getActivityStreamDuration(video.duration),
+      views: video.views
+    }
+
+    const ogType = 'video'
+    const twitterCard = CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary_large_image'
+    const schemaType = 'VideoObject'
+
+    customHtml = ClientHtml.addTags(customHtml, {
+      url,
+      originUrl,
+      siteName,
+      title,
+      description,
+      image,
+      embed,
+      ogType,
+      twitterCard,
+      schemaType
+    })
+
+    return customHtml
+  }
+
+  static async getWatchPlaylistHTMLPage (videoPlaylistId: string, req: express.Request, res: express.Response) {
+    // Let Angular application handle errors
+    if (!validator.isInt(videoPlaylistId) && !validator.isUUID(videoPlaylistId, 4)) {
+      res.status(HttpStatusCode.NOT_FOUND_404)
+      return ClientHtml.getIndexHTML(req, res)
+    }
+
+    const [ html, videoPlaylist ] = await Promise.all([
+      ClientHtml.getIndexHTML(req, res),
+      VideoPlaylistModel.loadWithAccountAndChannel(videoPlaylistId, null)
+    ])
+
+    // Let Angular application handle errors
+    if (!videoPlaylist || videoPlaylist.privacy === VideoPlaylistPrivacy.PRIVATE) {
+      res.status(HttpStatusCode.NOT_FOUND_404)
+      return html
+    }
+
+    let customHtml = ClientHtml.addTitleTag(html, escapeHTML(videoPlaylist.name))
+    customHtml = ClientHtml.addDescriptionTag(customHtml, escapeHTML(videoPlaylist.description))
+
+    const url = videoPlaylist.getWatchUrl()
+    const originUrl = videoPlaylist.url
+    const title = escapeHTML(videoPlaylist.name)
+    const siteName = escapeHTML(CONFIG.INSTANCE.NAME)
+    const description = escapeHTML(videoPlaylist.description)
+
+    const image = {
+      url: videoPlaylist.getThumbnailUrl()
+    }
+
+    const embed = {
+      url: WEBSERVER.URL + videoPlaylist.getEmbedStaticPath(),
+      createdAt: videoPlaylist.createdAt.toISOString()
+    }
+
+    const list = {
+      numberOfItems: videoPlaylist.get('videosLength') as number
+    }
+
+    const ogType = 'video'
+    const twitterCard = CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary'
+    const schemaType = 'ItemList'
+
+    customHtml = ClientHtml.addTags(customHtml, {
+      url,
+      originUrl,
+      siteName,
+      embed,
+      title,
+      description,
+      image,
+      list,
+      ogType,
+      twitterCard,
+      schemaType
+    })
 
     return customHtml
   }
@@ -69,8 +213,25 @@ export class ClientHtml {
     return this.getAccountOrChannelHTMLPage(() => VideoChannelModel.loadByNameWithHostAndPopulateAccount(nameWithHost), req, res)
   }
 
+  static async getEmbedHTML () {
+    const path = ClientHtml.getEmbedPath()
+
+    if (!isTestInstance() && ClientHtml.htmlCache[path]) return ClientHtml.htmlCache[path]
+
+    const buffer = await readFile(path)
+
+    let html = buffer.toString()
+    html = await ClientHtml.addAsyncPluginCSS(html)
+    html = ClientHtml.addCustomCSS(html)
+    html = ClientHtml.addTitleTag(html)
+
+    ClientHtml.htmlCache[path] = html
+
+    return html
+  }
+
   private static async getAccountOrChannelHTMLPage (
-    loader: () => Bluebird<MAccountActor | MChannelActor>,
+    loader: () => Promise<MAccountActor | MChannelActor>,
     req: express.Request,
     res: express.Response
   ) {
@@ -81,20 +242,47 @@ export class ClientHtml {
 
     // Let Angular application handle errors
     if (!entity) {
-      res.status(404)
+      res.status(HttpStatusCode.NOT_FOUND_404)
       return ClientHtml.getIndexHTML(req, res)
     }
 
     let customHtml = ClientHtml.addTitleTag(html, escapeHTML(entity.getDisplayName()))
     customHtml = ClientHtml.addDescriptionTag(customHtml, escapeHTML(entity.description))
-    customHtml = ClientHtml.addAccountOrChannelMetaTags(customHtml, entity)
+
+    const url = entity.getLocalUrl()
+    const originUrl = entity.Actor.url
+    const siteName = escapeHTML(CONFIG.INSTANCE.NAME)
+    const title = escapeHTML(entity.getDisplayName())
+    const description = escapeHTML(entity.description)
+
+    const image = {
+      url: entity.Actor.getAvatarUrl(),
+      width: AVATARS_SIZE.width,
+      height: AVATARS_SIZE.height
+    }
+
+    const ogType = 'website'
+    const twitterCard = 'summary'
+    const schemaType = 'ProfilePage'
+
+    customHtml = ClientHtml.addTags(customHtml, {
+      url,
+      originUrl,
+      title,
+      siteName,
+      description,
+      image,
+      ogType,
+      twitterCard,
+      schemaType
+    })
 
     return customHtml
   }
 
   private static async getIndexHTML (req: express.Request, res: express.Response, paramLang?: string) {
     const path = ClientHtml.getIndexPath(req, res, paramLang)
-    if (ClientHtml.htmlCache[path]) return ClientHtml.htmlCache[path]
+    if (!isTestInstance() && ClientHtml.htmlCache[path]) return ClientHtml.htmlCache[path]
 
     const buffer = await readFile(path)
 
@@ -130,6 +318,10 @@ export class ClientHtml {
     }
 
     return join(__dirname, '../../../client/dist/' + buildFileLocale(lang) + '/index.html')
+  }
+
+  private static getEmbedPath () {
+    return join(__dirname, '../../../client/dist/standalone/videos/embed.html')
   }
 
   private static addHtmlLang (htmlStringPage: string, paramLang: string) {
@@ -168,60 +360,109 @@ export class ClientHtml {
     return htmlStringPage.replace('</head>', linkTag + '</head>')
   }
 
-  private static addVideoOpenGraphAndOEmbedTags (htmlStringPage: string, video: MVideo) {
-    const previewUrl = WEBSERVER.URL + video.getPreviewStaticPath()
-    const videoUrl = WEBSERVER.URL + video.getWatchStaticPath()
-
-    const videoNameEscaped = escapeHTML(video.name)
-    const videoDescriptionEscaped = escapeHTML(video.description)
-    const embedUrl = WEBSERVER.URL + video.getEmbedStaticPath()
-
-    const openGraphMetaTags = {
-      'og:type': 'video',
-      'og:title': videoNameEscaped,
-      'og:image': previewUrl,
-      'og:url': videoUrl,
-      'og:description': videoDescriptionEscaped,
-
-      'og:video:url': embedUrl,
-      'og:video:secure_url': embedUrl,
-      'og:video:type': 'text/html',
-      'og:video:width': EMBED_SIZE.width,
-      'og:video:height': EMBED_SIZE.height,
-
-      'name': videoNameEscaped,
-      'description': videoDescriptionEscaped,
-      'image': previewUrl,
-
-      'twitter:card': CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary_large_image',
-      'twitter:site': CONFIG.SERVICES.TWITTER.USERNAME,
-      'twitter:title': videoNameEscaped,
-      'twitter:description': videoDescriptionEscaped,
-      'twitter:image': previewUrl,
-      'twitter:player': embedUrl,
-      'twitter:player:width': EMBED_SIZE.width,
-      'twitter:player:height': EMBED_SIZE.height
+  private static generateOpenGraphMetaTags (tags: Tags) {
+    const metaTags = {
+      'og:type': tags.ogType,
+      'og:site_name': tags.siteName,
+      'og:title': tags.title,
+      'og:image': tags.image.url
     }
 
-    const oembedLinkTags = [
-      {
-        type: 'application/json+oembed',
-        href: WEBSERVER.URL + '/services/oembed?url=' + encodeURIComponent(videoUrl),
-        title: videoNameEscaped
-      }
-    ]
+    if (tags.image.width && tags.image.height) {
+      metaTags['og:image:width'] = tags.image.width
+      metaTags['og:image:height'] = tags.image.height
+    }
 
-    const schemaTags = {
+    metaTags['og:url'] = tags.url
+    metaTags['og:description'] = tags.description
+
+    if (tags.embed) {
+      metaTags['og:video:url'] = tags.embed.url
+      metaTags['og:video:secure_url'] = tags.embed.url
+      metaTags['og:video:type'] = 'text/html'
+      metaTags['og:video:width'] = EMBED_SIZE.width
+      metaTags['og:video:height'] = EMBED_SIZE.height
+    }
+
+    return metaTags
+  }
+
+  private static generateStandardMetaTags (tags: Tags) {
+    return {
+      name: tags.title,
+      description: tags.description,
+      image: tags.image.url
+    }
+  }
+
+  private static generateTwitterCardMetaTags (tags: Tags) {
+    const metaTags = {
+      'twitter:card': tags.twitterCard,
+      'twitter:site': CONFIG.SERVICES.TWITTER.USERNAME,
+      'twitter:title': tags.title,
+      'twitter:description': tags.description,
+      'twitter:image': tags.image.url
+    }
+
+    if (tags.image.width && tags.image.height) {
+      metaTags['twitter:image:width'] = tags.image.width
+      metaTags['twitter:image:height'] = tags.image.height
+    }
+
+    if (tags.twitterCard === 'player') {
+      metaTags['twitter:player'] = tags.embed.url
+      metaTags['twitter:player:width'] = EMBED_SIZE.width
+      metaTags['twitter:player:height'] = EMBED_SIZE.height
+    }
+
+    return metaTags
+  }
+
+  private static generateSchemaTags (tags: Tags) {
+    const schema = {
       '@context': 'http://schema.org',
-      '@type': 'VideoObject',
-      'name': videoNameEscaped,
-      'description': videoDescriptionEscaped,
-      'thumbnailUrl': previewUrl,
-      'uploadDate': video.createdAt.toISOString(),
-      'duration': getActivityStreamDuration(video.duration),
-      'contentUrl': videoUrl,
-      'embedUrl': embedUrl,
-      'interactionCount': video.views
+      '@type': tags.schemaType,
+      'name': tags.title,
+      'description': tags.description,
+      'image': tags.image.url,
+      'url': tags.url
+    }
+
+    if (tags.list) {
+      schema['numberOfItems'] = tags.list.numberOfItems
+      schema['thumbnailUrl'] = tags.image.url
+    }
+
+    if (tags.embed) {
+      schema['embedUrl'] = tags.embed.url
+      schema['uploadDate'] = tags.embed.createdAt
+
+      if (tags.embed.duration) schema['duration'] = tags.embed.duration
+      if (tags.embed.views) schema['iterationCount'] = tags.embed.views
+
+      schema['thumbnailUrl'] = tags.image.url
+      schema['contentUrl'] = tags.url
+    }
+
+    return schema
+  }
+
+  private static addTags (htmlStringPage: string, tagsValues: Tags) {
+    const openGraphMetaTags = this.generateOpenGraphMetaTags(tagsValues)
+    const standardMetaTags = this.generateStandardMetaTags(tagsValues)
+    const twitterCardMetaTags = this.generateTwitterCardMetaTags(tagsValues)
+    const schemaTags = this.generateSchemaTags(tagsValues)
+
+    const { url, title, embed, originUrl } = tagsValues
+
+    const oembedLinkTags: { type: string, href: string, title: string }[] = []
+
+    if (embed) {
+      oembedLinkTags.push({
+        type: 'application/json+oembed',
+        href: WEBSERVER.URL + '/services/oembed?url=' + encodeURIComponent(url),
+        title
+      })
     }
 
     let tagsString = ''
@@ -233,28 +474,68 @@ export class ClientHtml {
       tagsString += `<meta property="${tagName}" content="${tagValue}" />`
     })
 
+    // Standard
+    Object.keys(standardMetaTags).forEach(tagName => {
+      const tagValue = standardMetaTags[tagName]
+
+      tagsString += `<meta property="${tagName}" content="${tagValue}" />`
+    })
+
+    // Twitter card
+    Object.keys(twitterCardMetaTags).forEach(tagName => {
+      const tagValue = twitterCardMetaTags[tagName]
+
+      tagsString += `<meta property="${tagName}" content="${tagValue}" />`
+    })
+
     // OEmbed
     for (const oembedLinkTag of oembedLinkTags) {
       tagsString += `<link rel="alternate" type="${oembedLinkTag.type}" href="${oembedLinkTag.href}" title="${oembedLinkTag.title}" />`
     }
 
     // Schema.org
-    tagsString += `<script type="application/ld+json">${JSON.stringify(schemaTags)}</script>`
+    if (schemaTags) {
+      tagsString += `<script type="application/ld+json">${JSON.stringify(schemaTags)}</script>`
+    }
 
-    // SEO, use origin video url so Google does not index remote videos
-    tagsString += `<link rel="canonical" href="${video.url}" />`
+    // SEO, use origin URL
+    tagsString += `<link rel="canonical" href="${originUrl}" />`
 
-    return this.addOpenGraphAndOEmbedTags(htmlStringPage, tagsString)
+    return htmlStringPage.replace(CUSTOM_HTML_TAG_COMMENTS.META_TAGS, tagsString)
+  }
+}
+
+function sendHTML (html: string, res: express.Response) {
+  res.set('Content-Type', 'text/html; charset=UTF-8')
+
+  return res.send(html)
+}
+
+async function serveIndexHTML (req: express.Request, res: express.Response) {
+  if (req.accepts(ACCEPT_HEADERS) === 'html' ||
+      !req.headers.accept) {
+    try {
+      await generateHTMLPage(req, res, req.params.language)
+      return
+    } catch (err) {
+      logger.error('Cannot generate HTML page.', err)
+      return res.sendStatus(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
+    }
   }
 
-  private static addAccountOrChannelMetaTags (htmlStringPage: string, entity: MAccountActor | MChannelActor) {
-    // SEO, use origin account or channel URL
-    const metaTags = `<link rel="canonical" href="${entity.Actor.url}" />`
+  return res.sendStatus(HttpStatusCode.NOT_ACCEPTABLE_406)
+}
 
-    return this.addOpenGraphAndOEmbedTags(htmlStringPage, metaTags)
-  }
+// ---------------------------------------------------------------------------
 
-  private static addOpenGraphAndOEmbedTags (htmlStringPage: string, metaTags: string) {
-    return htmlStringPage.replace(CUSTOM_HTML_TAG_COMMENTS.META_TAGS, metaTags)
-  }
+export {
+  ClientHtml,
+  sendHTML,
+  serveIndexHTML
+}
+
+async function generateHTMLPage (req: express.Request, res: express.Response, paramLang?: string) {
+  const html = await ClientHtml.getDefaultHTMLPage(req, res, paramLang)
+
+  return sendHTML(html, res)
 }

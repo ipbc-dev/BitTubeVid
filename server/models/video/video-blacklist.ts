@@ -1,14 +1,18 @@
-import { AllowNull, BelongsTo, Column, CreatedAt, DataType, Default, ForeignKey, Is, Model, Table, UpdatedAt } from 'sequelize-typescript'
-import { getBlacklistSort, SortType, throwIfNotValid, searchAttribute } from '../utils'
-import { VideoModel } from './video'
-import { ScopeNames as VideoChannelScopeNames, SummaryOptions, VideoChannelModel } from './video-channel'
-import { isVideoBlacklistReasonValid, isVideoBlacklistTypeValid } from '../../helpers/custom-validators/video-blacklist'
-import { VideoBlacklist, VideoBlacklistType } from '../../../shared/models/videos'
-import { CONSTRAINTS_FIELDS } from '../../initializers/constants'
 import { FindOptions } from 'sequelize'
+import { AllowNull, BelongsTo, Column, CreatedAt, DataType, Default, ForeignKey, Is, Model, Table, UpdatedAt } from 'sequelize-typescript'
+import { MVideoBlacklist, MVideoBlacklistFormattable } from '@server/types/models'
+import { VideoBlacklist, VideoBlacklistType } from '../../../shared/models/videos'
+import { isVideoBlacklistReasonValid, isVideoBlacklistTypeValid } from '../../helpers/custom-validators/video-blacklist'
+import { CONSTRAINTS_FIELDS } from '../../initializers/constants'
+import { getBlacklistSort, searchAttribute, SortType, throwIfNotValid } from '../utils'
 import { ThumbnailModel } from './thumbnail'
+<<<<<<< Updated upstream
 import * as Bluebird from 'bluebird'
 import { MVideoBlacklist, MVideoBlacklistFormattable } from '@server/typings/models'
+=======
+import { VideoModel } from './video'
+import { ScopeNames as VideoChannelScopeNames, SummaryOptions, VideoChannelModel } from './video-channel'
+>>>>>>> Stashed changes
 
 @Table({
   tableName: 'videoBlacklist',
@@ -19,7 +23,7 @@ import { MVideoBlacklist, MVideoBlacklistFormattable } from '@server/typings/mod
     }
   ]
 })
-export class VideoBlacklistModel extends Model<VideoBlacklistModel> {
+export class VideoBlacklistModel extends Model {
 
   @AllowNull(true)
   @Is('VideoBlacklistReason', value => throwIfNotValid(value, isVideoBlacklistReasonValid, 'reason', true))
@@ -109,7 +113,7 @@ export class VideoBlacklistModel extends Model<VideoBlacklistModel> {
     })
   }
 
-  static loadByVideoId (id: number): Bluebird<MVideoBlacklist> {
+  static loadByVideoId (id: number): Promise<MVideoBlacklist> {
     const query = {
       where: {
         videoId: id

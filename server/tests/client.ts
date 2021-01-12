@@ -3,18 +3,28 @@
 import 'mocha'
 import * as chai from 'chai'
 import * as request from 'supertest'
+import { Account, VideoPlaylistPrivacy } from '@shared/models'
 import {
+  addVideoInPlaylist,
   cleanupTests,
-  flushAndRunServer,
+  createVideoPlaylist,
+  doubleFollow,
+  flushAndRunMultipleServers,
+  getAccount,
   getCustomConfig,
   getVideosList,
   makeHTMLRequest,
   ServerInfo,
-  serverLogin,
+  setAccessTokensToServers,
+  setDefaultVideoChannel,
   updateCustomConfig,
   updateCustomSubConfig,
-  uploadVideo
+  updateMyUser,
+  updateVideoChannel,
+  uploadVideo,
+  waitJobs
 } from '../../shared/extra-utils'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 
@@ -25,125 +35,321 @@ function checkIndexTags (html: string, title: string, description: string, css: 
 }
 
 describe('Test a client controllers', function () {
-  let server: ServerInfo
+  let servers: ServerInfo[] = []
+  let account: Account
+
+  const videoName = 'my super name for server 1'
+  const videoDescription = 'my super description for server 1'
+
+  const playlistName = 'super playlist name'
+  const playlistDescription = 'super playlist description'
+  let playlistUUID: string
+
+  const channelDescription = 'my super channel description'
 
   before(async function () {
     this.timeout(120000)
 
-    server = await flushAndRunServer(1)
-    server.accessToken = await serverLogin(server)
+    servers = await flushAndRunMultipleServers(2)
 
-    const videoAttributes = {
-      name: 'my super name for server 1',
-      description: 'my super description for server 1'
-    }
-    await uploadVideo(server.url, server.accessToken, videoAttributes)
+    await setAccessTokensToServers(servers)
 
-    const res = await getVideosList(server.url)
-    const videos = res.body.data
+    await doubleFollow(servers[0], servers[1])
 
+    await setDefaultVideoChannel(servers)
+
+    await updateVideoChannel(servers[0].url, servers[0].accessToken, servers[0].videoChannel.name, { description: channelDescription })
+
+    // Video
+
+    const videoAttributes = { name: videoName, description: videoDescription }
+    await uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes)
+
+    const resVideosRequest = await getVideosList(servers[0].url)
+    const videos = resVideosRequest.body.data
     expect(videos.length).to.equal(1)
 
-    server.video = videos[0]
-  })
+    servers[0].video = videos[0]
 
-  it('Should have valid Open Graph tags on the watch page with video id', async function () {
-    const res = await request(server.url)
-      .get('/videos/watch/' + server.video.id)
-      .set('Accept', 'text/html')
-      .expect(200)
+    // Playlist
 
-    expect(res.text).to.contain('<meta property="og:title" content="my super name for server 1" />')
-    expect(res.text).to.contain('<meta property="og:description" content="my super description for server 1" />')
-  })
-
-  it('Should have valid Open Graph tags on the watch page with video uuid', async function () {
-    const res = await request(server.url)
-      .get('/videos/watch/' + server.video.uuid)
-      .set('Accept', 'text/html')
-      .expect(200)
-
-    expect(res.text).to.contain('<meta property="og:title" content="my super name for server 1" />')
-    expect(res.text).to.contain('<meta property="og:description" content="my super description for server 1" />')
-  })
-
-  it('Should have valid oEmbed discovery tags', async function () {
-    const path = '/videos/watch/' + server.video.uuid
-    const res = await request(server.url)
-      .get(path)
-      .set('Accept', 'text/html')
-      .expect(200)
-
-    const expectedLink = '<link rel="alternate" type="application/json+oembed" href="http://localhost:9001/services/oembed?' +
-      `url=http%3A%2F%2Flocalhost%3A9001%2Fvideos%2Fwatch%2F${server.video.uuid}" ` +
-      `title="${server.video.name}" />`
-
-    expect(res.text).to.contain(expectedLink)
-  })
-
-  it('Should have valid twitter card', async function () {
-    const res = await request(server.url)
-      .get('/videos/watch/' + server.video.uuid)
-      .set('Accept', 'text/html')
-      .expect(200)
-
-    expect(res.text).to.contain('<meta property="twitter:card" content="summary_large_image" />')
-    expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />')
-  })
-
-  it('Should have valid twitter card if Twitter is whitelisted', async function () {
-    const res1 = await getCustomConfig(server.url, server.accessToken)
-    const config = res1.body
-    config.services.twitter = {
-      username: '@Kuja',
-      whitelisted: true
+    const playlistAttrs = {
+      displayName: playlistName,
+      description: playlistDescription,
+      privacy: VideoPlaylistPrivacy.PUBLIC,
+      videoChannelId: servers[0].videoChannel.id
     }
-    await updateCustomConfig(server.url, server.accessToken, config)
 
-    const res = await request(server.url)
-      .get('/videos/watch/' + server.video.uuid)
-      .set('Accept', 'text/html')
-      .expect(200)
+    const resVideoPlaylistRequest = await createVideoPlaylist({ url: servers[0].url, token: servers[0].accessToken, playlistAttrs })
 
-    expect(res.text).to.contain('<meta property="twitter:card" content="player" />')
-    expect(res.text).to.contain('<meta property="twitter:site" content="@Kuja" />')
-  })
+    const playlist = resVideoPlaylistRequest.body.videoPlaylist
+    const playlistId = playlist.id
+    playlistUUID = playlist.uuid
 
-  it('Should have valid index html tags (title, description...)', async function () {
-    const res = await makeHTMLRequest(server.url, '/videos/trending')
-
-    const description = 'PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.'
-    checkIndexTags(res.text, 'PeerTube', description, '')
-  })
-
-  it('Should update the customized configuration and have the correct index html tags', async function () {
-    await updateCustomSubConfig(server.url, server.accessToken, {
-      instance: {
-        name: 'PeerTube updated',
-        shortDescription: 'my short description',
-        description: 'my super description',
-        terms: 'my super terms',
-        defaultClientRoute: '/videos/recently-added',
-        defaultNSFWPolicy: 'blur',
-        customizations: {
-          javascript: 'alert("coucou")',
-          css: 'body { background-color: red; }'
-        }
-      }
+    await addVideoInPlaylist({
+      url: servers[0].url,
+      token: servers[0].accessToken,
+      playlistId,
+      elementAttrs: { videoId: servers[0].video.id }
     })
 
-    const res = await makeHTMLRequest(server.url, '/videos/trending')
+    // Account
 
-    checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }')
+    await updateMyUser({ url: servers[0].url, accessToken: servers[0].accessToken, description: 'my account description' })
+
+    const resAccountRequest = await getAccount(servers[0].url, `${servers[0].user.username}@${servers[0].host}`)
+    account = resAccountRequest.body
+
+    await waitJobs(servers)
   })
 
-  it('Should have valid index html updated tags (title, description...)', async function () {
-    const res = await makeHTMLRequest(server.url, '/videos/trending')
+  describe('oEmbed', function () {
+    it('Should have valid oEmbed discovery tags for videos', async function () {
+      const path = '/videos/watch/' + servers[0].video.uuid
+      const res = await request(servers[0].url)
+        .get(path)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
 
-    checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }')
+      const port = servers[0].port
+
+      const expectedLink = '<link rel="alternate" type="application/json+oembed" href="http://localhost:' + port + '/services/oembed?' +
+        `url=http%3A%2F%2Flocalhost%3A${port}%2Fvideos%2Fwatch%2F${servers[0].video.uuid}" ` +
+        `title="${servers[0].video.name}" />`
+
+      expect(res.text).to.contain(expectedLink)
+    })
+
+    it('Should have valid oEmbed discovery tags for a playlist', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/playlist/' + playlistUUID)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      const port = servers[0].port
+
+      const expectedLink = '<link rel="alternate" type="application/json+oembed" href="http://localhost:' + port + '/services/oembed?' +
+        `url=http%3A%2F%2Flocalhost%3A${port}%2Fvideos%2Fwatch%2Fplaylist%2F${playlistUUID}" ` +
+        `title="${playlistName}" />`
+
+      expect(res.text).to.contain(expectedLink)
+    })
+  })
+
+  describe('Open Graph', function () {
+
+    it('Should have valid Open Graph tags on the account page', async function () {
+      const res = await request(servers[0].url)
+        .get('/accounts/' + servers[0].user.username)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain(`<meta property="og:title" content="${account.displayName}" />`)
+      expect(res.text).to.contain(`<meta property="og:description" content="${account.description}" />`)
+      expect(res.text).to.contain('<meta property="og:type" content="website" />')
+      expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/accounts/${servers[0].user.username}" />`)
+    })
+
+    it('Should have valid Open Graph tags on the channel page', async function () {
+      const res = await request(servers[0].url)
+        .get('/video-channels/' + servers[0].videoChannel.name)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain(`<meta property="og:title" content="${servers[0].videoChannel.displayName}" />`)
+      expect(res.text).to.contain(`<meta property="og:description" content="${channelDescription}" />`)
+      expect(res.text).to.contain('<meta property="og:type" content="website" />')
+      expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/video-channels/${servers[0].videoChannel.name}" />`)
+    })
+
+    it('Should have valid Open Graph tags on the watch page with video id', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/' + servers[0].video.id)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain(`<meta property="og:title" content="${videoName}" />`)
+      expect(res.text).to.contain(`<meta property="og:description" content="${videoDescription}" />`)
+      expect(res.text).to.contain('<meta property="og:type" content="video" />')
+      expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`)
+    })
+
+    it('Should have valid Open Graph tags on the watch page with video uuid', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/' + servers[0].video.uuid)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain(`<meta property="og:title" content="${videoName}" />`)
+      expect(res.text).to.contain(`<meta property="og:description" content="${videoDescription}" />`)
+      expect(res.text).to.contain('<meta property="og:type" content="video" />')
+      expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`)
+    })
+
+    it('Should have valid Open Graph tags on the watch playlist page', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/playlist/' + playlistUUID)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain(`<meta property="og:title" content="${playlistName}" />`)
+      expect(res.text).to.contain(`<meta property="og:description" content="${playlistDescription}" />`)
+      expect(res.text).to.contain('<meta property="og:type" content="video" />')
+      expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/playlist/${playlistUUID}" />`)
+    })
+  })
+
+  describe('Twitter card', async function () {
+
+    it('Should have valid twitter card on the watch video page', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/' + servers[0].video.uuid)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain('<meta property="twitter:card" content="summary_large_image" />')
+      expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />')
+      expect(res.text).to.contain(`<meta property="twitter:title" content="${videoName}" />`)
+      expect(res.text).to.contain(`<meta property="twitter:description" content="${videoDescription}" />`)
+    })
+
+    it('Should have valid twitter card on the watch playlist page', async function () {
+      const res = await request(servers[0].url)
+        .get('/videos/watch/playlist/' + playlistUUID)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain('<meta property="twitter:card" content="summary" />')
+      expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />')
+      expect(res.text).to.contain(`<meta property="twitter:title" content="${playlistName}" />`)
+      expect(res.text).to.contain(`<meta property="twitter:description" content="${playlistDescription}" />`)
+    })
+
+    it('Should have valid twitter card on the account page', async function () {
+      const res = await request(servers[0].url)
+        .get('/accounts/' + account.name)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain('<meta property="twitter:card" content="summary" />')
+      expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />')
+      expect(res.text).to.contain(`<meta property="twitter:title" content="${account.name}" />`)
+      expect(res.text).to.contain(`<meta property="twitter:description" content="${account.description}" />`)
+    })
+
+    it('Should have valid twitter card on the channel page', async function () {
+      const res = await request(servers[0].url)
+        .get('/video-channels/' + servers[0].videoChannel.name)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(res.text).to.contain('<meta property="twitter:card" content="summary" />')
+      expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />')
+      expect(res.text).to.contain(`<meta property="twitter:title" content="${servers[0].videoChannel.displayName}" />`)
+      expect(res.text).to.contain(`<meta property="twitter:description" content="${channelDescription}" />`)
+    })
+
+    it('Should have valid twitter card if Twitter is whitelisted', async function () {
+      const res1 = await getCustomConfig(servers[0].url, servers[0].accessToken)
+      const config = res1.body
+      config.services.twitter = {
+        username: '@Kuja',
+        whitelisted: true
+      }
+      await updateCustomConfig(servers[0].url, servers[0].accessToken, config)
+
+      const resVideoRequest = await request(servers[0].url)
+        .get('/videos/watch/' + servers[0].video.uuid)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(resVideoRequest.text).to.contain('<meta property="twitter:card" content="player" />')
+      expect(resVideoRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />')
+
+      const resVideoPlaylistRequest = await request(servers[0].url)
+        .get('/videos/watch/playlist/' + playlistUUID)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(resVideoPlaylistRequest.text).to.contain('<meta property="twitter:card" content="player" />')
+      expect(resVideoPlaylistRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />')
+
+      const resAccountRequest = await request(servers[0].url)
+        .get('/accounts/' + account.name)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(resAccountRequest.text).to.contain('<meta property="twitter:card" content="summary" />')
+      expect(resAccountRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />')
+
+      const resChannelRequest = await request(servers[0].url)
+        .get('/video-channels/' + servers[0].videoChannel.name)
+        .set('Accept', 'text/html')
+        .expect(HttpStatusCode.OK_200)
+
+      expect(resChannelRequest.text).to.contain('<meta property="twitter:card" content="summary" />')
+      expect(resChannelRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />')
+    })
+  })
+
+  describe('Index HTML', function () {
+
+    it('Should have valid index html tags (title, description...)', async function () {
+      const res = await makeHTMLRequest(servers[0].url, '/videos/trending')
+
+      const description = 'PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.'
+      checkIndexTags(res.text, 'PeerTube', description, '')
+    })
+
+    it('Should update the customized configuration and have the correct index html tags', async function () {
+      await updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+        instance: {
+          name: 'PeerTube updated',
+          shortDescription: 'my short description',
+          description: 'my super description',
+          terms: 'my super terms',
+          defaultClientRoute: '/videos/recently-added',
+          defaultNSFWPolicy: 'blur',
+          customizations: {
+            javascript: 'alert("coucou")',
+            css: 'body { background-color: red; }'
+          }
+        }
+      })
+
+      const res = await makeHTMLRequest(servers[0].url, '/videos/trending')
+
+      checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }')
+    })
+
+    it('Should have valid index html updated tags (title, description...)', async function () {
+      const res = await makeHTMLRequest(servers[0].url, '/videos/trending')
+
+      checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }')
+    })
+
+    it('Should use the original video URL for the canonical tag', async function () {
+      const res = await makeHTMLRequest(servers[1].url, '/videos/watch/' + servers[0].video.uuid)
+      expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`)
+    })
+
+    it('Should use the original account URL for the canonical tag', async function () {
+      const res = await makeHTMLRequest(servers[1].url, '/accounts/root@' + servers[0].host)
+      expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/accounts/root" />`)
+    })
+
+    it('Should use the original channel URL for the canonical tag', async function () {
+      const res = await makeHTMLRequest(servers[1].url, '/video-channels/root_channel@' + servers[0].host)
+      expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/video-channels/root_channel" />`)
+    })
+
+    it('Should use the original playlist URL for the canonical tag', async function () {
+      const res = await makeHTMLRequest(servers[1].url, '/videos/watch/playlist/' + playlistUUID)
+      expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/video-playlists/${playlistUUID}" />`)
+    })
   })
 
   after(async function () {
-    await cleanupTests([ server ])
+    await cleanupTests(servers)
   })
 })

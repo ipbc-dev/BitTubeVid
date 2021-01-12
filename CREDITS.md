@@ -3,14 +3,34 @@
  * Chocobozzz
  * Rigel Kent
  * Filip Bengtsson
+<<<<<<< Updated upstream
  * Felix Ableitner
  * Gérald Niel
+=======
+ * kimsible
+ * Clemens Schielicke
+ * Simon Brosdetzko
+ * josé m
+ * Kim
+ * Berto Te
+ * Jeff Huang
+ * Phongpanot
+ * Felix Ableitner
+ * Александр
+ * Tirifto
+ * Gérald Niel
+ * kontrollanten
+ * Frank Sträter
+>>>>>>> Stashed changes
  * Julien Maulny
+ * Mark Van den Borre
  * Jorropo
  * Josh Morel
  * Kim
  * BO41
+ * x
  * Francesc
+<<<<<<< Updated upstream
  * Phongpanot
  * Frank Sträter
  * Tirifto
@@ -27,12 +47,51 @@
  * knuxify
  * matograine
  * Александр
+=======
+ * Laurent Ettouati
+ * mando laress
+ * Slimane Selyan AMIRI
+ * John Livingston
+ * Quentin PAGÈS
+ * ButterflyOfFire
+ * Kimsible
+ * Xabi
+ * buoyantair
+ * Balázs Meskó
+ * Balázs Úr
+ * Jan Keromnes
+ * Luca Calcaterra
+ * Vodoyo Kamal
+ * Zet
+ * Attila F
+ * Caroline Chuong
+ * Benjamin Bouvier
+ * Kemal Oktay Aktoğan
+ * Lucas Declercq
+ * chris@famichiki.tube
+ * knuxify
+ * matograine
+ * Alexander Ivanov
+ * Daniel Santos
+>>>>>>> Stashed changes
  * David Libeau
+ * Ewald Arnold
  * Florent F
  * Luc Didry
  * Nassim Bounouas
+<<<<<<< Updated upstream
  * josé m
+=======
+ * NorbiPeti
+ * Rafael Fontenelle
+ * Thomas Citharel
+ * Tzafrir Cohen
+ * Viorel-Cătălin Răpițeanu
+ * Adrià Martín
+ * Ahmed ABERWAG
+>>>>>>> Stashed changes
  * Anne-Gaelle Moulun
+ * Arman
  * BRAINS YUM
  * Berto Te
  * Côme 744
@@ -45,29 +104,58 @@
  * Thomas Kuntz
  * William Lahti
  * Wirebrass
+ * Yury Bulka
+ * boris joeson
+ * test2a
+ * Ajeje Brazorf
  * Angristan
+ * Ch
  * Chris Sakura 佐倉くりす on Youtube
  * DontUseGithub
+ * Florian CUNY
  * GunChleoc
+ * Ihor Hordiichuk
+ * MahdiTurki
  * Marcin Mikołajczak
- * NorbiPeti
  * Okhin
  * Pierre-Alain TORET
+ * Porrumentzio
  * Serge Victor
- * Thomas Citharel
  * clementbrizard
+ * gohoso9454
  * kaiyou
+<<<<<<< Updated upstream
+=======
+ * roberto marcolin
+>>>>>>> Stashed changes
  * Alberto Teira
+ * Andrey
  * Andréas Livet
  * Andrés Maldonado
  * Aurélien Bertron
+<<<<<<< Updated upstream
+=======
+ * Cedric F
+ * Daniele Garau
+ * Ehsan Gholami
+ * Eivind Ødegård
+ * Girish Ramakrishnan
+>>>>>>> Stashed changes
  * Hans Meiser
+ * Iñigo A
  * Jefferson Hernandez
- * Kemal Oktay Aktoğan
+ * Joan Montané
  * Kiro
  * LecygneNoir
  * Leopere
  * Manuela Silva
+<<<<<<< Updated upstream
+=======
+ * Mélanie Chauvel
+ * Ugaitz
+ * Vincent Finance
+ * Waazdakka
+>>>>>>> Stashed changes
  * Yohan Boniface
  * am97
  * anotheranonymoususer
@@ -76,11 +164,12 @@
  * jonathanraes
  * Al-Hassan Abdel-Raouf
  * Andrew Morgan
+ * Antimidia
+ * Arco
  * Arne Uplegger
  * Aurélien Béranger
  * Average Dude
  * Axel Viala
- * Balázs Meskó
  * BitTube
  * ButterflyOfFire
  * Ch
@@ -91,7 +180,6 @@
  * Florian
  * Frank de Lange
  * Gaëtan Rizio
- * Joan Montané
  * Jocelyn Jaubert
  * Julien Lemaire
  * Lucas Teixeira
@@ -105,12 +193,15 @@
  * Quentin
  * Ronan
  * SerCom_KC
+ * Thai Localization
  * Valvin
+ * Yogesh K S
  * ahmadsharifian
  * framail
  * les
  * libertas
  * merty
+ * qwerty
  * taziden
  * victor héry
  * Àngel Pérez Beroy
@@ -120,7 +211,14 @@
  * Adam Gauthier
  * Adam Magnier
  * Adnane Belmadiaf
+ * Agron
+ * Alejandro Criado-Pérez
  * Alexander F. Rødseth
+<<<<<<< Updated upstream
+=======
+ * Ali Alim
+ * Aman Sharma
+>>>>>>> Stashed changes
  * Antoine Millet
  * Anton Latukha
  * Armando Lüscher
@@ -131,6 +229,7 @@
  * Ben Abbott
  * Ben Lubar
  * Benjamin EWFT
+ * Boo Teille
  * Brad Johnson
  * Cale
  * Charles de Lacombe
@@ -140,6 +239,7 @@
  * Clément Brizard
  * David Dobryakov
  * DeeJayBro
+ * Diazepan Medina
  * Edouard SCHWEISGUTH
  * Edwin Alberto Amado Baron
  * Emmanuel Pret
@@ -147,22 +247,34 @@
  * Erwan Croze
  * Fabio Agreles Bezerra
  * Fernandez, ReK2
+<<<<<<< Updated upstream
  * Florian CUNY
  * Glandos
+=======
+ * Glandos
+ * Guillaume Pérution-Kihli
+ * Gérald CHATAGNON
+>>>>>>> Stashed changes
  * Haelwenn (lanodan) Monnier
  * HesioZ
+ * Hozan Şahin
  * ICabaleiro
+ * Iker Garaialde
  * Ismaël Bouya
+ * Ivan Ip
  * Iván Cabaleiro
  * Jacen
  * Jacob
  * Jacques Foucry
  * Jagannath Bhat
  * Jarosław Maciejewski
+ * Jeena
  * Jessica Fairchild
+ * Jinn Koriech
  * Jorge Silva
  * Jos
  * Julien Le Bras
+ * Juraj Liso
  * Knackie
  * Kody
  * Kyâne Pichou
@@ -180,6 +292,7 @@
  * Martin Trigaux
  * Mateusz Piotrowski
  * Mathieu Agopian
+ * Mathieu Brunot
  * Matthieu De Beule
  * Michael Koppmann
  * Miguel Mayol Tur
@@ -187,6 +300,7 @@
  * MrGiga
  * Mélanie Pin
  * Nathanaël J
+ * Net
  * Nicolas Fortin
  * Niklas Reimer
  * Nitesh Sawant
@@ -202,32 +316,42 @@
  * Raphael
  * Raphaël Droz
  * Rech
+ * Rep Dolsay
  * Robin
  * Sankar
  * Sebastian Paweł Wolski
  * Simon Gilliot
  * Simounet
  * Stefan Schüller
+ * Steffen Möller
+ * Sumit Khanna
+ * SupC
+ * Tanguy BERNARD
+ * Timothée Grégoire
  * Tomás Sebastián Romero
  * TrashMacNugget
  * Vincent Stakenburg
+ * WhiredPlanck
  * Yann Sionneau
  * Yorwba
  * Yun
- * Yury Bulka
  * Zig-03
  * [ Bie ] Watcharapong Suriyawan
  * anmol26s
  * augier
+ * big gamer
  * bikepunk
  * bsky
  * ctlaltdefeat
  * dingycle
+ * eduard pintilie
  * jomo
  * libertysoft3
  * lsde
  * luz.paz
  * luzpaz
+ * madmath03
+ * mahdi
  * memorybox
  * mike stedman
  * morteza
@@ -242,6 +366,7 @@
  * victor-long
  * xcffl
  * zacharystenger
+ * Артур Кирпо
  * ‮noisawe
  * abdhessuk
  * abidin24
@@ -364,11 +489,35 @@
 # Design
 
  * [Olivier Massain](https://dribbble.com/omassain)
+ * [Marie-Cécile Godwin Paccard](https://mcgodwin.com/)
 
 
 # Icons
 
+<<<<<<< Updated upstream
  * [Robbie Pearce](https://robbiepearce.com/softies/)
  * [Fork-Awesome](https://github.com/ForkAwesome/Fork-Awesome)
  * `playlist add` by Material UI
  * `language` by Aaron Jin
+=======
+ * [Feather Icons](feathericons.com/) (MIT)
+ * `playlist add`, `history`, `subscriptions`, `miscellaneous-services.svg` by Material UI (Apache 2.0)
+ * `support` by Chocobozzz (CC-BY)
+ * `language` by Aaron Jin (CC-BY)
+ * `video-language` by Rigel Kent (CC-BY)
+ * `peertube-x` by Solen DP (CC-BY)
+
+
+# Contributors to our 2020 crowdfunding :heart:
+
+*We ran [a crowdfunding campaign](https://joinpeertube.org/roadmap) in 2020 to implement live streaming to the version 3.0.0 of PeerTube. Thanks to everyone who pitched in and shared the news!*
+
+
+
+
+# Contributors to our 2018 crowdfunding :heart:
+
+*We ran [a crowdfunding campaign](https://www.kisskissbankbank.com/en/projects/peertube-a-free-and-federated-video-platform) in 2018 to pave the road to the version 1.0.0 of PeerTube, with 1,379 backers. Thanks to everyone who pitched in and shared the news!*
+
+
+>>>>>>> Stashed changes

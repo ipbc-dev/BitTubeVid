@@ -1,4 +1,4 @@
-export enum UserRight {
+export const enum UserRight {
   ALL,
 
   MANAGE_USERS,
@@ -11,7 +11,7 @@ export enum UserRight {
 
   MANAGE_SERVER_REDUNDANCY,
 
-  MANAGE_VIDEO_ABUSES,
+  MANAGE_ABUSES,
 
   MANAGE_JOBS,
 
@@ -30,7 +30,9 @@ export enum UserRight {
   UPDATE_ANY_VIDEO,
   UPDATE_ANY_VIDEO_PLAYLIST,
 
+  GET_ANY_LIVE,
   SEE_ALL_VIDEOS,
+  SEE_ALL_COMMENTS,
   CHANGE_VIDEO_OWNERSHIP,
 
   MANAGE_PLUGINS,

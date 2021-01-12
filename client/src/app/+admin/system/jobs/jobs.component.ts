@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { peertubeLocalStorage } from '@app/shared/misc/peertube-web-storage'
 import { Notifier } from '@app/core'
 import { SortMeta } from 'primeng/api'
@@ -7,6 +8,11 @@ import { JobState } from '../../../../../../shared/models'
 import { RestPagination, RestTable } from '../../../shared'
 import { JobService } from './job.service'
 import { I18n } from '@ngx-translate/i18n-polyfill'
+=======
+import { Notifier, RestPagination, RestTable } from '@app/core'
+import { peertubeLocalStorage } from '@root-helpers/peertube-web-storage'
+import { Job, JobState, JobType } from '@shared/models'
+>>>>>>> Stashed changes
 import { JobStateClient } from '../../../../types/job-state-client.type'
 import { JobTypeClient } from '../../../../types/job-type-client.type'
 
@@ -19,7 +25,7 @@ export class JobsComponent extends RestTable implements OnInit {
   private static LOCAL_STORAGE_STATE = 'jobs-list-state'
   private static LOCAL_STORAGE_TYPE = 'jobs-list-type'
 
-  jobState: JobStateClient = 'waiting'
+  jobState?: JobStateClient | 'all'
   jobStates: JobStateClient[] = [ 'active', 'completed', 'failed', 'waiting', 'delayed' ]
 
   jobType: JobTypeClient = 'all'
@@ -34,8 +40,11 @@ export class JobsComponent extends RestTable implements OnInit {
     'video-file-import',
     'video-import',
     'videos-views',
+    'premium-storage-checker',
     'activitypub-refresher',
-    'video-redundancy'
+    'video-live-ending',
+    'video-redundancy',
+    'video-live-ending'
   ]
 
   jobs: Job[] = []
@@ -45,9 +54,8 @@ export class JobsComponent extends RestTable implements OnInit {
 
   constructor (
     private notifier: Notifier,
-    private jobsService: JobService,
-    private i18n: I18n
-  ) {
+    private jobsService: JobService
+    ) {
     super()
   }
 
@@ -60,6 +68,25 @@ export class JobsComponent extends RestTable implements OnInit {
     return 'JobsComponent'
   }
 
+  getJobStateClass (state: JobStateClient) {
+    switch (state) {
+      case 'active':
+        return 'badge-blue'
+      case 'completed':
+        return 'badge-green'
+      case 'delayed':
+        return 'badge-brown'
+      case 'failed':
+        return 'badge-red'
+      case 'waiting':
+        return 'badge-yellow'
+    }
+  }
+
+  getColspan () {
+    return this.jobState === 'all' ? 5 : 4
+  }
+
   onJobStateOrTypeChanged () {
     this.pagination.start = 0
 
@@ -68,8 +95,16 @@ export class JobsComponent extends RestTable implements OnInit {
   }
 
   protected loadData () {
+    let jobState = this.jobState as JobState
+    if (this.jobState === 'all') jobState = null
+
     this.jobsService
-      .getJobs(this.jobState, this.jobType, this.pagination, this.sort)
+      .getJobs({
+        jobState,
+        jobType: this.jobType,
+        pagination: this.pagination,
+        sort: this.sort
+      })
       .subscribe(
         resultList => {
           this.jobs = resultList.data

@@ -1,6 +1,10 @@
 import * as express from 'express'
+<<<<<<< Updated upstream
 import { cloneDeep } from 'lodash'
 import { ResultList } from '../../../../shared/models'
+=======
+import { ResultList, UserRight } from '../../../../shared/models'
+>>>>>>> Stashed changes
 import { VideoCommentCreate } from '../../../../shared/models/videos/video-comment.model'
 import { logger } from '../../../helpers/logger'
 import { getFormattedObjects } from '../../../helpers/utils'
@@ -10,6 +14,7 @@ import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
   authenticate,
+  ensureUserHasRight,
   optionalAuthenticate,
   paginationValidator,
   setDefaultPagination,
@@ -18,17 +23,23 @@ import {
 import {
   addVideoCommentReplyValidator,
   addVideoCommentThreadValidator,
+  listVideoCommentsValidator,
   listVideoCommentThreadsValidator,
   listVideoThreadCommentsValidator,
   removeVideoCommentValidator,
+  videoCommentsValidator,
   videoCommentThreadsSortValidator
 } from '../../../middlewares/validators'
 import { VideoCommentModel } from '../../../models/video/video-comment'
+<<<<<<< Updated upstream
 import { auditLoggerFactory, CommentAuditView, getAuditIdFromRes } from '../../../helpers/audit-logger'
 import { AccountModel } from '../../../models/account/account'
 import { Notifier } from '../../../lib/notifier'
 import { Hooks } from '../../../lib/plugins/hooks'
 import { sendDeleteVideoComment } from '../../../lib/activitypub/send'
+=======
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 const auditLogger = auditLoggerFactory('comments')
 const videoCommentRouter = express.Router()
@@ -64,6 +75,17 @@ videoCommentRouter.delete('/:videoId/comments/:commentId',
   asyncRetryTransactionMiddleware(removeVideoComment)
 )
 
+videoCommentRouter.get('/comments',
+  authenticate,
+  ensureUserHasRight(UserRight.SEE_ALL_COMMENTS),
+  paginationValidator,
+  videoCommentsValidator,
+  setDefaultSort,
+  setDefaultPagination,
+  listVideoCommentsValidator,
+  asyncMiddleware(listComments)
+)
+
 // ---------------------------------------------------------------------------
 
 export {
@@ -71,6 +93,26 @@ export {
 }
 
 // ---------------------------------------------------------------------------
+
+async function listComments (req: express.Request, res: express.Response) {
+  const options = {
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort,
+
+    isLocal: req.query.isLocal,
+    search: req.query.search,
+    searchAccount: req.query.searchAccount,
+    searchVideo: req.query.searchVideo
+  }
+
+  const resultList = await VideoCommentModel.listCommentsForApi(options)
+
+  return res.json({
+    total: resultList.total,
+    data: resultList.data.map(c => c.toFormattedAdminJSON())
+  })
+}
 
 async function listVideoThreads (req: express.Request, res: express.Response) {
   const video = res.locals.onlyVideo
@@ -125,6 +167,10 @@ async function listVideoThreadComments (req: express.Request, res: express.Respo
       total: 0,
       data: []
     }
+  }
+
+  if (resultList.data.length === 0) {
+    return res.sendStatus(HttpStatusCode.NOT_FOUND_404)
   }
 
   return res.json(buildFormattedCommentTree(resultList))
@@ -195,5 +241,7 @@ async function removeVideoComment (req: express.Request, res: express.Response) 
 
   Hooks.runAction('action:api.video-comment.deleted', { comment: videoCommentInstanceBefore })
 
-  return res.type('json').status(204).end()
+  return res.type('json')
+            .status(HttpStatusCode.NO_CONTENT_204)
+            .end()
 }

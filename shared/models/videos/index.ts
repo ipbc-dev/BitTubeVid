@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 export * from './rate/user-video-rate-update.model'
 export * from './rate/user-video-rate.model'
 export * from './rate/account-video-rate.model'
@@ -20,10 +21,32 @@ export * from './playlist/video-playlist-type.model'
 export * from './playlist/video-playlist-update.model'
 export * from './playlist/video-playlist.model'
 export * from './playlist/video-playlist-element.model'
+=======
+export * from './blacklist'
+export * from './caption'
+export * from './channel'
+export * from './live'
+export * from './import'
+export * from './playlist'
+export * from './rate'
+
+export * from './nsfw-policy.type'
+
+export * from './thumbnail.type'
+
+export * from './video-change-ownership-accept.model'
+export * from './video-change-ownership-create.model'
+>>>>>>> Stashed changes
 export * from './video-change-ownership.model'
 export * from './video-change-ownership-create.model'
 export * from './video-create.model'
 export * from './video-file.model'
+<<<<<<< Updated upstream
+=======
+
+export * from './live/live-video.model'
+
+>>>>>>> Stashed changes
 export * from './video-privacy.enum'
 export * from './video-rate.type'
 export * from './video-resolution.enum'

@@ -101,7 +101,7 @@ export enum ScopeNames {
     }
   ]
 })
-export class VideoFileModel extends Model<VideoFileModel> {
+export class VideoFileModel extends Model {
   @CreatedAt
   createdAt: Date
 
@@ -123,8 +123,8 @@ export class VideoFileModel extends Model<VideoFileModel> {
   @Column
   extname: string
 
-  @AllowNull(false)
-  @Is('VideoFileInfohash', value => throwIfNotValid(value, isVideoFileInfoHashValid, 'info hash'))
+  @AllowNull(true)
+  @Is('VideoFileInfohash', value => throwIfNotValid(value, isVideoFileInfoHashValid, 'info hash', true))
   @Column
   infoHash: string
 
@@ -269,10 +269,11 @@ export class VideoFileModel extends Model<VideoFileModel> {
   }
 
   static getStats () {
-    const query: FindOptions = {
+    const webtorrentFilesQuery: FindOptions = {
       include: [
         {
           attributes: [],
+          required: true,
           model: VideoModel.unscoped(),
           where: {
             remote: false
@@ -281,10 +282,32 @@ export class VideoFileModel extends Model<VideoFileModel> {
       ]
     }
 
-    return VideoFileModel.aggregate('size', 'SUM', query)
-      .then(result => ({
-        totalLocalVideoFilesSize: parseAggregateResult(result)
-      }))
+    const hlsFilesQuery: FindOptions = {
+      include: [
+        {
+          attributes: [],
+          required: true,
+          model: VideoStreamingPlaylistModel.unscoped(),
+          include: [
+            {
+              attributes: [],
+              model: VideoModel.unscoped(),
+              required: true,
+              where: {
+                remote: false
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+    return Promise.all([
+      VideoFileModel.aggregate('size', 'SUM', webtorrentFilesQuery),
+      VideoFileModel.aggregate('size', 'SUM', hlsFilesQuery)
+    ]).then(([ webtorrentResult, hlsResult ]) => ({
+      totalLocalVideoFilesSize: parseAggregateResult(webtorrentResult) + parseAggregateResult(hlsResult)
+    }))
   }
 
   // Redefine upsert because sequelize does not use an appropriate where clause in the update query with 2 unique indexes
@@ -311,6 +334,14 @@ export class VideoFileModel extends Model<VideoFileModel> {
     return element.save({ transaction })
   }
 
+  static removeHLSFilesOfVideoId (videoStreamingPlaylistId: number) {
+    const options = {
+      where: { videoStreamingPlaylistId }
+    }
+
+    return VideoFileModel.destroy(options)
+  }
+
   getVideoOrStreamingPlaylist (this: MVideoFileVideo | MVideoFileStreamingPlaylistVideo): MVideo | MStreamingPlaylistVideo {
     if (this.videoId) return (this as MVideoFileVideo).Video
 
@@ -319,6 +350,14 @@ export class VideoFileModel extends Model<VideoFileModel> {
 
   isAudio () {
     return !!MIMETYPES.AUDIO.EXT_MIMETYPE[this.extname]
+  }
+
+  isLive () {
+    return this.size === -1
+  }
+
+  isHLS () {
+    return !!this.videoStreamingPlaylistId
   }
 
   hasSameUniqueKeysThan (other: MVideoFile) {

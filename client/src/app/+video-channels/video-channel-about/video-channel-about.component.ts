@@ -1,9 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { VideoChannelService } from '@app/shared/video-channel/video-channel.service'
 import { VideoChannel } from '@app/shared/video-channel/video-channel.model'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { Subscription } from 'rxjs'
 import { MarkdownService } from '@app/shared/renderer'
+=======
+import { MarkdownService } from '@app/core'
+import { VideoChannel, VideoChannelService } from '@app/shared/shared-main'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-video-channel-about',
@@ -18,7 +23,6 @@ export class VideoChannelAboutComponent implements OnInit, OnDestroy {
   private videoChannelSub: Subscription
 
   constructor (
-    private i18n: I18n,
     private videoChannelService: VideoChannelService,
     private markdownService: MarkdownService
   ) { }
@@ -41,6 +45,6 @@ export class VideoChannelAboutComponent implements OnInit, OnDestroy {
   getVideoChannelDescription () {
     if (this.descriptionHTML) return this.descriptionHTML
 
-    return this.i18n('No description')
+    return $localize`No description`
   }
 }

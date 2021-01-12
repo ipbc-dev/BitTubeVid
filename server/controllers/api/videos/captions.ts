@@ -10,7 +10,12 @@ import { federateVideoIfNeeded } from '../../../lib/activitypub/videos'
 import { moveAndProcessCaptionFile } from '../../../helpers/captions-utils'
 import { CONFIG } from '../../../initializers/config'
 import { sequelizeTypescript } from '../../../initializers/database'
+<<<<<<< Updated upstream
 import { MVideoCaptionVideo } from '@server/typings/models'
+=======
+import { MVideoCaptionVideo } from '@server/types/models'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 const reqVideoCaptionAdd = createReqFiles(
   [ 'captionfile' ],
@@ -72,7 +77,7 @@ async function addVideoCaption (req: express.Request, res: express.Response) {
     await federateVideoIfNeeded(video, false, t)
   })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function deleteVideoCaption (req: express.Request, res: express.Response) {
@@ -88,5 +93,5 @@ async function deleteVideoCaption (req: express.Request, res: express.Response) 
 
   logger.info('Video caption %s of video %s deleted.', videoCaption.language, video.uuid)
 
-  return res.type('json').status(204).end()
+  return res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 }

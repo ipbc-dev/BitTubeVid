@@ -1,23 +1,30 @@
-import { by, element } from 'protractor'
+import { by, element, browser } from 'protractor'
 
 export class MyAccountPage {
 
   navigateToMyVideos () {
-    return element(by.css('a[href="/my-account/videos"]')).click()
+    return element(by.css('a[href="/my-library/videos"]')).click()
   }
 
   navigateToMyPlaylists () {
-    return element(by.css('a[href="/my-account/video-playlists"]')).click()
+    return element(by.css('a[href="/my-library/video-playlists"]')).click()
   }
 
   navigateToMyHistory () {
-    return element(by.css('a[href="/my-account/history/videos"]')).click()
+    return element(by.css('a[href="/my-library/history/videos"]')).click()
   }
 
   // My account Videos
 
-  removeVideo (name: string) {
-    return this.getVideoElement(name).element(by.css('my-delete-button')).click()
+  async removeVideo (name: string) {
+    const container = this.getVideoElement(name)
+
+    await container.element(by.css('.dropdown-toggle')).click()
+
+    const dropdownMenu = container.element(by.css('.dropdown-menu .dropdown-item:nth-child(2)'))
+    await browser.wait(browser.ExpectedConditions.presenceOf(dropdownMenu))
+
+    return dropdownMenu.click()
   }
 
   validRemove () {
@@ -50,6 +57,14 @@ export class MyAccountPage {
 
   playPlaylist () {
     return element(by.css('.playlist-info .miniature-thumbnail')).click()
+  }
+
+  async goOnAssociatedPlaylistEmbed () {
+    let url = await browser.getCurrentUrl()
+    url = url.replace('/videos/watch/playlist/', '/video-playlists/embed/')
+    url = url.replace(':3333', ':9001')
+
+    return browser.get(url)
   }
 
   // My account Videos

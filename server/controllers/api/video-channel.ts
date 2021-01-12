@@ -1,5 +1,21 @@
 import * as express from 'express'
+import { Hooks } from '@server/lib/plugins/hooks'
+import { getServerActor } from '@server/models/application/application'
+import { MChannelAccountDefault } from '@server/types/models'
+import { VideoChannelCreate, VideoChannelUpdate } from '../../../shared'
+import { auditLoggerFactory, getAuditIdFromRes, VideoChannelAuditView } from '../../helpers/audit-logger'
+import { resetSequelizeInstance } from '../../helpers/database-utils'
+import { buildNSFWFilter, createReqFiles, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
+import { logger } from '../../helpers/logger'
 import { getFormattedObjects } from '../../helpers/utils'
+import { CONFIG } from '../../initializers/config'
+import { MIMETYPES } from '../../initializers/constants'
+import { sequelizeTypescript } from '../../initializers/database'
+import { setAsyncActorKeys } from '../../lib/activitypub/actor'
+import { sendUpdateActor } from '../../lib/activitypub/send'
+import { updateActorAvatarFile } from '../../lib/avatar'
+import { JobQueue } from '../../lib/job-queue'
+import { createLocalVideoChannel, federateAllVideosOfChannel } from '../../lib/video-channel'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -9,34 +25,29 @@ import {
   paginationValidator,
   setDefaultPagination,
   setDefaultSort,
+  setDefaultVideosSort,
   videoChannelsAddValidator,
   videoChannelsRemoveValidator,
   videoChannelsSortValidator,
   videoChannelsUpdateValidator,
   videoPlaylistsSortValidator
 } from '../../middlewares'
-import { VideoChannelModel } from '../../models/video/video-channel'
-import { videoChannelsNameWithHostValidator, videosSortValidator } from '../../middlewares/validators'
-import { sendUpdateActor } from '../../lib/activitypub/send'
-import { VideoChannelCreate, VideoChannelUpdate } from '../../../shared'
-import { createLocalVideoChannel, federateAllVideosOfChannel } from '../../lib/video-channel'
-import { buildNSFWFilter, createReqFiles, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
-import { setAsyncActorKeys } from '../../lib/activitypub/actor'
-import { AccountModel } from '../../models/account/account'
-import { MIMETYPES } from '../../initializers/constants'
-import { logger } from '../../helpers/logger'
-import { VideoModel } from '../../models/video/video'
+import { videoChannelsNameWithHostValidator, videoChannelsOwnSearchValidator, videosSortValidator } from '../../middlewares/validators'
 import { updateAvatarValidator } from '../../middlewares/validators/avatar'
-import { updateActorAvatarFile } from '../../lib/avatar'
-import { auditLoggerFactory, getAuditIdFromRes, VideoChannelAuditView } from '../../helpers/audit-logger'
-import { resetSequelizeInstance } from '../../helpers/database-utils'
-import { JobQueue } from '../../lib/job-queue'
+import { commonVideoPlaylistFiltersValidator } from '../../middlewares/validators/videos/video-playlists'
+import { AccountModel } from '../../models/account/account'
+import { VideoModel } from '../../models/video/video'
+import { VideoChannelModel } from '../../models/video/video-channel'
 import { VideoPlaylistModel } from '../../models/video/video-playlist'
+<<<<<<< Updated upstream
 import { commonVideoPlaylistFiltersValidator } from '../../middlewares/validators/videos/video-playlists'
 import { CONFIG } from '../../initializers/config'
 import { sequelizeTypescript } from '../../initializers/database'
 import { MChannelAccountDefault } from '@server/typings/models'
 import { getServerActor } from '@server/models/application/application'
+=======
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 const auditLogger = auditLoggerFactory('channels')
 const reqAvatarFile = createReqFiles([ 'avatarfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: CONFIG.STORAGE.TMP_DIR })
@@ -48,6 +59,7 @@ videoChannelRouter.get('/',
   videoChannelsSortValidator,
   setDefaultSort,
   setDefaultPagination,
+  videoChannelsOwnSearchValidator,
   asyncMiddleware(listVideoChannels)
 )
 
@@ -97,7 +109,7 @@ videoChannelRouter.get('/:nameWithHost/videos',
   asyncMiddleware(videoChannelsNameWithHostValidator),
   paginationValidator,
   videosSortValidator,
-  setDefaultSort,
+  setDefaultVideosSort,
   setDefaultPagination,
   optionalAuthenticate,
   commonVideosFiltersValidator,
@@ -114,7 +126,12 @@ export {
 
 async function listVideoChannels (req: express.Request, res: express.Response) {
   const serverActor = await getServerActor()
-  const resultList = await VideoChannelModel.listForApi(serverActor.id, req.query.start, req.query.count, req.query.sort)
+  const resultList = await VideoChannelModel.listForApi({
+    actorId: serverActor.id,
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort
+  })
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }
@@ -205,7 +222,7 @@ async function updateVideoChannel (req: express.Request, res: express.Response) 
     throw err
   }
 
-  res.type('json').status(204).end()
+  res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 
   // Don't process in a transaction, and after the response because it could be long
   if (doBulkVideoUpdate) {
@@ -225,7 +242,7 @@ async function removeVideoChannel (req: express.Request, res: express.Response) 
     logger.info('Video channel %s deleted.', videoChannelInstance.Actor.url)
   })
 
-  return res.type('json').status(204).end()
+  return res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function getVideoChannel (req: express.Request, res: express.Response) {
@@ -258,7 +275,7 @@ async function listVideoChannelVideos (req: express.Request, res: express.Respon
   const followerActorId = isUserAbleToSearchRemoteURI(res) ? null : undefined
   const countVideos = getCountVideos(req)
 
-  const resultList = await VideoModel.listForApi({
+  const apiOptions = await Hooks.wrapObject({
     followerActorId,
     start: req.query.start,
     count: req.query.count,
@@ -275,7 +292,13 @@ async function listVideoChannelVideos (req: express.Request, res: express.Respon
     videoChannelId: videoChannelInstance.id,
     user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
     countVideos
-  })
+  }, 'filter:api.video-channels.videos.list.params')
+
+  const resultList = await Hooks.wrapPromiseFun(
+    VideoModel.listForApi,
+    apiOptions,
+    'filter:api.video-channels.videos.list.result'
+  )
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }

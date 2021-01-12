@@ -1,3 +1,5 @@
+import { remove } from 'fs-extra'
+import { join } from 'path'
 import { OrderItem, Transaction } from 'sequelize'
 import {
   AllowNull,
@@ -13,18 +15,21 @@ import {
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { buildWhereIdOrUUID, throwIfNotValid } from '../utils'
-import { VideoModel } from './video'
-import { isVideoCaptionLanguageValid } from '../../helpers/custom-validators/video-captions'
+import { buildRemoteVideoBaseUrl } from '@server/helpers/activitypub'
+import { MVideoAccountLight, MVideoCaptionFormattable, MVideoCaptionVideo } from '@server/types/models'
 import { VideoCaption } from '../../../shared/models/videos/caption/video-caption.model'
-import { CONSTRAINTS_FIELDS, LAZY_STATIC_PATHS, VIDEO_LANGUAGES, WEBSERVER } from '../../initializers/constants'
-import { join } from 'path'
+import { isVideoCaptionLanguageValid } from '../../helpers/custom-validators/video-captions'
 import { logger } from '../../helpers/logger'
-import { remove } from 'fs-extra'
 import { CONFIG } from '../../initializers/config'
+<<<<<<< Updated upstream
 import * as Bluebird from 'bluebird'
 import { MVideoAccountLight, MVideoCaptionFormattable, MVideoCaptionVideo } from '@server/typings/models'
 import { buildRemoteVideoBaseUrl } from '@server/helpers/activitypub'
+=======
+import { CONSTRAINTS_FIELDS, LAZY_STATIC_PATHS, VIDEO_LANGUAGES, WEBSERVER } from '../../initializers/constants'
+import { buildWhereIdOrUUID, throwIfNotValid } from '../utils'
+import { VideoModel } from './video'
+>>>>>>> Stashed changes
 
 export enum ScopeNames {
   WITH_VIDEO_UUID_AND_REMOTE = 'WITH_VIDEO_UUID_AND_REMOTE'
@@ -54,7 +59,7 @@ export enum ScopeNames {
     }
   ]
 })
-export class VideoCaptionModel extends Model<VideoCaptionModel> {
+export class VideoCaptionModel extends Model {
   @CreatedAt
   createdAt: Date
 
@@ -101,7 +106,7 @@ export class VideoCaptionModel extends Model<VideoCaptionModel> {
     return undefined
   }
 
-  static loadByVideoIdAndLanguage (videoId: string | number, language: string): Bluebird<MVideoCaptionVideo> {
+  static loadByVideoIdAndLanguage (videoId: string | number, language: string): Promise<MVideoCaptionVideo> {
     const videoInclude = {
       model: VideoModel.unscoped(),
       attributes: [ 'id', 'remote', 'uuid' ],
@@ -131,7 +136,7 @@ export class VideoCaptionModel extends Model<VideoCaptionModel> {
       .then(([ caption ]) => caption)
   }
 
-  static listVideoCaptions (videoId: number): Bluebird<MVideoCaptionVideo[]> {
+  static listVideoCaptions (videoId: number): Promise<MVideoCaptionVideo[]> {
     const query = {
       order: [ [ 'language', 'ASC' ] ] as OrderItem[],
       where: {

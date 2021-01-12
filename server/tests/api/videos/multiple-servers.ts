@@ -40,6 +40,7 @@ import {
   getVideoThreadComments
 } from '../../../../shared/extra-utils/videos/video-comments'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 
@@ -157,7 +158,7 @@ describe('Test multiple servers', function () {
     })
 
     it('Should upload the video on server 2 and propagate on each server', async function () {
-      this.timeout(50000)
+      this.timeout(100000)
 
       const user = {
         username: 'user1',
@@ -215,19 +216,19 @@ describe('Test multiple servers', function () {
           files: [
             {
               resolution: 240,
-              size: 189000
+              size: 270000
             },
             {
               resolution: 360,
-              size: 278000
+              size: 359000
             },
             {
               resolution: 480,
-              size: 384000
+              size: 465000
             },
             {
               resolution: 720,
-              size: 706000
+              size: 788000
             }
           ],
           thumbnailfile: 'thumbnail',
@@ -575,7 +576,7 @@ describe('Test multiple servers', function () {
     })
 
     it('Should like and dislikes videos on different services', async function () {
-      this.timeout(20000)
+      this.timeout(30000)
 
       await rateVideo(servers[0].url, servers[0].accessToken, remoteVideosServer1[0], 'like')
       await wait(500)
@@ -590,6 +591,7 @@ describe('Test multiple servers', function () {
       await rateVideo(servers[2].url, servers[2].accessToken, remoteVideosServer3[0], 'like')
 
       await waitJobs(servers)
+      await wait(5000)
 
       let baseVideos = null
       for (const server of servers) {
@@ -999,7 +1001,7 @@ describe('Test multiple servers', function () {
         expect(res.body.downloadEnabled).to.be.false
 
         const text = 'my super forbidden comment'
-        await addVideoCommentThread(server.url, server.accessToken, videoUUID, text, 409)
+        await addVideoCommentThread(server.url, server.accessToken, videoUUID, text, HttpStatusCode.CONFLICT_409)
       }
     })
   })
@@ -1021,7 +1023,7 @@ describe('Test multiple servers', function () {
       const filePath = join(__dirname, '..', '..', 'fixtures', 'video_short.webm')
 
       await req.attach('videofile', filePath)
-               .expect(200)
+               .expect(HttpStatusCode.OK_200)
 
       await waitJobs(servers)
 

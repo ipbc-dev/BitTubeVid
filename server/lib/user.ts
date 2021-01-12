@@ -1,11 +1,13 @@
+import { Transaction } from 'sequelize/types'
 import { v4 as uuidv4 } from 'uuid'
+import { UserModel } from '@server/models/account/user'
 import { ActivityPubActorType } from '../../shared/models/activitypub'
+import { UserNotificationSetting, UserNotificationSettingValue } from '../../shared/models/users'
 import { SERVER_ACTOR_NAME, WEBSERVER } from '../initializers/constants'
+import { sequelizeTypescript } from '../initializers/database'
 import { AccountModel } from '../models/account/account'
-import { buildActorInstance, setAsyncActorKeys } from './activitypub/actor'
-import { createLocalVideoChannel } from './video-channel'
-import { ActorModel } from '../models/activitypub/actor'
 import { UserNotificationSettingModel } from '../models/account/user-notification-setting'
+<<<<<<< Updated upstream
 import { UserNotificationSetting, UserNotificationSettingValue } from '../../shared/models/users'
 import { createWatchLaterPlaylist } from './video-playlist'
 import { sequelizeTypescript } from '../initializers/database'
@@ -15,6 +17,18 @@ import { Emailer } from './emailer'
 import { MAccountDefault, MActorDefault, MChannelActor } from '../typings/models'
 import { MUser, MUserDefault, MUserId } from '../typings/models/user'
 import { getAccountActivityPubUrl } from './activitypub/url'
+=======
+import { ActorModel } from '../models/activitypub/actor'
+import { MAccountDefault, MActorDefault, MChannelActor } from '../types/models'
+import { MUser, MUserDefault, MUserId } from '../types/models/user'
+import { buildActorInstance, setAsyncActorKeys } from './activitypub/actor'
+import { getLocalAccountActivityPubUrl } from './activitypub/url'
+import { Emailer } from './emailer'
+import { LiveManager } from './live-manager'
+import { Redis } from './redis'
+import { createLocalVideoChannel } from './video-channel'
+import { createWatchLaterPlaylist } from './video-playlist'
+>>>>>>> Stashed changes
 
 type ChannelNames = { name: string, displayName: string }
 
@@ -72,7 +86,7 @@ async function createLocalAccountWithoutKeys (parameters: {
   type?: ActivityPubActorType
 }) {
   const { name, displayName, userId, applicationId, t, type = 'Person' } = parameters
-  const url = getAccountActivityPubUrl(name)
+  const url = getLocalAccountActivityPubUrl(name)
 
   const actorInstance = buildActorInstance(type, url, name)
   const actorInstanceCreated: MActorDefault = await actorInstance.save({ transaction: t })
@@ -115,13 +129,61 @@ async function sendVerifyUserEmail (user: MUser, isPendingEmail = false) {
   await Emailer.Instance.addVerifyEmailJob(email, url)
 }
 
+async function getOriginalVideoFileTotalFromUser (user: MUserId) {
+  // Don't use sequelize because we need to use a sub query
+  const query = UserModel.generateUserQuotaBaseSQL({
+    withSelect: true,
+    whereUserId: '$userId'
+  })
+
+  const base = await UserModel.getTotalRawQuery(query, user.id)
+
+  return base + LiveManager.Instance.getLiveQuotaUsedByUser(user.id)
+}
+
+// Returns cumulative size of all video files uploaded in the last 24 hours.
+async function getOriginalVideoFileTotalDailyFromUser (user: MUserId) {
+  // Don't use sequelize because we need to use a sub query
+  const query = UserModel.generateUserQuotaBaseSQL({
+    withSelect: true,
+    whereUserId: '$userId',
+    where: '"video"."createdAt" > now() - interval \'24 hours\''
+  })
+
+  const base = await UserModel.getTotalRawQuery(query, user.id)
+
+  return base + LiveManager.Instance.getLiveQuotaUsedByUser(user.id)
+}
+
+async function isAbleToUploadVideo (userId: number, size: number) {
+  const user = await UserModel.loadById(userId)
+
+  if (user.videoQuota === -1 && user.videoQuotaDaily === -1) return Promise.resolve(true)
+
+  const [ totalBytes, totalBytesDaily ] = await Promise.all([
+    getOriginalVideoFileTotalFromUser(user),
+    getOriginalVideoFileTotalDailyFromUser(user)
+  ])
+
+  const uploadedTotal = size + totalBytes
+  const uploadedDaily = size + totalBytesDaily
+
+  if (user.videoQuotaDaily === -1) return uploadedTotal < user.videoQuota
+  if (user.videoQuota === -1) return uploadedDaily < user.videoQuotaDaily
+
+  return uploadedTotal < user.videoQuota && uploadedDaily < user.videoQuotaDaily
+}
+
 // ---------------------------------------------------------------------------
 
 export {
+  getOriginalVideoFileTotalFromUser,
+  getOriginalVideoFileTotalDailyFromUser,
   createApplicationActor,
   createUserAccountAndChannelAndPlaylist,
   createLocalAccountWithoutKeys,
-  sendVerifyUserEmail
+  sendVerifyUserEmail,
+  isAbleToUploadVideo
 }
 
 // ---------------------------------------------------------------------------
@@ -133,13 +195,15 @@ function createDefaultUserNotificationSettings (user: MUserId, t: Transaction | 
     newCommentOnMyVideo: UserNotificationSettingValue.WEB,
     myVideoImportFinished: UserNotificationSettingValue.WEB,
     myVideoPublished: UserNotificationSettingValue.WEB,
-    videoAbuseAsModerator: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    abuseAsModerator: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
     videoAutoBlacklistAsModerator: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
     blacklistOnMyVideo: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
     newUserRegistration: UserNotificationSettingValue.WEB,
     commentMention: UserNotificationSettingValue.WEB,
     newFollow: UserNotificationSettingValue.WEB,
     newInstanceFollower: UserNotificationSettingValue.WEB,
+    abuseNewMessage: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
+    abuseStateChange: UserNotificationSettingValue.WEB | UserNotificationSettingValue.EMAIL,
     autoInstanceFollowing: UserNotificationSettingValue.WEB
   }
 

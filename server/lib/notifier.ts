@@ -1,4 +1,23 @@
+<<<<<<< Updated upstream
 import { UserNotificationSettingValue, UserNotificationType, UserRight } from '../../shared/models/users'
+=======
+import { AccountModel } from '@server/models/account/account'
+import { getServerActor } from '@server/models/application/application'
+import { ServerBlocklistModel } from '@server/models/server/server-blocklist'
+import {
+  MUser,
+  MUserAccount,
+  MUserDefault,
+  MUserNotifSettingAccount,
+  MUserWithNotificationSetting,
+  UserNotificationModelForApi
+} from '@server/types/models/user'
+import { MVideoBlacklistLightVideo, MVideoBlacklistVideo } from '@server/types/models/video/video-blacklist'
+import { MVideoImportVideo } from '@server/types/models/video/video-import'
+import { UserAbuse } from '@shared/models'
+import { UserNotificationSettingValue, UserNotificationType, UserRight } from '../../shared/models/users'
+import { VideoPrivacy, VideoState } from '../../shared/models/videos'
+>>>>>>> Stashed changes
 import { logger } from '../helpers/logger'
 import { Emailer } from './emailer'
 import { UserNotificationModel } from '../models/account/user-notification'
@@ -7,6 +26,7 @@ import { PeerTubeSocket } from './peertube-socket'
 import { CONFIG } from '../initializers/config'
 import { VideoPrivacy, VideoState, VideoAbuse } from '../../shared/models/videos'
 import { AccountBlocklistModel } from '../models/account/account-blocklist'
+<<<<<<< Updated upstream
 import {
   MCommentOwnerVideo,
   MVideoAbuseVideo,
@@ -27,6 +47,15 @@ import { MAccountDefault, MActorFollowFull } from '../typings/models'
 import { MVideoImportVideo } from '@server/typings/models/video/video-import'
 import { ServerBlocklistModel } from '@server/models/server/server-blocklist'
 import { getServerActor } from '@server/models/application/application'
+=======
+import { UserModel } from '../models/account/user'
+import { UserNotificationModel } from '../models/account/user-notification'
+import { MAbuseFull, MAbuseMessage, MAccountServer, MActorFollowFull } from '../types/models'
+import { MCommentOwnerVideo, MVideoAccountLight, MVideoFullLight } from '../types/models/video'
+import { isBlockedByServerOrAccount } from './blocklist'
+import { Emailer } from './emailer'
+import { PeerTubeSocket } from './peertube-socket'
+>>>>>>> Stashed changes
 
 class Notifier {
 
@@ -77,9 +106,9 @@ class Notifier {
         .catch(err => logger.error('Cannot notify mentions of comment %s.', comment.url, { err }))
   }
 
-  notifyOnNewVideoAbuse (parameters: { videoAbuse: VideoAbuse, videoAbuseInstance: MVideoAbuseVideo, reporter: string }): void {
-    this.notifyModeratorsOfNewVideoAbuse(parameters)
-        .catch(err => logger.error('Cannot notify of new video abuse of video %s.', parameters.videoAbuseInstance.Video.url, { err }))
+  notifyOnNewAbuse (parameters: { abuse: UserAbuse, abuseInstance: MAbuseFull, reporter: string }): void {
+    this.notifyModeratorsOfNewAbuse(parameters)
+        .catch(err => logger.error('Cannot notify of new abuse %d.', parameters.abuseInstance.id, { err }))
   }
 
   notifyOnVideoAutoBlacklist (videoBlacklist: MVideoBlacklistLightVideo): void {
@@ -131,6 +160,20 @@ class Notifier {
         .catch(err => {
           logger.error('Cannot notify administrators of auto instance following %s.', actorFollow.ActorFollowing.url, { err })
         })
+  }
+
+  notifyOnAbuseStateChange (abuse: MAbuseFull): void {
+    this.notifyReporterOfAbuseStateChange(abuse)
+      .catch(err => {
+        logger.error('Cannot notify reporter of abuse %d state change.', abuse.id, { err })
+      })
+  }
+
+  notifyOnAbuseMessage (abuse: MAbuseFull, message: MAbuseMessage): void {
+    this.notifyOfNewAbuseMessage(abuse, message)
+      .catch(err => {
+        logger.error('Cannot notify on new abuse %d message.', abuse.id, { err })
+      })
   }
 
   private async notifySubscribersOfNewVideo (video: MVideoAccountLight) {
@@ -350,36 +393,134 @@ class Notifier {
     return this.notify({ users: admins, settingGetter, notificationCreator, emailSender })
   }
 
-  private async notifyModeratorsOfNewVideoAbuse (parameters: {
-    videoAbuse: VideoAbuse
-    videoAbuseInstance: MVideoAbuseVideo
+  private async notifyModeratorsOfNewAbuse (parameters: {
+    abuse: UserAbuse
+    abuseInstance: MAbuseFull
     reporter: string
   }) {
-    const moderators = await UserModel.listWithRight(UserRight.MANAGE_VIDEO_ABUSES)
+    const { abuse, abuseInstance } = parameters
+
+    const moderators = await UserModel.listWithRight(UserRight.MANAGE_ABUSES)
     if (moderators.length === 0) return
 
-    logger.info('Notifying %s user/moderators of new video abuse %s.', moderators.length, parameters.videoAbuseInstance.Video.url)
+    const url = this.getAbuseUrl(abuseInstance)
+
+    logger.info('Notifying %s user/moderators of new abuse %s.', moderators.length, url)
 
     function settingGetter (user: MUserWithNotificationSetting) {
-      return user.NotificationSetting.videoAbuseAsModerator
+      return user.NotificationSetting.abuseAsModerator
     }
 
     async function notificationCreator (user: MUserWithNotificationSetting) {
-      const notification: UserNotificationModelForApi = await UserNotificationModel.create<UserNotificationModelForApi>({
-        type: UserNotificationType.NEW_VIDEO_ABUSE_FOR_MODERATORS,
+      const notification = await UserNotificationModel.create<UserNotificationModelForApi>({
+        type: UserNotificationType.NEW_ABUSE_FOR_MODERATORS,
         userId: user.id,
-        videoAbuseId: parameters.videoAbuse.id
+        abuseId: abuse.id
       })
-      notification.VideoAbuse = parameters.videoAbuseInstance
+      notification.Abuse = abuseInstance
 
       return notification
     }
 
     function emailSender (emails: string[]) {
-      return Emailer.Instance.addVideoAbuseModeratorsNotification(emails, parameters)
+      return Emailer.Instance.addAbuseModeratorsNotification(emails, parameters)
     }
 
     return this.notify({ users: moderators, settingGetter, notificationCreator, emailSender })
+  }
+
+  private async notifyReporterOfAbuseStateChange (abuse: MAbuseFull) {
+    // Only notify our users
+    if (abuse.ReporterAccount.isOwned() !== true) return
+
+    const url = this.getAbuseUrl(abuse)
+
+    logger.info('Notifying reporter of abuse % of state change.', url)
+
+    const reporter = await UserModel.loadByAccountActorId(abuse.ReporterAccount.actorId)
+
+    function settingGetter (user: MUserWithNotificationSetting) {
+      return user.NotificationSetting.abuseStateChange
+    }
+
+    async function notificationCreator (user: MUserWithNotificationSetting) {
+      const notification = await UserNotificationModel.create<UserNotificationModelForApi>({
+        type: UserNotificationType.ABUSE_STATE_CHANGE,
+        userId: user.id,
+        abuseId: abuse.id
+      })
+      notification.Abuse = abuse
+
+      return notification
+    }
+
+    function emailSender (emails: string[]) {
+      return Emailer.Instance.addAbuseStateChangeNotification(emails, abuse)
+    }
+
+    return this.notify({ users: [ reporter ], settingGetter, notificationCreator, emailSender })
+  }
+
+  private async notifyOfNewAbuseMessage (abuse: MAbuseFull, message: MAbuseMessage) {
+    const url = this.getAbuseUrl(abuse)
+    logger.info('Notifying reporter and moderators of new abuse message on %s.', url)
+
+    const accountMessage = await AccountModel.load(message.accountId)
+
+    function settingGetter (user: MUserWithNotificationSetting) {
+      return user.NotificationSetting.abuseNewMessage
+    }
+
+    async function notificationCreator (user: MUserWithNotificationSetting) {
+      const notification = await UserNotificationModel.create<UserNotificationModelForApi>({
+        type: UserNotificationType.ABUSE_NEW_MESSAGE,
+        userId: user.id,
+        abuseId: abuse.id
+      })
+      notification.Abuse = abuse
+
+      return notification
+    }
+
+    function emailSenderReporter (emails: string[]) {
+      return Emailer.Instance.addAbuseNewMessageNotification(emails, { target: 'reporter', abuse, message, accountMessage })
+    }
+
+    function emailSenderModerators (emails: string[]) {
+      return Emailer.Instance.addAbuseNewMessageNotification(emails, { target: 'moderator', abuse, message, accountMessage })
+    }
+
+    async function buildReporterOptions () {
+      // Only notify our users
+      if (abuse.ReporterAccount.isOwned() !== true) return undefined
+
+      const reporter = await UserModel.loadByAccountActorId(abuse.ReporterAccount.actorId)
+      // Don't notify my own message
+      if (reporter.Account.id === message.accountId) return undefined
+
+      return { users: [ reporter ], settingGetter, notificationCreator, emailSender: emailSenderReporter }
+    }
+
+    async function buildModeratorsOptions () {
+      let moderators = await UserModel.listWithRight(UserRight.MANAGE_ABUSES)
+      // Don't notify my own message
+      moderators = moderators.filter(m => m.Account.id !== message.accountId)
+
+      if (moderators.length === 0) return undefined
+
+      return { users: moderators, settingGetter, notificationCreator, emailSender: emailSenderModerators }
+    }
+
+    const options = await Promise.all([
+      buildReporterOptions(),
+      buildModeratorsOptions()
+    ])
+
+    return Promise.all(
+      options
+        .filter(opt => !!opt)
+        .map(opt => this.notify(opt))
+    )
   }
 
   private async notifyModeratorsOfVideoAutoBlacklist (videoBlacklist: MVideoBlacklistLightVideo) {
@@ -601,6 +742,12 @@ class Notifier {
     if (instanceMutedHash[serverAccountId] || instanceMutedHash[user.Account.id]) return true
 
     return false
+  }
+
+  private getAbuseUrl (abuse: MAbuseFull) {
+    return abuse.VideoAbuse?.Video?.url ||
+      abuse.VideoCommentAbuse?.VideoComment?.url ||
+      abuse.FlaggedAccount.Actor.url
   }
 
   static get Instance () {

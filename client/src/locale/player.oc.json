@@ -7,13 +7,17 @@
     "peer": "par",
     "Go to the video page": "Anar a la pagina de la vidèo",
     "Settings": "Paramètres",
-    "Uses P2P, others may know you are watching this video.": "Utiliza lo P2P, se pòt que d’autres sián a agachar aquesta vidèo.",
+    "Watching this video may reveal your IP address to others.": "Watching this video may reveal your IP address to others.",
     "Copy the video URL": "Copiar l’URL de la vidèo",
     "Copy the video URL at the current time": "Copiar l’URL de la vidèo a aquesta posicion",
     "Copy embed code": "Copiar lo còdi d’integracion",
     "Copy magnet URI": "Copiar lo magnet URI",
     "Total downloaded: ": "Total telecargat : ",
     "Total uploaded: ": "Total enviat : ",
+    "From servers: ": "From servers: ",
+    "From peers: ": "From peers: ",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode",
     "Audio Player": "Lector àudio",
     "Video Player": "Lector vidèo",
     "Play": "Lectura",
@@ -96,5 +100,6 @@
     "Caption Settings Dialog": "Fenèstra de paramètres de legenda",
     "Beginning of dialog window. Escape will cancel and close the window.": "Debuta de la fenèstra. Escapar anullarà e tamparà la fenèstra.",
     "End of dialog window.": "Fin de la fenèstra.",
-    "{1} is loading.": "{1} es a cargar."
+    "{1} is loading.": "{1} es a cargar.",
+    "Uses P2P, others may know you are watching this video.": "Utiliza lo P2P, se pòt que d’autres sián a agachar aquesta vidèo."
 }

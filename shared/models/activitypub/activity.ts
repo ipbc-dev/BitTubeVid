@@ -1,12 +1,16 @@
 import { ActivityPubActor } from './activitypub-actor'
 import { ActivityPubSignature } from './activitypub-signature'
+<<<<<<< Updated upstream
 import { CacheFileObject, VideoTorrentObject } from './objects'
+=======
+import { ActivityFlagReasonObject, CacheFileObject, VideoObject } from './objects'
+import { AbuseObject } from './objects/abuse-object'
+>>>>>>> Stashed changes
 import { DislikeObject } from './objects/dislike-object'
-import { VideoAbuseObject } from './objects/video-abuse-object'
-import { VideoCommentObject } from './objects/video-comment-object'
-import { ViewObject } from './objects/view-object'
 import { APObject } from './objects/object.model'
 import { PlaylistObject } from './objects/playlist-object'
+import { VideoCommentObject } from './objects/video-comment-object'
+import { ViewObject } from './objects/view-object'
 
 export type Activity =
   ActivityCreate |
@@ -53,12 +57,12 @@ export interface BaseActivity {
 
 export interface ActivityCreate extends BaseActivity {
   type: 'Create'
-  object: VideoTorrentObject | VideoAbuseObject | ViewObject | DislikeObject | VideoCommentObject | CacheFileObject | PlaylistObject
+  object: VideoObject | AbuseObject | ViewObject | DislikeObject | VideoCommentObject | CacheFileObject | PlaylistObject
 }
 
 export interface ActivityUpdate extends BaseActivity {
   type: 'Update'
-  object: VideoTorrentObject | ActivityPubActor | CacheFileObject | PlaylistObject
+  object: VideoObject | ActivityPubActor | CacheFileObject | PlaylistObject
 }
 
 export interface ActivityDelete extends BaseActivity {

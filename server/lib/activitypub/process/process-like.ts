@@ -1,13 +1,21 @@
 import { ActivityLike } from '../../../../shared/models/activitypub'
+import { getAPId } from '../../../helpers/activitypub'
 import { retryTransactionWrapper } from '../../../helpers/database-utils'
 import { sequelizeTypescript } from '../../../initializers/database'
 import { AccountVideoRateModel } from '../../../models/account/account-video-rate'
+<<<<<<< Updated upstream
 import { forwardVideoRelatedActivity } from '../send/utils'
 import { getOrCreateVideoAndAccountAndChannel } from '../videos'
 import { getVideoLikeActivityPubUrl } from '../url'
 import { getAPId } from '../../../helpers/activitypub'
 import { APProcessorOptions } from '../../../typings/activitypub-processor.model'
 import { MActorSignature } from '../../../typings/models'
+=======
+import { APProcessorOptions } from '../../../types/activitypub-processor.model'
+import { MActorSignature } from '../../../types/models'
+import { forwardVideoRelatedActivity } from '../send/utils'
+import { getOrCreateVideoAndAccountAndChannel } from '../videos'
+>>>>>>> Stashed changes
 
 async function processLikeActivity (options: APProcessorOptions<ActivityLike>) {
   const { activity, byActor } = options
@@ -31,9 +39,7 @@ async function processLikeVideo (byActor: MActorSignature, activity: ActivityLik
   const { video } = await getOrCreateVideoAndAccountAndChannel({ videoObject: videoUrl })
 
   return sequelizeTypescript.transaction(async t => {
-    const url = getVideoLikeActivityPubUrl(byActor, video)
-
-    const existingRate = await AccountVideoRateModel.loadByAccountAndVideoOrUrl(byAccount.id, video.id, url)
+    const existingRate = await AccountVideoRateModel.loadByAccountAndVideoOrUrl(byAccount.id, video.id, activity.id, t)
     if (existingRate && existingRate.type === 'like') return
 
     if (existingRate && existingRate.type === 'dislike') {
@@ -46,7 +52,7 @@ async function processLikeVideo (byActor: MActorSignature, activity: ActivityLik
     rate.type = 'like'
     rate.videoId = video.id
     rate.accountId = byAccount.id
-    rate.url = url
+    rate.url = activity.id
 
     await rate.save({ transaction: t })
 

@@ -6,7 +6,9 @@ import { areValidationErrors } from './utils'
 
 const listJobsValidator = [
   param('state')
-    .custom(isValidJobState).not().isEmpty().withMessage('Should have a valid job state'),
+  .optional()
+  .custom(isValidJobState).not().isEmpty().withMessage('Should have a valid job state'),
+
   query('jobType')
     .optional()
     .custom(isValidJobType).withMessage('Should have a valid job state'),

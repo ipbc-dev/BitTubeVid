@@ -1,9 +1,9 @@
-import { getCompleteLocale, getShortLocale, is18nLocale, isDefaultLocale } from '../../../../shared/models'
+import { getCompleteLocale, getShortLocale, is18nLocale, isDefaultLocale } from '@shared/core-utils/i18n'
 
 export class TranslationsManager {
   private static videojsLocaleCache: { [ path: string ]: any } = {}
 
-  static getServerTranslations (serverUrl: string, locale: string) {
+  static getServerTranslations (serverUrl: string, locale: string): Promise<{ [id: string]: string }> {
     const path = TranslationsManager.getLocalePath(serverUrl, locale)
     // It is the default locale, nothing to translate
     if (!path) return Promise.resolve(undefined)

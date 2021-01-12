@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import * as chai from 'chai'
 import 'mocha'
-import { VideoDetails, VideoImport, VideoPrivacy, VideoCaption } from '../../../../shared/models/videos'
+import * as chai from 'chai'
 import {
   cleanupTests,
   doubleFollow,
@@ -11,15 +10,16 @@ import {
   getMyVideos,
   getVideo,
   getVideosList,
-  listVideoCaptions,
-  testCaptionFile,
   immutableAssign,
+  listVideoCaptions,
   ServerInfo,
-  setAccessTokensToServers
+  setAccessTokensToServers,
+  testCaptionFile
 } from '../../../../shared/extra-utils'
+import { areHttpImportTestsDisabled, testImage } from '../../../../shared/extra-utils/miscs/miscs'
 import { waitJobs } from '../../../../shared/extra-utils/server/jobs'
 import { getMagnetURI, getMyVideoImports, getYoutubeVideoUrl, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
-import { testImage } from '../../../../shared/extra-utils/miscs/miscs'
+import { VideoCaption, VideoDetails, VideoImport, VideoPrivacy } from '../../../../shared/models/videos'
 
 const expect = chai.expect
 
@@ -27,6 +27,8 @@ describe('Test video imports', function () {
   let servers: ServerInfo[] = []
   let channelIdServer1: number
   let channelIdServer2: number
+
+  if (areHttpImportTestsDisabled()) return
 
   async function checkVideosServer1 (url: string, idHttp: string, idMagnet: string, idTorrent: string) {
     const resHttp = await getVideo(url, idHttp)
@@ -120,7 +122,7 @@ describe('Test video imports', function () {
       const res = await importVideo(servers[0].url, servers[0].accessToken, attributes)
       expect(res.body.video.name).to.equal('small video - youtube')
       expect(res.body.video.thumbnailPath).to.equal(`/static/thumbnails/${res.body.video.uuid}.jpg`)
-      expect(res.body.video.previewPath).to.equal(`/static/previews/${res.body.video.uuid}.jpg`)
+      expect(res.body.video.previewPath).to.equal(`/lazy-static/previews/${res.body.video.uuid}.jpg`)
       await testImage(servers[0].url, 'video_import_thumbnail', res.body.video.thumbnailPath)
       await testImage(servers[0].url, 'video_import_preview', res.body.video.previewPath)
 
@@ -131,7 +133,7 @@ describe('Test video imports', function () {
       const enCaption = videoCaptions.find(caption => caption.language.id === 'en')
       expect(enCaption).to.exist
       expect(enCaption.language.label).to.equal('English')
-      expect(enCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-en.vtt`)
+      expect(enCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-en.vtt`)
       await testCaptionFile(servers[0].url, enCaption.captionPath, `WEBVTT
 Kind: captions
 Language: en
@@ -148,7 +150,7 @@ Adding subtitles is very easy to do`)
       const frCaption = videoCaptions.find(caption => caption.language.id === 'fr')
       expect(frCaption).to.exist
       expect(frCaption.language.label).to.equal('French')
-      expect(frCaption.captionPath).to.equal(`/static/video-captions/${res.body.video.uuid}-fr.vtt`)
+      expect(frCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-fr.vtt`)
       await testCaptionFile(servers[0].url, frCaption.captionPath, `WEBVTT
 Kind: captions
 Language: fr

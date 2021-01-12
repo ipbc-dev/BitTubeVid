@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { AuthService, ServerService } from '../../../core'
 import { FormReactive } from '../../../shared'
 import { ServerConfig, USER_ROLE_LABELS, UserRole, VideoResolution } from '../../../../../../shared'
@@ -6,7 +7,17 @@ import { UserAdminFlag } from '@shared/models/users/user-flag.model'
 import { OnInit } from '@angular/core'
 import { User } from '@app/shared/users/user.model'
 import { ScreenService } from '@app/shared/misc/screen.service'
+=======
+import { Directive, OnInit } from '@angular/core'
+import { ConfigService } from '@app/+admin/config/shared/config.service'
+import { AuthService, ScreenService, ServerService, User } from '@app/core'
+import { FormReactive } from '@app/shared/shared-forms'
+import { USER_ROLE_LABELS } from '@shared/core-utils/users'
+import { ServerConfig, UserAdminFlag, UserRole, VideoResolution } from '@shared/models'
+>>>>>>> Stashed changes
 
+@Directive()
+// tslint:disable-next-line: directive-class-suffix
 export abstract class UserEdit extends FormReactive implements OnInit {
   videoQuotaOptions: { value: string, label: string, disabled?: boolean }[] = []
   videoQuotaDailyOptions: { value: string, label: string, disabled?: boolean }[] = []

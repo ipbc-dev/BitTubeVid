@@ -9,6 +9,7 @@ import { ServerModel } from '../../models/server/server'
 import { WEBSERVER } from '../../initializers/constants'
 import { doesAccountNameWithHostExist } from '../../helpers/middlewares'
 import { getServerActor } from '@server/models/application/application'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const blockAccountValidator = [
   body('accountName').exists().withMessage('Should have an account name with host'),
@@ -23,9 +24,14 @@ const blockAccountValidator = [
     const accountToBlock = res.locals.account
 
     if (user.Account.id === accountToBlock.id) {
+<<<<<<< Updated upstream
       res.status(409)
          .send({ error: 'You cannot block yourself.' })
          .end()
+=======
+      res.status(HttpStatusCode.CONFLICT_409)
+         .json({ error: 'You cannot block yourself.' })
+>>>>>>> Stashed changes
 
       return
     }
@@ -79,9 +85,14 @@ const blockServerValidator = [
     const host: string = req.body.host
 
     if (host === WEBSERVER.HOST) {
+<<<<<<< Updated upstream
       return res.status(409)
         .send({ error: 'You cannot block your own server.' })
         .end()
+=======
+      return res.status(HttpStatusCode.CONFLICT_409)
+        .json({ error: 'You cannot block your own server.' })
+>>>>>>> Stashed changes
     }
 
     const server = await ServerModel.loadOrCreateByHost(host)
@@ -138,9 +149,14 @@ export {
 async function doesUnblockAccountExist (accountId: number, targetAccountId: number, res: express.Response) {
   const accountBlock = await AccountBlocklistModel.loadByAccountAndTarget(accountId, targetAccountId)
   if (!accountBlock) {
+<<<<<<< Updated upstream
     res.status(404)
        .send({ error: 'Account block entry not found.' })
        .end()
+=======
+    res.status(HttpStatusCode.NOT_FOUND_404)
+       .json({ error: 'Account block entry not found.' })
+>>>>>>> Stashed changes
 
     return false
   }
@@ -153,9 +169,14 @@ async function doesUnblockAccountExist (accountId: number, targetAccountId: numb
 async function doesUnblockServerExist (accountId: number, host: string, res: express.Response) {
   const serverBlock = await ServerBlocklistModel.loadByAccountAndHost(accountId, host)
   if (!serverBlock) {
+<<<<<<< Updated upstream
     res.status(404)
        .send({ error: 'Server block entry not found.' })
        .end()
+=======
+    res.status(HttpStatusCode.NOT_FOUND_404)
+       .json({ error: 'Server block entry not found.' })
+>>>>>>> Stashed changes
 
     return false
   }

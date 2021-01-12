@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core'
+<<<<<<< Updated upstream
 import { AuthService } from '@app/core/auth'
 import { ServerService } from '@app/core/server'
 import { environment } from '../../../environments/environment'
@@ -8,6 +9,16 @@ import { first } from 'rxjs/operators'
 import { User } from '@app/shared/users/user.model'
 import { UserService } from '@app/shared/users/user.service'
 import { LocalStorageService } from '@app/shared/misc/storage.service'
+=======
+import { UserLocalStorageKeys } from '@root-helpers/users'
+import { ServerConfig, ServerConfigTheme } from '@shared/models'
+import { environment } from '../../../environments/environment'
+import { AuthService } from '../auth'
+import { PluginService } from '../plugins/plugin.service'
+import { ServerService } from '../server'
+import { UserService } from '../users/user.service'
+import { LocalStorageService } from '../wrappers/storage.service'
+>>>>>>> Stashed changes
 
 @Injectable()
 export class ThemeService {
@@ -111,9 +122,9 @@ export class ThemeService {
 
       this.pluginService.reloadLoadedScopes()
 
-      this.localStorageService.setItem(User.KEYS.THEME, JSON.stringify(theme), false)
+      this.localStorageService.setItem(UserLocalStorageKeys.LAST_ACTIVE_THEME, JSON.stringify(theme), false)
     } else {
-      this.localStorageService.removeItem(User.KEYS.THEME, false)
+      this.localStorageService.removeItem(UserLocalStorageKeys.LAST_ACTIVE_THEME, false)
     }
 
     this.oldThemeName = currentTheme
@@ -127,7 +138,7 @@ export class ThemeService {
     if (!this.auth.isLoggedIn()) {
       this.updateCurrentTheme()
 
-      this.localStorageService.watch([User.KEYS.THEME]).subscribe(
+      this.localStorageService.watch([ UserLocalStorageKeys.THEME ]).subscribe(
         () => this.updateCurrentTheme()
       )
     }
@@ -138,7 +149,7 @@ export class ThemeService {
   }
 
   private loadAndSetFromLocalStorage () {
-    const lastActiveThemeString = this.localStorageService.getItem(User.KEYS.THEME)
+    const lastActiveThemeString = this.localStorageService.getItem(UserLocalStorageKeys.LAST_ACTIVE_THEME)
     if (!lastActiveThemeString) return
 
     try {

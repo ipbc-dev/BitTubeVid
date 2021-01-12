@@ -1,7 +1,11 @@
-import * as express from 'express'
 import 'multer'
+import * as express from 'express'
+import { VideoFilter } from '../../../../shared/models/videos/video-query.type'
+import { buildNSFWFilter, getCountVideos } from '../../../helpers/express-utils'
 import { getFormattedObjects } from '../../../helpers/utils'
 import { WEBSERVER } from '../../../initializers/constants'
+import { sequelizeTypescript } from '../../../initializers/database'
+import { JobQueue } from '../../../lib/job-queue'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -10,16 +14,20 @@ import {
   paginationValidator,
   setDefaultPagination,
   setDefaultSort,
+  setDefaultVideosSort,
   userSubscriptionAddValidator,
   userSubscriptionGetValidator
 } from '../../../middlewares'
-import { areSubscriptionsExistValidator, userSubscriptionsSortValidator, videosSortValidator } from '../../../middlewares/validators'
-import { VideoModel } from '../../../models/video/video'
-import { buildNSFWFilter, getCountVideos } from '../../../helpers/express-utils'
-import { VideoFilter } from '../../../../shared/models/videos/video-query.type'
+import {
+  areSubscriptionsExistValidator,
+  userSubscriptionListValidator,
+  userSubscriptionsSortValidator,
+  videosSortValidator
+} from '../../../middlewares/validators'
 import { ActorFollowModel } from '../../../models/activitypub/actor-follow'
-import { JobQueue } from '../../../lib/job-queue'
-import { sequelizeTypescript } from '../../../initializers/database'
+import { VideoModel } from '../../../models/video/video'
+import { sendUndoFollow } from '@server/lib/activitypub/send'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const mySubscriptionsRouter = express.Router()
 
@@ -27,7 +35,7 @@ mySubscriptionsRouter.get('/me/subscriptions/videos',
   authenticate,
   paginationValidator,
   videosSortValidator,
-  setDefaultSort,
+  setDefaultVideosSort,
   setDefaultPagination,
   commonVideosFiltersValidator,
   asyncMiddleware(getUserSubscriptionVideos)
@@ -45,6 +53,7 @@ mySubscriptionsRouter.get('/me/subscriptions',
   userSubscriptionsSortValidator,
   setDefaultSort,
   setDefaultPagination,
+  userSubscriptionListValidator,
   asyncMiddleware(getUserSubscriptions)
 )
 
@@ -118,7 +127,7 @@ function addUserSubscription (req: express.Request, res: express.Response) {
 
   JobQueue.Instance.createJob({ type: 'activitypub-follow', payload })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 function getUserSubscription (req: express.Request, res: express.Response) {
@@ -131,17 +140,27 @@ async function deleteUserSubscription (req: express.Request, res: express.Respon
   const subscription = res.locals.subscription
 
   await sequelizeTypescript.transaction(async t => {
+    if (subscription.state === 'accepted') await sendUndoFollow(subscription, t)
+
     return subscription.destroy({ transaction: t })
   })
 
-  return res.type('json').status(204).end()
+  return res.type('json')
+            .status(HttpStatusCode.NO_CONTENT_204)
+            .end()
 }
 
 async function getUserSubscriptions (req: express.Request, res: express.Response) {
   const user = res.locals.oauth.token.User
   const actorId = user.Account.Actor.id
 
-  const resultList = await ActorFollowModel.listSubscriptionsForApi(actorId, req.query.start, req.query.count, req.query.sort)
+  const resultList = await ActorFollowModel.listSubscriptionsForApi({
+    actorId,
+    start: req.query.start,
+    count: req.query.count,
+    sort: req.query.sort,
+    search: req.query.search
+  })
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }

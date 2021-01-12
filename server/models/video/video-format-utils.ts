@@ -1,13 +1,13 @@
 import { Video, VideoDetails } from '../../../shared/models/videos'
 import { VideoModel } from './video'
-import { ActivityTagObject, ActivityUrlObject, VideoTorrentObject } from '../../../shared/models/activitypub/objects'
+import { ActivityTagObject, ActivityUrlObject, VideoObject } from '../../../shared/models/activitypub/objects'
 import { MIMETYPES, WEBSERVER } from '../../initializers/constants'
 import { VideoCaptionModel } from './video-caption'
 import {
-  getVideoCommentsActivityPubUrl,
-  getVideoDislikesActivityPubUrl,
-  getVideoLikesActivityPubUrl,
-  getVideoSharesActivityPubUrl
+  getLocalVideoCommentsActivityPubUrl,
+  getLocalVideoDislikesActivityPubUrl,
+  getLocalVideoLikesActivityPubUrl,
+  getLocalVideoSharesActivityPubUrl
 } from '../../lib/activitypub/url'
 import { isArray } from '../../helpers/custom-validators/misc'
 import { VideoStreamingPlaylist } from '../../../shared/models/videos/video-streaming-playlist.model'
@@ -59,7 +59,11 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
       label: VideoModel.getPrivacyLabel(video.privacy)
     },
     nsfw: video.nsfw,
-    description: options && options.completeDescription === true ? video.description : video.getTruncatedDescription(),
+
+    description: options && options.completeDescription === true
+      ? video.description
+      : video.getTruncatedDescription(),
+
     isLocal: video.isOwned(),
     duration: video.duration,
     views: video.views,
@@ -73,12 +77,17 @@ function videoModelToFormattedJSON (video: MVideoFormattable, options?: VideoFor
     publishedAt: video.publishedAt,
     originallyPublishedAt: video.originallyPublishedAt,
 
+    isLive: video.isLive,
+
     account: video.VideoChannel.Account.toFormattedSummaryJSON(),
     channel: video.VideoChannel.toFormattedSummaryJSON(),
 
     userHistory: userHistory ? {
       currentTime: userHistory.currentTime
-    } : undefined
+    } : undefined,
+
+    // Can be added by external plugins
+    pluginData: (video as any).pluginData
   }
 
   if (options) {
@@ -183,7 +192,13 @@ function videoFilesModelToFormattedJSON (
 ): VideoFile[] {
   const video = extractVideo(model)
 
+<<<<<<< Updated upstream
   return videoFiles
+=======
+  return [ ...videoFiles ]
+    .filter(f => !f.isLive())
+    .sort(sortByResolutionDesc)
+>>>>>>> Stashed changes
     .map(videoFile => {
       return {
         resolution: {
@@ -214,7 +229,15 @@ function addVideoFilesInAPAcc (
   baseUrlWs: string,
   files: MVideoFile[]
 ) {
+<<<<<<< Updated upstream
   for (const file of files) {
+=======
+  const sortedFiles = [ ...files ]
+    .filter(f => !f.isLive())
+    .sort(sortByResolutionDesc)
+
+  for (const file of sortedFiles) {
+>>>>>>> Stashed changes
     acc.push({
       type: 'Link',
       mediaType: MIMETYPES.VIDEO.EXT_MIMETYPE[file.extname] as any,
@@ -249,7 +272,7 @@ function addVideoFilesInAPAcc (
   }
 }
 
-function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
+function videoModelToActivityPubObject (video: MVideoAP): VideoObject {
   const { baseUrlHttp, baseUrlWs } = video.getBaseUrls()
   if (!video.Tags) video.Tags = []
 
@@ -341,11 +364,25 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
     views: video.views,
     sensitive: video.nsfw,
     waitTranscoding: video.waitTranscoding,
+    isLiveBroadcast: video.isLive,
+
+    liveSaveReplay: video.isLive
+      ? video.VideoLive.saveReplay
+      : null,
+
+    permanentLive: video.isLive
+      ? video.VideoLive.permanentLive
+      : null,
+
     state: video.state,
     commentsEnabled: video.commentsEnabled,
     downloadEnabled: video.downloadEnabled,
     published: video.publishedAt.toISOString(),
-    originallyPublishedAt: video.originallyPublishedAt ? video.originallyPublishedAt.toISOString() : null,
+
+    originallyPublishedAt: video.originallyPublishedAt
+      ? video.originallyPublishedAt.toISOString()
+      : null,
+
     updated: video.updatedAt.toISOString(),
     mediaType: 'text/markdown',
     content: video.getTruncatedDescription(),
@@ -366,10 +403,10 @@ function videoModelToActivityPubObject (video: MVideoAP): VideoTorrentObject {
     //   height: i.height
     // })),
     url,
-    likes: getVideoLikesActivityPubUrl(video),
-    dislikes: getVideoDislikesActivityPubUrl(video),
-    shares: getVideoSharesActivityPubUrl(video),
-    comments: getVideoCommentsActivityPubUrl(video),
+    likes: getLocalVideoLikesActivityPubUrl(video),
+    dislikes: getLocalVideoDislikesActivityPubUrl(video),
+    shares: getLocalVideoSharesActivityPubUrl(video),
+    comments: getLocalVideoCommentsActivityPubUrl(video),
     attributedTo: [
       {
         type: 'Person',

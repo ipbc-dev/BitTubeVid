@@ -1,5 +1,9 @@
 import * as express from 'express'
+import { getServerActor } from '@server/models/application/application'
+import { buildNSFWFilter, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
 import { getFormattedObjects } from '../../helpers/utils'
+import { Hooks } from '../../lib/plugins/hooks'
+import { JobQueue } from '../../lib/job-queue'
 import {
   asyncMiddleware,
   authenticate,
@@ -8,6 +12,7 @@ import {
   paginationValidator,
   setDefaultPagination,
   setDefaultSort,
+  setDefaultVideosSort,
   videoPlaylistsSortValidator,
   videoRatesSortValidator,
   videoRatingValidator
@@ -17,18 +22,15 @@ import {
   accountsSortValidator,
   ensureAuthUserOwnsAccountValidator,
   videoChannelsSortValidator,
-  videosSortValidator,
-  videoChannelStatsValidator
+  videoChannelStatsValidator,
+  videosSortValidator
 } from '../../middlewares/validators'
+import { commonVideoPlaylistFiltersValidator, videoPlaylistsSearchValidator } from '../../middlewares/validators/videos/video-playlists'
 import { AccountModel } from '../../models/account/account'
 import { AccountVideoRateModel } from '../../models/account/account-video-rate'
 import { VideoModel } from '../../models/video/video'
-import { buildNSFWFilter, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
 import { VideoChannelModel } from '../../models/video/video-channel'
-import { JobQueue } from '../../lib/job-queue'
 import { VideoPlaylistModel } from '../../models/video/video-playlist'
-import { commonVideoPlaylistFiltersValidator, videoPlaylistsSearchValidator } from '../../middlewares/validators/videos/video-playlists'
-import { getServerActor } from '@server/models/application/application'
 
 const accountsRouter = express.Router()
 
@@ -49,7 +51,7 @@ accountsRouter.get('/:accountName/videos',
   asyncMiddleware(accountNameWithHostGetValidator),
   paginationValidator,
   videosSortValidator,
-  setDefaultSort,
+  setDefaultVideosSort,
   setDefaultPagination,
   optionalAuthenticate,
   commonVideosFiltersValidator,
@@ -120,7 +122,8 @@ async function listAccountChannels (req: express.Request, res: express.Response)
     start: req.query.start,
     count: req.query.count,
     sort: req.query.sort,
-    withStats: req.query.withStats
+    withStats: req.query.withStats,
+    search: req.query.search
   }
 
   const resultList = await VideoChannelModel.listByAccount(options)
@@ -156,7 +159,7 @@ async function listAccountVideos (req: express.Request, res: express.Response) {
   const followerActorId = isUserAbleToSearchRemoteURI(res) ? null : undefined
   const countVideos = getCountVideos(req)
 
-  const resultList = await VideoModel.listForApi({
+  const apiOptions = await Hooks.wrapObject({
     followerActorId,
     start: req.query.start,
     count: req.query.count,
@@ -173,7 +176,13 @@ async function listAccountVideos (req: express.Request, res: express.Response) {
     accountId: account.id,
     user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
     countVideos
-  })
+  }, 'filter:api.accounts.videos.list.params')
+
+  const resultList = await Hooks.wrapPromiseFun(
+    VideoModel.listForApi,
+    apiOptions,
+    'filter:api.accounts.videos.list.result'
+  )
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }

@@ -1,6 +1,21 @@
 import { catchError, map, switchMap } from 'rxjs/operators'
 import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core'
+<<<<<<< Updated upstream
+=======
+import { ComponentPagination, RestExtractor, RestService } from '@app/core'
+import { PluginService } from '@app/core/plugins/plugin.service'
+import { peertubeTranslate } from '@shared/core-utils/i18n'
+import {
+  InstallOrUpdatePlugin,
+  ManagePlugin,
+  PeerTubePlugin,
+  PeerTubePluginIndex,
+  PluginType,
+  RegisteredServerSettings,
+  ResultList
+} from '@shared/models'
+>>>>>>> Stashed changes
 import { environment } from '../../../../environments/environment'
 import { RestExtractor, RestService } from '../../../shared'
 import { I18n } from '@ngx-translate/i18n-polyfill'
@@ -23,18 +38,17 @@ export class PluginApiService {
     private authHttp: HttpClient,
     private restExtractor: RestExtractor,
     private restService: RestService,
-    private i18n: I18n,
     private pluginService: PluginService
   ) { }
 
   getPluginTypeOptions () {
     return [
       {
-        label: this.i18n('Plugins'),
+        label: $localize`Plugins`,
         value: PluginType.PLUGIN
       },
       {
-        label: this.i18n('Themes'),
+        label: $localize`Themes`,
         value: PluginType.THEME
       }
     ]
@@ -42,10 +56,10 @@ export class PluginApiService {
 
   getPluginTypeLabel (type: PluginType) {
     if (type === PluginType.PLUGIN) {
-      return this.i18n('plugin')
+      return $localize`plugin`
     }
 
-    return this.i18n('theme')
+    return $localize`theme`
   }
 
   getPlugins (
@@ -132,6 +146,14 @@ export class PluginApiService {
 
     return this.authHttp.post(PluginApiService.BASE_PLUGIN_URL + '/install', body)
                .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  getPluginOrThemeHref (type: PluginType, name: string) {
+    const typeString = type === PluginType.PLUGIN
+      ? 'plugin'
+      : 'theme'
+
+    return `https://www.npmjs.com/package/peertube-${typeString}-${name}`
   }
 
   private translateSettingsLabel (npmName: string, res: RegisteredServerSettings): Observable<RegisteredServerSettings> {

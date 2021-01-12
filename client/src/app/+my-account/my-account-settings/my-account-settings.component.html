@@ -1,8 +1,22 @@
+<<<<<<< Updated upstream
 <div class="form-row"> <!-- profile grid -->
+=======
+<h1 class="sr-only" i18n>Settings</h1>
+<div class="form-row"> <!-- preview -->
+  <div class="form-group col-12 col-lg-4 col-xl-3"></div>
+
+  <div class="form-group col-12 col-lg-8 col-xl-9">
+    <my-actor-avatar-info [actor]="user.account" (avatarChange)="onAvatarChange($event)"></my-actor-avatar-info>
+  </div>
+</div>
+
+<div class="form-row"> <!-- profile settings grid -->
+>>>>>>> Stashed changes
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div i18n class="account-title">PROFILE</div>
   </div>
 
+<<<<<<< Updated upstream
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
     <my-actor-avatar-info [actor]="user.account" (avatarChange)="onAvatarChange($event)"></my-actor-avatar-info>
 
@@ -21,19 +35,43 @@
         </div>
       </div>
     </div>
+=======
+  <div class="form-group col-12 col-lg-8 col-xl-9">
+
+    <my-user-quota [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-quota>
+>>>>>>> Stashed changes
 
     <my-account-profile [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-profile>
   </div>
 </div>
 
+<<<<<<< Updated upstream
+=======
+<div *ngIf="isPremiumStorageEnabled()" class="form-row mt-5"> <!-- storage settings grid -->
+  <div class="form-group col-12 col-lg-4 col-xl-3">
+    <div class="anchor" id="storage-settings"></div> <!-- storage settings anchor -->
+    <div i18n class="account-title">STORAGE SETTINGS</div>
+  </div> <!-- storage settings grid END -->
+
+  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+    <my-account-storage-settings [user]="user" [userInformationLoaded]="userInformationLoaded" ></my-account-storage-settings> <!-- [userQuotaObject]="userQuotaObject" -->
+  </div>
+</div>
+
+>>>>>>> Stashed changes
 <div class="form-row mt-5"> <!-- video settings grid -->
   <div class="form-group col-12 col-lg-4 col-xl-3">
     <div class="anchor" id="video-settings"></div> <!-- video settings anchor -->
     <div i18n class="account-title">VIDEO SETTINGS</div>
   </div>
 
+<<<<<<< Updated upstream
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
     <my-account-video-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-video-settings>
+=======
+  <div class="form-group col-12 col-lg-8 col-xl-9">
+    <my-user-video-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-video-settings>
+>>>>>>> Stashed changes
   </div>
 </div>
 
@@ -43,7 +81,7 @@
     <div i18n class="account-title">NOTIFICATIONS</div>
   </div>
 
-  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+  <div class="form-group col-12 col-lg-8 col-xl-9">
     <my-account-notification-preferences [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-notification-preferences>
   </div>
 </div>
@@ -53,8 +91,13 @@
     <div i18n class="account-title">INTERFACE</div>
   </div>
 
+<<<<<<< Updated upstream
   <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
     <my-account-interface-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-account-interface-settings>
+=======
+  <div class="form-group col-12 col-lg-8 col-xl-9">
+    <my-user-interface-settings [user]="user" [userInformationLoaded]="userInformationLoaded"></my-user-interface-settings>
+>>>>>>> Stashed changes
   </div>
 </div>
 
@@ -63,7 +106,7 @@
     <div i18n class="account-title">PASSWORD</div>
   </div>
 
-  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+  <div class="form-group col-12 col-lg-8 col-xl-9">
     <my-account-change-password></my-account-change-password>
   </div>
 </div>
@@ -73,7 +116,7 @@
     <div i18n class="account-title">EMAIL</div>
   </div>
 
-  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+  <div class="form-group col-12 col-lg-8 col-xl-9">
     <my-account-change-email></my-account-change-email>
   </div>
 </div>
@@ -83,7 +126,7 @@
     <div i18n class="account-title">DANGER ZONE</div>
   </div>
 
-  <div class="form-group form-group-right col-12 col-lg-8 col-xl-9">
+  <div class="form-group col-12 col-lg-8 col-xl-9">
     <my-account-danger-zone [user]="user"></my-account-danger-zone>
   </div>
 </div>

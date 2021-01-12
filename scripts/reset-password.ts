@@ -21,7 +21,7 @@ initDatabaseModels(true)
   })
   .then(user => {
     if (!user) {
-      console.error('User unknown.')
+      console.error('Unknown user.')
       process.exit(-1)
     }
 
@@ -52,4 +52,8 @@ initDatabaseModels(true)
         .catch(err => console.error(err))
         .finally(() => process.exit(0))
     })
+  })
+  .catch(err => {
+    console.error(err)
+    process.exit(-1)
   })

@@ -1,9 +1,13 @@
 import { Component, ElementRef, ViewChild, Inject, LOCALE_ID } from '@angular/core'
 import { I18N_LOCALES } from '../../../../shared'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap'
+<<<<<<< Updated upstream
 import { sortBy } from '@app/shared/misc/utils'
 import { getCompleteLocale } from '@shared/models/i18n'
 import { isOnDevLocale, getDevLocale } from '@app/shared/i18n/i18n-utils'
+=======
+import { getCompleteLocale, getShortLocale, I18N_LOCALES } from '@shared/core-utils/i18n'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-language-chooser',

@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { ActivatedRoute, Router } from '@angular/router'
 import { UserService } from '@app/shared/users/user.service'
 import { Notifier } from '../../../core'
@@ -7,6 +8,12 @@ import { I18n } from '@ngx-translate/i18n-polyfill'
 import { FormValidatorService } from '@app/shared/forms/form-validators/form-validator.service'
 import { UserValidatorsService } from '@app/shared/forms/form-validators/user-validators.service'
 import { FormReactive } from '../../../shared'
+=======
+import { Notifier, UserService } from '@app/core'
+import { USER_PASSWORD_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { UserUpdate } from '@shared/models'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-user-password',
@@ -22,17 +29,15 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
-    private userService: UserService,
-    private i18n: I18n
-  ) {
+    private userService: UserService
+    ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      password: this.userValidatorsService.USER_PASSWORD
+      password: USER_PASSWORD_VALIDATOR
     })
   }
 
@@ -43,9 +48,7 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
 
     this.userService.updateUser(this.userId, userUpdate).subscribe(
       () => {
-        this.notifier.success(
-          this.i18n('Password changed for user {{username}}.', { username: this.username })
-        )
+        this.notifier.success($localize`Password changed for user ${this.username}.`)
       },
 
       err => this.error = err.message
@@ -57,6 +60,6 @@ export class UserPasswordComponent extends FormReactive implements OnInit {
   }
 
   getFormButtonTitle () {
-    return this.i18n('Update user password')
+    return $localize`Update user password`
   }
 }

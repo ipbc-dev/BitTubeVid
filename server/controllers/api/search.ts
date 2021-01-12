@@ -1,4 +1,18 @@
 import * as express from 'express'
+<<<<<<< Updated upstream
+=======
+import { sanitizeUrl } from '@server/helpers/core-utils'
+import { doRequest } from '@server/helpers/requests'
+import { CONFIG } from '@server/initializers/config'
+import { getOrCreateVideoAndAccountAndChannel } from '@server/lib/activitypub/videos'
+import { AccountBlocklistModel } from '@server/models/account/account-blocklist'
+import { getServerActor } from '@server/models/application/application'
+import { ServerBlocklistModel } from '@server/models/server/server-blocklist'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
+import { ResultList, Video, VideoChannel } from '@shared/models'
+import { SearchTargetQuery } from '@shared/models/search/search-target-query.model'
+import { VideoChannelsSearchQuery, VideosSearchQuery } from '../../../shared/models/search'
+>>>>>>> Stashed changes
 import { buildNSFWFilter, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
 import { getFormattedObjects } from '../../helpers/utils'
 import { VideoModel } from '../../models/video/video'
@@ -10,7 +24,7 @@ import {
   setDefaultPagination,
   setDefaultSearchSort,
   videoChannelsSearchSortValidator,
-  videoChannelsSearchValidator,
+  videoChannelsListSearchValidator,
   videosSearchSortValidator,
   videosSearchValidator
 } from '../../middlewares'
@@ -42,7 +56,7 @@ searchRouter.get('/video-channels',
   videoChannelsSearchSortValidator,
   setDefaultSearchSort,
   optionalAuthenticate,
-  videoChannelsSearchValidator,
+  videoChannelsListSearchValidator,
   asyncMiddleware(searchVideoChannels)
 )
 
@@ -71,6 +85,29 @@ function searchVideoChannels (req: express.Request, res: express.Response) {
   return searchVideoChannelsDB(query, res)
 }
 
+<<<<<<< Updated upstream
+=======
+async function searchVideoChannelsIndex (query: VideoChannelsSearchQuery, res: express.Response) {
+  const result = await buildMutedForSearchIndex(res)
+
+  const body = Object.assign(query, result)
+
+  const url = sanitizeUrl(CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/video-channels'
+
+  try {
+    logger.debug('Doing video channels search index request on %s.', url, { body })
+
+    const searchIndexResult = await doRequest<ResultList<VideoChannel>>({ uri: url, body, json: true })
+
+    return res.json(searchIndexResult.body)
+  } catch (err) {
+    logger.warn('Cannot use search index to make video channels search.', { err })
+
+    return res.sendStatus(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
+  }
+}
+
+>>>>>>> Stashed changes
 async function searchVideoChannelsDB (query: VideoChannelsSearchQuery, res: express.Response) {
   const serverActor = await getServerActor()
 
@@ -127,6 +164,40 @@ function searchVideos (req: express.Request, res: express.Response) {
   return searchVideosDB(query, res)
 }
 
+<<<<<<< Updated upstream
+=======
+async function searchVideosIndex (query: VideosSearchQuery, res: express.Response) {
+  const result = await buildMutedForSearchIndex(res)
+
+  const body: VideosSearchQuery = Object.assign(query, result)
+
+  // Use the default instance NSFW policy if not specified
+  if (!body.nsfw) {
+    const nsfwPolicy = res.locals.oauth
+      ? res.locals.oauth.token.User.nsfwPolicy
+      : CONFIG.INSTANCE.DEFAULT_NSFW_POLICY
+
+    body.nsfw = nsfwPolicy === 'do_not_list'
+      ? 'false'
+      : 'both'
+  }
+
+  const url = sanitizeUrl(CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/videos'
+
+  try {
+    logger.debug('Doing videos search index request on %s.', url, { body })
+
+    const searchIndexResult = await doRequest<ResultList<Video>>({ uri: url, body, json: true })
+
+    return res.json(searchIndexResult.body)
+  } catch (err) {
+    logger.warn('Cannot use search index to make video search.', { err })
+
+    return res.sendStatus(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
+  }
+}
+
+>>>>>>> Stashed changes
 async function searchVideosDB (query: VideosSearchQuery, res: express.Response) {
   const options = Object.assign(query, {
     includeLocalVideos: true,

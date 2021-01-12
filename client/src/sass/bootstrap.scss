@@ -27,13 +27,26 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
 }
 
 /* rules for dropdowns excepts when in button group, to avoid impacting the dropdown-toggle */
-.dropdown:not(.btn-group):not(.dropdown-root):not(.action-dropdown):not(.input-group-prepend) {
+.dropdown {
   z-index: z(dropdown) !important;
+}
 
-  &.list-overflow-menu,
-  &.parent-entry {
-    z-index: z(header) - 1 !important;
-  }
+.list-overflow-menu,
+.parent-entry {
+  z-index: z(header) - 1 !important;
+}
+
+.btn-group,
+.dropdown-root,
+.action-dropdown,
+.input-group-prepend,
+.column-toggle {
+  z-index: inherit !important;
+}
+
+.btn-group > .btn:not(:first-child) {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
 }
 
 .dropdown-menu {
@@ -54,6 +67,10 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
       color: var(--mainBackgroundColor) !important;
       background-color: var(--mainHoverColor);
       opacity: .9;
+    }
+
+    &:active {
+      color: pvar(--mainForegroundColor) !important;
     }
 
     &::after {
@@ -143,6 +160,36 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
   }
 }
 
+
+// On desktop browsers, make the content and header horizontally sticked to right not move when modal open and close
+.modal-open {
+  overflow-y: scroll !important; // Make sure vertical scroll bar is always visible on desktop browsers to get disabled scrollbar effect
+  width: 100vw; // Make sure the content fits all the available width
+}
+
+// On touchscreen devices, simply overflow: hidden to avoid detached overlay on scroll
+@media (hover: none) and (pointer: coarse) {
+  .modal-open, .menu-open {
+    overflow: hidden !important;
+  }
+
+  // On touchscreen devices display content overlay when opened menu
+  .menu-open {
+    .main-col {
+      &::before {
+        background-color: black;
+        width: 100vw;
+        height: 100vh;
+        opacity: 0.75;
+        content: '';
+        display: block;
+        position: fixed;
+        z-index: z('menu') - 1;
+      }
+    }
+  }
+}
+
 // Nav customizations
 .nav .nav-link {
   display: flex !important;
@@ -153,9 +200,14 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
 
 .nav.nav-pills {
   font-size: 16px !important;
+  font-weight: $font-semibold !important;
 
-  .nav-link.active {
-    font-weight: $font-semibold !important;
+  .nav-link {
+    opacity: 0.6 !important;
+
+    &.active, &:hover, &:active, &:focus {
+      opacity: 1 !important;
+    }
   }
 
   a {
@@ -165,29 +217,36 @@ $icon-font-path: '~@neos21/bootstrap3-glyphicons/assets/fonts/';
   }
 }
 
-.nav-tabs {
+.nav-tabs .nav-link {
+  @include disable-default-a-behaviour;
 
-  .nav-link {
-    @include disable-default-a-behaviour;
-
+<<<<<<< Updated upstream
     color: var(--mainForegroundColor) !important;
   }
 }
+=======
+  color: pvar(--mainForegroundColor);
+  font-weight: $font-semibold;
+  border: none;
+  border-bottom: 2px solid transparent;
+  opacity: 0.6;
+>>>>>>> Stashed changes
 
-.nav-tabs .nav-link {
-  &:not(.active) {
-    border-bottom: 3px solid transparent;
-  }
   &.active {
+<<<<<<< Updated upstream
     font-weight: $font-semibold;
     background-color: var(--mainBackgroundColor) !important;
     border: none;
     border-bottom: 2px solid var(--mainColor);
+=======
+    color: pvar(--mainForegroundColor);
+    background-color: pvar(--mainBackgroundColor) !important;
+    border-bottom-color: pvar(--mainColor);
+>>>>>>> Stashed changes
   }
-  &:hover {
-    border-top-color: transparent;
-    border-left-color: transparent;
-    border-right-color: transparent;
+
+  &.active, &:hover, &:active, &:focus {
+    opacity: 1;
   }
 }
 
@@ -303,6 +362,7 @@ ngb-tooltip-window {
     position: absolute;
     right: .5rem;
     height: 95%;
+    font-size: 14px;
 
     &:hover {
       color: rgba(0, 0, 0, 0.7);
@@ -312,5 +372,27 @@ ngb-tooltip-window {
 
   input:placeholder-shown + .form-control-clear {
     display: none;
+  }
+}
+
+.callout {
+  padding: 1.25rem;
+  border: 1px solid #eee;
+  border-radius: .25rem;
+
+  & > label {
+    position: relative;
+    top: -5px;
+    left: -10px;
+    color: #6c757d !important;
+  }
+
+  &:not(.callout-light) {
+    border-left-width: .25rem;
+  }
+  
+  &.callout-info {
+    border-color: pvar(--mainColorLightest);
+    border-left-color: pvar(--mainColor);
   }
 }

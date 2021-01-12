@@ -1,11 +1,11 @@
-import { AccountSummary, VideoChannelSummary, VideoState } from '../../index'
-import { Account } from '../actors'
-import { VideoChannel } from './channel/video-channel.model'
+import { Account, AccountSummary } from '../actors'
+import { VideoChannel, VideoChannelSummary } from './channel/video-channel.model'
+import { VideoConstant } from './video-constant.model'
+import { VideoFile } from './video-file.model'
 import { VideoPrivacy } from './video-privacy.enum'
 import { VideoScheduleUpdate } from './video-schedule-update.model'
-import { VideoConstant } from './video-constant.model'
+import { VideoState } from './video-state.enum'
 import { VideoStreamingPlaylist } from './video-streaming-playlist.model'
-import { VideoFile } from './video-file.model'
 
 export interface Video {
   id: number
@@ -22,6 +22,12 @@ export interface Video {
   duration: number
   isLocal: boolean
   name: string
+<<<<<<< Updated upstream
+=======
+
+  isLive: boolean
+
+>>>>>>> Stashed changes
   thumbnailPath: string
   previewPath: string
   embedPath: string
@@ -43,6 +49,8 @@ export interface Video {
   userHistory?: {
     currentTime: number
   }
+
+  pluginData?: any
 }
 
 export interface VideoDetails extends Video {

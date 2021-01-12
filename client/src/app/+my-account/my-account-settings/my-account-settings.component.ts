@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { Component, OnInit, AfterViewChecked } from '@angular/core'
 import { Notifier } from '@app/core'
 import { BytesPipe } from 'ngx-pipes'
@@ -6,15 +7,23 @@ import { User } from '../../shared'
 import { UserService } from '../../shared/users'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { ViewportScroller } from '@angular/common'
+=======
+import { ViewportScroller } from '@angular/common'
+import { AfterViewChecked, Component, OnInit, OnDestroy } from '@angular/core'
+import { AuthService, Notifier, User, UserService, ServerService } from '@app/core'
+import { HttpErrorResponse } from '@angular/common/http'
+import { uploadErrorHandler } from '@app/helpers'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-account-settings',
   templateUrl: './my-account-settings.component.html',
   styleUrls: [ './my-account-settings.component.scss' ]
 })
-export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
+export class MyAccountSettingsComponent implements OnInit, OnDestroy, AfterViewChecked {
   user: User = null
 
+<<<<<<< Updated upstream
   userVideoQuota = '0'
   userVideoQuotaUsed = 0
   userVideoQuotaPercentage = 15
@@ -22,14 +31,19 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
   userVideoQuotaDaily = '0'
   userVideoQuotaUsedDaily = 0
   userVideoQuotaDailyPercentage = 15
+=======
+  private lastScrollHash: string
+>>>>>>> Stashed changes
 
   constructor (
     private viewportScroller: ViewportScroller,
     private userService: UserService,
     private authService: AuthService,
     private notifier: Notifier,
-    private i18n: I18n
-  ) {}
+    private serverService: ServerService
+    ) {
+    this.getUserInfo = this.getUserInfo.bind(this)
+  }
 
   get userInformationLoaded () {
     return this.authService.userInformationLoaded
@@ -37,6 +51,7 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
 
   ngOnInit () {
     this.user = this.authService.getUser()
+<<<<<<< Updated upstream
 
     this.authService.userInformationLoaded.subscribe(
       () => {
@@ -65,22 +80,50 @@ export class MyAccountSettingsComponent implements OnInit, AfterViewChecked {
 
   ngAfterViewChecked () {
     if (window.location.hash) this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+=======
+    document.body.addEventListener('premiumStorageAddedSuccessfully', this.getUserInfo)
+  }
+
+  ngAfterViewChecked () {
+    if (window.location.hash && window.location.hash !== this.lastScrollHash) {
+      this.viewportScroller.scrollToAnchor(window.location.hash.replace('#', ''))
+
+      this.lastScrollHash = window.location.hash
+    }
+
+>>>>>>> Stashed changes
   }
 
   onAvatarChange (formData: FormData) {
     this.userService.changeAvatar(formData)
       .subscribe(
         data => {
-          this.notifier.success(this.i18n('Avatar changed.'))
+          this.notifier.success($localize`Avatar changed.`)
 
           this.user.updateAccountAvatar(data.avatar)
         },
 
-        err => this.notifier.error(err.message)
+        (err: HttpErrorResponse) => uploadErrorHandler({
+          err,
+          name: $localize`avatar`,
+          notifier: this.notifier
+        })
       )
   }
 
-  hasDailyQuota () {
-    return this.user.videoQuotaDaily !== -1
+  isPremiumStorageEnabled () {
+    const isPremiumStorageEnabled = this.serverService.getTmpConfig().premium_storage.enabled
+    return isPremiumStorageEnabled
+  }
+
+  ngOnDestroy () {
+    document.body.removeEventListener('premiumStorageAddedSuccessfully', this.getUserInfo)
+  }
+
+  getUserInfo () {
+    this.authService.refreshUserInformation()
+    setTimeout(() => {
+      this.user = this.authService.getUser()
+    }, 1000)
   }
 }

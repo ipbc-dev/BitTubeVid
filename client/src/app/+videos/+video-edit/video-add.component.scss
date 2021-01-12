@@ -1,0 +1,126 @@
+@import '_variables';
+@import '_mixins';
+
+$border-width: 3px;
+$border-type: solid;
+$border-color: #EAEAEA;
+$nav-link-height: 40px;
+
+.no-upload {
+  height: 100%;
+  width: 100%;
+  text-align: center;
+
+  .about-link {
+    @include peertube-button-link;
+    @include orange-button;
+
+    height: fit-content;
+    margin-top: 10px;
+  }
+
+  img {
+    margin-top: 10px;
+    margin-bottom: 75px;
+    width: 220px;
+    height: auto;
+  }
+
+  @media screen and (max-height: 600px) {
+    img {
+      margin-top: 5px;
+      width: 160px;
+    }
+  }
+}
+
+.margin-content {
+  padding-top: 20px;
+}
+
+.alert {
+  font-size: 15px;
+}
+
+::ng-deep .video-add-nav {
+  border-bottom: $border-width $border-type $border-color;
+  margin: 20px 0 0 0 !important;
+
+  &.hide-nav {
+    display: none !important;
+  }
+
+  a.nav-link {
+    @include disable-default-a-behaviour;
+
+    margin-bottom: -$border-width;
+    height: $nav-link-height !important;
+    padding: 0 30px !important;
+    font-size: 15px;
+
+    border: $border-width $border-type transparent;
+
+    span {
+      border-bottom: 2px solid transparent;
+    }
+
+    &.active {
+      border-color: $border-color;
+      border-bottom-color: transparent;
+      background-color: pvar(--submenuColor) !important;
+
+      span {
+        border-bottom-color: pvar(--mainColor);
+      }
+    }
+
+    &:hover:not(.active) {
+      border-color: transparent;
+    }
+  }
+}
+
+::ng-deep .upload-video-container {
+  border: $border-width $border-type $border-color;
+  border-top: transparent;
+
+  background-color: pvar(--submenuColor);
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  width: 100%;
+  min-height: 440px;
+  padding-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+
+  &.dragover {
+    border: 3px dashed pvar(--mainColor);
+  }
+}
+
+@mixin nav-scroll {
+  ::ng-deep .video-add-nav {
+    height: #{$nav-link-height + $border-width * 2};
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: unset;
+
+    /* Hide active tab style to not have a moving tab effect */
+    a.nav-link.active {
+      border-color: transparent;
+      background-color: pvar(--mainBackgroundColor) !important;
+    }
+  }
+}
+
+/* Make .video-add-nav tabs scrollable on small devices */
+@media screen and (max-width: $small-view) {
+  @include nav-scroll();
+}
+
+@media screen and (max-width: #{$small-view + $menu-width}) {
+  :host-context(.main-col:not(.expanded)) {
+    @include nav-scroll();
+  }
+}

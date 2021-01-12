@@ -60,6 +60,11 @@ import {
 } from '../../../../shared/models/users'
 import { MockSmtpServer } from '../../../../shared/extra-utils/miscs/email'
 import { addUserSubscription, removeUserSubscription } from '../../../../shared/extra-utils/users/user-subscriptions'
+<<<<<<< Updated upstream
+=======
+import { getBadVideoUrl, getGoodVideoUrl, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
+import { UserNotification, UserNotificationType } from '../../../../shared/models/users'
+>>>>>>> Stashed changes
 import { VideoPrivacy } from '../../../../shared/models/videos'
 import { getBadVideoUrl, getYoutubeVideoUrl, importVideo } from '../../../../shared/extra-utils/videos/video-imports'
 import { addVideoCommentReply, addVideoCommentThread } from '../../../../shared/extra-utils/videos/video-comments'
@@ -186,7 +191,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should not send notifications if the user does not follow the video publisher', async function () {
-      this.timeout(10000)
+      this.timeout(50000)
 
       await uploadVideoByLocalAccount(servers)
 
@@ -218,7 +223,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should send a new video notification on a scheduled publication', async function () {
-      this.timeout(20000)
+      this.timeout(50000)
 
       // In 2 seconds
       const updateAt = new Date(new Date().getTime() + 2000)
@@ -257,7 +262,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should not send a notification before the video is published', async function () {
-      this.timeout(20000)
+      this.timeout(50000)
 
       const updateAt = new Date(new Date().getTime() + 1000000)
 
@@ -275,7 +280,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should send a new video notification when a video becomes public', async function () {
-      this.timeout(10000)
+      this.timeout(50000)
 
       const data = { privacy: VideoPrivacy.PRIVATE }
       const { name, uuid } = await uploadVideoByLocalAccount(servers, data)
@@ -289,7 +294,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should send a new video notification when a remote video becomes public', async function () {
-      this.timeout(20000)
+      this.timeout(50000)
 
       const data = { privacy: VideoPrivacy.PRIVATE }
       const { name, uuid } = await uploadVideoByRemoteAccount(servers, data)
@@ -303,7 +308,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should not send a new video notification when a video becomes unlisted', async function () {
-      this.timeout(20000)
+      this.timeout(50000)
 
       const data = { privacy: VideoPrivacy.PRIVATE }
       const { name, uuid } = await uploadVideoByLocalAccount(servers, data)
@@ -314,7 +319,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should not send a new video notification when a remote video becomes unlisted', async function () {
-      this.timeout(20000)
+      this.timeout(50000)
 
       const data = { privacy: VideoPrivacy.PRIVATE }
       const { name, uuid } = await uploadVideoByRemoteAccount(servers, data)
@@ -334,7 +339,7 @@ describe('Test users notifications', function () {
         name,
         channelId,
         privacy: VideoPrivacy.PUBLIC,
-        targetUrl: getYoutubeVideoUrl()
+        targetUrl: getGoodVideoUrl()
       }
       const res = await importVideo(servers[0].url, servers[0].accessToken, attributes)
       const uuid = res.body.video.uuid
@@ -708,7 +713,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should not send a notification if transcoding is not enabled', async function () {
-      this.timeout(10000)
+      this.timeout(50000)
 
       const { name, uuid } = await uploadVideoByLocalAccount(servers)
       await waitJobs(servers)
@@ -755,7 +760,7 @@ describe('Test users notifications', function () {
         name,
         channelId,
         privacy: VideoPrivacy.PUBLIC,
-        targetUrl: getYoutubeVideoUrl(),
+        targetUrl: getGoodVideoUrl(),
         waitTranscoding: true
       }
       const res = await importVideo(servers[1].url, servers[1].accessToken, attributes)
@@ -842,13 +847,13 @@ describe('Test users notifications', function () {
         name,
         channelId,
         privacy: VideoPrivacy.PRIVATE,
-        targetUrl: getYoutubeVideoUrl()
+        targetUrl: getGoodVideoUrl()
       }
       const res = await importVideo(servers[0].url, servers[0].accessToken, attributes)
       const uuid = res.body.video.uuid
 
       await waitJobs(servers)
-      await checkMyVideoImportIsFinished(baseParams, name, uuid, getYoutubeVideoUrl(), true, 'presence')
+      await checkMyVideoImportIsFinished(baseParams, name, uuid, getGoodVideoUrl(), true, 'presence')
     })
   })
 
@@ -1003,7 +1008,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should notify when a local channel is following one of our channel', async function () {
-      this.timeout(10000)
+      this.timeout(50000)
 
       await addUserSubscription(servers[0].url, servers[0].accessToken, 'user_1_channel@localhost:' + servers[0].port)
       await waitJobs(servers)
@@ -1014,7 +1019,7 @@ describe('Test users notifications', function () {
     })
 
     it('Should notify when a remote channel is following one of our channel', async function () {
-      this.timeout(10000)
+      this.timeout(50000)
 
       await addUserSubscription(servers[1].url, servers[1].accessToken, 'user_1_channel@localhost:' + servers[0].port)
       await waitJobs(servers)
@@ -1026,7 +1031,7 @@ describe('Test users notifications', function () {
 
     // PeerTube does not support accout -> account follows
     // it('Should notify when a local account is following one of our channel', async function () {
-    //   this.timeout(10000)
+    //   this.timeout(50000)
     //
     //   await addUserSubscription(servers[0].url, servers[0].accessToken, 'user_1@localhost:' + servers[0].port)
     //
@@ -1036,7 +1041,7 @@ describe('Test users notifications', function () {
     // })
 
     // it('Should notify when a remote account is following one of our channel', async function () {
-    //   this.timeout(10000)
+    //   this.timeout(50000)
     //
     //   await addUserSubscription(servers[1].url, servers[1].accessToken, 'user_1@localhost:' + servers[0].port)
     //

@@ -6,6 +6,19 @@ import { ActorFollowModel } from '../../models/activitypub/actor-follow'
 import { areValidActorHandles, isValidActorHandle } from '../../helpers/custom-validators/activitypub/actor'
 import { toArray } from '../../helpers/custom-validators/misc'
 import { WEBSERVER } from '../../initializers/constants'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
+
+const userSubscriptionListValidator = [
+  query('search').optional().not().isEmpty().withMessage('Should have a valid search'),
+
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.debug('Checking userSubscriptionListValidator parameters', { parameters: req.query })
+
+    if (areValidationErrors(req, res)) return
+
+    return next()
+  }
+]
 
 const userSubscriptionAddValidator = [
   body('uri').custom(isValidActorHandle).withMessage('Should have a valid URI to follow (username@domain)'),
@@ -49,7 +62,7 @@ const userSubscriptionGetValidator = [
 
     if (!subscription || !subscription.ActorFollowing.VideoChannel) {
       return res
-        .status(404)
+        .status(HttpStatusCode.NOT_FOUND_404)
         .json({
           error: `Subscription ${req.params.uri} not found.`
         })
@@ -64,6 +77,7 @@ const userSubscriptionGetValidator = [
 
 export {
   areSubscriptionsExistValidator,
+  userSubscriptionListValidator,
   userSubscriptionAddValidator,
   userSubscriptionGetValidator
 }

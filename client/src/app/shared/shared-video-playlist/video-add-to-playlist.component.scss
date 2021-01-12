@@ -1,0 +1,153 @@
+@import '_variables';
+@import '_mixins';
+
+$optional-rows-checkbox-width: 34px;
+$timestamp-width: 50px;
+$timestamp-margin-right: 10px;
+
+.header,
+.dropdown-item,
+.input-container {
+  padding: 8px 24px;
+}
+
+.dropdown-item:active {
+  color: inherit;
+}
+
+.header {
+  min-width: 240px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid $separator-border-color;
+
+  .first-row {
+    display: flex;
+    align-items: center;
+
+    .title {
+      font-size: 18px;
+      flex-grow: 1;
+    }
+  }
+}
+
+.playlists {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.playlist {
+  padding: 0;
+
+  > .primary-row {
+    padding: 8px 10px 8px 24px;
+  }
+
+  > .optional-rows {
+    padding-left: 24px;
+  }
+
+  &.has-optional-row:hover {
+    background-color: inherit;
+  }
+}
+
+.primary-row,
+.optional-rows > div {
+  display: flex;
+
+  my-peertube-checkbox {
+    margin-right: 10px;
+    align-self: center;
+  }
+
+  .display-name {
+    display: flex;
+    align-items: flex-end;
+    flex-grow: 1;
+    margin: 0;
+    font-weight: $font-regular;
+    cursor: pointer;
+  }
+
+  .optional-row-icon {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+
+    my-global-icon {
+      @include apply-svg-color(#333);
+
+      width: 19px;
+      height: 19px;
+      margin-right: 0;
+    }
+  }
+
+  my-timestamp-input {
+    margin-right: $timestamp-margin-right;
+
+    ::ng-deep .ui-inputtext {
+      padding: 0;
+      width: $timestamp-width;
+    }
+  }
+}
+
+.optional-rows {
+  > div {
+    padding: 8px 5px 5px 10px;
+  }
+
+  my-peertube-checkbox {
+    display: block;
+    width: $optional-rows-checkbox-width;
+    margin-right: 0 !important;
+  }
+
+  .labels {
+    margin-left: $optional-rows-checkbox-width;
+    font-size: 13px;
+    color: pvar(--greyForegroundColor);
+    padding-top: 5px;
+    padding-bottom: 0;
+
+    div {
+      margin-right: $timestamp-margin-right;
+      width: $timestamp-width;
+    }
+  }
+}
+
+.new-playlist-button,
+.new-playlist-block {
+  padding-top: 10px;
+  border-top: 1px solid $separator-border-color;
+}
+
+.new-playlist-button  {
+  cursor: pointer;
+
+  my-global-icon {
+    @include apply-svg-color(#333);
+
+    position: relative;
+    left: -1px;
+    top: -1px;
+    margin-right: 4px;
+    width: 21px;
+    height: 21px;
+  }
+}
+
+input[type=text] {
+  @include peertube-input-text(200px);
+
+  display: block;
+}
+
+input[type=submit] {
+  @include peertube-button;
+  @include orange-button;
+}

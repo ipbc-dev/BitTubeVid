@@ -1,3 +1,4 @@
+import { values } from 'lodash'
 import { col, FindOptions, fn, literal, Op, QueryTypes, where, WhereOptions } from 'sequelize'
 import {
   AfterDestroy,
@@ -14,13 +15,27 @@ import {
   HasOne,
   Is,
   IsEmail,
+  IsUUID,
   Model,
   Scopes,
   Table,
   UpdatedAt
 } from 'sequelize-typescript'
-import { hasUserRight, MyUser, USER_ROLE_LABELS, UserRight, VideoAbuseState, VideoPlaylistType, VideoPrivacy } from '../../../shared'
+import {
+  MMyUserFormattable,
+  MUser,
+  MUserDefault,
+  MUserFormattable,
+  MUserNotifSettingChannelDefault,
+  MUserWithNotificationSetting,
+  MVideoFullLight
+} from '@server/types/models'
+import { hasUserRight, USER_ROLE_LABELS } from '../../../shared/core-utils/users'
+import { AbuseState, MyUser, UserRight, VideoPlaylistType, VideoPrivacy } from '../../../shared/models'
 import { User, UserRole } from '../../../shared/models/users'
+import { UserAdminFlag } from '../../../shared/models/users/user-flag.model'
+import { NSFWPolicyType } from '../../../shared/models/videos/nsfw-policy.type'
+import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
 import {
   isNoInstanceConfigWarningModal,
   isNoWelcomeModal,
@@ -42,16 +57,21 @@ import {
   isUserWebTorrentEnabledValid
 } from '../../helpers/custom-validators/users'
 import { comparePassword, cryptPassword } from '../../helpers/peertube-crypto'
-import { OAuthTokenModel } from '../oauth/oauth-token'
-import { getSort, throwIfNotValid } from '../utils'
-import { VideoChannelModel } from '../video/video-channel'
-import { VideoPlaylistModel } from '../video/video-playlist'
-import { AccountModel } from './account'
-import { NSFWPolicyType } from '../../../shared/models/videos/nsfw-policy.type'
-import { values } from 'lodash'
 import { DEFAULT_USER_THEME_NAME, NSFW_POLICY_TYPES } from '../../initializers/constants'
 import { clearCacheByUserId } from '../../lib/oauth-model'
+import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
+import { ActorModel } from '../activitypub/actor'
+import { ActorFollowModel } from '../activitypub/actor-follow'
+import { OAuthTokenModel } from '../oauth/oauth-token'
+import { getSort, throwIfNotValid } from '../utils'
+import { VideoModel } from '../video/video'
+import { VideoChannelModel } from '../video/video-channel'
+import { VideoImportModel } from '../video/video-import'
+import { VideoLiveModel } from '../video/video-live'
+import { VideoPlaylistModel } from '../video/video-playlist'
+import { AccountModel } from './account'
 import { UserNotificationSettingModel } from './user-notification-setting'
+<<<<<<< Updated upstream
 import { VideoModel } from '../video/video'
 import { ActorModel } from '../activitypub/actor'
 import { ActorFollowModel } from '../activitypub/actor-follow'
@@ -69,6 +89,8 @@ import {
   MUserWithNotificationSetting,
   MVideoFullLight
 } from '@server/typings/models'
+=======
+>>>>>>> Stashed changes
 
 enum ScopeNames {
   FOR_ME_API = 'FOR_ME_API',
@@ -168,28 +190,26 @@ enum ScopeNames {
             '(' +
               `SELECT concat_ws(':', "abuses", "acceptedAbuses") ` +
               'FROM (' +
-                'SELECT COUNT("videoAbuse"."id") AS "abuses", ' +
-                       `COUNT("videoAbuse"."id") FILTER (WHERE "videoAbuse"."state" = ${VideoAbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
-                'FROM "videoAbuse" ' +
-                'INNER JOIN "video" ON "videoAbuse"."videoId" = "video"."id" ' +
-                'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-                'INNER JOIN "account" ON "account"."id" = "videoChannel"."accountId" ' +
+                'SELECT COUNT("abuse"."id") AS "abuses", ' +
+                       `COUNT("abuse"."id") FILTER (WHERE "abuse"."state" = ${AbuseState.ACCEPTED}) AS "acceptedAbuses" ` +
+                'FROM "abuse" ' +
+                'INNER JOIN "account" ON "account"."id" = "abuse"."flaggedAccountId" ' +
                 'WHERE "account"."userId" = "UserModel"."id"' +
               ') t' +
             ')'
           ),
-          'videoAbusesCount'
+          'abusesCount'
         ],
         [
           literal(
             '(' +
-              'SELECT COUNT("videoAbuse"."id") ' +
-              'FROM "videoAbuse" ' +
-              'INNER JOIN "account" ON "account"."id" = "videoAbuse"."reporterAccountId" ' +
+              'SELECT COUNT("abuse"."id") ' +
+              'FROM "abuse" ' +
+              'INNER JOIN "account" ON "account"."id" = "abuse"."reporterAccountId" ' +
               'WHERE "account"."userId" = "UserModel"."id"' +
             ')'
           ),
-          'videoAbusesCreatedCount'
+          'abusesCreatedCount'
         ],
         [
           literal(
@@ -219,7 +239,7 @@ enum ScopeNames {
     }
   ]
 })
-export class UserModel extends Model<UserModel> {
+export class UserModel extends Model {
 
   @AllowNull(true)
   @Is('UserPassword', value => throwIfNotValid(value, isUserPasswordValid, 'user password', true))
@@ -353,6 +373,12 @@ export class UserModel extends Model<UserModel> {
   @Column
   pluginAuth: string
 
+  @AllowNull(false)
+  @Default(DataType.UUIDV4)
+  @IsUUID(4)
+  @Column(DataType.UUID)
+  feedToken: string
+
   @AllowNull(true)
   @Default(null)
   @Column
@@ -463,7 +489,7 @@ export class UserModel extends Model<UserModel> {
                     })
   }
 
-  static listWithRight (right: UserRight): Bluebird<MUserDefault[]> {
+  static listWithRight (right: UserRight): Promise<MUserDefault[]> {
     const roles = Object.keys(USER_ROLE_LABELS)
                         .map(k => parseInt(k, 10) as UserRole)
                         .filter(role => hasUserRight(role, right))
@@ -479,7 +505,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findAll(query)
   }
 
-  static listUserSubscribersOf (actorId: number): Bluebird<MUserWithNotificationSetting[]> {
+  static listUserSubscribersOf (actorId: number): Promise<MUserWithNotificationSetting[]> {
     const query = {
       include: [
         {
@@ -518,7 +544,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.unscoped().findAll(query)
   }
 
-  static listByUsernames (usernames: string[]): Bluebird<MUserDefault[]> {
+  static listByUsernames (usernames: string[]): Promise<MUserDefault[]> {
     const query = {
       where: {
         username: usernames
@@ -528,7 +554,11 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findAll(query)
   }
 
-  static loadById (id: number, withStats = false): Bluebird<MUserDefault> {
+  static loadById (id: number): Promise<MUser> {
+    return UserModel.unscoped().findByPk(id)
+  }
+
+  static loadByIdWithChannels (id: number, withStats = false): Promise<MUserDefault> {
     const scopes = [
       ScopeNames.WITH_VIDEOCHANNELS
     ]
@@ -538,7 +568,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.scope(scopes).findByPk(id)
   }
 
-  static loadByUsername (username: string): Bluebird<MUserDefault> {
+  static loadByUsername (username: string): Promise<MUserDefault> {
     const query = {
       where: {
         username: { [Op.iLike]: username }
@@ -548,7 +578,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadForMeAPI (username: string): Bluebird<MUserNotifSettingChannelDefault> {
+  static loadForMeAPI (username: string): Promise<MUserNotifSettingChannelDefault> {
     const query = {
       where: {
         username: { [Op.iLike]: username }
@@ -558,7 +588,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.scope(ScopeNames.FOR_ME_API).findOne(query)
   }
 
-  static loadByEmail (email: string): Bluebird<MUserDefault> {
+  static loadByEmail (email: string): Promise<MUserDefault> {
     const query = {
       where: {
         email
@@ -568,7 +598,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadByUsernameOrEmail (username: string, email?: string): Bluebird<MUserDefault> {
+  static loadByUsernameOrEmail (username: string, email?: string): Promise<MUserDefault> {
     if (!email) email = username
 
     const query = {
@@ -584,7 +614,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadByVideoId (videoId: number): Bluebird<MUserDefault> {
+  static loadByVideoId (videoId: number): Promise<MUserDefault> {
     const query = {
       include: [
         {
@@ -615,7 +645,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadByVideoImportId (videoImportId: number): Bluebird<MUserDefault> {
+  static loadByVideoImportId (videoImportId: number): Promise<MUserDefault> {
     const query = {
       include: [
         {
@@ -632,7 +662,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadByChannelActorId (videoChannelActorId: number): Bluebird<MUserDefault> {
+  static loadByChannelActorId (videoChannelActorId: number): Promise<MUserDefault> {
     const query = {
       include: [
         {
@@ -656,7 +686,7 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static loadByAccountActorId (accountActorId: number): Bluebird<MUserDefault> {
+  static loadByAccountActorId (accountActorId: number): Promise<MUserDefault> {
     const query = {
       include: [
         {
@@ -673,26 +703,85 @@ export class UserModel extends Model<UserModel> {
     return UserModel.findOne(query)
   }
 
-  static getOriginalVideoFileTotalFromUser (user: MUserId) {
-    // Don't use sequelize because we need to use a sub query
-    const query = UserModel.generateUserQuotaBaseSQL({
-      withSelect: true,
-      whereUserId: '$userId'
-    })
+  static loadByLiveId (liveId: number): Promise<MUser> {
+    const query = {
+      include: [
+        {
+          attributes: [ 'id' ],
+          model: AccountModel.unscoped(),
+          required: true,
+          include: [
+            {
+              attributes: [ 'id' ],
+              model: VideoChannelModel.unscoped(),
+              required: true,
+              include: [
+                {
+                  attributes: [ 'id' ],
+                  model: VideoModel.unscoped(),
+                  required: true,
+                  include: [
+                    {
+                      attributes: [],
+                      model: VideoLiveModel.unscoped(),
+                      required: true,
+                      where: {
+                        id: liveId
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
 
-    return UserModel.getTotalRawQuery(query, user.id)
+    return UserModel.unscoped().findOne(query)
   }
 
-  // Returns cumulative size of all video files uploaded in the last 24 hours.
-  static getOriginalVideoFileTotalDailyFromUser (user: MUserId) {
-    // Don't use sequelize because we need to use a sub query
-    const query = UserModel.generateUserQuotaBaseSQL({
-      withSelect: true,
-      whereUserId: '$userId',
-      where: '"video"."createdAt" > now() - interval \'24 hours\''
-    })
+  static generateUserQuotaBaseSQL (options: {
+    whereUserId: '$userId' | '"UserModel"."id"'
+    withSelect: boolean
+    where?: string
+  }) {
+    const andWhere = options.where
+      ? 'AND ' + options.where
+      : ''
 
-    return UserModel.getTotalRawQuery(query, user.id)
+    const videoChannelJoin = 'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
+      'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
+      `WHERE "account"."userId" = ${options.whereUserId} ${andWhere}`
+
+    const webtorrentFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+      'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
+      videoChannelJoin
+
+    const hlsFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+      'INNER JOIN "videoStreamingPlaylist" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist".id ' +
+      'INNER JOIN "video" ON "videoStreamingPlaylist"."videoId" = "video"."id" ' +
+      videoChannelJoin
+
+    return 'SELECT COALESCE(SUM("size"), 0) AS "total" ' +
+      'FROM (' +
+        `SELECT MAX("t1"."size") AS "size" FROM (${webtorrentFiles} UNION ${hlsFiles}) t1 ` +
+        'GROUP BY "t1"."videoId"' +
+      ') t2'
+  }
+
+  static getTotalRawQuery (query: string, userId: number) {
+    const options = {
+      bind: { userId },
+      type: QueryTypes.SELECT as QueryTypes.SELECT
+    }
+
+    return UserModel.sequelize.query<{ total: string }>(query, options)
+                    .then(([ { total } ]) => {
+                      if (total === null) return 0
+
+                      return parseInt(total, 10)
+                    })
   }
 
   static async getStats () {
@@ -712,12 +801,14 @@ export class UserModel extends Model<UserModel> {
     const totalDailyActiveUsers = await getActiveUsers(1)
     const totalWeeklyActiveUsers = await getActiveUsers(7)
     const totalMonthlyActiveUsers = await getActiveUsers(30)
+    const totalHalfYearActiveUsers = await getActiveUsers(180)
 
     return {
       totalUsers,
       totalDailyActiveUsers,
       totalWeeklyActiveUsers,
-      totalMonthlyActiveUsers
+      totalMonthlyActiveUsers,
+      totalHalfYearActiveUsers
     }
   }
 
@@ -767,8 +858,8 @@ export class UserModel extends Model<UserModel> {
     const videoQuotaUsed = this.get('videoQuotaUsed')
     const videoQuotaUsedDaily = this.get('videoQuotaUsedDaily')
     const videosCount = this.get('videosCount')
-    const [ videoAbusesCount, videoAbusesAcceptedCount ] = (this.get('videoAbusesCount') as string || ':').split(':')
-    const videoAbusesCreatedCount = this.get('videoAbusesCreatedCount')
+    const [ abusesCount, abusesAcceptedCount ] = (this.get('abusesCount') as string || ':').split(':')
+    const abusesCreatedCount = this.get('abusesCreatedCount')
     const videoCommentsCount = this.get('videoCommentsCount')
 
     const json: User = {
@@ -802,14 +893,14 @@ export class UserModel extends Model<UserModel> {
       videosCount: videosCount !== undefined
         ? parseInt(videosCount + '', 10)
         : undefined,
-      videoAbusesCount: videoAbusesCount
-        ? parseInt(videoAbusesCount, 10)
+      abusesCount: abusesCount
+        ? parseInt(abusesCount, 10)
         : undefined,
-      videoAbusesAcceptedCount: videoAbusesAcceptedCount
-        ? parseInt(videoAbusesAcceptedCount, 10)
+      abusesAcceptedCount: abusesAcceptedCount
+        ? parseInt(abusesAcceptedCount, 10)
         : undefined,
-      videoAbusesCreatedCount: videoAbusesCreatedCount !== undefined
-        ? parseInt(videoAbusesCreatedCount + '', 10)
+      abusesCreatedCount: abusesCreatedCount !== undefined
+        ? parseInt(abusesCreatedCount + '', 10)
         : undefined,
       videoCommentsCount: videoCommentsCount !== undefined
         ? parseInt(videoCommentsCount + '', 10)
@@ -861,65 +952,5 @@ export class UserModel extends Model<UserModel> {
                                  .map(p => ({ id: p.id, name: p.name, type: p.type }))
 
     return Object.assign(formatted, { specialPlaylists })
-  }
-
-  async isAbleToUploadVideo (videoFile: { size: number }) {
-    if (this.videoQuota === -1 && this.videoQuotaDaily === -1) return Promise.resolve(true)
-
-    const [ totalBytes, totalBytesDaily ] = await Promise.all([
-      UserModel.getOriginalVideoFileTotalFromUser(this),
-      UserModel.getOriginalVideoFileTotalDailyFromUser(this)
-    ])
-
-    const uploadedTotal = videoFile.size + totalBytes
-    const uploadedDaily = videoFile.size + totalBytesDaily
-
-    if (this.videoQuotaDaily === -1) return uploadedTotal < this.videoQuota
-    if (this.videoQuota === -1) return uploadedDaily < this.videoQuotaDaily
-
-    return uploadedTotal < this.videoQuota && uploadedDaily < this.videoQuotaDaily
-  }
-
-  private static generateUserQuotaBaseSQL (options: {
-    whereUserId: '$userId' | '"UserModel"."id"'
-    withSelect: boolean
-    where?: string
-  }) {
-    const andWhere = options.where
-      ? 'AND ' + options.where
-      : ''
-
-    const videoChannelJoin = 'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-      'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
-      `WHERE "account"."userId" = ${options.whereUserId} ${andWhere}`
-
-    const webtorrentFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
-      'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
-      videoChannelJoin
-
-    const hlsFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
-      'INNER JOIN "videoStreamingPlaylist" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist".id ' +
-      'INNER JOIN "video" ON "videoStreamingPlaylist"."videoId" = "video"."id" ' +
-      videoChannelJoin
-
-    return 'SELECT COALESCE(SUM("size"), 0) AS "total" ' +
-      'FROM (' +
-        `SELECT MAX("t1"."size") AS "size" FROM (${webtorrentFiles} UNION ${hlsFiles}) t1 ` +
-        'GROUP BY "t1"."videoId"' +
-      ') t2'
-  }
-
-  private static getTotalRawQuery (query: string, userId: number) {
-    const options = {
-      bind: { userId },
-      type: QueryTypes.SELECT as QueryTypes.SELECT
-    }
-
-    return UserModel.sequelize.query<{ total: string }>(query, options)
-                    .then(([ { total } ]) => {
-                      if (total === null) return 0
-
-                      return parseInt(total, 10)
-                    })
   }
 }

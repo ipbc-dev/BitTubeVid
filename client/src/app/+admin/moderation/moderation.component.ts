@@ -4,7 +4,7 @@ import { AuthService, ServerService } from '@app/core'
 
 @Component({
   templateUrl: './moderation.component.html',
-  styleUrls: [ './moderation.component.scss' ]
+  styleUrls: [ ]
 })
 export class ModerationComponent implements OnInit {
   autoBlacklistVideosEnabled = false

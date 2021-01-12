@@ -1,10 +1,18 @@
+import { readFileSync } from 'fs-extra'
+import { merge } from 'lodash'
 import { createTransport, Transporter } from 'nodemailer'
+import { join } from 'path'
+import { VideoChannelModel } from '@server/models/video/video-channel'
+import { MVideoBlacklistLightVideo, MVideoBlacklistVideo } from '@server/types/models/video/video-blacklist'
+import { MVideoImport, MVideoImportVideo } from '@server/types/models/video/video-import'
+import { SANITIZE_OPTIONS, TEXT_WITH_HTML_RULES } from '@shared/core-utils'
+import { AbuseState, EmailPayload, UserAbuse } from '@shared/models'
+import { SendEmailOptions } from '../../shared/models/server/emailer.model'
 import { isTestInstance, root } from '../helpers/core-utils'
 import { bunyanLogger, logger } from '../helpers/logger'
 import { CONFIG, isEmailEnabled } from '../initializers/config'
-import { JobQueue } from './job-queue'
-import { readFileSync } from 'fs-extra'
 import { WEBSERVER } from '../initializers/constants'
+<<<<<<< Updated upstream
 import {
   MCommentOwnerVideo,
   MVideo,
@@ -21,6 +29,32 @@ import { VideoAbuse } from '../../shared/models/videos'
 import { SendEmailOptions } from '../../shared/models/server/emailer.model'
 import { merge } from 'lodash'
 import { VideoChannelModel } from '@server/models/video/video-channel'
+=======
+import { MAbuseFull, MAbuseMessage, MAccountDefault, MActorFollowActors, MActorFollowFull, MUser } from '../types/models'
+import { MCommentOwnerVideo, MVideo, MVideoAccountLight } from '../types/models/video'
+import { JobQueue } from './job-queue'
+
+const sanitizeHtml = require('sanitize-html')
+const markdownItEmoji = require('markdown-it-emoji/light')
+const MarkdownItClass = require('markdown-it')
+const markdownIt = new MarkdownItClass('default', { linkify: true, breaks: true, html: true })
+
+markdownIt.enable(TEXT_WITH_HTML_RULES)
+
+markdownIt.use(markdownItEmoji)
+
+const toSafeHtml = text => {
+  // Restore line feed
+  const textWithLineFeed = text.replace(/<br.?\/?>/g, '\r\n')
+
+  // Convert possible markdown (emojis, emphasis and lists) to html
+  const html = markdownIt.render(textWithLineFeed)
+
+  // Convert to safe Html
+  return sanitizeHtml(html, SANITIZE_OPTIONS)
+}
+
+>>>>>>> Stashed changes
 const Email = require('email-templates')
 
 class Emailer {
@@ -92,18 +126,18 @@ class Emailer {
     }
   }
 
-  async checkConnectionOrDie () {
+  async checkConnection () {
     if (!this.transporter || CONFIG.SMTP.TRANSPORT !== 'smtp') return
 
     logger.info('Testing SMTP server...')
 
     try {
       const success = await this.transporter.verify()
-      if (success !== true) this.dieOnConnectionFailure()
+      if (success !== true) this.warnOnConnectionFailure()
 
       logger.info('Successfully connected to SMTP server.')
     } catch (err) {
-      this.dieOnConnectionFailure(err)
+      this.warnOnConnectionFailure(err)
     }
   }
 
@@ -215,7 +249,7 @@ class Emailer {
   }
 
   myVideoImportErrorNotification (to: string[], videoImport: MVideoImport) {
-    const importUrl = WEBSERVER.URL + '/my-account/video-imports'
+    const importUrl = WEBSERVER.URL + '/my-library/video-imports'
 
     const text =
       `Your video import "${videoImport.getTargetIdentifier()}" encountered an error.` +
@@ -242,6 +276,7 @@ class Emailer {
     const video = comment.Video
     const videoUrl = WEBSERVER.URL + comment.Video.getWatchStaticPath()
     const commentUrl = WEBSERVER.URL + comment.getCommentStaticPath()
+    const commentHtml = toSafeHtml(comment.text)
 
     const emailPayload: EmailPayload = {
       template: 'video-comment-new',
@@ -251,6 +286,7 @@ class Emailer {
         accountName: comment.Account.getDisplayName(),
         accountUrl: comment.Account.Actor.url,
         comment,
+        commentHtml,
         video,
         videoUrl,
         action: {
@@ -268,6 +304,7 @@ class Emailer {
     const video = comment.Video
     const videoUrl = WEBSERVER.URL + comment.Video.getWatchStaticPath()
     const commentUrl = WEBSERVER.URL + comment.getCommentStaticPath()
+    const commentHtml = toSafeHtml(comment.text)
 
     const emailPayload: EmailPayload = {
       template: 'video-comment-mention',
@@ -275,6 +312,7 @@ class Emailer {
       subject: 'Mention on video ' + video.name,
       locals: {
         comment,
+        commentHtml,
         video,
         videoUrl,
         accountName,
@@ -288,29 +326,138 @@ class Emailer {
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
   }
 
-  addVideoAbuseModeratorsNotification (to: string[], parameters: {
-    videoAbuse: VideoAbuse
-    videoAbuseInstance: MVideoAbuseVideo
+  addAbuseModeratorsNotification (to: string[], parameters: {
+    abuse: UserAbuse
+    abuseInstance: MAbuseFull
     reporter: string
   }) {
-    const videoAbuseUrl = WEBSERVER.URL + '/admin/moderation/video-abuses/list?search=%23' + parameters.videoAbuse.id
-    const videoUrl = WEBSERVER.URL + parameters.videoAbuseInstance.Video.getWatchStaticPath()
+    const { abuse, abuseInstance, reporter } = parameters
+
+    const action = {
+      text: 'View report #' + abuse.id,
+      url: WEBSERVER.URL + '/admin/moderation/abuses/list?search=%23' + abuse.id
+    }
+
+    let emailPayload: EmailPayload
+
+    if (abuseInstance.VideoAbuse) {
+      const video = abuseInstance.VideoAbuse.Video
+      const videoUrl = WEBSERVER.URL + video.getWatchStaticPath()
+
+      emailPayload = {
+        template: 'video-abuse-new',
+        to,
+        subject: `New video abuse report from ${reporter}`,
+        locals: {
+          videoUrl,
+          isLocal: video.remote === false,
+          videoCreatedAt: new Date(video.createdAt).toLocaleString(),
+          videoPublishedAt: new Date(video.publishedAt).toLocaleString(),
+          videoName: video.name,
+          reason: abuse.reason,
+          videoChannel: abuse.video.channel,
+          reporter,
+          action
+        }
+      }
+    } else if (abuseInstance.VideoCommentAbuse) {
+      const comment = abuseInstance.VideoCommentAbuse.VideoComment
+      const commentUrl = WEBSERVER.URL + comment.Video.getWatchStaticPath() + ';threadId=' + comment.getThreadId()
+
+      emailPayload = {
+        template: 'video-comment-abuse-new',
+        to,
+        subject: `New comment abuse report from ${reporter}`,
+        locals: {
+          commentUrl,
+          videoName: comment.Video.name,
+          isLocal: comment.isOwned(),
+          commentCreatedAt: new Date(comment.createdAt).toLocaleString(),
+          reason: abuse.reason,
+          flaggedAccount: abuseInstance.FlaggedAccount.getDisplayName(),
+          reporter,
+          action
+        }
+      }
+    } else {
+      const account = abuseInstance.FlaggedAccount
+      const accountUrl = account.getClientUrl()
+
+      emailPayload = {
+        template: 'account-abuse-new',
+        to,
+        subject: `New account abuse report from ${reporter}`,
+        locals: {
+          accountUrl,
+          accountDisplayName: account.getDisplayName(),
+          isLocal: account.isOwned(),
+          reason: abuse.reason,
+          reporter,
+          action
+        }
+      }
+    }
+
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addAbuseStateChangeNotification (to: string[], abuse: MAbuseFull) {
+    const text = abuse.state === AbuseState.ACCEPTED
+      ? 'Report #' + abuse.id + ' has been accepted'
+      : 'Report #' + abuse.id + ' has been rejected'
+
+    const abuseUrl = WEBSERVER.URL + '/my-account/abuses?search=%23' + abuse.id
+
+    const action = {
+      text,
+      url: abuseUrl
+    }
 
     const emailPayload: EmailPayload = {
-      template: 'video-abuse-new',
+      template: 'abuse-state-change',
       to,
-      subject: `New video abuse report from ${parameters.reporter}`,
+      subject: text,
       locals: {
-        videoUrl,
-        videoAbuseUrl,
-        videoCreatedAt: new Date(parameters.videoAbuseInstance.Video.createdAt).toLocaleString(),
-        videoPublishedAt: new Date(parameters.videoAbuseInstance.Video.publishedAt).toLocaleString(),
-        videoAbuse: parameters.videoAbuse,
-        reporter: parameters.reporter,
-        action: {
-          text: 'View report #' + parameters.videoAbuse.id,
-          url: videoAbuseUrl
-        }
+        action,
+        abuseId: abuse.id,
+        abuseUrl,
+        isAccepted: abuse.state === AbuseState.ACCEPTED
+      }
+    }
+
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addAbuseNewMessageNotification (
+    to: string[],
+    options: {
+      target: 'moderator' | 'reporter'
+      abuse: MAbuseFull
+      message: MAbuseMessage
+      accountMessage: MAccountDefault
+    }) {
+    const { abuse, target, message, accountMessage } = options
+
+    const text = 'New message on report #' + abuse.id
+    const abuseUrl = target === 'moderator'
+      ? WEBSERVER.URL + '/admin/moderation/abuses/list?search=%23' + abuse.id
+      : WEBSERVER.URL + '/my-account/abuses?search=%23' + abuse.id
+
+    const action = {
+      text,
+      url: abuseUrl
+    }
+
+    const emailPayload: EmailPayload = {
+      template: 'abuse-new-message',
+      to,
+      subject: text,
+      locals: {
+        abuseId: abuse.id,
+        abuseUrl: action.url,
+        messageAccountName: accountMessage.getDisplayName(),
+        messageText: message.message,
+        action
       }
     }
 
@@ -344,7 +491,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       template: 'user-registered',
       to,
-      subject: `a new user registered on ${WEBSERVER.HOST}: ${user.username}`,
+      subject: `a new user registered on ${CONFIG.INSTANCE.NAME}: ${user.username}`,
       locals: {
         user
       }
@@ -358,7 +505,7 @@ class Emailer {
     const videoUrl = WEBSERVER.URL + videoBlacklist.Video.getWatchStaticPath()
 
     const reasonString = videoBlacklist.reason ? ` for the following reason: ${videoBlacklist.reason}` : ''
-    const blockedString = `Your video ${videoName} (${videoUrl} on ${WEBSERVER.HOST} has been blacklisted${reasonString}.`
+    const blockedString = `Your video ${videoName} (${videoUrl} on ${CONFIG.INSTANCE.NAME} has been blacklisted${reasonString}.`
 
     const emailPayload: EmailPayload = {
       to,
@@ -378,7 +525,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       to,
       subject: `Video ${video.name} unblacklisted`,
-      text: `Your video "${video.name}" (${videoUrl}) on ${WEBSERVER.HOST} has been unblacklisted.`,
+      text: `Your video "${video.name}" (${videoUrl}) on ${CONFIG.INSTANCE.NAME} has been unblacklisted.`,
       locals: {
         title: 'Your video was unblacklisted'
       }
@@ -418,7 +565,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       template: 'verify-email',
       to: [ to ],
-      subject: `Verify your email on ${WEBSERVER.HOST}`,
+      subject: `Verify your email on ${CONFIG.INSTANCE.NAME}`,
       locals: {
         verifyEmailUrl
       }
@@ -435,7 +582,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       to: [ to ],
       subject: 'Account ' + blockedWord,
-      text: `Your account ${user.username} on ${WEBSERVER.HOST} has been ${blockedWord}${reasonString}.`
+      text: `Your account ${user.username} on ${CONFIG.INSTANCE.NAME} has been ${blockedWord}${reasonString}.`
     }
 
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
@@ -450,11 +597,50 @@ class Emailer {
       locals: {
         fromName,
         fromEmail,
-        body
+        body,
+
+        // There are not notification preferences for the contact form
+        hideNotificationPreferences: true
       }
     }
 
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageAboutToExpireJob (username: string, to: string, instanceName: string, daysToExpire: number) {
+    const days = Math.round(daysToExpire / 86400000)
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is about to expire',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is about to expire in ${days} days. Once this happen, we will start to delete some videos per day in your account.
+      Please, extend or upgrade your Premium Storage at your account settings`
+    }
+    logger.info('addPremiumStorageAboutToExpireJob going to send email with payload: ', emailPayload)
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete, userVideos) {
+    try {
+      let removedVideosList = ''
+      for (const videoName of userVideos) {
+        removedVideosList += `
+      - ` + videoName
+      }
+      const emailPayload: EmailPayload = {
+        to: [ to ],
+        subject: 'Premium storage is expired',
+        text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account: 
+      ` + removedVideosList + `
+      This will be repeated every day until you don't upgrade your storage.
+      Please, extend or upgrade your Premium Storage at your account settings`
+      }
+      logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload)
+      return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+    } catch (err) {
+      console.error('Something went wrong with addPremiumStorageExpiredJob: ', err)
+    }
   }
 
   async sendMail (options: EmailPayload) {
@@ -464,7 +650,7 @@ class Emailer {
 
     const fromDisplayName = options.from
       ? options.from
-      : WEBSERVER.HOST
+      : CONFIG.INSTANCE.NAME
 
     const email = new Email({
       send: true,
@@ -492,6 +678,7 @@ class Emailer {
             locals: { // default variables available in all templates
               WEBSERVER,
               EMAIL: CONFIG.EMAIL,
+              instanceName: CONFIG.INSTANCE.NAME,
               text: options.text,
               subject: options.subject
             }
@@ -503,9 +690,8 @@ class Emailer {
     }
   }
 
-  private dieOnConnectionFailure (err?: Error) {
+  private warnOnConnectionFailure (err?: Error) {
     logger.error('Failed to connect to SMTP %s:%d.', CONFIG.SMTP.HOSTNAME, CONFIG.SMTP.PORT, { err })
-    process.exit(-1)
   }
 
   static get Instance () {

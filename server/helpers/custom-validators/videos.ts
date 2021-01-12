@@ -8,15 +8,16 @@ import {
   VIDEO_LICENCES,
   VIDEO_PRIVACIES,
   VIDEO_RATE_TYPES,
-  VIDEO_STATES
+  VIDEO_STATES,
+  VIDEO_LIVE
 } from '../../initializers/constants'
-import { exists, isArray, isDateValid, isFileValid } from './misc'
+import { exists, isArray, isDateValid, isFileMimeTypeValid, isFileValid } from './misc'
 import * as magnetUtil from 'magnet-uri'
 
 const VIDEOS_CONSTRAINTS_FIELDS = CONSTRAINTS_FIELDS.VIDEOS
 
 function isVideoFilterValid (filter: VideoFilter) {
-  return filter === 'local' || filter === 'all-local'
+  return filter === 'local' || filter === 'all-local' || filter === 'all'
 }
 
 function isVideoCategoryValid (value: any) {
@@ -77,15 +78,11 @@ function isVideoRatingTypeValid (value: string) {
 }
 
 function isVideoFileExtnameValid (value: string) {
-  return exists(value) && MIMETYPES.VIDEO.EXT_MIMETYPE[value] !== undefined
+  return exists(value) && (value === VIDEO_LIVE.EXTENSION || MIMETYPES.VIDEO.EXT_MIMETYPE[value] !== undefined)
 }
 
-function isVideoFile (files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[]) {
-  const videoFileTypesRegex = Object.keys(MIMETYPES.VIDEO.MIMETYPE_EXT)
-                                    .map(m => `(${m})`)
-                                    .join('|')
-
-  return isFileValid(files, videoFileTypesRegex, 'videofile', null)
+function isVideoFileMimeTypeValid (files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[]) {
+  return isFileMimeTypeValid(files, MIMETYPES.VIDEO.MIMETYPES_REGEX, 'videofile')
 }
 
 const videoImageTypes = CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME
@@ -146,12 +143,12 @@ export {
   isVideoFPSResolutionValid,
   isScheduleVideoUpdatePrivacyValid,
   isVideoOriginallyPublishedAtValid,
-  isVideoFile,
   isVideoMagnetUriValid,
   isVideoStateValid,
   isVideoViewsValid,
   isVideoRatingTypeValid,
   isVideoFileExtnameValid,
+  isVideoFileMimeTypeValid,
   isVideoDurationValid,
   isVideoTagValid,
   isVideoPrivacyValid,

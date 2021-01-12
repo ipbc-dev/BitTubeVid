@@ -7,13 +7,26 @@
     "peer": "par",
     "Go to the video page": "Ir para página do vídeo",
     "Settings": "Configurações",
+<<<<<<< Updated upstream
     "Uses P2P, others may know you are watching this video.": "Utiliza P2P, outros poderão saber que está a ver este vídeo.",
+=======
+    "Watching this video may reveal your IP address to others.": "Watching this video may reveal your IP address to others.",
+>>>>>>> Stashed changes
     "Copy the video URL": "Copiar URL do vídeo",
     "Copy the video URL at the current time": "Copiar URL do vídeo no tempo atual",
     "Copy embed code": "Copiar código incorporado",
     "Copy magnet URI": "Copiar URl ''magnet''",
+<<<<<<< Updated upstream
     "Total downloaded: ": "Total transferido: ",
     "Total uploaded: ": "Total carregado: ",
+=======
+    "Total downloaded: ": "Total baixado: ",
+    "Total uploaded: ": "Total enviado: ",
+    "From servers: ": "From servers: ",
+    "From peers: ": "From peers: ",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode",
+>>>>>>> Stashed changes
     "Audio Player": "Reprodutor de Áudio",
     "Video Player": "Reprodutor de Vídeo",
     "Play": "Reproduzir",
@@ -96,5 +109,6 @@
     "Caption Settings Dialog": "Janela das Configurações da Legenda Oculta",
     "Beginning of dialog window. Escape will cancel and close the window.": "Início da janela de diálogo. A tecla Escape irá cancelar e fechar a janela.",
     "End of dialog window.": "Fim da janela de diálogo.",
-    "{1} is loading.": "A carregar {1}."
+    "{1} is loading.": "A carregar {1}.",
+    "Uses P2P, others may know you are watching this video.": "Utiliza P2P, poderão saber que está a ver este vídeo."
 }

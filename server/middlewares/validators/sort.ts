@@ -5,11 +5,12 @@ import { checkSort, createSortableColumns } from './utils'
 const SORTABLE_USERS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.USERS)
 const SORTABLE_ACCOUNTS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.ACCOUNTS)
 const SORTABLE_JOBS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.JOBS)
-const SORTABLE_VIDEO_ABUSES_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_ABUSES)
+const SORTABLE_ABUSES_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.ABUSES)
 const SORTABLE_VIDEOS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEOS)
 const SORTABLE_VIDEOS_SEARCH_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEOS_SEARCH)
 const SORTABLE_VIDEO_CHANNELS_SEARCH_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_CHANNELS_SEARCH)
 const SORTABLE_VIDEO_IMPORTS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_IMPORTS)
+const SORTABLE_VIDEO_COMMENTS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_COMMENT_THREADS)
 const SORTABLE_VIDEO_COMMENT_THREADS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_COMMENT_THREADS)
 const SORTABLE_VIDEO_RATES_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.VIDEO_RATES)
 const SORTABLE_BLACKLISTS_COLUMNS = createSortableColumns(SORTABLE_COLUMNS.BLACKLISTS)
@@ -28,11 +29,12 @@ const SORTABLE_VIDEO_REDUNDANCIES_COLUMNS = createSortableColumns(SORTABLE_COLUM
 const usersSortValidator = checkSort(SORTABLE_USERS_COLUMNS)
 const accountsSortValidator = checkSort(SORTABLE_ACCOUNTS_COLUMNS)
 const jobsSortValidator = checkSort(SORTABLE_JOBS_COLUMNS)
-const videoAbusesSortValidator = checkSort(SORTABLE_VIDEO_ABUSES_COLUMNS)
+const abusesSortValidator = checkSort(SORTABLE_ABUSES_COLUMNS)
 const videosSortValidator = checkSort(SORTABLE_VIDEOS_COLUMNS)
 const videoImportsSortValidator = checkSort(SORTABLE_VIDEO_IMPORTS_COLUMNS)
 const videosSearchSortValidator = checkSort(SORTABLE_VIDEOS_SEARCH_COLUMNS)
 const videoChannelsSearchSortValidator = checkSort(SORTABLE_VIDEO_CHANNELS_SEARCH_COLUMNS)
+const videoCommentsValidator = checkSort(SORTABLE_VIDEO_COMMENTS_COLUMNS)
 const videoCommentThreadsSortValidator = checkSort(SORTABLE_VIDEO_COMMENT_THREADS_COLUMNS)
 const videoRatesSortValidator = checkSort(SORTABLE_VIDEO_RATES_COLUMNS)
 const blacklistSortValidator = checkSort(SORTABLE_BLACKLISTS_COLUMNS)
@@ -52,9 +54,10 @@ const videoRedundanciesSortValidator = checkSort(SORTABLE_VIDEO_REDUNDANCIES_COL
 
 export {
   usersSortValidator,
-  videoAbusesSortValidator,
+  abusesSortValidator,
   videoChannelsSortValidator,
   videoImportsSortValidator,
+  videoCommentsValidator,
   videosSearchSortValidator,
   videosSortValidator,
   blacklistSortValidator,

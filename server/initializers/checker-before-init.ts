@@ -9,7 +9,7 @@ function checkMissedConfig () {
   const required = [ 'listen.port', 'listen.hostname',
     'webserver.https', 'webserver.hostname', 'webserver.port',
     'trust_proxy',
-    'database.hostname', 'database.port', 'database.suffix', 'database.username', 'database.password', 'database.pool.max',
+    'database.hostname', 'database.port', 'database.username', 'database.password', 'database.pool.max',
     'smtp.hostname', 'smtp.port', 'smtp.username', 'smtp.password', 'smtp.tls', 'smtp.from_address',
     'email.body.signature', 'email.subject.prefix',
     'storage.avatars', 'storage.videos', 'storage.logs', 'storage.previews', 'storage.thumbnails', 'storage.torrents', 'storage.cache',
@@ -34,8 +34,20 @@ function checkMissedConfig () {
     'history.videos.max_age', 'views.videos.remote.max_age',
     'rates_limit.login.window', 'rates_limit.login.max', 'rates_limit.ask_send_email.window', 'rates_limit.ask_send_email.max',
     'theme.default',
+<<<<<<< Updated upstream
     'remote_redundancy.videos.accept_from'
+=======
+    'remote_redundancy.videos.accept_from',
+    'federation.videos.federate_unlisted',
+    'search.remote_uri.users', 'search.remote_uri.anonymous', 'search.search_index.enabled', 'search.search_index.url',
+    'search.search_index.disable_local_search', 'search.search_index.is_default_search',
+    'live.enabled', 'live.allow_replay', 'live.max_duration', 'live.max_user_lives', 'live.max_instance_lives',
+    'live.transcoding.enabled', 'live.transcoding.threads',
+    'live.transcoding.resolutions.240p', 'live.transcoding.resolutions.360p', 'live.transcoding.resolutions.480p',
+    'live.transcoding.resolutions.720p', 'live.transcoding.resolutions.1080p', 'live.transcoding.resolutions.2160p'
+>>>>>>> Stashed changes
   ]
+
   const requiredAlternatives = [
     [ // set
       [ 'redis.hostname', 'redis.port' ], // alternative
@@ -77,7 +89,7 @@ async function checkFFmpeg (CONFIG: { TRANSCODING: { ENABLED: boolean } }) {
   const Ffmpeg = require('fluent-ffmpeg')
   const getAvailableCodecsPromise = promisify0(Ffmpeg.getAvailableCodecs)
   const codecs = await getAvailableCodecsPromise()
-  const canEncode = [ 'h264_nvenc' ]
+  const canEncode = [ 'h264_qsv' ]
 
   for (const codec of canEncode) {
     if (codecs[codec] === undefined) {
@@ -92,25 +104,30 @@ async function checkFFmpeg (CONFIG: { TRANSCODING: { ENABLED: boolean } }) {
   return checkFFmpegEncoders()
 }
 
-// Optional encoders, if present, can be used to improve transcoding
-// Here we ask ffmpeg if it detects their presence on the system, so that we can later use them
-let supportedOptionalEncoders: Map<string, boolean>
+// Detect supported encoders by ffmpeg
+let supportedEncoders: Map<string, boolean>
 async function checkFFmpegEncoders (): Promise<Map<string, boolean>> {
-  if (supportedOptionalEncoders !== undefined) {
-    return supportedOptionalEncoders
+  if (supportedEncoders !== undefined) {
+    return supportedEncoders
   }
 
   const Ffmpeg = require('fluent-ffmpeg')
   const getAvailableEncodersPromise = promisify0(Ffmpeg.getAvailableEncoders)
-  const encoders = await getAvailableEncodersPromise()
-  const optionalEncoders = [ 'libfdk_aac' ]
-  supportedOptionalEncoders = new Map<string, boolean>()
+  const availableEncoders = await getAvailableEncodersPromise()
 
-  for (const encoder of optionalEncoders) {
-    supportedOptionalEncoders.set(encoder, encoders[encoder] !== undefined)
+  const searchEncoders = [
+    'aac',
+    'libfdk_aac',
+    'libx264'
+  ]
+
+  supportedEncoders = new Map<string, boolean>()
+
+  for (const searchEncoder of searchEncoders) {
+    supportedEncoders.set(searchEncoder, availableEncoders[searchEncoder] !== undefined)
   }
 
-  return supportedOptionalEncoders
+  return supportedEncoders
 }
 
 function checkNodeVersion () {

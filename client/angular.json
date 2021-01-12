@@ -85,6 +85,10 @@
             "translation": "src/locale/angular.ca-ES.xlf",
             "baseHref": "/client/ca-ES/"
           },
+          "gl": {
+            "translation": "src/locale/angular.gl-ES.xlf",
+            "baseHref": "/client/gl-ES/"
+          },
           "cs": {
             "translation": "src/locale/angular.cs-CZ.xlf",
             "baseHref": "/client/cs-CZ/"
@@ -108,6 +112,7 @@
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
             "aot": true,
+            "localize": true,
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -125,6 +130,39 @@
             "styles": [
               "src/sass/application.scss"
             ],
+            "allowedCommonJsDependencies": [
+              "@angularclass/hmr",
+              "debug",
+              "mousetrap",
+              "chart.js",
+              "linkifyjs/html",
+              "linkifyjs",
+              "markdown-it",
+              "markdown-it-emoji/light",
+              "sanitize-html",
+              "socket.io-client",
+              "socket.io-parser",
+              "@app/+about/about-peertube/about-peertube-contributors.component",
+              "path",
+              "video.js",
+              "p2p-media-loader-hlsjs",
+              "videojs-hotkeys/videojs.hotkeys",
+              "p2p-media-loader-core",
+              "qrcode",
+              "webtorrent",
+              "cache-chunk-store",
+              "global/document",
+              "videojs-vtt.js",
+              "videojs-vtt.js",
+              "@babel/runtime/helpers/possibleConstructorReturn",
+              "@babel/runtime/helpers/inherits",
+              "@babel/runtime/helpers/construct",
+              "@videojs/xhr",
+              "htmlparser2",
+              "url",
+              "parse-srcset",
+              "postcss"
+            ],
             "scripts": []
           },
           "configurations": {
@@ -132,7 +170,6 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
-              "extractCss": true,
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -160,6 +197,7 @@
               ]
             },
             "hmr": {
+              "localize": false,
               "budgets": [
                 {
                   "type": "anyComponentStyle",
@@ -174,6 +212,7 @@
               ]
             },
             "e2e": {
+              "localize": false,
               "budgets": [
                 {
                   "type": "anyComponentStyle",
@@ -186,6 +225,7 @@
                   "with": "src/environments/environment.e2e.ts"
                 }
               ]
+<<<<<<< Updated upstream
             },
             "hu-HU": {
               "localize": [ "hu" ]
@@ -252,6 +292,8 @@
             },
             "it-IT": {
               "localize":  [ "it" ]
+=======
+>>>>>>> Stashed changes
             }
           }
         },
@@ -322,6 +364,7 @@
               "languages": [
                 "ar-001",
                 "ca-ES",
+                "gl-ES",
                 "cs-CZ",
                 "da-DK",
                 "de-DE",
@@ -400,7 +443,7 @@
   "schematics": {
     "@schematics/angular:component": {
       "prefix": "app",
-      "styleext": "scss"
+      "style": "scss"
     },
     "@schematics/angular:directive": {
       "prefix": "app"

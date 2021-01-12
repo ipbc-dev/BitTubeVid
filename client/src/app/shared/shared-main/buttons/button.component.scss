@@ -1,0 +1,57 @@
+@import '_variables';
+@import '_mixins';
+
+:host {
+  outline: none;
+}
+
+my-small-loader ::ng-deep .root {
+  display: inline-block;
+  margin: 0 3px 0 0;
+  width: 20px;
+}
+
+a[class$=-button],
+span[class$=-button] {
+  > span {
+    margin-left: 5px;
+  }
+}
+
+.action-button {
+  @include peertube-button-link;
+  @include button-with-icon(21px, 0, -1px);
+}
+
+.orange-button {
+  @include peertube-button;
+  @include orange-button;
+}
+
+.orange-button-link {
+  @include peertube-button-link;
+  @include orange-button;
+}
+
+.grey-button {
+  @include peertube-button;
+  @include grey-button;
+}
+
+.grey-button-link {
+  @include peertube-button-link;
+  @include grey-button;
+}
+
+// In a table, try to minimize the space taken by this button
+@media screen and (max-width: 1400px) {
+  :host-context(td) {
+    .action-button {
+      padding: 0 13px;
+    }
+
+    .button-label {
+      display: none;
+    }
+  }
+}

@@ -1,10 +1,11 @@
 import * as express from 'express'
 import { body, param, query } from 'express-validator'
-import { isBooleanValid, isIdOrUUIDValid, toBooleanOrNull } from '../../../helpers/custom-validators/misc'
-import { logger } from '../../../helpers/logger'
-import { areValidationErrors } from '../utils'
+import { isBooleanValid, isIdOrUUIDValid, toBooleanOrNull, toIntOrNull } from '../../../helpers/custom-validators/misc'
 import { isVideoBlacklistReasonValid, isVideoBlacklistTypeValid } from '../../../helpers/custom-validators/video-blacklist'
+import { logger } from '../../../helpers/logger'
 import { doesVideoBlacklistExist, doesVideoExist } from '../../../helpers/middlewares'
+import { areValidationErrors } from '../utils'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const videosBlacklistRemoveValidator = [
   param('videoId').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
@@ -39,7 +40,7 @@ const videosBlacklistAddValidator = [
     const video = res.locals.videoAll
     if (req.body.unfederate === true && video.remote === true) {
       return res
-        .status(409)
+        .status(HttpStatusCode.CONFLICT_409)
         .send({ error: 'You cannot unfederate a remote video.' })
         .end()
     }
@@ -67,7 +68,8 @@ const videosBlacklistUpdateValidator = [
 
 const videosBlacklistFiltersValidator = [
   query('type')
-    .optional()
+  .optional()
+    .customSanitizer(toIntOrNull)
     .custom(isVideoBlacklistTypeValid).withMessage('Should have a valid video blacklist type attribute'),
   query('search')
     .optional()

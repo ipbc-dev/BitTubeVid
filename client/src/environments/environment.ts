@@ -9,7 +9,12 @@
 import 'core-js/features/reflect'
 
 export const environment = {
-  production: false,
+  production: true,
   hmr: false,
+<<<<<<< Updated upstream
   apiUrl: 'http://localhost:9000'
+=======
+  apiUrl: '',
+  originServerUrl: ''
+>>>>>>> Stashed changes
 }

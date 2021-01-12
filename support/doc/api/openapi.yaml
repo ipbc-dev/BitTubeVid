@@ -1,7 +1,11 @@
 openapi: 3.0.0
 info:
   title: PeerTube
+<<<<<<< Updated upstream
   version: 2.2.0
+=======
+  version: 3.0.0
+>>>>>>> Stashed changes
   contact:
     name: PeerTube Community
     url: 'https://joinpeertube.org'
@@ -47,7 +51,27 @@ tags:
     description: >
       Using some features of PeerTube require authentication, for which Accounts
       provide different levels of permission as well as associated user
+<<<<<<< Updated upstream
       information. Accounts also encompass remote accounts discovered across the federation.
+=======
+      information. Each user has a corresponding local Account for federation.
+  - name: My User
+    description: >
+      Operations related to your own User, when logged-in.
+  - name: My Subscriptions
+    description: >
+      Operations related to your subscriptions to video channels, their
+      new videos, and how to keep up to date with their latest publications!
+  - name: My History
+    description: >
+      Operations related to your watch history.
+  - name: My Notifications
+    description: >
+      Notifications following new videos, follows or reports. They allow you
+      to keep track of the interactions and overall important information that
+      concerns you. You MAY set per-notification type delivery preference, to
+      receive the info either by mail, by in-browser notification or both.
+>>>>>>> Stashed changes
   - name: Config
     description: >
       Each server exposes public information regarding supported videos and
@@ -63,9 +87,28 @@ tags:
       server then deals with inter-server ActivityPub operations and propagates
       information across its social graph by posting activities to actors' inbox
       endpoints.
+<<<<<<< Updated upstream
   - name: Video Abuses
+=======
+    externalDocs:
+      url: https://docs.joinpeertube.org/#/admin-following-instances?id=instances-follows
+  - name: Instance Redundancy
+    description: >
+      Redundancy is part of the inter-server solidarity that PeerTube fosters.
+      Manage the list of instances you wish to help by seeding their videos according
+      to the policy of video selection of your choice. Note that you have a similar functionality
+      to mirror individual videos, see `Video Mirroring`.
+    externalDocs:
+      url: https://docs.joinpeertube.org/#/admin-following-instances?id=instances-redundancy
+  - name: Plugins
+    description: >
+      Managing plugins installed from a local path or from NPM, or search for new ones.
+    externalDocs:
+      url: https://docs.joinpeertube.org/#/api-plugins
+  - name: Abuses
+>>>>>>> Stashed changes
     description: |
-      Video abuses deal with reports of local or remote videos alike.
+      Abuses deal with reports of local or remote videos/comments/accounts alike.
   - name: Video
     description: |
       Operations dealing with listing, uploading, fetching or modifying videos.
@@ -101,6 +144,11 @@ x-tagGroups:
       - Users
       - My User
       - My Subscriptions
+<<<<<<< Updated upstream
+=======
+      - My Notifications
+      - My History
+>>>>>>> Stashed changes
   - name: Videos
     tags:
       - Video
@@ -111,13 +159,26 @@ x-tagGroups:
       - Video Rates
       - Video Playlists
       - Video Ownership Change
+<<<<<<< Updated upstream
+=======
+      - Video Mirroring
+      - Live Videos
+      - Feeds
+>>>>>>> Stashed changes
   - name: Search
     tags:
       - Search
   - name: Moderation
     tags:
+<<<<<<< Updated upstream
       - Video Abuses
       - Video Blacklist
+=======
+      - Abuses
+      - Video Blocks
+      - Account Blocks
+      - Server Blocks
+>>>>>>> Stashed changes
   - name: Instance Configuration
     tags:
       - Config
@@ -177,8 +238,8 @@ paths:
             })
         - lang: Shell
           source: |
-            # pip install httpie
-            http -b GET https://peertube2.cpy.re/api/v1/accounts/{name}/videos
+            ## DEPENDENCIES: jq
+            curl -s https://peertube2.cpy.re/api/v1/accounts/{name}/videos | jq
         - lang: Ruby
           source: |
             require 'net/http'
@@ -249,7 +310,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -263,7 +324,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -273,7 +334,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -282,22 +343,24 @@ paths:
       summary: List instance jobs
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Job
       parameters:
         - name: state
           in: path
           required: true
-          description: The state of the job
+          description: The state of the job ('' for for no filter)
           schema:
             type: string
             enum:
+              - ''
               - active
               - completed
               - failed
               - waiting
               - delayed
+        - $ref: '#/components/parameters/jobType'
         - $ref: '#/components/parameters/start'
         - $ref: '#/components/parameters/count'
         - $ref: '#/components/parameters/sort'
@@ -367,7 +430,7 @@ paths:
     post:
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Instance Follows
       summary: Follow a server
@@ -384,7 +447,7 @@ paths:
       summary: Create a user
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Users
       responses:
@@ -425,7 +488,7 @@ paths:
       summary: Delete a user
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Users
       parameters:
@@ -517,7 +580,7 @@ paths:
       summary: Get video imports of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - Videos
         - My User
@@ -594,7 +657,7 @@ paths:
       summary: Get my user subscriptions
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -608,9 +671,29 @@ paths:
       summary: Add subscription to my user
       security:
         - OAuth2:
+<<<<<<< Updated upstream
             - user
       tags:
         - My Subscriptions
+=======
+          - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                uri:
+                  type: string
+                  format: uri
+                  description: uri of the video channels to subscribe to
+              required:
+                - uri
+            examples:
+              default:
+                value:
+                  uri: 008a0e54-375d-49d0-8379-143202e24152@video.lqdn.fr
+>>>>>>> Stashed changes
       responses:
         '200':
           description: successful operation
@@ -619,7 +702,7 @@ paths:
       summary: Get if subscriptions exist for my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -664,7 +747,7 @@ paths:
       summary: Get subscription of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -680,7 +763,7 @@ paths:
       summary: Delete subscription of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -688,6 +771,142 @@ paths:
       responses:
         '200':
           description: successful operation
+<<<<<<< Updated upstream
+=======
+  /users/me/notifications:
+    get:
+      summary: List my notifications
+      security:
+        - OAuth2: []
+      tags:
+        - My Notifications
+      parameters:
+        - name: unread
+          in: query
+          description: only list unread notifications
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/start'
+        - $ref: '#/components/parameters/count'
+        - $ref: '#/components/parameters/sort'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+  /users/me/notifications/read:
+    post:
+      summary: Mark notifications as read by their id
+      security:
+        - OAuth2: []
+      tags:
+        - My Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  description: ids of the notifications to mark as read
+                  items:
+                    type: integer
+              required:
+                - ids
+      responses:
+        '204':
+          description: successful operation
+  /users/me/notifications/read-all:
+    post:
+      summary: Mark all my notification as read
+      security:
+        - OAuth2: []
+      tags:
+        - My Notifications
+      responses:
+        '204':
+          description: successful operation
+  /users/me/notification-settings:
+    put:
+      summary: Update my notification settings
+      security:
+        - OAuth2: []
+      tags:
+        - My Notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newVideoFromSubscription:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                newCommentOnMyVideo:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                abuseAsModerator:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                videoAutoBlacklistAsModerator:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                blacklistOnMyVideo:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                myVideoPublished:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                myVideoImportFinished:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                newFollow:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                newUserRegistration:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                commentMention:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                newInstanceFollower:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+                autoInstanceFollowing:
+                  $ref: '#/components/schemas/NotificationSettingValue'
+      responses:
+        '204':
+          description: successful operation
+  /users/me/history/videos:
+    get:
+      summary: List watched videos history
+      security:
+        - OAuth2: []
+      tags:
+        - My History
+      parameters:
+        - $ref: '#/components/parameters/start'
+        - $ref: '#/components/parameters/count'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoListResponse'
+  /users/me/history/videos/remove:
+    post:
+      summary: Clear video history
+      security:
+        - OAuth2: []
+      tags:
+        - My History
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                beforeDate:
+                  description: history before this date will be deleted
+                  type: string
+                  format: date-time
+      responses:
+        '204':
+          description: successful operation
+>>>>>>> Stashed changes
   /users/me/avatar/pick:
     post:
       summary: Update my user avatar
@@ -702,6 +921,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Avatar'
+        '413':
+          description: image file too large
+          headers:
+            X-File-Maximum-Size:
+              schema:
+                type: string
+                format: Nginx size
+              description: Maximum file size for the avatar
       requestBody:
         content:
           multipart/form-data:
@@ -1009,12 +1236,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoUploadResponse'
+        '400':
+          description: invalid file field, schedule date or parameter
         '403':
+<<<<<<< Updated upstream
           description: 'The user video quota is exceeded with this video.'
         '408':
           description: 'Upload has timed out'
         '422':
           description: 'Invalid input file.'
+=======
+          description: video didn't pass upload filter
+        '408':
+          description: upload has timed out
+        '413':
+          description: video file too large, due to quota or max body size limit set by the reverse-proxy
+          headers:
+            X-File-Maximum-Size:
+              schema:
+                type: string
+                format: Nginx size
+              description: Maximum file size for the video
+        '415':
+          description: video type unsupported
+        '422':
+          description: video unreadable
+>>>>>>> Stashed changes
       requestBody:
         content:
           multipart/form-data:
@@ -1052,7 +1299,7 @@ paths:
                   type: string
                 waitTranscoding:
                   description: Whether or not we wait transcoding before publish the video
-                  type: string
+                  type: boolean
                 support:
                   description: Text describing how to support the video uploader
                   type: string
@@ -1073,7 +1320,14 @@ paths:
                     maxLength: 30
                 commentsEnabled:
                   description: Enable or disable comments for this video
+<<<<<<< Updated upstream
                   type: string
+=======
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for this video
+                  type: boolean
+>>>>>>> Stashed changes
                 originallyPublishedAt:
                   description: Date when the content was originally published
                   type: string
@@ -1094,8 +1348,7 @@ paths:
       x-code-samples:
         - lang: Shell
           source: |
-            ## DEPENDENCIES: httpie, jq
-            # pip install httpie
+            ## DEPENDENCIES: jq
             USERNAME="<your_username>"
             PASSWORD="<your_password>"
             FILE_PATH="<your_file_path>"
@@ -1104,19 +1357,23 @@ paths:
 
             API_PATH="https://peertube2.cpy.re/api/v1"
             ## AUTH
-            client_id=$(http -b GET "$API_PATH/oauth-clients/local" | jq -r ".client_id")
-            client_secret=$(http -b GET "$API_PATH/oauth-clients/local" | jq -r ".client_secret")
-            token=$(http -b --form POST "$API_PATH/users/token" \
-              client_id="$client_id" client_secret="$client_secret" grant_type=password response_type=code \
-              username=$USERNAME \
-              password=$PASSWORD \
+            client_id=$(curl -s "$API_PATH/oauth-clients/local" | jq -r ".client_id")
+            client_secret=$(curl -s "$API_PATH/oauth-clients/local" | jq -r ".client_secret")
+            token=$(curl -s "$API_PATH/users/token" \
+              --data client_id="$client_id" \
+              --data client_secret="$client_secret" \
+              --data grant_type=password \
+              --data response_type=code \
+              --data username="$USERNAME" \
+              --data password="$PASSWORD" \
               | jq -r ".access_token")
             ## VIDEO UPLOAD
-            http -b --form POST "$API_PATH/videos/upload" \
-              videofile@$FILE_PATH \
-              channelId=$CHANNEL_ID \
-              name=$NAME \
-              "Authorization:Bearer $token"
+            curl -s "$API_PATH/videos/upload" \
+              -H "Authorization: Bearer $token" \
+              --max-time 600 \
+              --form videofile=@"$FILE_PATH" \
+              --form channelId=$CHANNEL_ID \
+              --form name="$NAME"
   /videos/imports:
     post:
       summary: Import a video
@@ -1175,13 +1432,13 @@ paths:
                   type: string
                 waitTranscoding:
                   description: Whether or not we wait transcoding before publish the video
-                  type: string
+                  type: boolean
                 support:
                   description: Text describing how to support the video uploader
                   type: string
                 nsfw:
                   description: Whether or not this video contains sensitive content
-                  type: string
+                  type: boolean
                 name:
                   description: Video name
                   type: string
@@ -1196,7 +1453,10 @@ paths:
                     maxLength: 30
                 commentsEnabled:
                   description: Enable or disable comments for this video
-                  type: string
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for this video
+                  type: boolean
                 scheduleUpdate:
                   $ref: '#/components/schemas/VideoScheduledUpdate'
               required:
@@ -1209,16 +1469,169 @@ paths:
                 contentType: image/jpeg
               previewfile:
                 contentType: image/jpeg
+<<<<<<< Updated upstream
   /videos/abuse:
     get:
       summary: List video abuses
+=======
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUploadResponse'
+        '400':
+          description: '`magnetUri` or `targetUrl` or a torrent file missing'
+        '403':
+          description: video didn't pass pre-import filter
+        '409':
+          description: HTTP or Torrent/magnetURI import not enabled
+
+  /videos/live:
+    post:
+      summary: Create a live
       security:
-        - OAuth2:
-            - admin
-            - moderator
+        - OAuth2: []
       tags:
-        - Video Abuses
+        - Live Videos
+        - Video
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUploadResponse'
+        '403':
+          description: Live is not enabled, allow replay is not enabled, or max instance/user live videos limit is exceeded
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                channelId:
+                  description: Channel id that will contain this live video
+                  type: integer
+                saveReplay:
+                  type: boolean
+                permanentLive:
+                  description: User can stream multiple times in a permanent live
+                  type: boolean
+                thumbnailfile:
+                  description: Live video/replay thumbnail file
+                  type: string
+                  format: binary
+                previewfile:
+                  description: Live video/replay preview file
+                  type: string
+                  format: binary
+                privacy:
+                  $ref: '#/components/schemas/VideoPrivacySet'
+                category:
+                  description: Live video/replay category
+                  type: string
+                licence:
+                  description: Live video/replay licence
+                  type: string
+                language:
+                  description: Live video/replay language
+                  type: string
+                description:
+                  description: Live video/replay description
+                  type: string
+                support:
+                  description: A text tell the audience how to support the creator
+                  example: Please support my work on <insert crowdfunding plateform>! <3
+                  type: string
+                nsfw:
+                  description: Whether or not this live video/replay contains sensitive content
+                  type: boolean
+                name:
+                  description: Live video/replay name
+                  type: string
+                tags:
+                  description: Live video/replay tags (maximum 5 tags each between 2 and 30 characters)
+                  type: array
+                  minItems: 1
+                  maxItems: 5
+                  items:
+                    type: string
+                    minLength: 2
+                    maxLength: 30
+                commentsEnabled:
+                  description: Enable or disable comments for this live video/replay
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for the replay of this live
+                  type: boolean
+              required:
+                - channelId
+                - name
+            encoding:
+              thumbnailfile:
+                contentType: image/jpeg
+              previewfile:
+                contentType: image/jpeg
+
+  /videos/live/{id}:
+    get:
+      summary: Get a live information
+      security:
+        - OAuth2: []
+      tags:
+        - Live Videos
+        - Video
       parameters:
+        - $ref: '#/components/parameters/idOrUUID'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiveVideoResponse'
+    put:
+      summary: Update a live information
+      security:
+        - OAuth2: []
+      tags:
+        - Live Videos
+        - Video
+      parameters:
+        - $ref: '#/components/parameters/idOrUUID'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiveVideoUpdate'
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Bad parameters or trying to update a live that has already started
+        '403':
+          description: Trying to save replay of the live but saving replay is not enabled on the instance
+
+  /users/me/abuses:
+    get:
+      summary: List my abuses
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+        - My User
+      parameters:
+        - name: id
+          in: query
+          description: only list the report with this id
+          schema:
+            type: integer
+        - name: state
+          in: query
+          schema:
+            $ref: '#/components/schemas/AbuseStateSet'
         - $ref: '#/components/parameters/start'
         - $ref: '#/components/parameters/count'
         - $ref: '#/components/parameters/abusesSort'
@@ -1230,17 +1643,97 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/VideoAbuse'
-  '/videos/{id}/abuse':
+                  $ref: '#/components/schemas/Abuse'
+
+  /abuses:
+    get:
+      summary: List abuses
+>>>>>>> Stashed changes
+      security:
+        - OAuth2:
+            - admin
+            - moderator
+      tags:
+        - Abuses
+      parameters:
+<<<<<<< Updated upstream
+=======
+        - name: id
+          in: query
+          description: only list the report with this id
+          schema:
+            type: integer
+        - name: predefinedReason
+          in: query
+          description: predefined reason the listed reports should contain
+          schema:
+            $ref: '#/components/schemas/PredefinedAbuseReasons'
+        - name: search
+          in: query
+          description: plain search that will match with video titles, reporter names and more
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            $ref: '#/components/schemas/AbuseStateSet'
+        - name: searchReporter
+          in: query
+          description: only list reports of a specific reporter
+          schema:
+            type: string
+        - name: searchReportee
+          description: only list reports of a specific reportee
+          in: query
+          schema:
+            type: string
+        - name: searchVideo
+          in: query
+          description: only list reports of a specific video
+          schema:
+            type: string
+        - name: searchVideoChannel
+          in: query
+          description: only list reports of a specific video channel
+          schema:
+            type: string
+        - name: videoIs
+          in: query
+          description: only list blacklisted or deleted videos
+          schema:
+            type: string
+            enum:
+            - 'deleted'
+            - 'blacklisted'
+        - name: filter
+          in: query
+          description: only list account, comment or video reports
+          schema:
+            type: string
+            enum:
+            - 'video'
+            - 'comment'
+            - 'account'
+>>>>>>> Stashed changes
+        - $ref: '#/components/parameters/start'
+        - $ref: '#/components/parameters/count'
+        - $ref: '#/components/parameters/abusesSort'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Abuse'
+
     post:
       summary: Report an abuse
       security:
         - OAuth2: []
       tags:
-        - Video Abuses
-        - Videos
-      parameters:
-        - $ref: '#/components/parameters/idOrUUID'
+        - Abuses
       requestBody:
         content:
           application/json:
@@ -1250,10 +1743,51 @@ paths:
                 reason:
                   description: Reason why the user reports this video
                   type: string
+<<<<<<< Updated upstream
       responses:
         '204':
           description: successful operation
   '/videos/{id}/abuse/{abuseId}':
+=======
+                  minLength: 4
+                predefinedReasons:
+                  $ref: '#/components/schemas/PredefinedAbuseReasons'
+
+                video:
+                  type: object
+                  properties:
+                    id:
+                      description: Video id to report
+                      type: number
+                    startAt:
+                      type: integer
+                      description: Timestamp in the video that marks the beginning of the report
+                      minimum: 0
+                    endAt:
+                      type: integer
+                      description: Timestamp in the video that marks the ending of the report
+                      minimum: 0
+                comment:
+                  type: object
+                  properties:
+                    id:
+                      description: Comment id to report
+                      type: number
+                account:
+                  type: object
+                  properties:
+                    id:
+                      description: Account id to report
+                      type: number
+              required:
+                - reason
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: incorrect request parameters
+  '/abuses/{abuseId}':
+>>>>>>> Stashed changes
     put:
       summary: Update an abuse
       security:
@@ -1261,12 +1795,15 @@ paths:
           - admin
           - moderator
       tags:
+<<<<<<< Updated upstream
         - Video Abuses
       responses:
         '204':
           description: successful operation
+=======
+        - Abuses
+>>>>>>> Stashed changes
       parameters:
-        - $ref: '#/components/parameters/idOrUUID'
         - $ref: '#/components/parameters/abuseId'
       requestBody:
         content:
@@ -1275,9 +1812,10 @@ paths:
               type: object
               properties:
                 state:
-                  $ref: '#/components/schemas/VideoAbuseStateSet'
+                  $ref: '#/components/schemas/AbuseStateSet'
                 moderationComment:
                   type: string
+<<<<<<< Updated upstream
                   description: 'Update the comment of the video abuse for other admin/moderators'
     delete:
       summary: Delete an abuse
@@ -1293,14 +1831,94 @@ paths:
       parameters:
         - $ref: '#/components/parameters/idOrUUID'
         - $ref: '#/components/parameters/abuseId'
+=======
+                  description: Update the report comment visible only to the moderation team
+      responses:
+        '204':
+          description: successful operation
+        '404':
+          description: abuse not found
+    delete:
+      tags:
+        - Abuses
+      summary: Delete an abuse
+      security:
+        - OAuth2:
+          - admin
+          - moderator
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+      responses:
+        '204':
+          description: successful operation
+        '404':
+          description: block not found
+  '/abuses/{abuseId}/messages':
+    get:
+      summary: List messages of an abuse
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AbuseMessage'
+
+    post:
+      summary: Add message to an abuse
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  description: Message to send
+                  type: string
+              required:
+                - message
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: incorrect request parameters
+  '/abuses/{abuseId}/messages/{abuseMessageId}':
+    delete:
+      summary: Delete an abuse message
+      security:
+        - OAuth2: []
+      tags:
+        - Abuses
+      parameters:
+        - $ref: '#/components/parameters/abuseId'
+        - $ref: '#/components/parameters/abuseMessageId'
+      responses:
+        '204':
+          description: successful operation
+>>>>>>> Stashed changes
 
   '/videos/{id}/blacklist':
     post:
       summary: Blacklist a video
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       tags:
         - Video Blacklist
       parameters:
@@ -1312,8 +1930,8 @@ paths:
       summary: Delete an entry of the blacklist of a video by its id
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       tags:
         - Video Blacklist
       parameters:
@@ -1326,10 +1944,15 @@ paths:
       summary: List blacklisted videos
       security:
         - OAuth2:
+<<<<<<< Updated upstream
             - admin
             - moderator
       tags:
         - Video Blacklist
+=======
+          - admin
+          - moderator
+>>>>>>> Stashed changes
       parameters:
         - $ref: '#/components/parameters/start'
         - $ref: '#/components/parameters/count'
@@ -1367,6 +1990,9 @@ paths:
   /videos/{id}/captions/{captionLanguage}:
     put:
       summary: Add or replace a video caption
+      security:
+        - OAuth2:
+          - user
       tags:
         - Video Caption
       parameters:
@@ -1390,6 +2016,9 @@ paths:
           description: successful operation
     delete:
       summary: Delete a video caption
+      security:
+        - OAuth2:
+          - user
       tags:
         - Video Caption
       parameters:
@@ -2099,9 +2728,13 @@ components:
       name: name
       in: path
       required: true
+<<<<<<< Updated upstream
       description: >-
         The name of the account (chocobozzz or chocobozzz@peertube.cpy.re for
         example)
+=======
+      description: The username or handle of the account
+>>>>>>> Stashed changes
       schema:
         type: string
     id:
@@ -2129,7 +2762,14 @@ components:
       name: abuseId
       in: path
       required: true
-      description: Video abuse id
+      description: Abuse id
+      schema:
+        type: integer
+    abuseMessageId:
+      name: abuseMessageId
+      in: path
+      required: true
+      description: Abuse message id
       schema:
         type: number
     captionLanguage:
@@ -2257,9 +2897,10 @@ components:
       in: query
       required: false
       description: >
-        Special filters (local for instance) which might require special rights:
+        Special filters which might require special rights:
          * `local` - only videos local to the instance
          * `all-local` - only videos local to the instance, but showing private and unlisted videos (requires Admin privileges)
+         * `all` - all videos, showing private and unlisted videos (requires Admin privileges)
       schema:
         type: string
         enum:
@@ -2274,6 +2915,38 @@ components:
         type: array
         items:
           type: string
+<<<<<<< Updated upstream
+=======
+          format: uri
+    npmName:
+      name: npmName
+      in: path
+      required: true
+      description: name of the plugin/theme on npmjs.com or in its package.json
+      schema:
+        type: string
+        example: peertube-plugin-auth-ldap
+    jobType:
+      name: jobType
+      in: query
+      required: false
+      description: job type
+      schema:
+        type: string
+        enum:
+          - activitypub-follow
+          - activitypub-http-broadcast
+          - activitypub-http-fetcher
+          - activitypub-http-unicast
+          - email
+          - video-transcoding
+          - video-file-import
+          - video-import
+          - videos-views
+          - activitypub-refresher
+          - video-redundancy
+          - video-live-ending
+>>>>>>> Stashed changes
   securitySchemes:
     OAuth2:
       description: >
@@ -2380,19 +3053,41 @@ components:
         label:
           type: string
 
-    VideoAbuseStateSet:
+    AbuseStateSet:
       type: integer
       enum:
         - 1
         - 2
         - 3
+<<<<<<< Updated upstream
       description: 'The video playlist privacy (Pending = 1, Rejected = 2, Accepted = 3)'
     VideoAbuseStateConstant:
+=======
+      description: 'The abuse state (Pending = `1`, Rejected = `2`, Accepted = `3`)'
+    AbuseStateConstant:
+>>>>>>> Stashed changes
       properties:
         id:
-          $ref: '#/components/schemas/VideoAbuseStateSet'
+          $ref: '#/components/schemas/AbuseStateSet'
         label:
           type: string
+<<<<<<< Updated upstream
+=======
+    AbusePredefinedReasons:
+      type: array
+      items:
+        type: string
+        enum:
+        - violentOrAbusive
+        - hatefulOrAbusive
+        - spamOrMisleading
+        - privacy
+        - rights
+        - serverRules
+        - thumbnails
+        - captions
+      example: [spamOrMisleading]
+>>>>>>> Stashed changes
 
     VideoResolutionConstant:
       properties:
@@ -2491,6 +3186,7 @@ components:
           type: string
         files:
           type: array
+          description: 'Video files associated to this playlist. The difference with the root "files" property is that these files are fragmented, so they can be used in this streaming playlist (HLS etc)'
           items:
             $ref: '#/components/schemas/VideoFile'
         redundancies:
@@ -2506,6 +3202,13 @@ components:
           type: number
         uuid:
           type: string
+<<<<<<< Updated upstream
+=======
+          format: uuid
+          example: 9c9de5e8-0a1e-484a-b099-e80766180a6d
+        isLive:
+          type: boolean
+>>>>>>> Stashed changes
         createdAt:
           type: string
         publishedAt:
@@ -2534,6 +3237,10 @@ components:
           type: string
         previewPath:
           type: string
+<<<<<<< Updated upstream
+=======
+          example: /lazy-static/previews/a65bc12f-9383-462e-81ae-8207e8b434ee.jpg
+>>>>>>> Stashed changes
         embedPath:
           type: string
         views:
@@ -2588,6 +3295,7 @@ components:
                 type: string
             files:
               type: array
+              description: 'WebTorrent/raw video files. Can be empty if WebTorrent is disabled on the server. In this case, video files will be in the "streamingPlaylists[].files" property'
               items:
                 $ref: '#/components/schemas/VideoFile'
             commentsEnabled:
@@ -2638,16 +3346,22 @@ components:
           type: string
         video:
           $ref: '#/components/schemas/Video'
-    VideoAbuse:
+    Abuse:
       properties:
         id:
           type: number
         reason:
           type: string
+<<<<<<< Updated upstream
+=======
+          example: The video is a spam
+        predefinedReasons:
+          $ref: '#/components/schemas/AbusePredefinedReasons'
+>>>>>>> Stashed changes
         reporterAccount:
           $ref: '#/components/schemas/Account'
         state:
-          $ref: '#/components/schemas/VideoAbuseStateConstant'
+          $ref: '#/components/schemas/AbuseStateConstant'
         moderationComment:
           type: string
         video:
@@ -2661,6 +3375,23 @@ components:
               type: string
         createdAt:
           type: string
+<<<<<<< Updated upstream
+=======
+          format: date-time
+    AbuseMessage:
+      properties:
+        id:
+          type: integer
+        message:
+          type: string
+        byModerator:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        account:
+          $ref: '#/components/schemas/AccountSummary'
+>>>>>>> Stashed changes
     VideoBlacklist:
       properties:
         id:
@@ -3244,6 +3975,26 @@ components:
           type: string
         updatedAt:
           type: string
+<<<<<<< Updated upstream
+=======
+          format: date-time
+
+    PredefinedAbuseReasons:
+      description: Reason categories that help triage reports
+      type: array
+      items:
+        type: string
+        enum:
+        - violentOrAbusive
+        - hatefulOrAbusive
+        - spamOrMisleading
+        - privacy
+        - rights
+        - serverRules
+        - thumbnails
+        - captions
+
+>>>>>>> Stashed changes
     Job:
       properties:
         id:
@@ -3303,6 +4054,77 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Video'
+<<<<<<< Updated upstream
+=======
+    User:
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: The user username
+          minLength: 1
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          description: The user email
+        theme:
+          type: string
+          description: Theme enabled by this user
+        emailVerified:
+          type: boolean
+          description: Has the user confirmed their email address?
+        nsfwPolicy:
+          $ref: '#/components/schemas/NSFWPolicy'
+        webtorrentEnabled:
+          type: boolean
+          description: Enable P2P in the player
+        autoPlayVideo:
+          type: boolean
+          description: Automatically start playing the video on the watch page
+        role:
+          $ref: '#/components/schemas/UserRole'
+        roleLabel:
+          type: string
+          enum:
+            - User
+            - Moderator
+            - Administrator
+        videoQuota:
+          type: integer
+          description: The user video quota
+        videoQuotaDaily:
+          type: integer
+          description: The user daily video quota
+        videosCount:
+          type: integer
+        abusesCount:
+          type: integer
+        abusesAcceptedCount:
+          type: integer
+        abusesCreatedCount:
+          type: integer
+        videoCommentsCount:
+          type: integer
+        noInstanceConfigWarningModal:
+          type: boolean
+        noWelcomeModal:
+          type: boolean
+        blocked:
+          type: boolean
+        blockedReason:
+          type: string
+        createdAt:
+          type: string
+        account:
+          $ref: '#/components/schemas/Account'
+        videoChannels:
+          type: array
+          items:
+            $ref: '#/components/schemas/VideoChannel'
+>>>>>>> Stashed changes
     AddUser:
       properties:
         username:
@@ -3410,7 +4232,12 @@ components:
           properties:
             name:
               type: string
+<<<<<<< Updated upstream
               description: 'The default channel name'
+=======
+              description: The username for the default channel
+              pattern: '/^[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\\-_.:]+$/'
+>>>>>>> Stashed changes
             displayName:
               type: string
               description: 'The default channel display name'
@@ -3442,5 +4269,441 @@ components:
           type: string
         bulkVideosSupportUpdate:
           type: boolean
+<<<<<<< Updated upstream
           description: 'Update all videos support field of this channel'
 
+=======
+          description: 'Update the support field for all videos of this channel'
+
+    MRSSPeerLink:
+      type: object
+      xml:
+        name: 'media:peerLink'
+      properties:
+        href:
+          type: string
+          xml:
+            attribute: true
+        type:
+          type: string
+          enum:
+            - application/x-bittorrent
+          xml:
+            attribute: true
+    MRSSGroupContent:
+      type: object
+      xml:
+        name: 'media:content'
+      properties:
+        url:
+          type: string
+          format: url
+          xml:
+            attribute: true
+        fileSize:
+          type: integer
+          xml:
+            attribute: true
+        type:
+          type: string
+          xml:
+            attribute: true
+        framerate:
+          type: integer
+          xml:
+            attribute: true
+        duration:
+          type: integer
+          xml:
+            attribute: true
+        height:
+          type: integer
+          xml:
+            attribute: true
+        lang:
+          type: string
+          xml:
+            attribute: true
+    VideoCommentsForXML:
+      type: array
+      xml:
+        wrapped: true
+        name: 'channel'
+      items:
+        type: object
+        xml:
+          name: 'item'
+        properties:
+          link:
+            type: string
+            format: url
+          guid:
+            type: string
+          pubDate:
+            type: string
+            format: date-time
+          'content:encoded':
+            type: string
+          'dc:creator':
+            type: string
+    VideosForXML:
+      type: array
+      xml:
+        wrapped: true
+        name: 'channel'
+      items:
+        type: object
+        xml:
+          name: 'item'
+        properties:
+          link:
+            type: string
+            format: url
+            description: video watch page URL
+          guid:
+            type: string
+            description: video canonical URL
+          pubDate:
+            type: string
+            format: date-time
+            description: video publication date
+          description:
+            type: string
+            description: video description
+          'content:encoded':
+            type: string
+            description: video description
+          'dc:creator':
+            type: string
+            description: publisher user name
+          'media:category':
+            type: integer
+            description: video category (MRSS)
+          'media:community':
+            type: object
+            description: see [media:community](https://www.rssboard.org/media-rss#media-community) (MRSS)
+            properties:
+              'media:statistics':
+                type: object
+                properties:
+                  views:
+                    type: integer
+                    xml:
+                      attribute: true
+          'media:embed':
+            type: object
+            properties:
+              url:
+                type: string
+                format: url
+                description: video embed path, relative to the canonical URL domain (MRSS)
+                xml:
+                  attribute: true
+          'media:player':
+            type: object
+            properties:
+              url:
+                type: string
+                format: url
+                description: video watch path, relative to the canonical URL domain (MRSS)
+                xml:
+                  attribute: true
+          'media:thumbnail':
+            type: object
+            properties:
+              url:
+                type: string
+                format: url
+                xml:
+                  attribute: true
+              height:
+                type: integer
+                xml:
+                  attribute: true
+              width:
+                type: integer
+                xml:
+                  attribute: true
+          'media:title':
+            type: string
+            description: see [media:title](https://www.rssboard.org/media-rss#media-title) (MRSS). We only use `plain` titles.
+          'media:description':
+            type: string
+          'media:rating':
+            type: string
+            enum:
+              - nonadult
+              - adult
+            description: see [media:rating](https://www.rssboard.org/media-rss#media-rating) (MRSS)
+          'enclosure':
+            type: object
+            description: main streamable file for the video
+            properties:
+              url:
+                type: string
+                format: url
+                xml:
+                  attribute: true
+              type:
+                type: string
+                enum:
+                  - application/x-bittorrent
+                xml:
+                  attribute: true
+              length:
+                type: integer
+                xml:
+                  attribute: true
+          'media:group':
+            type: array
+            description: list of streamable files for the video. see [media:peerLink](https://www.rssboard.org/media-rss#media-peerlink) and [media:content](https://www.rssboard.org/media-rss#media-content) or  (MRSS)
+            items:
+              anyOf:
+                - $ref: '#/components/schemas/MRSSPeerLink'
+                - $ref: '#/components/schemas/MRSSGroupContent'
+    NotificationSettingValue:
+      type: integer
+      description: >
+        Notification type
+
+        - `0` NONE
+
+        - `1` WEB
+
+        - `2` EMAIL
+      enum:
+        - 0
+        - 1
+        - 3
+    Notification:
+      properties:
+        id:
+          type: integer
+        type:
+          type: integer
+          description: >
+            Notification type, following the `UserNotificationType` enum:
+
+            - `1` NEW_VIDEO_FROM_SUBSCRIPTION
+
+            - `2` NEW_COMMENT_ON_MY_VIDEO
+
+            - `3` NEW_ABUSE_FOR_MODERATORS
+
+            - `4` BLACKLIST_ON_MY_VIDEO
+
+            - `5` UNBLACKLIST_ON_MY_VIDEO
+
+            - `6` MY_VIDEO_PUBLISHED
+
+            - `7` MY_VIDEO_IMPORT_SUCCESS
+
+            - `8` MY_VIDEO_IMPORT_ERROR
+
+            - `9` NEW_USER_REGISTRATION
+
+            - `10` NEW_FOLLOW
+
+            - `11` COMMENT_MENTION
+
+            - `12` VIDEO_AUTO_BLACKLIST_FOR_MODERATORS
+
+            - `13` NEW_INSTANCE_FOLLOWER
+
+            - `14` AUTO_INSTANCE_FOLLOWING
+        read:
+          type: boolean
+        video:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/VideoInfo'
+            - type: object
+              properties:
+                channel:
+                  $ref: '#/components/schemas/ActorInfo'
+        videoImport:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: integer
+            video:
+              nullable: true
+              $ref: '#/components/schemas/VideoInfo'
+            torrentName:
+              type: string
+              nullable: true
+            magnetUri:
+              type: string
+              format: uri
+              nullable: true
+            targetUri:
+              type: string
+              format: uri
+              nullable: true
+        comment:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: integer
+            threadId:
+              type: integer
+            video:
+              $ref: '#/components/schemas/VideoInfo'
+            account:
+              $ref: '#/components/schemas/ActorInfo'
+        videoAbuse:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: integer
+            video:
+              allOf:
+                - $ref: '#/components/schemas/VideoInfo'
+        videoBlacklist:
+          nullable: true
+          type: object
+          properties:
+            id:
+              type: integer
+            video:
+              allOf:
+                - $ref: '#/components/schemas/VideoInfo'
+        account:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ActorInfo'
+        actorFollow:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            follower:
+              $ref: '#/components/schemas/ActorInfo'
+            state:
+              type: string
+              enum:
+                - pending
+                - accepted
+            following:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - account
+                    - channel
+                    - instance
+                name:
+                  type: string
+                displayName:
+                  type: string
+                host:
+                  type: string
+                  format: hostname
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NotificationListResponse:
+      properties:
+        total:
+          type: integer
+          example: 1
+        data:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Notification'
+    Plugin:
+      properties:
+        name:
+          type: string
+          example: peertube-plugin-auth-ldap
+        type:
+          type: integer
+          description: >
+            - `1`: PLUGIN
+
+            - `2`: THEME
+          enum:
+            - 1
+            - 2
+        latestVersion:
+          type: string
+          example: 0.0.3
+        version:
+          type: string
+          example: 0.0.1
+        enabled:
+          type: boolean
+        uninstalled:
+          type: boolean
+        peertubeEngine:
+          type: string
+          example: 2.2.0
+        description:
+          type: string
+        homepage:
+          type: string
+          format: url
+          example: https://framagit.org/framasoft/peertube/official-plugins/tree/master/peertube-plugin-auth-ldap
+        settings:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PluginResponse:
+      properties:
+        total:
+          type: integer
+          example: 1
+        data:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Plugin'
+
+    LiveVideoUpdate:
+      properties:
+        saveReplay:
+          type: boolean
+        permanentLive:
+          description: User can stream multiple times in a permanent live
+          type: boolean
+
+    LiveVideoResponse:
+      properties:
+        rtmpUrl:
+          type: string
+        streamKey:
+          type: string
+          description: RTMP stream key to use to stream into this live video
+        saveReplay:
+          type: boolean
+        permanentLive:
+          description: User can stream multiple times in a permanent live
+          type: boolean
+
+  callbacks:
+    searchIndex:
+      'https://search.example.org/api/v1/search/videos':
+        post:
+          summary: third-party search index MAY be used instead of the local index, if enabled by the instance admin. see `searchTarget`
+          responses:
+            '200':
+              description: successful operation
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/VideoListResponse'
+>>>>>>> Stashed changes

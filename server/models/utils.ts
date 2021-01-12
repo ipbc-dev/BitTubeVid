@@ -1,7 +1,7 @@
+import { literal, Op, OrderItem } from 'sequelize'
 import { Model, Sequelize } from 'sequelize-typescript'
-import validator from 'validator'
 import { Col } from 'sequelize/types/lib/utils'
-import { literal, OrderItem, Op } from 'sequelize'
+import validator from 'validator'
 
 type Primitive = string | Function | number | boolean | Symbol | undefined | null
 type DeepOmitHelper<T, K extends keyof T> = {
@@ -37,6 +37,16 @@ function getSort (value: string, lastSort: OrderItem = [ 'id', 'ASC' ]): OrderIt
   }
 
   return [ [ finalField, direction ], lastSort ]
+}
+
+function getPlaylistSort (value: string, lastSort: OrderItem = [ 'id', 'ASC' ]): OrderItem[] {
+  const { direction, field } = buildDirectionAndField(value)
+
+  if (field.toLowerCase() === 'name') {
+    return [ [ 'displayName', direction ], lastSort ]
+  }
+
+  return getSort(value, lastSort)
 }
 
 function getCommentSort (value: string, lastSort: OrderItem = [ 'id', 'ASC' ]): OrderItem[] {
@@ -120,7 +130,8 @@ function throwIfNotValid (value: any, validator: (value: any) => boolean, fieldN
 function buildTrigramSearchIndex (indexName: string, attribute: string) {
   return {
     name: indexName,
-    fields: [ Sequelize.literal('lower(immutable_unaccent(' + attribute + '))') as any ],
+    // FIXME: gin_trgm_ops is not taken into account in Sequelize 6, so adding it ourselves in the literal function
+    fields: [ Sequelize.literal('lower(immutable_unaccent(' + attribute + ')) gin_trgm_ops') as any ],
     using: 'gin',
     operator: 'gin_trgm_ops'
   }
@@ -147,6 +158,30 @@ function buildBlockedAccountSQL (serverAccountId: number, userAccountId?: number
     'SELECT "account"."id" AS "id" FROM account INNER JOIN "actor" ON account."actorId" = actor.id ' +
     'INNER JOIN "serverBlocklist" ON "actor"."serverId" = "serverBlocklist"."targetServerId" ' +
     'WHERE "serverBlocklist"."accountId" IN (' + blockerIdsString + ')'
+}
+
+function buildBlockedAccountSQLOptimized (columnNameJoin: string, blockerIds: number[]) {
+  const blockerIdsString = blockerIds.join(', ')
+
+  return [
+    literal(
+      `NOT EXISTS (` +
+      `  SELECT 1 FROM "accountBlocklist" ` +
+      `  WHERE "targetAccountId" = ${columnNameJoin} ` +
+      `  AND "accountId" IN (${blockerIdsString})` +
+      `)`
+    ),
+
+    literal(
+      `NOT EXISTS (` +
+      `  SELECT 1 FROM "account" ` +
+      `  INNER JOIN "actor" ON account."actorId" = actor.id ` +
+      `  INNER JOIN "serverBlocklist" ON "actor"."serverId" = "serverBlocklist"."targetServerId" ` +
+      `  WHERE "account"."id" = ${columnNameJoin} ` +
+      `  AND "serverBlocklist"."accountId" IN (${blockerIdsString})` +
+      `)`
+    )
+  ]
 }
 
 function buildServerIdsFollowedBy (actorId: any) {
@@ -222,7 +257,9 @@ function searchAttribute (sourceField?: string, targetField?: string) {
 export {
   DeepOmit,
   buildBlockedAccountSQL,
+  buildBlockedAccountSQLOptimized,
   buildLocalActorIdsIn,
+  getPlaylistSort,
   SortType,
   buildLocalAccountIdsIn,
   getSort,

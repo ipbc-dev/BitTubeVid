@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { PeerTubePlugin } from '@shared/models/plugins/peertube-plugin.model'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { PluginApiService } from '@app/+admin/plugins/shared/plugin-api.service'
@@ -8,6 +9,14 @@ import { Subscription } from 'rxjs'
 import { map, switchMap } from 'rxjs/operators'
 import { BuildFormArgument, FormReactive, FormValidatorService } from '@app/shared'
 import { RegisterServerSettingOptions } from '@shared/models/plugins/register-server-setting.model'
+=======
+import { ActivatedRoute } from '@angular/router'
+import { Notifier } from '@app/core'
+import { BuildFormArgument } from '@app/shared/form-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { PeerTubePlugin, RegisterServerSettingOptions } from '@shared/models'
+import { PluginApiService } from '../shared/plugin-api.service'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-plugin-show-installed',
@@ -23,7 +32,6 @@ export class PluginShowInstalledComponent extends FormReactive implements OnInit
 
   constructor (
     protected formValidatorService: FormValidatorService,
-    private i18n: I18n,
     private pluginService: PluginApiService,
     private notifier: Notifier,
     private route: ActivatedRoute
@@ -51,7 +59,7 @@ export class PluginShowInstalledComponent extends FormReactive implements OnInit
     this.pluginService.updatePluginSettings(this.plugin.name, this.plugin.type, settings)
         .subscribe(
           () => {
-            this.notifier.success(this.i18n('Settings updated.'))
+            this.notifier.success($localize`Settings updated.`)
           },
 
           err => this.notifier.error(err.message)

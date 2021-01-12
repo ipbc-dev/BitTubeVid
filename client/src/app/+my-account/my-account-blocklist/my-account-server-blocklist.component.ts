@@ -8,8 +8,13 @@ import { BlocklistService } from '@app/shared/blocklist'
 
 @Component({
   selector: 'my-account-server-blocklist',
+<<<<<<< Updated upstream
   styleUrls: [ './my-account-server-blocklist.component.scss' ],
   templateUrl: './my-account-server-blocklist.component.html'
+=======
+  styleUrls: [ '../../shared/shared-moderation/moderation.scss', '../../shared/shared-moderation/server-blocklist.component.scss' ],
+  templateUrl: '../../shared/shared-moderation/server-blocklist.component.html'
+>>>>>>> Stashed changes
 })
 export class MyAccountServerBlocklistComponent extends RestTable implements OnInit {
   blockedServers: ServerBlock[] = []

@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
 import * as chai from 'chai'
+import * as ffmpeg from 'fluent-ffmpeg'
+import { ensureDir, pathExists, readFile, stat } from 'fs-extra'
 import { basename, dirname, isAbsolute, join, resolve } from 'path'
 import * as request from 'supertest'
 import * as WebTorrent from 'webtorrent'
-import { ensureDir, pathExists, readFile } from 'fs-extra'
-import * as ffmpeg from 'fluent-ffmpeg'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 let webtorrent: WebTorrent.Instance
@@ -44,14 +45,14 @@ function root () {
   return root
 }
 
-function buildServerDirectory (internalServerNumber: number, directory: string) {
-  return join(root(), 'test' + internalServerNumber, directory)
+function buildServerDirectory (server: { internalServerNumber: number }, directory: string) {
+  return join(root(), 'test' + server.internalServerNumber, directory)
 }
 
 async function testImage (url: string, imageName: string, imagePath: string, extension = '.jpg') {
   const res = await request(url)
     .get(imagePath)
-    .expect(200)
+    .expect(HttpStatusCode.OK_200)
 
   const body = res.body
 
@@ -63,18 +64,26 @@ async function testImage (url: string, imageName: string, imagePath: string, ext
   expect(data.length).to.be.below(maxLength)
 }
 
+function isGithubCI () {
+  return !!process.env.GITHUB_WORKSPACE
+}
+
 function buildAbsoluteFixturePath (path: string, customCIPath = false) {
-  if (isAbsolute(path)) {
-    return path
-  }
+  if (isAbsolute(path)) return path
 
-  if (customCIPath) {
-    if (process.env.GITLAB_CI) return join(root(), 'cached-fixtures', path)
-
-    if (process.env.TRAVIS) return join(process.env.HOME, 'fixtures', path)
+  if (customCIPath && process.env.GITHUB_WORKSPACE) {
+    return join(process.env.GITHUB_WORKSPACE, 'fixtures', path)
   }
 
   return join(root(), 'server', 'tests', 'fixtures', path)
+}
+
+function areHttpImportTestsDisabled () {
+  const disabled = process.env.DISABLE_HTTP_IMPORT_TESTS === 'true'
+
+  if (disabled) console.log('Import tests are disabled')
+
+  return disabled
 }
 
 async function generateHighBitrateVideo () {
@@ -84,6 +93,7 @@ async function generateHighBitrateVideo () {
 
   const exists = await pathExists(tempFixturePath)
   if (!exists) {
+    console.log('Generating high bitrate video.')
 
     // Generate a random, high bitrate video on the fly, so we don't have to include
     // a large file in the repo. The video needs to have a certain minimum length so
@@ -111,6 +121,8 @@ async function generateVideoWithFramerate (fps = 60) {
 
   const exists = await pathExists(tempFixturePath)
   if (!exists) {
+    console.log('Generating video with framerate %d.', fps)
+
     return new Promise<string>((res, rej) => {
       ffmpeg()
         .outputOptions([ '-f rawvideo', '-video_size 1280x720', '-i /dev/urandom' ])
@@ -126,15 +138,24 @@ async function generateVideoWithFramerate (fps = 60) {
   return tempFixturePath
 }
 
+async function getFileSize (path: string) {
+  const stats = await stat(path)
+
+  return stats.size
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   dateIsValid,
   wait,
+  areHttpImportTestsDisabled,
   buildServerDirectory,
   webtorrentAdd,
+  getFileSize,
   immutableAssign,
   testImage,
+  isGithubCI,
   buildAbsoluteFixturePath,
   root,
   generateHighBitrateVideo,

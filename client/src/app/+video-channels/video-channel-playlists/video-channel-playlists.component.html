@@ -4,8 +4,15 @@
 
 <div i18n class="no-results" *ngIf="pagination.totalItems === 0">This channel does not have playlists.</div>
 
+<<<<<<< Updated upstream
 <div class="video-playlist" myInfiniteScroller (nearOfBottom)="onNearOfBottom()" [dataObservable]="onDataSubject.asObservable()">
   <div *ngFor="let playlist of videoPlaylists" class="playlist-miniature-container">
     <my-video-playlist-miniature [playlist]="playlist" [toManage]="false"></my-video-playlist-miniature>
+=======
+  <div class="video-playlist" myInfiniteScroller (nearOfBottom)="onNearOfBottom()" [autoInit]="true" [dataObservable]="onDataSubject.asObservable()">
+    <div *ngFor="let playlist of videoPlaylists" class="playlist-miniature-container">
+      <my-video-playlist-miniature [playlist]="playlist" [toManage]="false"></my-video-playlist-miniature>
+    </div>
+>>>>>>> Stashed changes
   </div>
 </div>

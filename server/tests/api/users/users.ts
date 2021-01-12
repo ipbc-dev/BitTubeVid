@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-expressions,@typescript-eslint/require-await */
 
-import * as chai from 'chai'
 import 'mocha'
-import { MyUser, User, UserRole, Video, VideoAbuseState, VideoAbuseUpdate, VideoPlaylistType } from '../../../../shared/index'
+import * as chai from 'chai'
+import { AbuseState, AbuseUpdate, MyUser, User, UserRole, Video, VideoPlaylistType } from '@shared/models'
+import { CustomConfig } from '@shared/models/server'
 import {
   addVideoCommentThread,
   blockUser,
@@ -11,6 +12,7 @@ import {
   deleteMe,
   flushAndRunServer,
   getAccountRatings,
+  getAdminAbusesList,
   getBlacklistedVideosList,
   getCustomConfig,
   getMyUserInformation,
@@ -19,7 +21,6 @@ import {
   getUserInformation,
   getUsersList,
   getUsersListPaginationAndSort,
-  getVideoAbusesList,
   getVideoChannel,
   getVideosList,
   installPlugin,
@@ -29,15 +30,15 @@ import {
   registerUserWithChannel,
   removeUser,
   removeVideo,
-  reportVideoAbuse,
+  reportAbuse,
   ServerInfo,
   testImage,
   unblockUser,
+  updateAbuse,
   updateCustomSubConfig,
   updateMyAvatar,
   updateMyUser,
   updateUser,
-  updateVideoAbuse,
   uploadVideo,
   userLogin,
   waitJobs
@@ -46,7 +47,7 @@ import { follow } from '../../../../shared/extra-utils/server/follows'
 import { logout, serverLogin, setAccessTokensToServers } from '../../../../shared/extra-utils/users/login'
 import { getMyVideos } from '../../../../shared/extra-utils/videos/videos'
 import { UserAdminFlag } from '../../../../shared/models/users/user-flag.model'
-import { CustomConfig } from '@shared/models/server'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 
@@ -86,14 +87,14 @@ describe('Test users', function () {
 
     it('Should not login with an invalid client id', async function () {
       const client = { id: 'client', secret: server.client.secret }
-      const res = await login(server.url, client, server.user, 400)
+      const res = await login(server.url, client, server.user, HttpStatusCode.BAD_REQUEST_400)
 
       expect(res.body.error).to.contain('client is invalid')
     })
 
     it('Should not login with an invalid client secret', async function () {
       const client = { id: server.client.id, secret: 'coucou' }
-      const res = await login(server.url, client, server.user, 400)
+      const res = await login(server.url, client, server.user, HttpStatusCode.BAD_REQUEST_400)
 
       expect(res.body.error).to.contain('client is invalid')
     })
@@ -103,14 +104,14 @@ describe('Test users', function () {
 
     it('Should not login with an invalid username', async function () {
       const user = { username: 'captain crochet', password: server.user.password }
-      const res = await login(server.url, server.client, user, 400)
+      const res = await login(server.url, server.client, user, HttpStatusCode.BAD_REQUEST_400)
 
       expect(res.body.error).to.contain('credentials are invalid')
     })
 
     it('Should not login with an invalid password', async function () {
       const user = { username: server.user.username, password: 'mew_three' }
-      const res = await login(server.url, server.client, user, 400)
+      const res = await login(server.url, server.client, user, HttpStatusCode.BAD_REQUEST_400)
 
       expect(res.body.error).to.contain('credentials are invalid')
     })
@@ -119,31 +120,31 @@ describe('Test users', function () {
       accessToken = 'my_super_token'
 
       const videoAttributes = {}
-      await uploadVideo(server.url, accessToken, videoAttributes, 401)
+      await uploadVideo(server.url, accessToken, videoAttributes, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should not be able to follow', async function () {
       accessToken = 'my_super_token'
-      await follow(server.url, [ 'http://example.com' ], accessToken, 401)
+      await follow(server.url, [ 'http://example.com' ], accessToken, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should not be able to unfollow')
 
     it('Should be able to login', async function () {
-      const res = await login(server.url, server.client, server.user, 200)
+      const res = await login(server.url, server.client, server.user, HttpStatusCode.OK_200)
 
       accessToken = res.body.access_token
     })
 
     it('Should be able to login with an insensitive username', async function () {
       const user = { username: 'RoOt', password: server.user.password }
-      await login(server.url, server.client, user, 200)
+      await login(server.url, server.client, user, HttpStatusCode.OK_200)
 
       const user2 = { username: 'rOoT', password: server.user.password }
-      await login(server.url, server.client, user2, 200)
+      await login(server.url, server.client, user2, HttpStatusCode.OK_200)
 
       const user3 = { username: 'ROOt', password: server.user.password }
-      await login(server.url, server.client, user3, 200)
+      await login(server.url, server.client, user3, HttpStatusCode.OK_200)
     })
   })
 
@@ -179,7 +180,7 @@ describe('Test users', function () {
     it('Should retrieve ratings list', async function () {
       await rateVideo(server.url, accessToken, videoId, 'like')
 
-      const res = await getAccountRatings(server.url, server.user.username, server.accessToken, null, 200)
+      const res = await getAccountRatings(server.url, server.user.username, server.accessToken, null, HttpStatusCode.OK_200)
       const ratings = res.body
 
       expect(ratings.total).to.equal(1)
@@ -204,7 +205,7 @@ describe('Test users', function () {
 
   describe('Remove video', function () {
     it('Should not be able to remove the video with an incorrect token', async function () {
-      await removeVideo(server.url, 'bad_token', videoId, 401)
+      await removeVideo(server.url, 'bad_token', videoId, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should not be able to remove the video with the token of another account')
@@ -220,11 +221,11 @@ describe('Test users', function () {
     })
 
     it('Should not be able to get the user information', async function () {
-      await getMyUserInformation(server.url, server.accessToken, 401)
+      await getMyUserInformation(server.url, server.accessToken, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should not be able to upload a video', async function () {
-      await uploadVideo(server.url, server.accessToken, { name: 'video' }, 401)
+      await uploadVideo(server.url, server.accessToken, { name: 'video' }, HttpStatusCode.UNAUTHORIZED_401)
     })
 
     it('Should not be able to rate a video', async function () {
@@ -238,7 +239,7 @@ describe('Test users', function () {
         path: path + videoId,
         token: 'wrong token',
         fields: data,
-        statusCodeExpected: 401
+        statusCodeExpected: HttpStatusCode.UNAUTHORIZED_401
       }
       await makePutBodyRequest(options)
     })
@@ -302,10 +303,10 @@ describe('Test users', function () {
       expect(userGet.videosCount).to.equal(0)
       expect(userGet.videoCommentsCount).to.be.a('number')
       expect(userGet.videoCommentsCount).to.equal(0)
-      expect(userGet.videoAbusesCount).to.be.a('number')
-      expect(userGet.videoAbusesCount).to.equal(0)
-      expect(userGet.videoAbusesAcceptedCount).to.be.a('number')
-      expect(userGet.videoAbusesAcceptedCount).to.equal(0)
+      expect(userGet.abusesCount).to.be.a('number')
+      expect(userGet.abusesCount).to.equal(0)
+      expect(userGet.abusesAcceptedCount).to.be.a('number')
+      expect(userGet.abusesAcceptedCount).to.equal(0)
     })
   })
 
@@ -534,7 +535,7 @@ describe('Test users', function () {
       })
       user.password = 'new password'
 
-      await userLogin(server, user, 200)
+      await userLogin(server, user, HttpStatusCode.OK_200)
     })
 
     it('Should be able to change the NSFW display attribute', async function () {
@@ -602,8 +603,8 @@ describe('Test users', function () {
       expect(user.account.description).to.be.null
     })
 
-    it('Should be able to update my avatar', async function () {
-      const fixture = 'avatar.png'
+    it('Should be able to update my avatar with a gif', async function () {
+      const fixture = 'avatar.gif'
 
       await updateMyAvatar({
         url: server.url,
@@ -614,7 +615,24 @@ describe('Test users', function () {
       const res = await getMyUserInformation(server.url, accessTokenUser)
       const user = res.body
 
-      await testImage(server.url, 'avatar-resized', user.account.avatar.path, '.png')
+      await testImage(server.url, 'avatar-resized', user.account.avatar.path, '.gif')
+    })
+
+    it('Should be able to update my avatar with a gif, and then a png', async function () {
+      for (const extension of [ '.png', '.gif' ]) {
+        const fixture = 'avatar' + extension
+
+        await updateMyAvatar({
+          url: server.url,
+          accessToken: accessTokenUser,
+          fixture
+        })
+
+        const res = await getMyUserInformation(server.url, accessTokenUser)
+        const user = res.body
+
+        await testImage(server.url, 'avatar-resized', user.account.avatar.path, extension)
+      }
     })
 
     it('Should be able to update my display name', async function () {
@@ -715,7 +733,7 @@ describe('Test users', function () {
     })
 
     it('Should have removed the user token', async function () {
-      await getMyUserVideoQuotaUsed(server.url, accessTokenUser, 401)
+      await getMyUserVideoQuotaUsed(server.url, accessTokenUser, HttpStatusCode.UNAUTHORIZED_401)
 
       accessTokenUser = await userLogin(server, user)
     })
@@ -728,9 +746,9 @@ describe('Test users', function () {
         password: 'password updated'
       })
 
-      await getMyUserVideoQuotaUsed(server.url, accessTokenUser, 401)
+      await getMyUserVideoQuotaUsed(server.url, accessTokenUser, HttpStatusCode.UNAUTHORIZED_401)
 
-      await userLogin(server, user, 400)
+      await userLogin(server, user, HttpStatusCode.BAD_REQUEST_400)
 
       user.password = 'password updated'
       accessTokenUser = await userLogin(server, user)
@@ -749,7 +767,7 @@ describe('Test users', function () {
     })
 
     it('Should not be able to login with this user', async function () {
-      await userLogin(server, user, 400)
+      await userLogin(server, user, HttpStatusCode.BAD_REQUEST_400)
     })
 
     it('Should not have videos of this user', async function () {
@@ -835,15 +853,43 @@ describe('Test users', function () {
 
       user16AccessToken = await userLogin(server, user16)
 
-      await getMyUserInformation(server.url, user16AccessToken, 200)
+      await getMyUserInformation(server.url, user16AccessToken, HttpStatusCode.OK_200)
       await blockUser(server.url, user16Id, server.accessToken)
 
+<<<<<<< Updated upstream
       await getMyUserInformation(server.url, user16AccessToken, 401)
       await userLogin(server, user16, 400)
+=======
+      await getMyUserInformation(server.url, user16AccessToken, HttpStatusCode.UNAUTHORIZED_401)
+      await userLogin(server, user16, HttpStatusCode.BAD_REQUEST_400)
+    })
+
+    it('Should search user by banned status', async function () {
+      {
+        const res = await getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', undefined, true)
+        const users = res.body.data as User[]
+
+        expect(res.body.total).to.equal(1)
+        expect(users.length).to.equal(1)
+
+        expect(users[0].username).to.equal(user16.username)
+      }
+
+      {
+        const res = await getUsersListPaginationAndSort(server.url, server.accessToken, 0, 2, 'createdAt', undefined, false)
+        const users = res.body.data as User[]
+
+        expect(res.body.total).to.equal(1)
+        expect(users.length).to.equal(1)
+
+        expect(users[0].username).to.not.equal(user16.username)
+      }
+    })
+>>>>>>> Stashed changes
 
       await unblockUser(server.url, user16Id, server.accessToken)
       user16AccessToken = await userLogin(server, user16)
-      await getMyUserInformation(server.url, user16AccessToken, 200)
+      await getMyUserInformation(server.url, user16AccessToken, HttpStatusCode.OK_200)
     })
   })
 
@@ -871,9 +917,9 @@ describe('Test users', function () {
 
       expect(user.videosCount).to.equal(0)
       expect(user.videoCommentsCount).to.equal(0)
-      expect(user.videoAbusesCount).to.equal(0)
-      expect(user.videoAbusesCreatedCount).to.equal(0)
-      expect(user.videoAbusesAcceptedCount).to.equal(0)
+      expect(user.abusesCount).to.equal(0)
+      expect(user.abusesCreatedCount).to.equal(0)
+      expect(user.abusesAcceptedCount).to.equal(0)
     })
 
     it('Should report correct videos count', async function () {
@@ -900,26 +946,26 @@ describe('Test users', function () {
       expect(user.videoCommentsCount).to.equal(1)
     })
 
-    it('Should report correct video abuses counts', async function () {
+    it('Should report correct abuses counts', async function () {
       const reason = 'my super bad reason'
-      await reportVideoAbuse(server.url, user17AccessToken, videoId, reason)
+      await reportAbuse({ url: server.url, token: user17AccessToken, videoId, reason })
 
-      const res1 = await getVideoAbusesList({ url: server.url, token: server.accessToken })
+      const res1 = await getAdminAbusesList({ url: server.url, token: server.accessToken })
       const abuseId = res1.body.data[0].id
 
       const res2 = await getUserInformation(server.url, server.accessToken, user17Id, true)
       const user2: User = res2.body
 
-      expect(user2.videoAbusesCount).to.equal(1) // number of incriminations
-      expect(user2.videoAbusesCreatedCount).to.equal(1) // number of reports created
+      expect(user2.abusesCount).to.equal(1) // number of incriminations
+      expect(user2.abusesCreatedCount).to.equal(1) // number of reports created
 
-      const body: VideoAbuseUpdate = { state: VideoAbuseState.ACCEPTED }
-      await updateVideoAbuse(server.url, server.accessToken, videoId, abuseId, body)
+      const body: AbuseUpdate = { state: AbuseState.ACCEPTED }
+      await updateAbuse(server.url, server.accessToken, abuseId, body)
 
       const res3 = await getUserInformation(server.url, server.accessToken, user17Id, true)
       const user3: User = res3.body
 
-      expect(user3.videoAbusesAcceptedCount).to.equal(1) // number of reports created accepted
+      expect(user3.abusesAcceptedCount).to.equal(1) // number of reports created accepted
     })
   })
 

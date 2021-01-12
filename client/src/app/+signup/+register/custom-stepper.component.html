@@ -1,8 +1,12 @@
 <section class="container">
-  <header>
+  <header *ngIf="steps.length > 2">
     <ng-container *ngFor="let step of steps; let i = index; let isLast = last;">
       <div
+<<<<<<< Updated upstream
         class="step-info" [ngClass]="{ active: selectedIndex === i, completed: isCompleted(step) }"
+=======
+        class="step-info" [ngClass]="{ active: selectedIndex === i, completed: isCompleted(step), 'c-hand': isAccessible(i) }" [attr.aria-current]="selectedIndex === i"
+>>>>>>> Stashed changes
         (click)="onClick(i)"
       >
         <div class="step-index">

@@ -12,6 +12,7 @@ import { ClientHook, ClientHookName, clientHookObject } from '@shared/models/plu
 import { PluginClientScope } from '@shared/models/plugins/plugin-client-scope.type'
 import { RegisterClientHookOptions } from '@shared/models/plugins/register-client-hook.model'
 import { HttpClient } from '@angular/common/http'
+<<<<<<< Updated upstream
 import { AuthService } from '@app/core/auth'
 import { Notifier } from '@app/core/notification'
 import { RestExtractor } from '@app/shared/rest'
@@ -19,22 +20,33 @@ import { MarkdownService } from '@app/shared/renderer'
 import { PluginType } from '@shared/models/plugins/plugin.type'
 import { PublicServerSetting } from '@shared/models/plugins/public-server.setting'
 import { getDevLocale, isOnDevLocale } from '@app/shared/i18n/i18n-utils'
+=======
+import { Inject, Injectable, LOCALE_ID, NgZone } from '@angular/core'
+import { VideoEditType } from '@app/+videos/+video-edit/shared/video-edit.type'
+import { AuthService } from '@app/core/auth'
+import { Notifier } from '@app/core/notification'
+import { MarkdownService } from '@app/core/renderer'
+import { RestExtractor } from '@app/core/rest'
+import { ServerService } from '@app/core/server/server.service'
+import { getDevLocale, isOnDevLocale } from '@app/helpers'
+import { CustomModalComponent } from '@app/modal/custom-modal.component'
+import { FormFields, Hooks, loadPlugin, PluginInfo, runHook } from '@root-helpers/plugins'
+import { getCompleteLocale, isDefaultLocale, peertubeTranslate } from '@shared/core-utils/i18n'
+import {
+  ClientHook,
+  ClientHookName,
+  PluginClientScope,
+  PluginTranslation,
+  PluginType,
+  PublicServerSetting,
+  ServerConfigPlugin
+} from '@shared/models'
+import { environment } from '../../../environments/environment'
+>>>>>>> Stashed changes
 import { RegisterClientHelpers } from '../../../types/register-client-option.model'
 import { PluginTranslation } from '@shared/models/plugins/plugin-translation.model'
 import { importModule } from '@app/shared/misc/utils'
 import { CustomModalComponent } from '@app/modal/custom-modal.component'
-
-interface HookStructValue extends RegisterClientHookOptions {
-  plugin: ServerConfigPlugin
-  clientScript: ClientScript
-}
-
-type PluginInfo = {
-  plugin: ServerConfigPlugin
-  clientScript: ClientScript
-  pluginType: PluginType
-  isTheme: boolean
-}
 
 @Injectable()
 export class PluginService implements ClientHook {
@@ -48,7 +60,9 @@ export class PluginService implements ClientHook {
     search: new ReplaySubject<boolean>(1),
     'video-watch': new ReplaySubject<boolean>(1),
     signup: new ReplaySubject<boolean>(1),
-    login: new ReplaySubject<boolean>(1)
+    login: new ReplaySubject<boolean>(1),
+    'video-edit': new ReplaySubject<boolean>(1),
+    embed: new ReplaySubject<boolean>(1)
   }
 
   translationsObservable: Observable<PluginTranslation>
@@ -61,7 +75,10 @@ export class PluginService implements ClientHook {
   private loadedScopes: PluginClientScope[] = []
   private loadingScopes: { [id in PluginClientScope]?: boolean } = {}
 
-  private hooks: { [ name: string ]: HookStructValue[] } = {}
+  private hooks: Hooks = {}
+  private formFields: FormFields = {
+    video: []
+  }
 
   constructor (
     private router: Router,
@@ -118,7 +135,7 @@ export class PluginService implements ClientHook {
         this.scopes[scope].push({
           plugin,
           clientScript: {
-            script: environment.apiUrl + `${pathPrefix}/${plugin.name}/${plugin.version}/client-scripts/${clientScript.script}`,
+            script: `${pathPrefix}/${plugin.name}/${plugin.version}/client-scripts/${clientScript.script}`,
             scopes: clientScript.scopes
           },
           pluginType: isTheme ? PluginType.THEME : PluginType.PLUGIN,
@@ -182,20 +199,8 @@ export class PluginService implements ClientHook {
   }
 
   runHook <T> (hookName: ClientHookName, result?: T, params?: any): Promise<T> {
-    return this.zone.runOutsideAngular(async () => {
-      if (!this.hooks[ hookName ]) return result
-
-      const hookType = getHookType(hookName)
-
-      for (const hook of this.hooks[ hookName ]) {
-        console.log('Running hook %s of plugin %s.', hookName, hook.plugin.name)
-
-        result = await internalRunHook(hook.handler, hookType, result, params, err => {
-          console.error('Cannot run hook %s of script %s of plugin %s.', hookName, hook.clientScript.script, hook.plugin.name, err)
-        })
-      }
-
-      return result
+    return this.zone.runOutsideAngular(() => {
+      return runHook(this.hooks, hookName, result, params)
     })
   }
 
@@ -213,49 +218,24 @@ export class PluginService implements ClientHook {
       : PluginType.THEME
   }
 
+  getRegisteredVideoFormFields (type: VideoEditType) {
+    return this.formFields.video.filter(f => f.videoFormOptions.type === type)
+  }
+
   private loadPlugin (pluginInfo: PluginInfo) {
-    const { plugin, clientScript } = pluginInfo
-
-    const registerHook = (options: RegisterClientHookOptions) => {
-      if (clientHookObject[options.target] !== true) {
-        console.error('Unknown hook %s of plugin %s. Skipping.', options.target, plugin.name)
-        return
-      }
-
-      if (!this.hooks[options.target]) this.hooks[options.target] = []
-
-      this.hooks[options.target].push({
-        plugin,
-        clientScript,
-        target: options.target,
-        handler: options.handler,
-        priority: options.priority || 0
-      })
-    }
-
-    const peertubeHelpers = this.buildPeerTubeHelpers(pluginInfo)
-
-    console.log('Loading script %s of plugin %s.', clientScript.script, plugin.name)
-
     return this.zone.runOutsideAngular(() => {
-      return importModule(clientScript.script)
-        .then((script: ClientScriptModule) => script.register({ registerHook, peertubeHelpers }))
-        .then(() => this.sortHooksByPriority())
-        .catch(err => console.error('Cannot import or register plugin %s.', pluginInfo.plugin.name, err))
+      return loadPlugin({
+        hooks: this.hooks,
+        formFields: this.formFields,
+        pluginInfo,
+        peertubeHelpersFactory: pluginInfo => this.buildPeerTubeHelpers(pluginInfo)
+      })
     })
   }
 
   private buildScopeStruct () {
     for (const plugin of this.plugins) {
       this.addPlugin(plugin)
-    }
-  }
-
-  private sortHooksByPriority () {
-    for (const hookName of Object.keys(this.hooks)) {
-      this.hooks[hookName].sort((a, b) => {
-        return b.priority - a.priority
-      })
     }
   }
 

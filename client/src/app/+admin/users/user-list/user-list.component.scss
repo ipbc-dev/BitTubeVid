@@ -9,6 +9,11 @@ tr.banned {
   color: red;
 }
 
+.table-email {
+  @include disable-default-a-behaviour;
+  color: pvar(--mainForegroundColor);
+}
+
 .banned-info {
   font-style: italic;
 }
@@ -30,6 +35,35 @@ p-tableCheckbox {
   top: -2.5px;
 }
 
+my-global-icon {
+  width: 18px;
+}
+
 .chip {
   @include chip;
 }
+<<<<<<< Updated upstream
+=======
+
+.badge {
+  @include table-badge;
+}
+
+.progress {
+  @include progressbar($small: true);
+  width: auto;
+  max-width: 100%;
+}
+
+.input-group {
+  @include peertube-input-group(300px);
+
+  input {
+    flex: 1;
+  }
+
+  .dropdown-toggle::after {
+    margin-left: 0;
+  }
+}
+>>>>>>> Stashed changes

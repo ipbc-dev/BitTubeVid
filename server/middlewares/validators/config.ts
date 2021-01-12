@@ -1,12 +1,14 @@
 import * as express from 'express'
 import { body } from 'express-validator'
+import { isIntOrNull } from '@server/helpers/custom-validators/misc'
+import { isEmailEnabled } from '@server/initializers/config'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
+import { CustomConfig } from '../../../shared/models/server/custom-config.model'
+import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
 import { isUserNSFWPolicyValid, isUserVideoQuotaDailyValid, isUserVideoQuotaValid } from '../../helpers/custom-validators/users'
 import { logger } from '../../helpers/logger'
-import { CustomConfig } from '../../../shared/models/server/custom-config.model'
-import { areValidationErrors } from './utils'
-import { isThemeNameValid } from '../../helpers/custom-validators/plugins'
 import { isThemeRegistered } from '../../lib/plugins/theme-utils'
-import { isEmailEnabled } from '@server/initializers/config'
+import { areValidationErrors } from './utils'
 
 const customConfigUpdateValidator = [
   body('instance.name').exists().withMessage('Should have a valid instance name'),
@@ -43,6 +45,7 @@ const customConfigUpdateValidator = [
   body('transcoding.resolutions.480p').isBoolean().withMessage('Should have a valid transcoding 480p resolution enabled boolean'),
   body('transcoding.resolutions.720p').isBoolean().withMessage('Should have a valid transcoding 720p resolution enabled boolean'),
   body('transcoding.resolutions.1080p').isBoolean().withMessage('Should have a valid transcoding 1080p resolution enabled boolean'),
+  body('transcoding.resolutions.2160p').isBoolean().withMessage('Should have a valid transcoding 2160p resolution enabled boolean'),
 
   body('transcoding.webtorrent.enabled').isBoolean().withMessage('Should have a valid webtorrent transcoding enabled boolean'),
   body('transcoding.hls.enabled').isBoolean().withMessage('Should have a valid hls transcoding enabled boolean'),
@@ -54,13 +57,44 @@ const customConfigUpdateValidator = [
   body('followers.instance.manualApproval').isBoolean().withMessage('Should have a valid manual approval boolean'),
 
   body('theme.default').custom(v => isThemeNameValid(v) && isThemeRegistered(v)).withMessage('Should have a valid theme'),
+<<<<<<< Updated upstream
+=======
+  body('premium_storage.enabled').isBoolean().withMessage('Should have a valid premium_storage enabled boolean'),
+
+  body('broadcastMessage.enabled').isBoolean().withMessage('Should have a valid broadcast message enabled boolean'),
+  body('broadcastMessage.message').exists().withMessage('Should have a valid broadcast message'),
+  body('broadcastMessage.level').exists().withMessage('Should have a valid broadcast level'),
+  body('broadcastMessage.dismissable').isBoolean().withMessage('Should have a valid broadcast dismissable boolean'),
+
+  body('live.enabled').isBoolean().withMessage('Should have a valid live enabled boolean'),
+  body('live.allowReplay').isBoolean().withMessage('Should have a valid live allow replay boolean'),
+  body('live.maxDuration').isInt().withMessage('Should have a valid live max duration'),
+  body('live.maxInstanceLives').custom(isIntOrNull).withMessage('Should have a valid max instance lives'),
+  body('live.maxUserLives').custom(isIntOrNull).withMessage('Should have a valid max user lives'),
+  body('live.transcoding.enabled').isBoolean().withMessage('Should have a valid live transcoding enabled boolean'),
+  body('live.transcoding.threads').isInt().withMessage('Should have a valid live transcoding threads'),
+  body('live.transcoding.resolutions.240p').isBoolean().withMessage('Should have a valid transcoding 240p resolution enabled boolean'),
+  body('live.transcoding.resolutions.360p').isBoolean().withMessage('Should have a valid transcoding 360p resolution enabled boolean'),
+  body('live.transcoding.resolutions.480p').isBoolean().withMessage('Should have a valid transcoding 480p resolution enabled boolean'),
+  body('live.transcoding.resolutions.720p').isBoolean().withMessage('Should have a valid transcoding 720p resolution enabled boolean'),
+  body('live.transcoding.resolutions.1080p').isBoolean().withMessage('Should have a valid transcoding 1080p resolution enabled boolean'),
+  body('live.transcoding.resolutions.2160p').isBoolean().withMessage('Should have a valid transcoding 2160p resolution enabled boolean'),
+
+  body('search.remoteUri.users').isBoolean().withMessage('Should have a remote URI search for users boolean'),
+  body('search.remoteUri.anonymous').isBoolean().withMessage('Should have a valid remote URI search for anonymous boolean'),
+  body('search.searchIndex.enabled').isBoolean().withMessage('Should have a valid search index enabled boolean'),
+  body('search.searchIndex.url').exists().withMessage('Should have a valid search index URL'),
+  body('search.searchIndex.disableLocalSearch').isBoolean().withMessage('Should have a valid search index disable local search boolean'),
+  body('search.searchIndex.isDefaultSearch').isBoolean().withMessage('Should have a valid search index default enabled boolean'),
+>>>>>>> Stashed changes
 
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking customConfigUpdateValidator parameters', { parameters: req.body })
 
     if (areValidationErrors(req, res)) return
-    if (!checkInvalidConfigIfEmailDisabled(req.body as CustomConfig, res)) return
-    if (!checkInvalidTranscodingConfig(req.body as CustomConfig, res)) return
+    if (!checkInvalidConfigIfEmailDisabled(req.body, res)) return
+    if (!checkInvalidTranscodingConfig(req.body, res)) return
+    if (!checkInvalidLiveConfig(req.body, res)) return
 
     return next()
   }
@@ -76,9 +110,9 @@ function checkInvalidConfigIfEmailDisabled (customConfig: CustomConfig, res: exp
   if (isEmailEnabled()) return true
 
   if (customConfig.signup.requiresEmailVerification === true) {
-    res.status(400)
-      .send({ error: 'Emailer is disabled but you require signup email verification.' })
-      .end()
+    res.status(HttpStatusCode.BAD_REQUEST_400)
+       .send({ error: 'Emailer is disabled but you require signup email verification.' })
+       .end()
     return false
   }
 
@@ -89,8 +123,21 @@ function checkInvalidTranscodingConfig (customConfig: CustomConfig, res: express
   if (customConfig.transcoding.enabled === false) return true
 
   if (customConfig.transcoding.webtorrent.enabled === false && customConfig.transcoding.hls.enabled === false) {
-    res.status(400)
+    res.status(HttpStatusCode.BAD_REQUEST_400)
        .send({ error: 'You need to enable at least webtorrent transcoding or hls transcoding' })
+       .end()
+    return false
+  }
+
+  return true
+}
+
+function checkInvalidLiveConfig (customConfig: CustomConfig, res: express.Response) {
+  if (customConfig.live.enabled === false) return true
+
+  if (customConfig.live.allowReplay === true && customConfig.transcoding.enabled === false) {
+    res.status(HttpStatusCode.BAD_REQUEST_400)
+       .send({ error: 'You cannot allow live replay if transcoding is not enabled' })
        .end()
     return false
   }

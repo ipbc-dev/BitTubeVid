@@ -5,7 +5,7 @@ import * as program from 'commander'
 import { VideoModel } from '../server/models/video/video'
 import { initDatabaseModels } from '../server/initializers/database'
 import { JobQueue } from '../server/lib/job-queue'
-import { computeResolutionsToTranscode } from '@server/helpers/ffmpeg-utils'
+import { computeResolutionsToTranscode } from '@server/helpers/ffprobe-utils'
 import { VideoTranscodingPayload } from '@shared/models'
 
 program
@@ -43,7 +43,7 @@ async function run () {
   if (program.generateHls) {
     const resolutionsEnabled = program.resolution
       ? [ program.resolution ]
-      : computeResolutionsToTranscode(videoFileResolution).concat([ videoFileResolution ])
+      : computeResolutionsToTranscode(videoFileResolution, 'vod').concat([ videoFileResolution ])
 
     for (const resolution of resolutionsEnabled) {
       dataInput.push({

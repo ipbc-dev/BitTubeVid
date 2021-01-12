@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { AuthService, Notifier, ServerService } from '@app/core'
 import { FormReactive, UserService } from '../../../shared'
 import { I18n } from '@ngx-translate/i18n-polyfill'
@@ -7,6 +8,12 @@ import { UserValidatorsService } from '@app/shared/forms/form-validators/user-va
 import { User } from '../../../../../../shared'
 import { tap } from 'rxjs/operators'
 import { forkJoin } from 'rxjs'
+=======
+import { AuthService, ServerService, UserService } from '@app/core'
+import { USER_EMAIL_VALIDATOR, USER_PASSWORD_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService } from '@app/shared/shared-forms'
+import { User } from '@shared/models'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-account-change-email',
@@ -20,20 +27,22 @@ export class MyAccountChangeEmailComponent extends FormReactive implements OnIni
 
   constructor (
     protected formValidatorService: FormValidatorService,
+<<<<<<< Updated upstream
     private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
+=======
+>>>>>>> Stashed changes
     private authService: AuthService,
     private userService: UserService,
-    private serverService: ServerService,
-    private i18n: I18n
+    private serverService: ServerService
   ) {
     super()
   }
 
   ngOnInit () {
     this.buildForm({
-      'new-email': this.userValidatorsService.USER_EMAIL,
-      'password': this.userValidatorsService.USER_PASSWORD
+      'new-email': USER_EMAIL_VALIDATOR,
+      'password': USER_PASSWORD_VALIDATOR
     })
 
     this.user = this.authService.getUser()
@@ -55,15 +64,15 @@ export class MyAccountChangeEmailComponent extends FormReactive implements OnIni
           this.form.reset()
 
           if (config.signup.requiresEmailVerification) {
-            this.success = this.i18n('Please check your emails to verify your new email.')
+            this.success = $localize`Please check your emails to verify your new email.`
           } else {
-            this.success = this.i18n('Email updated.')
+            this.success = $localize`Email updated.`
           }
         },
 
         err => {
           if (err.status === 401) {
-            this.error = this.i18n('You current password is invalid.')
+            this.error = $localize`You current password is invalid.`
             return
           }
 

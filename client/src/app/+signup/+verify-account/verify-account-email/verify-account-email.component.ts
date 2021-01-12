@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core'
+<<<<<<< Updated upstream
 import { ActivatedRoute, Router } from '@angular/router'
 import { I18n } from '@ngx-translate/i18n-polyfill'
 import { AuthService, Notifier } from '@app/core'
 import { UserService } from '@app/shared'
+=======
+import { ActivatedRoute } from '@angular/router'
+import { AuthService, Notifier, UserService } from '@app/core'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-verify-account-email',
@@ -21,10 +26,15 @@ export class VerifyAccountEmailComponent implements OnInit {
     private userService: UserService,
     private authService: AuthService,
     private notifier: Notifier,
+<<<<<<< Updated upstream
     private router: Router,
     private route: ActivatedRoute,
     private i18n: I18n
   ) {
+=======
+    private route: ActivatedRoute
+    ) {
+>>>>>>> Stashed changes
   }
 
   ngOnInit () {
@@ -34,7 +44,7 @@ export class VerifyAccountEmailComponent implements OnInit {
     this.isPendingEmail = queryParams['isPendingEmail'] === 'true'
 
     if (!this.userId || !this.verificationString) {
-      this.notifier.error(this.i18n('Unable to find user id or verification string.'))
+      this.notifier.error($localize`Unable to find user id or verification string.`)
     } else {
       this.verifyEmail()
     }

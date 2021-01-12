@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { Component, OnDestroy, OnInit } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { AccountService } from '@app/shared/account/account.service'
@@ -12,12 +13,25 @@ import { VideoChannelService } from '@app/shared/video-channel/video-channel.ser
 import { VideoChannel } from '@app/shared/video-channel/video-channel.model'
 import { ListOverflowItem } from '@app/shared/misc/list-overflow.component'
 import { ScreenService } from '@app/shared/misc/screen.service'
+=======
+import { Subscription } from 'rxjs'
+import { catchError, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators'
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core'
+import { ActivatedRoute } from '@angular/router'
+import { AuthService, Notifier, RedirectService, RestExtractor, ScreenService, UserService } from '@app/core'
+import { Account, AccountService, DropdownAction, ListOverflowItem, VideoChannel, VideoChannelService } from '@app/shared/shared-main'
+import { AccountReportComponent } from '@app/shared/shared-moderation'
+import { User, UserRight } from '@shared/models'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
+>>>>>>> Stashed changes
 
 @Component({
   templateUrl: './accounts.component.html',
   styleUrls: [ './accounts.component.scss' ]
 })
 export class AccountsComponent implements OnInit, OnDestroy {
+  @ViewChild('accountReportModal') accountReportModal: AccountReportComponent
+
   account: Account
   accountUser: User
   videoChannels: VideoChannel[] = []
@@ -25,6 +39,8 @@ export class AccountsComponent implements OnInit, OnDestroy {
 
   isAccountManageable = false
   accountFollowerTitle = ''
+
+  prependModerationActions: DropdownAction<any>[]
 
   private routeSub: Subscription
 
@@ -37,8 +53,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     private restExtractor: RestExtractor,
     private redirectService: RedirectService,
     private authService: AuthService,
-    private screenService: ScreenService,
-    private i18n: I18n
+    private screenService: ScreenService
   ) {
   }
 
@@ -48,26 +63,12 @@ export class AccountsComponent implements OnInit, OnDestroy {
                           map(params => params[ 'accountId' ]),
                           distinctUntilChanged(),
                           switchMap(accountId => this.accountService.getAccount(accountId)),
-                          tap(account => {
-                            this.account = account
-
-                            if (this.authService.isLoggedIn()) {
-                              this.authService.userInformationLoaded.subscribe(
-                                () => {
-                                  this.isAccountManageable = this.account.userId && this.account.userId === this.authService.getUser().id
-
-                                  this.accountFollowerTitle = this.i18n(
-                                    '{{followers}} direct account followers',
-                                    { followers: this.subscribersDisplayFor(account.followersCount) }
-                                  )
-                                }
-                              )
-                            }
-
-                            this.getUserIfNeeded(account)
-                          }),
+                          tap(account => this.onAccount(account)),
                           switchMap(account => this.videoChannelService.listAccountVideoChannels(account)),
-                          catchError(err => this.restExtractor.redirectTo404IfNotFound(err, [ 400, 404 ]))
+                          catchError(err => this.restExtractor.redirectTo404IfNotFound(err, [
+                            HttpStatusCode.BAD_REQUEST_400,
+                            HttpStatusCode.NOT_FOUND_404
+                          ]))
                         )
                         .subscribe(
                           videoChannels => this.videoChannels = videoChannels.data,
@@ -76,9 +77,9 @@ export class AccountsComponent implements OnInit, OnDestroy {
                         )
 
     this.links = [
-      { label: this.i18n('VIDEO CHANNELS'), routerLink: 'video-channels' },
-      { label: this.i18n('VIDEOS'), routerLink: 'videos' },
-      { label: this.i18n('ABOUT'), routerLink: 'about' }
+      { label: $localize`VIDEO CHANNELS`, routerLink: 'video-channels' },
+      { label: $localize`VIDEOS`, routerLink: 'videos' },
+      { label: $localize`ABOUT`, routerLink: 'about' }
     ]
   }
 
@@ -106,11 +107,46 @@ export class AccountsComponent implements OnInit, OnDestroy {
   }
 
   activateCopiedMessage () {
-    this.notifier.success(this.i18n('Username copied'))
+    this.notifier.success($localize`Username copied`)
   }
 
   subscribersDisplayFor (count: number) {
-    return this.i18n('{count, plural, =1 {1 subscriber} other {{{count}} subscribers}}', { count })
+    if (count === 1) return $localize`1 subscriber`
+
+    return $localize`${count} subscribers`
+  }
+
+  private onAccount (account: Account) {
+    this.prependModerationActions = undefined
+
+    this.account = account
+
+    if (this.authService.isLoggedIn()) {
+      this.authService.userInformationLoaded.subscribe(
+        () => {
+          this.isAccountManageable = this.account.userId && this.account.userId === this.authService.getUser().id
+
+          const followers = this.subscribersDisplayFor(account.followersCount)
+          this.accountFollowerTitle = $localize`${followers} direct account followers`
+
+          // It's not our account, we can report it
+          if (!this.isAccountManageable) {
+            this.prependModerationActions = [
+              {
+                label: $localize`Report this account`,
+                handler: () => this.showReportModal()
+              }
+            ]
+          }
+        }
+      )
+    }
+
+    this.getUserIfNeeded(account)
+  }
+
+  private showReportModal () {
+    this.accountReportModal.show()
   }
 
   private getUserIfNeeded (account: Account) {

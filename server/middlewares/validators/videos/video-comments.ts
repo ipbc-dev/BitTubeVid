@@ -1,16 +1,58 @@
 import * as express from 'express'
+<<<<<<< Updated upstream
 import { body, param } from 'express-validator'
 import { MUserAccountUrl } from '@server/typings/models'
+=======
+import { body, param, query } from 'express-validator'
+import { MUserAccountUrl } from '@server/types/models'
+>>>>>>> Stashed changes
 import { UserRight } from '../../../../shared'
-import { isIdOrUUIDValid, isIdValid } from '../../../helpers/custom-validators/misc'
-import { isValidVideoCommentText } from '../../../helpers/custom-validators/video-comments'
+import { exists, isBooleanValid, isIdOrUUIDValid, isIdValid, toBooleanOrNull } from '../../../helpers/custom-validators/misc'
+import {
+  doesVideoCommentExist,
+  doesVideoCommentThreadExist,
+  isValidVideoCommentText
+} from '../../../helpers/custom-validators/video-comments'
 import { logger } from '../../../helpers/logger'
 import { doesVideoExist } from '../../../helpers/middlewares'
 import { AcceptResult, isLocalVideoCommentReplyAccepted, isLocalVideoThreadAccepted } from '../../../lib/moderation'
 import { Hooks } from '../../../lib/plugins/hooks'
+<<<<<<< Updated upstream
 import { VideoCommentModel } from '../../../models/video/video-comment'
 import { MCommentOwnerVideoReply, MVideo, MVideoFullLight, MVideoId } from '../../../typings/models/video'
+=======
+import { MCommentOwnerVideoReply, MVideo, MVideoFullLight } from '../../../types/models/video'
+>>>>>>> Stashed changes
 import { areValidationErrors } from '../utils'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
+
+const listVideoCommentsValidator = [
+  query('isLocal')
+  .optional()
+  .customSanitizer(toBooleanOrNull)
+  .custom(isBooleanValid)
+  .withMessage('Should have a valid is local boolean'),
+
+  query('search')
+    .optional()
+    .custom(exists).withMessage('Should have a valid search'),
+
+  query('searchAccount')
+    .optional()
+    .custom(exists).withMessage('Should have a valid account search'),
+
+  query('searchVideo')
+    .optional()
+    .custom(exists).withMessage('Should have a valid video search'),
+
+  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    logger.debug('Checking listVideoCommentsValidator parameters.', { parameters: req.query })
+
+    if (areValidationErrors(req, res)) return
+
+    return next()
+  }
+]
 
 const listVideoCommentThreadsValidator = [
   param('videoId').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
@@ -113,6 +155,7 @@ export {
   listVideoCommentThreadsValidator,
   listVideoThreadCommentsValidator,
   addVideoCommentThreadValidator,
+  listVideoCommentsValidator,
   addVideoCommentReplyValidator,
   videoCommentGetValidator,
   removeVideoCommentValidator
@@ -120,67 +163,10 @@ export {
 
 // ---------------------------------------------------------------------------
 
-async function doesVideoCommentThreadExist (idArg: number | string, video: MVideoId, res: express.Response) {
-  const id = parseInt(idArg + '', 10)
-  const videoComment = await VideoCommentModel.loadById(id)
-
-  if (!videoComment) {
-    res.status(404)
-      .json({ error: 'Video comment thread not found' })
-      .end()
-
-    return false
-  }
-
-  if (videoComment.videoId !== video.id) {
-    res.status(400)
-      .json({ error: 'Video comment is not associated to this video.' })
-      .end()
-
-    return false
-  }
-
-  if (videoComment.inReplyToCommentId !== null) {
-    res.status(400)
-      .json({ error: 'Video comment is not a thread.' })
-      .end()
-
-    return false
-  }
-
-  res.locals.videoCommentThread = videoComment
-  return true
-}
-
-async function doesVideoCommentExist (idArg: number | string, video: MVideoId, res: express.Response) {
-  const id = parseInt(idArg + '', 10)
-  const videoComment = await VideoCommentModel.loadByIdAndPopulateVideoAndAccountAndReply(id)
-
-  if (!videoComment) {
-    res.status(404)
-      .json({ error: 'Video comment thread not found' })
-      .end()
-
-    return false
-  }
-
-  if (videoComment.videoId !== video.id) {
-    res.status(400)
-      .json({ error: 'Video comment is not associated to this video.' })
-      .end()
-
-    return false
-  }
-
-  res.locals.videoCommentFull = videoComment
-  return true
-}
-
 function isVideoCommentsEnabled (video: MVideo, res: express.Response) {
   if (video.commentsEnabled !== true) {
-    res.status(409)
-      .json({ error: 'Video comments are disabled for this video.' })
-      .end()
+    res.status(HttpStatusCode.CONFLICT_409)
+       .json({ error: 'Video comments are disabled for this video.' })
 
     return false
   }
@@ -190,9 +176,9 @@ function isVideoCommentsEnabled (video: MVideo, res: express.Response) {
 
 function checkUserCanDeleteVideoComment (user: MUserAccountUrl, videoComment: MCommentOwnerVideoReply, res: express.Response) {
   if (videoComment.isDeleted()) {
-    res.status(409)
-      .json({ error: 'This comment is already deleted' })
-      .end()
+    res.status(HttpStatusCode.CONFLICT_409)
+       .json({ error: 'This comment is already deleted' })
+
     return false
   }
 
@@ -203,7 +189,7 @@ function checkUserCanDeleteVideoComment (user: MUserAccountUrl, videoComment: MC
     videoComment.accountId !== userAccount.id && // Not the comment owner
     videoComment.Video.VideoChannel.accountId !== userAccount.id // Not the video owner
   ) {
-    res.status(403)
+    res.status(HttpStatusCode.FORBIDDEN_403)
       .json({ error: 'Cannot remove video comment of another user' })
 
     return false
@@ -239,8 +225,8 @@ async function isVideoCommentAccepted (req: express.Request, res: express.Respon
 
   if (!acceptedResult || acceptedResult.accepted !== true) {
     logger.info('Refused local comment.', { acceptedResult, acceptParameters })
-    res.status(403)
-              .json({ error: acceptedResult.errorMessage || 'Refused local comment' })
+    res.status(HttpStatusCode.FORBIDDEN_403)
+       .json({ error: acceptedResult.errorMessage || 'Refused local comment' })
 
     return false
   }

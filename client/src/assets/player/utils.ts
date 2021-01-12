@@ -1,4 +1,4 @@
-import { VideoFile } from '../../../../shared/models/videos'
+import { VideoFile } from '@shared/models'
 
 function toTitleCase (str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -9,7 +9,14 @@ function isWebRTCDisabled () {
 }
 
 function isIOS () {
-  return !!navigator.platform && /iPad|iPhone|iPod/.test(navigator.platform)
+  if (/iPad|iPhone|iPod/.test(navigator.platform)) {
+    return true
+  }
+
+  // Detect iPad Desktop mode
+  return !!(navigator.maxTouchPoints &&
+      navigator.maxTouchPoints > 2 &&
+      /MacIntel/.test(navigator.platform))
 }
 
 function isSafari () {
@@ -36,21 +43,22 @@ function isMobile () {
 }
 
 function buildVideoLink (options: {
-  baseUrl?: string,
+  baseUrl?: string
 
-  startTime?: number,
-  stopTime?: number,
+  startTime?: number
+  stopTime?: number
 
-  subtitle?: string,
+  subtitle?: string
 
-  loop?: boolean,
-  autoplay?: boolean,
-  muted?: boolean,
+  loop?: boolean
+  autoplay?: boolean
+  muted?: boolean
 
   // Embed options
-  title?: boolean,
-  warningTitle?: boolean,
+  title?: boolean
+  warningTitle?: boolean
   controls?: boolean
+  peertubeLink?: boolean
 } = {}) {
   const { baseUrl } = options
 
@@ -58,12 +66,9 @@ function buildVideoLink (options: {
     ? baseUrl
     : window.location.origin + window.location.pathname.replace('/embed/', '/watch/')
 
-  const params = new URLSearchParams(window.location.search)
-  // Remove these unused parameters when we are on a playlist page
-  params.delete('videoId')
-  params.delete('resume')
+  const params = generateParams(window.location.search)
 
-  if (options.startTime) {
+  if (options.startTime !== undefined && options.startTime !== null) {
     const startTimeInt = Math.floor(options.startTime)
     params.set('start', secondsToTime(startTimeInt))
   }
@@ -81,13 +86,45 @@ function buildVideoLink (options: {
   if (options.title === false) params.set('title', '0')
   if (options.warningTitle === false) params.set('warningTitle', '0')
   if (options.controls === false) params.set('controls', '0')
+  if (options.peertubeLink === false) params.set('peertubeLink', '0')
 
+  return buildUrl(url, params)
+}
+
+function buildPlaylistLink (options: {
+  baseUrl?: string
+
+  playlistPosition: number
+}) {
+  const { baseUrl } = options
+
+  const url = baseUrl
+    ? baseUrl
+    : window.location.origin + window.location.pathname.replace('/video-playlists/embed/', '/videos/watch/playlist/')
+
+  const params = generateParams(window.location.search)
+
+  if (options.playlistPosition) params.set('playlistPosition', '' + options.playlistPosition)
+
+  return buildUrl(url, params)
+}
+
+function buildUrl (url: string, params: URLSearchParams) {
   let hasParams = false
   params.forEach(() => hasParams = true)
 
   if (hasParams) return url + '?' + params.toString()
 
   return url
+}
+
+function generateParams (url: string) {
+  const params = new URLSearchParams(window.location.search)
+  // Unused parameters in embed
+  params.delete('videoId')
+  params.delete('resume')
+
+  return params
 }
 
 function timeToInt (time: number | string) {
@@ -108,6 +145,8 @@ function timeToInt (time: number | string) {
 
 function secondsToTime (seconds: number, full = false, symbol?: string) {
   let time = ''
+
+  if (seconds === 0 && !full) return '0s'
 
   const hourSymbol = (symbol || 'h')
   const minuteSymbol = (symbol || 'm')
@@ -131,24 +170,12 @@ function secondsToTime (seconds: number, full = false, symbol?: string) {
   return time
 }
 
-function buildVideoEmbed (embedUrl: string) {
+function buildVideoOrPlaylistEmbed (embedUrl: string) {
   return '<iframe width="560" height="315" ' +
     'sandbox="allow-same-origin allow-scripts allow-popups" ' +
     'src="' + embedUrl + '" ' +
     'frameborder="0" allowfullscreen>' +
     '</iframe>'
-}
-
-function copyToClipboard (text: string) {
-  const el = document.createElement('textarea')
-  el.value = text
-  el.setAttribute('readonly', '')
-  el.style.position = 'absolute'
-  el.style.left = '-9999px'
-  document.body.appendChild(el)
-  el.select()
-  document.execCommand('copy')
-  document.body.removeChild(el)
 }
 
 function videoFileMaxByResolution (files: VideoFile[]) {
@@ -194,11 +221,11 @@ export {
   timeToInt,
   secondsToTime,
   isWebRTCDisabled,
+  buildPlaylistLink,
   buildVideoLink,
-  buildVideoEmbed,
+  buildVideoOrPlaylistEmbed,
   videoFileMaxByResolution,
   videoFileMinByResolution,
-  copyToClipboard,
   isMobile,
   bytes,
   isIOS,

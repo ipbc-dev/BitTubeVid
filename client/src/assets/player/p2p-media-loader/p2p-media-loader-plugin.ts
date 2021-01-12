@@ -141,6 +141,7 @@ class P2pMediaLoaderPlugin extends Plugin {
       this.statsHTTPBytes.pendingUpload = []
 
       return this.player.trigger('p2pInfo', {
+        source: 'p2p-media-loader',
         http: {
           downloadSpeed: httpDownloadSpeed,
           uploadSpeed: httpUploadSpeed,

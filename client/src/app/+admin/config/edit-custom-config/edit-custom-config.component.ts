@@ -1,3 +1,4 @@
+
 import { AfterViewChecked, Component, OnInit, ViewChild } from '@angular/core'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { ServerService } from '@app/core/server/server.service'
@@ -10,7 +11,32 @@ import { SelectItem } from 'primeng/api'
 import { forkJoin } from 'rxjs'
 import { ServerConfig } from '@shared/models'
 import { ViewportScroller } from '@angular/common'
+<<<<<<< Updated upstream
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+=======
+import { HttpClient } from '@angular/common/http'
+import { environment } from '../../../../environments/environment'
+import { BytesPipe } from '@app/shared/shared-main/angular'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
+import { identifierModuleUrl } from '@angular/compiler'
+import { CustomConfig, ServerConfig } from '@shared/models'
+import {
+  ADMIN_EMAIL_VALIDATOR,
+  CACHE_CAPTIONS_SIZE_VALIDATOR,
+  CACHE_PREVIEWS_SIZE_VALIDATOR,
+  INDEX_URL_VALIDATOR,
+  INSTANCE_NAME_VALIDATOR,
+  INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
+  SEARCH_INDEX_URL_VALIDATOR,
+  SERVICES_TWITTER_USERNAME_VALIDATOR,
+  SIGNUP_LIMIT_VALIDATOR,
+  TRANSCODING_THREADS_VALIDATOR
+} from '@app/shared/form-validators/custom-config-validators'
+import { USER_VIDEO_QUOTA_DAILY_VALIDATOR, USER_VIDEO_QUOTA_VALIDATOR } from '@app/shared/form-validators/user-validators'
+import { FormReactive, FormValidatorService, SelectOptionsItem } from '@app/shared/shared-forms'
+import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
+import { pairwise } from 'rxjs/operators'
+>>>>>>> Stashed changes
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -25,63 +51,96 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   customConfig: CustomConfig
 
   resolutions: { id: string, label: string, description?: string }[] = []
+  liveResolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
+  liveMaxDurationOptions: { label: string, value: number }[] = []
 
+<<<<<<< Updated upstream
   languageItems: SelectItem[] = []
   categoryItems: SelectItem[] = []
+=======
+  serverStats: any = null
+  storagePlans: any[] = []
+  planIndex: number = null
+  premiumStorageActive = false
+  addPremiumPlanClicked = false
+  showAddPlanModal = false
+  languageItems: SelectOptionsItem[] = []
+  categoryItems: SelectOptionsItem[] = []
+
+  signupAlertMessage: string
+>>>>>>> Stashed changes
 
   private serverConfig: ServerConfig
 
   constructor (
     private viewportScroller: ViewportScroller,
     protected formValidatorService: FormValidatorService,
-    private customConfigValidatorsService: CustomConfigValidatorsService,
-    private userValidatorsService: UserValidatorsService,
     private notifier: Notifier,
     private configService: ConfigService,
+<<<<<<< Updated upstream
     private serverService: ServerService,
     private i18n: I18n
+=======
+    private confirmService: ConfirmService,
+    private serverService: ServerService
+>>>>>>> Stashed changes
   ) {
     super()
 
     this.resolutions = [
       {
         id: '0p',
-        label: this.i18n('Audio-only'),
-        description: this.i18n('A <code>.mp4</code> that keeps the original audio track, with no video')
+        label: $localize`Audio-only`,
+        description: $localize`A <code>.mp4</code> that keeps the original audio track, with no video`
       },
       {
         id: '240p',
-        label: this.i18n('240p')
+        label: $localize`240p`
       },
       {
         id: '360p',
-        label: this.i18n('360p')
+        label: $localize`360p`
       },
       {
         id: '480p',
-        label: this.i18n('480p')
+        label: $localize`480p`
       },
       {
         id: '720p',
-        label: this.i18n('720p')
+        label: $localize`720p`
       },
       {
         id: '1080p',
-        label: this.i18n('1080p')
+        label: $localize`1080p`
       },
       {
         id: '2160p',
-        label: this.i18n('2160p')
+        label: $localize`2160p`
       }
     ]
 
+    this.liveResolutions = this.resolutions.filter(r => r.id !== '0p')
+
     this.transcodingThreadOptions = [
-      { value: 0, label: this.i18n('Auto (via ffmpeg)') },
+      { value: 0, label: $localize`Auto (via ffmpeg)` },
       { value: 1, label: '1' },
       { value: 2, label: '2' },
       { value: 4, label: '4' },
       { value: 8, label: '8' }
+    ]
+    // Subcribe to serveStats
+    this.serverService.getServerStats()
+    .subscribe(res => {
+      this.serverStats = res
+    })
+
+    this.liveMaxDurationOptions = [
+      { value: -1, label: $localize`No limit` },
+      { value: 1000 * 3600, label: $localize`1 hour` },
+      { value: 1000 * 3600 * 3, label: $localize`3 hours` },
+      { value: 1000 * 3600 * 5, label: $localize`5 hours` },
+      { value: 1000 * 3600 * 10, label: $localize`10 hours` }
     ]
   }
 
@@ -98,19 +157,60 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       .map(t => t.name)
   }
 
+<<<<<<< Updated upstream
+=======
+  get liveRTMPPort () {
+    return this.serverConfig.live.rtmp.port
+  }
+
+  getTotalTranscodingThreads () {
+    const transcodingEnabled = this.form.value['transcoding']['enabled']
+    const transcodingThreads = this.form.value['transcoding']['threads']
+    const liveTranscodingEnabled = this.form.value['live']['transcoding']['enabled']
+    const liveTranscodingThreads = this.form.value['live']['transcoding']['threads']
+
+    // checks whether all enabled method are on fixed values and not on auto (= 0)
+    let noneOnAuto = !transcodingEnabled || +transcodingThreads > 0
+    noneOnAuto &&= !liveTranscodingEnabled || +liveTranscodingThreads > 0
+
+    // count total of fixed value, repalcing auto by a single thread (knowing it will display "at least")
+    let value = 0
+    if (transcodingEnabled) value += +transcodingThreads || 1
+    if (liveTranscodingEnabled) value += +liveTranscodingThreads || 1
+
+    return {
+      value,
+      atMost: noneOnAuto, // auto switches everything to a least estimation since ffmpeg will take as many threads as possible
+      unit: value > 1
+        ? $localize`threads`
+        : $localize`thread`
+    }
+  }
+
+>>>>>>> Stashed changes
   getResolutionKey (resolution: string) {
     return 'transcoding.resolutions.' + resolution
   }
 
   ngOnInit () {
     this.serverConfig = this.serverService.getTmpConfig()
+<<<<<<< Updated upstream
     this.serverService.getConfig()
         .subscribe(config => this.serverConfig = config)
+=======
+    // this.serverService.getConfig()
+    //     .subscribe(config => this.serverConfig = config)
+    this.resetNewStoragePlan()
+    this.serverService.getConfig()
+        .subscribe(config => {
+          this.serverConfig = config
+        })
+>>>>>>> Stashed changes
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
-        name: this.customConfigValidatorsService.INSTANCE_NAME,
-        shortDescription: this.customConfigValidatorsService.INSTANCE_SHORT_DESCRIPTION,
+        name: INSTANCE_NAME_VALIDATOR,
+        shortDescription: INSTANCE_SHORT_DESCRIPTION_VALIDATOR,
         description: null,
 
         isNSFW: false,
@@ -142,21 +242,21 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       },
       services: {
         twitter: {
-          username: this.customConfigValidatorsService.SERVICES_TWITTER_USERNAME,
+          username: SERVICES_TWITTER_USERNAME_VALIDATOR,
           whitelisted: null
         }
       },
       cache: {
         previews: {
-          size: this.customConfigValidatorsService.CACHE_PREVIEWS_SIZE
+          size: CACHE_PREVIEWS_SIZE_VALIDATOR
         },
         captions: {
-          size: this.customConfigValidatorsService.CACHE_CAPTIONS_SIZE
+          size: CACHE_CAPTIONS_SIZE_VALIDATOR
         }
       },
       signup: {
         enabled: null,
-        limit: this.customConfigValidatorsService.SIGNUP_LIMIT,
+        limit: SIGNUP_LIMIT_VALIDATOR,
         requiresEmailVerification: null
       },
       import: {
@@ -170,18 +270,18 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         }
       },
       admin: {
-        email: this.customConfigValidatorsService.ADMIN_EMAIL
+        email: ADMIN_EMAIL_VALIDATOR
       },
       contactForm: {
         enabled: null
       },
       user: {
-        videoQuota: this.userValidatorsService.USER_VIDEO_QUOTA,
-        videoQuotaDaily: this.userValidatorsService.USER_VIDEO_QUOTA_DAILY
+        videoQuota: USER_VIDEO_QUOTA_VALIDATOR,
+        videoQuotaDaily: USER_VIDEO_QUOTA_DAILY_VALIDATOR
       },
       transcoding: {
         enabled: null,
-        threads: this.customConfigValidatorsService.TRANSCODING_THREADS,
+        threads: TRANSCODING_THREADS_VALIDATOR,
         allowAdditionalExtensions: null,
         allowAudioFiles: null,
         resolutions: {},
@@ -190,6 +290,20 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         },
         webtorrent: {
           enabled: null
+        }
+      },
+      live: {
+        enabled: null,
+
+        maxDuration: null,
+        maxInstanceLives: null,
+        maxUserLives: null,
+        allowReplay: null,
+
+        transcoding: {
+          enabled: null,
+          threads: TRANSCODING_THREADS_VALIDATOR,
+          resolutions: {}
         }
       },
       autoBlacklist: {
@@ -212,25 +326,62 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
           },
           autoFollowIndex: {
             enabled: null,
-            indexUrl: this.customConfigValidatorsService.INDEX_URL
+            indexUrl: INDEX_URL_VALIDATOR
           }
         }
+<<<<<<< Updated upstream
+=======
+      },
+      premium_storage: {
+        enabled: null
+      },
+      broadcastMessage: {
+        enabled: null,
+        level: null,
+        dismissable: null,
+        message: null
+      },
+      search: {
+        remoteUri: {
+          users: null,
+          anonymous: null
+        },
+        searchIndex: {
+          enabled: null,
+          url: SEARCH_INDEX_URL_VALIDATOR,
+          disableLocalSearch: null,
+          isDefaultSearch: null
+        }
+>>>>>>> Stashed changes
       }
     }
 
     const defaultValues = {
       transcoding: {
         resolutions: {}
+      },
+      live: {
+        transcoding: {
+          resolutions: {}
+        }
       }
     }
+
     for (const resolution of this.resolutions) {
       defaultValues.transcoding.resolutions[resolution.id] = 'false'
       formGroupData.transcoding.resolutions[resolution.id] = null
     }
 
+    for (const resolution of this.liveResolutions) {
+      defaultValues.live.transcoding.resolutions[resolution.id] = 'false'
+      formGroupData.live.transcoding.resolutions[resolution.id] = null
+    }
+
     this.buildForm(formGroupData)
     this.loadForm()
+
     this.checkTranscodingFields()
+    this.checkSignupField()
   }
 
   ngAfterViewChecked () {
@@ -240,8 +391,202 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  resetNewStoragePlan () {
+    this.newStoragePlan = {
+      name: null,
+      quota: 0,
+      dailyQuota: 0,
+      priceTube: 0,
+      duration: 0,
+      expiration: 0,
+      active: false,
+      tubePayId: null
+    }
+  }
+
+  subscribeConfigAndPlans () {
+    forkJoin([
+      this.getPlans(),
+      this.serverService.getConfig()
+    ]).subscribe(([ plans, config ]) => {
+      if (plans['success']) {
+        this.storagePlans = plans['plans']
+        this.storagePlans.forEach(plan => {
+          plan.quota = Math.round(plan.quota / 1073741824)
+          plan.dailyQuota = Math.round(plan.dailyQuota / 1073741824)
+          plan.updateData = plan
+        })
+      } else {
+        this.storagePlans = []
+      }
+      if (config) {
+        this.serverConfig = config
+        this.premiumStorageActive = config.premium_storage.enabled
+      }
+    })
+  }
+
+  addPlanButtonClick () {
+    if (!this.isAddPlanButtonDisabled()) {
+      this.newStoragePlan.quota = this.newStoragePlan.quota * 1073741824 /* to bytes */
+      this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota * 1073741824 /* to bytes */
+      this.addPlan(this.newStoragePlan).subscribe(resp => {
+        if (resp['success']) {
+          this.notifier.success('Your new plan has been successfully added')
+          this.showAddPlanModal = false
+          this.resetNewStoragePlan()
+          this.subscribeConfigAndPlans()
+        } else {
+          this.notifier.error(resp['error'])
+          this.newStoragePlan.quota = this.newStoragePlan.quota / 1073741824 /* to bytes */
+          this.newStoragePlan.dailyQuota = this.newStoragePlan.dailyQuota / 1073741824 /* to bytes */
+        }
+      })
+    }
+  }
+
+  addPlanCancel () {
+    this.showAddPlanModal = false
+  }
+
+  addPlanShow () {
+    this.showAddPlanModal = true
+  }
+
+  addPlan (body: interfacePremiumStoragePlan) {
+    const bodyWithToken: any = body
+    bodyWithToken.accessToken = localStorage.getItem('access_token')
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'add-plan', bodyWithToken)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  isAddPlanButtonDisabled () {
+    const { name, quota, dailyQuota, priceTube, duration, active, expiration } = this.newStoragePlan
+    if (typeof name !== 'string' || name === null || name === '' || name.length > 50) return true
+    if (typeof quota !== 'number' || quota < -1 || quota === 0) return true
+    if (typeof dailyQuota !== 'number' || dailyQuota < -1 || dailyQuota === 0) return true
+    if (typeof priceTube !== 'number' || priceTube < 0) return true
+    if (typeof duration !== 'number' || duration < 2628000000 || duration > 31536000000) return true
+    if (typeof expiration !== 'number' || expiration < 0) return true
+    if (typeof active !== 'boolean') return true
+    return false
+  }
+  showAddButtonSubmitError () {
+    if (this.addPremiumPlanClicked === false) return false
+    return this.isAddPlanButtonDisabled()
+  }
+
+  getPlans () {
+    return this.authHttp.get(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'plans')
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  getFormattedPrice (price: any) {
+    return parseFloat(price).toFixed(2)
+  }
+
+  getHRBytes (num: any) {
+    try {
+      if (num === null || num === undefined) return ''
+      return this.bytesPipe.transform(parseInt(num, 10), 0)
+    } catch (err) {
+      return err
+    }
+  }
+
+  numberRound (num: number) {
+    return Math.round(num)
+  }
+
+  onRowEditInit (rowData: interfacePremiumStoragePlan) {
+    // this.updateStoragePlan = rowData
+  }
+
+  async onRowDelete (rowData: any) {
+    const res = await this.confirmService.confirm(
+      $localize`Do you really want to delete '{{planName}}' plan? \n ATENTION! If some user already bought this plan you can delete his payment also! Before delete a plan, be sure that anybody is using it or consider to just deactivate it", { planName: rowData.name }`,
+      $localize`Delete`
+    )
+    if (res === false) return
+    const body = {
+      planId: rowData.id,
+      tubePayId: rowData.tubePayId
+    }
+    // console.log('ICEICE calling onRowDelete function with data: ', body)
+    this.deletePlan(body).subscribe(resp => {
+      // console.log('ICEICE deletePlan response is: ', resp)
+      if (resp['success']) {
+        this.subscribeConfigAndPlans()
+        setTimeout(() => { this.notifier.success('Plan successfully deleted') } , 1000) /* Wait 1 sec for subscription */
+      } else {
+        this.notifier.error(`Something went wrong deleting the plan, reload and try again`)
+      }
+    })
+  }
+
+  deletePlan (body: any) {
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'delete-plan', body)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  onRowEditSave (rowData: interfacePremiumStoragePlan) {
+    // console.log('ICEICE calling onRowEditSave function with data: ', rowData)
+    const body = {
+      id: rowData.id,
+      tubePayId: rowData.tubePayId,
+      name: rowData.name,
+      quota: rowData.quota * 1073741824, /* to bytes */
+      dailyQuota: rowData.dailyQuota * 1073741824, /* to bytes */
+      priceTube: rowData.priceTube,
+      duration: rowData.duration,
+      expiration: rowData.expiration,
+      active: rowData.active
+    }
+    // console.log('ICEICE calling onRowEditSave function with body: ', body)
+    this.updatePlan(body).subscribe(resp => {
+      // console.log('ICEICE onRowEditSave updatePlan response is: ', resp)
+      if (resp['success']) {
+        this.subscribeConfigAndPlans()
+        this.notifier.success('Plan successfully updated')
+      } else {
+        this.notifier.error(`Something went wrong updating the plan, reload and try again`)
+      }
+    })
+  }
+
+  updatePlan (body: interfacePremiumStoragePlan) {
+    // console.log('ICEICE going to call addPlan with body: ', body)
+    return this.authHttp.post(EditCustomConfigComponent.GET_PREMIUM_STORAGE_API_URL + 'update-plan', body)
+               .pipe(catchError(res => this.restExtractor.handleError(res)))
+  }
+
+  onRowEditCancel (rowData: any, ri: number) {
+    // console.log('ICEICE calling onRowEditCancel function with data: ', rowData)
+    // console.log('ICEICE ri is: ', ri)
+  }
+
+
+  showFormSubmitButton () {
+    if (this.nav !== undefined && this.nav.activeId !== undefined) {
+      return this.nav.activeId !== 'premium-storage-config'
+    } else {
+      return false
+    }
+  }
+
+>>>>>>> Stashed changes
   isTranscodingEnabled () {
     return this.form.value['transcoding']['enabled'] === true
+  }
+
+  isLiveEnabled () {
+    return this.form.value['live']['enabled'] === true
+  }
+
+  isLiveTranscodingEnabled () {
+    return this.form.value['live']['transcoding']['enabled'] === true
   }
 
   isSignupEnabled () {
@@ -253,7 +598,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   async formValidated () {
+<<<<<<< Updated upstream
     this.configService.updateCustomConfig(this.form.getRawValue())
+=======
+    const value: CustomConfig = this.form.getRawValue()
+
+    this.configService.updateCustomConfig(value)
+>>>>>>> Stashed changes
       .subscribe(
         res => {
           this.customConfig = res
@@ -263,27 +614,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
           this.updateForm()
 
-          this.notifier.success(this.i18n('Configuration updated.'))
+          this.notifier.success($localize`Configuration updated.`)
         },
 
         err => this.notifier.error(err.message)
       )
-  }
-
-  getSelectedLanguageLabel () {
-    return this.i18n('{{\'{0} languages selected')
-  }
-
-  getDefaultLanguageLabel () {
-    return this.i18n('No language')
-  }
-
-  getSelectedCategoryLabel () {
-    return this.i18n('{{\'{0} categories selected')
-  }
-
-  getDefaultCategoryLabel () {
-    return this.i18n('No category')
   }
 
   gotoAnchor () {
@@ -296,6 +631,20 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       this.nav.select(hashToNav[hash])
       setTimeout(() => this.viewportScroller.scrollToAnchor(hash), 100)
     }
+  }
+
+  hasConsistentOptions () {
+    if (this.hasLiveAllowReplayConsistentOptions()) return true
+
+    return false
+  }
+
+  hasLiveAllowReplayConsistentOptions () {
+    if (this.isTranscodingEnabled() === false && this.isLiveEnabled() && this.form.value['live']['allowReplay'] === true) {
+      return false
+    }
+
+    return true
   }
 
   private updateForm () {
@@ -311,8 +660,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       ([ config, languages, categories ]) => {
         this.customConfig = config
 
-        this.languageItems = languages.map(l => ({ label: l.label, value: l.id }))
-        this.categoryItems = categories.map(l => ({ label: l.label, value: l.id }))
+        this.languageItems = languages.map(l => ({ label: l.label, id: l.id }))
+        this.categoryItems = categories.map(l => ({ label: l.label, id: l.id + '' }))
 
         this.updateForm()
         // Force form validation
@@ -348,5 +697,28 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
                   webtorrentControl.enable()
                 }
               })
+  }
+
+  private checkSignupField () {
+    const signupControl = this.form.get('signup.enabled')
+
+    signupControl.valueChanges
+      .pipe(pairwise())
+      .subscribe(([ oldValue, newValue ]) => {
+        if (oldValue !== true && newValue === true) {
+          // tslint:disable:max-line-length
+          this.signupAlertMessage = $localize`You enabled signup: we automatically enabled the "Block new videos automatically" checkbox of the "Videos" section just below.`
+
+          this.form.patchValue({
+            autoBlacklist: {
+              videos: {
+                ofUsers: {
+                  enabled: true
+                }
+              }
+            }
+          })
+        }
+      })
   }
 }

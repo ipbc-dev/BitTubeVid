@@ -1,7 +1,7 @@
 import { VideoStreamingPlaylistType } from './video-streaming-playlist.type'
-import { VideoFile } from '@shared/models/videos/video-file.model'
+import { VideoFile } from './video-file.model'
 
-export class VideoStreamingPlaylist {
+export interface VideoStreamingPlaylist {
   id: number
   type: VideoStreamingPlaylistType
   playlistUrl: string

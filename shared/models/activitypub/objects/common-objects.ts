@@ -1,3 +1,8 @@
+<<<<<<< Updated upstream
+=======
+import { AbusePredefinedReasonsString } from '../../moderation/abuse/abuse-reason.model'
+
+>>>>>>> Stashed changes
 export interface ActivityIdentifierObject {
   identifier: string
   name: string
@@ -81,6 +86,14 @@ export interface ActivityMentionObject {
   name: string
 }
 
+<<<<<<< Updated upstream
+=======
+export interface ActivityFlagReasonObject {
+  type: 'Hashtag'
+  name: AbusePredefinedReasonsString
+}
+
+>>>>>>> Stashed changes
 export type ActivityTagObject =
   ActivityPlaylistSegmentHashesObject
   | ActivityPlaylistInfohashesObject

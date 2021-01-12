@@ -1,21 +1,29 @@
 import * as Bull from 'bull'
+import { publishAndFederateIfNeeded } from '@server/lib/video'
+import { getVideoFilePath } from '@server/lib/video-paths'
+import { MVideoFullLight, MVideoUUID, MVideoWithFile } from '@server/types/models'
 import {
   MergeAudioTranscodingPayload,
   NewResolutionTranscodingPayload,
   OptimizeTranscodingPayload,
   VideoTranscodingPayload
 } from '../../../../shared'
-import { logger } from '../../../helpers/logger'
-import { VideoModel } from '../../../models/video/video'
-import { JobQueue } from '../job-queue'
-import { federateVideoIfNeeded } from '../../activitypub/videos'
 import { retryTransactionWrapper } from '../../../helpers/database-utils'
+import { computeResolutionsToTranscode } from '../../../helpers/ffprobe-utils'
+import { logger } from '../../../helpers/logger'
+import { CONFIG } from '../../../initializers/config'
 import { sequelizeTypescript } from '../../../initializers/database'
-import { computeResolutionsToTranscode } from '../../../helpers/ffmpeg-utils'
-import { generateHlsPlaylist, mergeAudioVideofile, optimizeOriginalVideofile, transcodeNewResolution } from '../../video-transcoding'
+import { VideoModel } from '../../../models/video/video'
+import { federateVideoIfNeeded } from '../../activitypub/videos'
 import { Notifier } from '../../notifier'
+<<<<<<< Updated upstream
 import { CONFIG } from '../../../initializers/config'
 import { MVideoFullLight, MVideoUUID, MVideoWithFile } from '@server/typings/models'
+=======
+import { generateHlsPlaylist, mergeAudioVideofile, optimizeOriginalVideofile, transcodeNewResolution } from '../../video-transcoding'
+import { JobQueue } from '../job-queue'
+import { TranscodeOptionsType } from '@server/helpers/ffmpeg-utils'
+>>>>>>> Stashed changes
 
 async function processVideoTranscoding (job: Bull.Job) {
   const payload = job.data as VideoTranscodingPayload
@@ -29,7 +37,20 @@ async function processVideoTranscoding (job: Bull.Job) {
   }
 
   if (payload.type === 'hls') {
-    await generateHlsPlaylist(video, payload.resolution, payload.copyCodecs, payload.isPortraitMode || false)
+    const videoFileInput = payload.copyCodecs
+      ? video.getWebTorrentFile(payload.resolution)
+      : video.getMaxQualityFile()
+
+    const videoOrStreamingPlaylist = videoFileInput.getVideoOrStreamingPlaylist()
+    const videoInputPath = getVideoFilePath(videoOrStreamingPlaylist, videoFileInput)
+
+    await generateHlsPlaylist({
+      video,
+      videoInputPath,
+      resolution: payload.resolution,
+      copyCodecs: payload.copyCodecs,
+      isPortraitMode: payload.isPortraitMode || false
+    })
 
     await retryTransactionWrapper(onHlsPlaylistGenerationSuccess, video)
   } else if (payload.type === 'new-resolution') {
@@ -41,9 +62,9 @@ async function processVideoTranscoding (job: Bull.Job) {
 
     await retryTransactionWrapper(publishNewResolutionIfNeeded, video, payload)
   } else {
-    await optimizeOriginalVideofile(video)
+    const transcodeType = await optimizeOriginalVideofile(video)
 
-    await retryTransactionWrapper(onVideoFileOptimizerSuccess, video, payload)
+    await retryTransactionWrapper(onVideoFileOptimizerSuccess, video, payload, transcodeType)
   }
 
   return video
@@ -68,14 +89,18 @@ async function onHlsPlaylistGenerationSuccess (video: MVideoFullLight) {
 async function publishNewResolutionIfNeeded (video: MVideoUUID, payload?: NewResolutionTranscodingPayload | MergeAudioTranscodingPayload) {
   await publishAndFederateIfNeeded(video)
 
-  await createHlsJobIfEnabled(payload)
+  createHlsJobIfEnabled(Object.assign({}, payload, { copyCodecs: true }))
 }
 
-async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: OptimizeTranscodingPayload) {
+async function onVideoFileOptimizerSuccess (
+  videoArg: MVideoWithFile,
+  payload: OptimizeTranscodingPayload,
+  transcodeType: TranscodeOptionsType
+) {
   if (videoArg === undefined) return undefined
 
   // Outside the transaction (IO on disk)
-  const { videoFileResolution } = await videoArg.getMaxQualityResolution()
+  const { videoFileResolution, isPortraitMode } = await videoArg.getMaxQualityResolution()
 
   const { videoDatabase, videoPublished } = await sequelizeTypescript.transaction(async t => {
     // Maybe the video changed in database, refresh it
@@ -84,17 +109,22 @@ async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: O
     if (!videoDatabase) return undefined
 
     // Create transcoding jobs if there are enabled resolutions
-    const resolutionsEnabled = computeResolutionsToTranscode(videoFileResolution)
+    const resolutionsEnabled = computeResolutionsToTranscode(videoFileResolution, 'vod')
     logger.info(
-      'Resolutions computed for video %s and origin file height of %d.', videoDatabase.uuid, videoFileResolution,
+      'Resolutions computed for video %s and origin file resolution of %d.', videoDatabase.uuid, videoFileResolution,
       { resolutions: resolutionsEnabled }
     )
 
     let videoPublished = false
 
     // Generate HLS version of the max quality file
-    const hlsPayload = Object.assign({}, payload, { resolution: videoDatabase.getMaxQualityFile().resolution })
-    await createHlsJobIfEnabled(hlsPayload)
+    const originalFileHLSPayload = Object.assign({}, payload, {
+      isPortraitMode,
+      resolution: videoDatabase.getMaxQualityFile().resolution,
+      // If we quick transcoded original file, force transcoding for HLS to avoid some weird playback issues
+      copyCodecs: transcodeType !== 'quick-transcode'
+    })
+    createHlsJobIfEnabled(originalFileHLSPayload)
 
     if (resolutionsEnabled.length !== 0) {
       for (const resolution of resolutionsEnabled) {
@@ -104,14 +134,15 @@ async function onVideoFileOptimizerSuccess (videoArg: MVideoWithFile, payload: O
           dataInput = {
             type: 'new-resolution' as 'new-resolution',
             videoUUID: videoDatabase.uuid,
-            resolution
+            resolution,
+            isPortraitMode
           }
         } else if (CONFIG.TRANSCODING.HLS.ENABLED) {
           dataInput = {
             type: 'hls',
             videoUUID: videoDatabase.uuid,
             resolution,
-            isPortraitMode: false,
+            isPortraitMode,
             copyCodecs: false
           }
         }
@@ -145,7 +176,7 @@ export {
 
 // ---------------------------------------------------------------------------
 
-function createHlsJobIfEnabled (payload?: { videoUUID: string, resolution: number, isPortraitMode?: boolean }) {
+function createHlsJobIfEnabled (payload: { videoUUID: string, resolution: number, isPortraitMode?: boolean, copyCodecs: boolean }) {
   // Generate HLS playlist?
   if (payload && CONFIG.TRANSCODING.HLS.ENABLED) {
     const hlsTranscodingPayload = {
@@ -153,31 +184,9 @@ function createHlsJobIfEnabled (payload?: { videoUUID: string, resolution: numbe
       videoUUID: payload.videoUUID,
       resolution: payload.resolution,
       isPortraitMode: payload.isPortraitMode,
-      copyCodecs: true
+      copyCodecs: payload.copyCodecs
     }
 
     return JobQueue.Instance.createJob({ type: 'video-transcoding', payload: hlsTranscodingPayload })
-  }
-}
-
-async function publishAndFederateIfNeeded (video: MVideoUUID) {
-  const { videoDatabase, videoPublished } = await sequelizeTypescript.transaction(async t => {
-    // Maybe the video changed in database, refresh it
-    const videoDatabase = await VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t)
-    // Video does not exist anymore
-    if (!videoDatabase) return undefined
-
-    // We transcoded the video file in another format, now we can publish it
-    const videoPublished = await videoDatabase.publishIfNeededAndSave(t)
-
-    // If the video was not published, we consider it is a new one for other instances
-    await federateVideoIfNeeded(videoDatabase, videoPublished, t)
-
-    return { videoDatabase, videoPublished }
-  })
-
-  if (videoPublished) {
-    Notifier.Instance.notifyOnNewVideoIfNeeded(videoDatabase)
-    Notifier.Instance.notifyOnVideoPublishedAfterTranscoding(videoDatabase)
   }
 }
