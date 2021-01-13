@@ -14,7 +14,7 @@ import { Column, DataType, Model, Table } from 'sequelize-typescript'
     }
   ]
 })
-export class PremiumStoragePlanModel extends Model<PremiumStoragePlanModel> {
+export class PremiumStoragePlanModel extends Model {
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
   id!: number
 
