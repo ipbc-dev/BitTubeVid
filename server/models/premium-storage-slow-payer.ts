@@ -15,7 +15,7 @@ import { UserModel } from './account/user'
   ]
 })
 
-export class premiumStorageSlowPayer extends Model<premiumStorageSlowPayer> {
+export class premiumStorageSlowPayer extends Model {
 
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
   id!: number

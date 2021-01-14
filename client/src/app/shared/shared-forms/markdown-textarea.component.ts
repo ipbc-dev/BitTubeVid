@@ -1,9 +1,10 @@
+import { ViewportScroller } from '@angular/common'
 import truncate from 'lodash-es/truncate'
 import { Subject } from 'rxjs'
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators'
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core'
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
-import { MarkdownService } from '@app/core'
+import { MarkdownService, ScreenService } from '@app/core'
 
 @Component({
   selector: 'my-markdown-textarea',
@@ -34,9 +35,17 @@ export class MarkdownTextareaComponent implements ControlValueAccessor, OnInit {
   previewHTML = ''
   isMaximized = false
 
-  private contentChanged = new Subject<string>()
+  maximizeInText = $localize`Maximize editor`
+  maximizeOutText = $localize`Exit maximized editor`
 
-  constructor (private markdownService: MarkdownService) {}
+  private contentChanged = new Subject<string>()
+  private scrollPosition: [number, number]
+
+  constructor (
+    private viewportScroller: ViewportScroller,
+    private screenService: ScreenService,
+    private markdownService: MarkdownService
+  ) { }
 
   ngOnInit () {
     this.contentChanged
@@ -75,7 +84,10 @@ export class MarkdownTextareaComponent implements ControlValueAccessor, OnInit {
     this.isMaximized = !this.isMaximized
 
     // Make sure textarea have the focus
-    this.textareaElement.nativeElement.focus()
+    // Except on touchscreens devices, the virtual keyboard may move up and hide the textarea in maximized mode
+    if (!this.screenService.isInTouchScreen()) {
+      this.textareaElement.nativeElement.focus()
+    }
 
     // Make sure the window has no scrollbars
     if (!this.isMaximized) {
@@ -86,11 +98,13 @@ export class MarkdownTextareaComponent implements ControlValueAccessor, OnInit {
   }
 
   private lockBodyScroll () {
+    this.scrollPosition = this.viewportScroller.getScrollPosition()
     document.getElementById('content').classList.add('lock-scroll')
   }
 
   private unlockBodyScroll () {
     document.getElementById('content').classList.remove('lock-scroll')
+    this.viewportScroller.scrollToPosition(this.scrollPosition)
   }
 
   private async updatePreviews () {

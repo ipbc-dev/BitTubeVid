@@ -2,7 +2,7 @@ import { ContextType } from '../activitypub/context'
 import { VideoResolution } from '../videos/video-resolution.enum'
 import { SendEmailOptions } from './emailer.model'
 
-export type JobState = 'active' | 'completed' | 'failed' | 'waiting' | 'delayed'
+export type JobState = 'active' | 'completed' | 'failed' | 'waiting' | 'delayed' | 'paused'
 
 export type JobType =
   | 'activitypub-http-unicast'
@@ -17,6 +17,7 @@ export type JobType =
   | 'premium-storage-checker'
   | 'activitypub-refresher'
   | 'video-redundancy'
+  | 'video-live-ending'
 
 export interface Job {
   id: number
@@ -127,3 +128,7 @@ export type VideoTranscodingPayload =
   | NewResolutionTranscodingPayload
   | OptimizeTranscodingPayload
   | MergeAudioTranscodingPayload
+
+export interface VideoLiveEndingPayload {
+  videoId: number
+}

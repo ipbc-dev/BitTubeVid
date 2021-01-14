@@ -13,7 +13,7 @@ type Metadata = {
   levels: Hlsjs.Level[]
 }
 
-type CustomAudioTrack = Hlsjs.AudioTrack & { name?: string, lang?: string }
+type CustomAudioTrack = Hlsjs.HlsAudioTrack & { name?: string, lang?: string }
 
 const registerSourceHandler = function (vjs: typeof videojs) {
   if (!Hlsjs.isSupported()) {
@@ -226,6 +226,7 @@ class Html5Hlsjs {
 
     if (this.errorCounts[ Hlsjs.ErrorTypes.MEDIA_ERROR ] > 2) {
       console.info('bubbling media error up to VIDEOJS')
+      this.hls.destroy()
       this.tech.error = () => error
       this.tech.trigger('error')
       return

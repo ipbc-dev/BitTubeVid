@@ -20,7 +20,7 @@ interface statsObject {
   ]
 })
 
-export class userPremiumStoragePaymentModel extends Model<userPremiumStoragePaymentModel> {
+export class userPremiumStoragePaymentModel extends Model {
 
   @Column({ type: DataType.INTEGER, primaryKey: true, autoIncrement: true, allowNull: false, unique: true })
   id!: number

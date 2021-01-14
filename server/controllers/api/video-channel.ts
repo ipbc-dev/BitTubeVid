@@ -1,4 +1,5 @@
 import * as express from 'express'
+import { Hooks } from '@server/lib/plugins/hooks'
 import { getServerActor } from '@server/models/application/application'
 import { MChannelAccountDefault } from '@server/types/models'
 import { VideoChannelCreate, VideoChannelUpdate } from '../../../shared'
@@ -38,6 +39,7 @@ import { AccountModel } from '../../models/account/account'
 import { VideoModel } from '../../models/video/video'
 import { VideoChannelModel } from '../../models/video/video-channel'
 import { VideoPlaylistModel } from '../../models/video/video-playlist'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const auditLogger = auditLoggerFactory('channels')
 const reqAvatarFile = createReqFiles([ 'avatarfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: CONFIG.STORAGE.TMP_DIR })
@@ -212,7 +214,7 @@ async function updateVideoChannel (req: express.Request, res: express.Response) 
     throw err
   }
 
-  res.type('json').status(204).end()
+  res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 
   // Don't process in a transaction, and after the response because it could be long
   if (doBulkVideoUpdate) {
@@ -232,7 +234,7 @@ async function removeVideoChannel (req: express.Request, res: express.Response) 
     logger.info('Video channel %s deleted.', videoChannelInstance.Actor.url)
   })
 
-  return res.type('json').status(204).end()
+  return res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function getVideoChannel (req: express.Request, res: express.Response) {
@@ -265,7 +267,7 @@ async function listVideoChannelVideos (req: express.Request, res: express.Respon
   const followerActorId = isUserAbleToSearchRemoteURI(res) ? null : undefined
   const countVideos = getCountVideos(req)
 
-  const resultList = await VideoModel.listForApi({
+  const apiOptions = await Hooks.wrapObject({
     followerActorId,
     start: req.query.start,
     count: req.query.count,
@@ -282,7 +284,13 @@ async function listVideoChannelVideos (req: express.Request, res: express.Respon
     videoChannelId: videoChannelInstance.id,
     user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
     countVideos
-  })
+  }, 'filter:api.video-channels.videos.list.params')
+
+  const resultList = await Hooks.wrapPromiseFun(
+    VideoModel.listForApi,
+    apiOptions,
+    'filter:api.video-channels.videos.list.result'
+  )
 
   return res.json(getFormattedObjects(resultList.data, resultList.total))
 }

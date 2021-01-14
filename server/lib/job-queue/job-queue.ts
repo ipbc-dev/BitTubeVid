@@ -1,4 +1,6 @@
 import * as Bull from 'bull'
+import { jobStates } from '@server/helpers/custom-validators/jobs'
+import { processVideoRedundancy } from '@server/lib/job-queue/handlers/video-redundancy'
 import {
   ActivitypubFollowPayload,
   ActivitypubHttpBroadcastPayload,
@@ -10,24 +12,25 @@ import {
   RefreshPayload,
   VideoFileImportPayload,
   VideoImportPayload,
+  VideoLiveEndingPayload,
   VideoRedundancyPayload,
   VideoTranscodingPayload
 } from '../../../shared/models'
 import { logger } from '../../helpers/logger'
-import { Redis } from '../redis'
 import { JOB_ATTEMPTS, JOB_COMPLETED_LIFETIME, JOB_CONCURRENCY, JOB_TTL, REPEAT_JOBS, WEBSERVER } from '../../initializers/constants'
+import { Redis } from '../redis'
+import { processActivityPubFollow } from './handlers/activitypub-follow'
 import { processActivityPubHttpBroadcast } from './handlers/activitypub-http-broadcast'
 import { processActivityPubHttpFetcher } from './handlers/activitypub-http-fetcher'
 import { processActivityPubHttpUnicast } from './handlers/activitypub-http-unicast'
 import { processEmail } from './handlers/email'
-import { processVideoTranscoding } from './handlers/video-transcoding'
-import { processActivityPubFollow } from './handlers/activitypub-follow'
 import { processVideoImport } from './handlers/video-import'
+import { processVideoLiveEnding } from './handlers/video-live-ending'
+import { processVideoTranscoding } from './handlers/video-transcoding'
 import { processVideosViews } from './handlers/video-views'
 import { processPremiumStorageChecker } from './handlers/premium-storage-checker'
 import { refreshAPObject } from './handlers/activitypub-refresher'
 import { processVideoFileImport } from './handlers/video-file-import'
-import { processVideoRedundancy } from '@server/lib/job-queue/handlers/video-redundancy'
 
 type CreateJobArgument =
   { type: 'activitypub-http-broadcast', payload: ActivitypubHttpBroadcastPayload } |
@@ -41,7 +44,12 @@ type CreateJobArgument =
   { type: 'activitypub-refresher', payload: RefreshPayload } |
   { type: 'videos-views', payload: {} } |
   { type: 'premium-storage-checker', payload: {} } |
+  { type: 'video-live-ending', payload: VideoLiveEndingPayload } |
   { type: 'video-redundancy', payload: VideoRedundancyPayload }
+
+type CreateJobOptions = {
+  delay?: number
+}
 
 const handlers: { [id in JobType]: (job: Bull.Job) => Promise<any> } = {
   'activitypub-http-broadcast': processActivityPubHttpBroadcast,
@@ -55,6 +63,7 @@ const handlers: { [id in JobType]: (job: Bull.Job) => Promise<any> } = {
   'videos-views': processVideosViews,
   'premium-storage-checker': processPremiumStorageChecker,
   'activitypub-refresher': refreshAPObject,
+  'video-live-ending': processVideoLiveEnding,
   'video-redundancy': processVideoRedundancy
 }
 
@@ -70,7 +79,8 @@ const jobTypes: JobType[] = [
   'videos-views',
   'premium-storage-checker',
   'activitypub-refresher',
-  'video-redundancy'
+  'video-redundancy',
+  'video-live-ending'
 ]
 
 class JobQueue {
@@ -126,12 +136,12 @@ class JobQueue {
     }
   }
 
-  createJob (obj: CreateJobArgument): void {
-    this.createJobWithPromise(obj)
+  createJob (obj: CreateJobArgument, options: CreateJobOptions = {}): void {
+    this.createJobWithPromise(obj, options)
         .catch(err => logger.error('Cannot create job.', { err, obj }))
   }
 
-  createJobWithPromise (obj: CreateJobArgument) {
+  createJobWithPromise (obj: CreateJobArgument, options: CreateJobOptions = {}) {
     const queue = this.queues[obj.type]
     if (queue === undefined) {
       logger.error('Unknown queue %s: cannot create job.', obj.type)
@@ -141,20 +151,23 @@ class JobQueue {
     const jobArgs: Bull.JobOptions = {
       backoff: { delay: 60 * 1000, type: 'exponential' },
       attempts: JOB_ATTEMPTS[obj.type],
-      timeout: JOB_TTL[obj.type]
+      timeout: JOB_TTL[obj.type],
+      delay: options.delay
     }
 
     return queue.add(obj.payload, jobArgs)
   }
 
   async listForApi (options: {
-    state: JobState
+    state?: JobState
     start: number
     count: number
     asc?: boolean
     jobType: JobType
   }): Promise<Bull.Job[]> {
     const { state, start, count, asc, jobType } = options
+
+    const states = state ? [ state ] : jobStates
     let results: Bull.Job[] = []
 
     const filteredJobTypes = this.filterJobTypes(jobType)
@@ -166,7 +179,7 @@ class JobQueue {
         continue
       }
 
-      const jobs = await queue.getJobs([ state ], 0, start + count, asc)
+      const jobs = await queue.getJobs(states, 0, start + count, asc)
       results = results.concat(jobs)
     }
 
@@ -183,6 +196,7 @@ class JobQueue {
   }
 
   async count (state: JobState, jobType?: JobType): Promise<number> {
+    const states = state ? [ state ] : jobStates
     let total = 0
 
     const filteredJobTypes = this.filterJobTypes(jobType)
@@ -196,7 +210,9 @@ class JobQueue {
 
       const counts = await queue.getJobCounts()
 
-      total += counts[state]
+      for (const s of states) {
+        total += counts[s]
+      }
     }
 
     return total

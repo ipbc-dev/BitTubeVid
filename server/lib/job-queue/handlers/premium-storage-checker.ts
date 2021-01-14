@@ -4,6 +4,7 @@ import { Hooks } from '../../../lib/plugins/hooks'
 import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
 import { premiumStorageSlowPayer } from '@server/models/premium-storage-slow-payer'
 import { UserModel } from '@server/models/account/user'
+import { AccountModel } from '@server/models/account/account'
 import { VideoModel } from '@server/models/video/video'
 import { CONFIG } from '@server/initializers/config'
 import { Emailer } from '@server/lib/emailer'
@@ -72,8 +73,8 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
   const slowPayersList = await premiumStorageSlowPayer.getAllSlowPayers()
   await parallel(1, slowPayersList, async (slowPayer) => {
     const userInfo = await UserModel.loadById(slowPayer.userId)
-    const actorId = userInfo.Account.id
-    const userVideos = await VideoModel.listUserVideosForApi(actorId, 0, videosAmmountToDelete, "-createdAt")
+    const actorInfo = await AccountModel.loadByNameWithHost(userInfo.username + '@' + CONFIG.WEBSERVER.HOSTNAME)
+    const userVideos = await VideoModel.listUserVideosForApi(actorInfo.actorId, 0, videosAmmountToDelete, "-createdAt")
     const userVideoQuota = userInfo.videoQuota
     let deletedVideosCounter = 0
     const deletedVideosNames = []
@@ -91,8 +92,6 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
     }
     if (deletedVideosCounter > 0) {
       // Send email
-      //   console.log('ICECIE videoNames are: ', deletedVideosNames)
-      //   console.log(`cleanVideosFromSlowPayers going to send email after deleting ${deletedVideosCounter} videos`)
         Emailer.Instance.addPremiumStorageExpiredJob(userInfo.username, userInfo.email, CONFIG.WEBSERVER.HOSTNAME, deletedVideosCounter, deletedVideosNames)
     }
     userUsedVideoQuota = await getUserUsedQuota(slowPayer.userId)

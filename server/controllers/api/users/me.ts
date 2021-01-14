@@ -1,6 +1,8 @@
 import 'multer'
 import * as express from 'express'
+import { auditLoggerFactory, getAuditIdFromRes, UserAuditView } from '@server/helpers/audit-logger'
 import { UserUpdateMe, UserVideoRate as FormattedUserVideoRate, VideoSortField } from '../../../../shared'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 import { UserVideoQuota } from '../../../../shared/models/users/user-video-quota.model'
 import { createReqFiles } from '../../../helpers/express-utils'
 import { getFormattedObjects } from '../../../helpers/utils'
@@ -9,7 +11,7 @@ import { MIMETYPES } from '../../../initializers/constants'
 import { sequelizeTypescript } from '../../../initializers/database'
 import { sendUpdateActor } from '../../../lib/activitypub/send'
 import { updateActorAvatarFile } from '../../../lib/avatar'
-import { sendVerifyUserEmail } from '../../../lib/user'
+import { getOriginalVideoFileTotalDailyFromUser, getOriginalVideoFileTotalFromUser, sendVerifyUserEmail } from '../../../lib/user'
 import {
   asyncMiddleware,
   asyncRetryTransactionMiddleware,
@@ -28,6 +30,8 @@ import { AccountVideoRateModel } from '../../../models/account/account-video-rat
 import { UserModel } from '../../../models/account/user'
 import { VideoModel } from '../../../models/video/video'
 import { VideoImportModel } from '../../../models/video/video-import'
+
+const auditLogger = auditLoggerFactory('users')
 
 const reqAvatarFile = createReqFiles([ 'avatarfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: CONFIG.STORAGE.TMP_DIR })
 
@@ -126,15 +130,15 @@ async function getUserVideoImports (req: express.Request, res: express.Response)
 
 async function getUserInformation (req: express.Request, res: express.Response) {
   // We did not load channels in res.locals.user
-  const user = await UserModel.loadForMeAPI(res.locals.oauth.token.user.username)
+  const user = await UserModel.loadForMeAPI(res.locals.oauth.token.user.id)
 
   return res.json(user.toMeFormattedJSON())
 }
 
 async function getUserVideoQuotaUsed (req: express.Request, res: express.Response) {
   const user = res.locals.oauth.token.user
-  const videoQuotaUsed = await UserModel.getOriginalVideoFileTotalFromUser(user)
-  const videoQuotaUsedDaily = await UserModel.getOriginalVideoFileTotalDailyFromUser(user)
+  const videoQuotaUsed = await getOriginalVideoFileTotalFromUser(user)
+  const videoQuotaUsedDaily = await getOriginalVideoFileTotalDailyFromUser(user)
 
   const data: UserVideoQuota = {
     videoQuotaUsed,
@@ -158,11 +162,13 @@ async function getUserVideoRating (req: express.Request, res: express.Response) 
 }
 
 async function deleteMe (req: express.Request, res: express.Response) {
-  const user = res.locals.oauth.token.User
+  const user = await UserModel.loadByIdWithChannels(res.locals.oauth.token.User.id)
+
+  auditLogger.delete(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
 
   await user.destroy()
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function updateMe (req: express.Request, res: express.Response) {
@@ -210,7 +216,7 @@ async function updateMe (req: express.Request, res: express.Response) {
     await sendVerifyUserEmail(user, true)
   }
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function updateMyAvatar (req: express.Request, res: express.Response) {

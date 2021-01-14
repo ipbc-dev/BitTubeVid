@@ -31,6 +31,7 @@ import { USER_VIDEO_QUOTA_DAILY_VALIDATOR, USER_VIDEO_QUOTA_VALIDATOR } from '@a
 import { FormReactive, FormValidatorService, SelectOptionsItem } from '@app/shared/shared-forms'
 import { NgbNav } from '@ng-bootstrap/ng-bootstrap'
 import { CustomConfig, ServerConfig } from '@shared/models'
+import { pairwise } from 'rxjs/operators'
 
 @Component({
   selector: 'my-edit-custom-config',
@@ -47,7 +48,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   newStoragePlan: interfacePremiumStoragePlan
 
   resolutions: { id: string, label: string, description?: string }[] = []
+  liveResolutions: { id: string, label: string, description?: string }[] = []
   transcodingThreadOptions: { label: string, value: number }[] = []
+  liveMaxDurationOptions: { label: string, value: number }[] = []
 
   serverStats: any = null
   storagePlans: any[] = []
@@ -57,6 +60,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   showAddPlanModal = false
   languageItems: SelectOptionsItem[] = []
   categoryItems: SelectOptionsItem[] = []
+
+  signupAlertMessage: string
 
   private serverConfig: ServerConfig
   private bytesPipe: BytesPipe
@@ -105,6 +110,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       }
     ]
 
+    this.liveResolutions = this.resolutions.filter(r => r.id !== '0p')
+
     this.transcodingThreadOptions = [
       { value: 0, label: $localize`Auto (via ffmpeg)` },
       { value: 1, label: '1' },
@@ -117,6 +124,14 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     .subscribe(res => {
       this.serverStats = res
     })
+
+    this.liveMaxDurationOptions = [
+      { value: -1, label: $localize`No limit` },
+      { value: 1000 * 3600, label: $localize`1 hour` },
+      { value: 1000 * 3600 * 3, label: $localize`3 hours` },
+      { value: 1000 * 3600 * 5, label: $localize`5 hours` },
+      { value: 1000 * 3600 * 10, label: $localize`10 hours` }
+    ]
   }
 
   get videoQuotaOptions () {
@@ -132,12 +147,48 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       .map(t => t.name)
   }
 
+  get liveRTMPPort () {
+    return this.serverConfig.live.rtmp.port
+  }
+
+  getTotalTranscodingThreads () {
+    const transcodingEnabled = this.form.value['transcoding']['enabled']
+    const transcodingThreads = this.form.value['transcoding']['threads']
+    const liveTranscodingEnabled = this.form.value['live']['transcoding']['enabled']
+    const liveTranscodingThreads = this.form.value['live']['transcoding']['threads']
+
+    // checks whether all enabled method are on fixed values and not on auto (= 0)
+    let noneOnAuto = !transcodingEnabled || +transcodingThreads > 0
+    noneOnAuto &&= !liveTranscodingEnabled || +liveTranscodingThreads > 0
+
+    // count total of fixed value, repalcing auto by a single thread (knowing it will display "at least")
+    let value = 0
+    if (transcodingEnabled) value += +transcodingThreads || 1
+    if (liveTranscodingEnabled) value += +liveTranscodingThreads || 1
+
+    return {
+      value,
+      atMost: noneOnAuto, // auto switches everything to a least estimation since ffmpeg will take as many threads as possible
+      unit: value > 1
+        ? $localize`threads`
+        : $localize`thread`
+    }
+  }
+
+  getResolutionKey (resolution: string) {
+    return 'transcoding.resolutions.' + resolution
+  }
+
   ngOnInit () {
     this.subscribeConfigAndPlans()
     this.serverConfig = this.serverService.getTmpConfig()
     // this.serverService.getConfig()
     //     .subscribe(config => this.serverConfig = config)
     this.resetNewStoragePlan()
+    this.serverService.getConfig()
+        .subscribe(config => {
+          this.serverConfig = config
+        })
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
       instance: {
@@ -224,6 +275,20 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
           enabled: null
         }
       },
+      live: {
+        enabled: null,
+
+        maxDuration: null,
+        maxInstanceLives: null,
+        maxUserLives: null,
+        allowReplay: null,
+
+        transcoding: {
+          enabled: null,
+          threads: TRANSCODING_THREADS_VALIDATOR,
+          resolutions: {}
+        }
+      },
       autoBlacklist: {
         videos: {
           ofUsers: {
@@ -274,16 +339,29 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     const defaultValues = {
       transcoding: {
         resolutions: {}
+      },
+      live: {
+        transcoding: {
+          resolutions: {}
+        }
       }
     }
+
     for (const resolution of this.resolutions) {
       defaultValues.transcoding.resolutions[resolution.id] = 'false'
       formGroupData.transcoding.resolutions[resolution.id] = null
     }
 
+    for (const resolution of this.liveResolutions) {
+      defaultValues.live.transcoding.resolutions[resolution.id] = 'false'
+      formGroupData.live.transcoding.resolutions[resolution.id] = null
+    }
+
     this.buildForm(formGroupData)
     this.loadForm()
+
     this.checkTranscodingFields()
+    this.checkSignupField()
   }
 
   ngAfterViewChecked () {
@@ -467,9 +545,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
     // console.log('ICEICE ri is: ', ri)
   }
 
-  getResolutionKey (resolution: string) {
-    return 'transcoding.resolutions.' + resolution
-  }
 
   showFormSubmitButton () {
     if (this.nav !== undefined && this.nav.activeId !== undefined) {
@@ -481,6 +556,14 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
   isTranscodingEnabled () {
     return this.form.value['transcoding']['enabled'] === true
+  }
+
+  isLiveEnabled () {
+    return this.form.value['live']['enabled'] === true
+  }
+
+  isLiveTranscodingEnabled () {
+    return this.form.value['live']['transcoding']['enabled'] === true
   }
 
   isSignupEnabled () {
@@ -496,8 +579,9 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   }
 
   async formValidated () {
-    // console.log('ICEICE going to update config with form : ', this.form.getRawValue())
-    this.configService.updateCustomConfig(this.form.getRawValue())
+    const value: CustomConfig = this.form.getRawValue()
+
+    this.configService.updateCustomConfig(value)
       .subscribe(
         res => {
           this.customConfig = res
@@ -524,6 +608,20 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       this.nav.select(hashToNav[hash])
       setTimeout(() => this.viewportScroller.scrollToAnchor(hash), 100)
     }
+  }
+
+  hasConsistentOptions () {
+    if (this.hasLiveAllowReplayConsistentOptions()) return true
+
+    return false
+  }
+
+  hasLiveAllowReplayConsistentOptions () {
+    if (this.isTranscodingEnabled() === false && this.isLiveEnabled() && this.form.value['live']['allowReplay'] === true) {
+      return false
+    }
+
+    return true
   }
 
   private updateForm () {
@@ -576,5 +674,28 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
                   webtorrentControl.enable()
                 }
               })
+  }
+
+  private checkSignupField () {
+    const signupControl = this.form.get('signup.enabled')
+
+    signupControl.valueChanges
+      .pipe(pairwise())
+      .subscribe(([ oldValue, newValue ]) => {
+        if (oldValue !== true && newValue === true) {
+          // tslint:disable:max-line-length
+          this.signupAlertMessage = $localize`You enabled signup: we automatically enabled the "Block new videos automatically" checkbox of the "Videos" section just below.`
+
+          this.form.patchValue({
+            autoBlacklist: {
+              videos: {
+                ofUsers: {
+                  enabled: true
+                }
+              }
+            }
+          })
+        }
+      })
   }
 }

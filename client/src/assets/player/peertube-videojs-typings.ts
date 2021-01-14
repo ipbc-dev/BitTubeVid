@@ -106,6 +106,8 @@ type PeerTubePluginOptions = {
   videoCaptions: VideoJSCaption[]
 
   stopTime: number | string
+
+  isLive: boolean
 }
 
 type PlaylistPluginOptions = {
@@ -175,6 +177,8 @@ type AutoResolutionUpdateData = {
 }
 
 type PlayerNetworkInfo = {
+  source: 'webtorrent' | 'p2p-media-loader'
+
   http: {
     downloadSpeed: number
     uploadSpeed: number

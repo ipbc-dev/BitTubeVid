@@ -32,7 +32,11 @@ const playerKeys = {
   'Copy embed code': 'Copy embed code',
   'Copy magnet URI': 'Copy magnet URI',
   'Total downloaded: ': 'Total downloaded: ',
-  'Total uploaded: ': 'Total uploaded: '
+  'Total uploaded: ': 'Total uploaded: ',
+  'From servers: ': 'From servers: ',
+  'From peers: ': 'From peers: ',
+  'Normal mode': 'Normal mode',
+  'Theater mode': 'Theater mode'
 }
 Object.assign(playerKeys, videojs)
 

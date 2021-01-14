@@ -2,7 +2,7 @@ listen:
   hostname: 'localhost'
   port: 9000
 
-# Correspond to your reverse proxy server_name/listen configuration
+# Correspond to your reverse proxy server_name/listen configuration (i.e., your public PeerTube instance URL)
 webserver:
   https: true
   hostname: 'example.com'
@@ -167,7 +167,7 @@ views:
     # -1 means no cleanup
     # Other values could be '6 months' or '30 days' etc (PeerTube will periodically delete old entries from database)
     remote:
-      max_age: -1
+      max_age: '30 days'
 
 plugins:
   # The website PeerTube will ask for available PeerTube plugins and themes
@@ -179,7 +179,7 @@ plugins:
 
 federation:
   videos:
-    federate_unlisted: true
+    federate_unlisted: false
 
 
 ###############################################################################
@@ -257,11 +257,53 @@ transcoding:
   hls:
     enabled: false
 
+live:
+  enabled: false
+
+  # Limit lives duration
+  # Set null to disable duration limit
+  max_duration: -1 # For example: '5 hours'
+
+  # Limit max number of live videos created on your instance
+  # -1 == unlimited
+  max_instance_lives: 20
+
+  # Limit max number of live videos created by a user on your instance
+  # -1 == unlimited
+  max_user_lives: 3
+
+  # Allow your users to save a replay of their live
+  # PeerTube will transcode segments in a video file
+  # If the user daily/total quota is reached, PeerTube will stop the live
+  # /!\ transcoding.enabled (and not live.transcoding.enabled) has to be true to create a replay
+  allow_replay: true
+
+  # Your firewall should accept traffic from this port in TCP if you enable live
+  rtmp:
+    port: 1935
+
+  # Allow to transcode the live streaming in multiple live resolutions
+  transcoding:
+    enabled: true
+    threads: 2
+
+    resolutions:
+      240p: false
+      360p: false
+      480p: false
+      720p: false
+      1080p: false
+      2160p: false
+
 import:
   # Add ability for your users to import remote videos (from YouTube, torrent...)
   videos:
     http: # Classic HTTP or all sites supported by youtube-dl https://rg3.github.io/youtube-dl/supportedsites.html
       enabled: false
+
+      # IPv6 is very strongly rate-limited on most sites supported by youtube-dl
+      force_ipv4: false
+
       # You can use an HTTP/HTTPS/SOCKS proxy with youtube-dl
       proxy:
         enabled: false
@@ -287,16 +329,16 @@ instance:
   moderation_information: '' # Supports markdown
 
   # Why did you create this instance?
-  creation_reason: ''
+  creation_reason: '' # Supports Markdown
 
   # Who is behind the instance? A single person? A non profit?
-  administrator: ''
+  administrator: '' # Supports Markdown
 
   # How long do you plan to maintain this instance?
-  maintenance_lifetime: ''
+  maintenance_lifetime: '' # Supports Markdown
 
   # How will you pay the PeerTube instance server? With your own funds? With users donations? Advertising?
-  business_model: ''
+  business_model: '' # Supports Markdown
 
   # If you want to explain on what type of hardware your PeerTube instance runs
   # Example: "2 vCore, 2GB RAM..."

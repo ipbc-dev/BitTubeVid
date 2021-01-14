@@ -14,13 +14,11 @@ $grey-foreground-color: #585858;
 $grey-foreground-hover-color: #303030;
 $grey-button-outline-color: scale-color($grey-foreground-color, $alpha: -95%);
 
-// Palette
 $main-color: hsl(24, 90%, 50%);
 $main-hover-color: lighten($main-color, 5%);
 $main-color-lighter: lighten($main-color, 10%);
 $main-color-lightest: lighten($main-color, 40%);
 $secondary-color: hsl(187, 77, 34);
-//
 
 $support-button: inherit;
 $support-button-heart: #e83e8c;
@@ -86,9 +84,12 @@ $variables: (
   --mainColor: var(--mainColor),
   --mainColorLighter: var(--mainColorLighter),
   --mainColorLightest: var(--mainColorLightest),
+
   --mainHoverColor: var(--mainHoverColor),
+
   --mainBackgroundColor: var(--mainBackgroundColor),
   --mainForegroundColor: var(--mainForegroundColor),
+
   --secondaryColor: var(--secondaryColor),
 
   --greyForegroundColor: var(--greyForegroundColor),
@@ -126,7 +127,6 @@ $variables: (
 $zindex: (
   miniature       :    10,
   privacymsg      :    20,
-  dropdown        : 12000,
   sub-menu        : 12500,
   menu            : 12600,
   search-typeahead: 12650,
@@ -135,6 +135,7 @@ $zindex: (
   tooltip         : 14000,
   loadbar         : 15000,
   modal           : 16000,
+  dropdown        : 17000,
   help-popover    : 17000,
   notification    : 18000,
   hotkeys         : 19000

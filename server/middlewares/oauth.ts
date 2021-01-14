@@ -1,8 +1,9 @@
 import * as express from 'express'
-import { logger } from '../helpers/logger'
 import { Socket } from 'socket.io'
-import { getAccessToken } from '../lib/oauth-model'
 import { oAuthServer } from '@server/lib/auth'
+import { logger } from '../helpers/logger'
+import { getAccessToken } from '../lib/oauth-model'
+import { HttpStatusCode } from '../../shared/core-utils/miscs/http-error-codes'
 
 function authenticate (req: express.Request, res: express.Response, next: express.NextFunction, authenticateInQuery = false) {
   const options = authenticateInQuery ? { allowBearerTokensInQueryString: true } : {}
@@ -19,12 +20,14 @@ function authenticate (req: express.Request, res: express.Response, next: expres
         .end()
     }
 
+    res.locals.authenticated = true
+
     return next()
   })
 }
 
 function authenticateSocket (socket: Socket, next: (err?: any) => void) {
-  const accessToken = socket.handshake.query.accessToken
+  const accessToken = socket.handshake.query['accessToken']
 
   logger.debug('Checking socket access token %s.', accessToken)
 
@@ -38,7 +41,7 @@ function authenticateSocket (socket: Socket, next: (err?: any) => void) {
         return next(new Error('Invalid access token.'))
       }
 
-      socket.handshake.query.user = tokenDB.User
+      socket.handshake.query['user'] = tokenDB.User
 
       return next()
     })
@@ -50,7 +53,7 @@ function authenticatePromiseIfNeeded (req: express.Request, res: express.Respons
     // Already authenticated? (or tried to)
     if (res.locals.oauth?.token.User) return resolve()
 
-    if (res.locals.authenticated === false) return res.sendStatus(401)
+    if (res.locals.authenticated === false) return res.sendStatus(HttpStatusCode.UNAUTHORIZED_401)
 
     authenticate(req, res, () => resolve(), authenticateInQuery)
   })

@@ -53,6 +53,7 @@ import { myVideosHistoryRouter } from './my-history'
 import { myNotificationsRouter } from './my-notifications'
 import { mySubscriptionsRouter } from './my-subscriptions'
 import { myVideoPlaylistsRouter } from './my-video-playlists'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const auditLogger = auditLoggerFactory('users')
 
@@ -257,7 +258,7 @@ async function registerUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.registered', { body, user, account, videoChannel })
 
-  return res.type('json').status(204).end()
+  return res.type('json').status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function unblockUser (req: express.Request, res: express.Response) {
@@ -267,7 +268,7 @@ async function unblockUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.unblocked', { user })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function blockUser (req: express.Request, res: express.Response) {
@@ -278,7 +279,7 @@ async function blockUser (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.user.blocked', { user })
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 function getUser (req: express.Request, res: express.Response) {
@@ -306,13 +307,13 @@ async function listUsers (req: express.Request, res: express.Response) {
 async function removeUser (req: express.Request, res: express.Response) {
   const user = res.locals.user
 
-  await user.destroy()
-
   auditLogger.delete(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
+
+  await user.destroy()
 
   Hooks.runAction('action:api.user.deleted', { user })
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function updateUser (req: express.Request, res: express.Response) {
@@ -340,7 +341,7 @@ async function updateUser (req: express.Request, res: express.Response) {
 
   // Don't need to send this update to followers, these attributes are not federated
 
-  return res.sendStatus(204)
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function askResetUserPassword (req: express.Request, res: express.Response) {
@@ -350,7 +351,7 @@ async function askResetUserPassword (req: express.Request, res: express.Response
   const url = WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString
   await Emailer.Instance.addPasswordResetEmailJob(user.username, user.email, url)
 
-  return res.status(202).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function resetUserPassword (req: express.Request, res: express.Response) {
@@ -360,7 +361,7 @@ async function resetUserPassword (req: express.Request, res: express.Response) {
   await user.save()
   await Redis.Instance.removePasswordVerificationString(user.id)
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function reSendVerifyUserEmail (req: express.Request, res: express.Response) {
@@ -368,7 +369,7 @@ async function reSendVerifyUserEmail (req: express.Request, res: express.Respons
 
   await sendVerifyUserEmail(user)
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function verifyUserEmail (req: express.Request, res: express.Response) {
@@ -382,7 +383,7 @@ async function verifyUserEmail (req: express.Request, res: express.Response) {
 
   await user.save()
 
-  return res.status(204).end()
+  return res.status(HttpStatusCode.NO_CONTENT_204).end()
 }
 
 async function changeUserBlock (res: express.Response, user: MUserAccountDefault, block: boolean, reason?: string) {

@@ -5,17 +5,18 @@ import toInt from 'validator/lib/toInt'
 import { addOptimizeOrMergeAudioJob } from '@server/helpers/video'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
 import { changeVideoChannelShare } from '@server/lib/activitypub/share'
-import { getVideoActivityPubUrl } from '@server/lib/activitypub/url'
+import { getLocalVideoActivityPubUrl } from '@server/lib/activitypub/url'
+import { LiveManager } from '@server/lib/live-manager'
+import { buildLocalVideoFromReq, buildVideoThumbnailsFromReq, setVideoTags } from '@server/lib/video'
 import { getVideoFilePath } from '@server/lib/video-paths'
 import { getServerActor } from '@server/models/application/application'
-import { MVideoDetails, MVideoFullLight } from '@server/types/models'
-import { VideoCreate, VideoPrivacy, VideoState, VideoUpdate } from '../../../../shared'
-import { ThumbnailType } from '../../../../shared/models/videos/thumbnail.type'
+import { MVideoFullLight } from '@server/types/models'
+import { VideoCreate, VideoState, VideoUpdate } from '../../../../shared'
 import { VideoFilter } from '../../../../shared/models/videos/video-query.type'
 import { auditLoggerFactory, getAuditIdFromRes, VideoAuditView } from '../../../helpers/audit-logger'
 import { resetSequelizeInstance } from '../../../helpers/database-utils'
 import { buildNSFWFilter, createReqFiles, getCountVideos } from '../../../helpers/express-utils'
-import { getMetadataFromFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffmpeg-utils'
+import { getMetadataFromFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffprobe-utils'
 import { logger } from '../../../helpers/logger'
 import { getFormattedObjects } from '../../../helpers/utils'
 import { CONFIG } from '../../../initializers/config'
@@ -34,7 +35,7 @@ import { JobQueue } from '../../../lib/job-queue'
 import { Notifier } from '../../../lib/notifier'
 import { Hooks } from '../../../lib/plugins/hooks'
 import { Redis } from '../../../lib/redis'
-import { createVideoMiniatureFromExisting, generateVideoMiniature } from '../../../lib/thumbnail'
+import { generateVideoMiniature } from '../../../lib/thumbnail'
 import { autoBlacklistVideoIfNeeded } from '../../../lib/video-blacklist'
 import {
   asyncMiddleware,
@@ -55,17 +56,17 @@ import {
   videosUpdateValidator
 } from '../../../middlewares'
 import { ScheduleVideoUpdateModel } from '../../../models/video/schedule-video-update'
-import { TagModel } from '../../../models/video/tag'
 import { VideoModel } from '../../../models/video/video'
 import { VideoFileModel } from '../../../models/video/video-file'
-import { abuseVideoRouter } from './abuse'
 import { blacklistRouter } from './blacklist'
 import { videoCaptionsRouter } from './captions'
 import { videoCommentRouter } from './comment'
 import { videoImportsRouter } from './import'
+import { liveRouter } from './live'
 import { ownershipVideoRouter } from './ownership'
 import { rateVideoRouter } from './rate'
 import { watchingRouter } from './watching'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const auditLogger = auditLoggerFactory('videos')
 const videosRouter = express.Router()
@@ -88,7 +89,6 @@ const reqVideoFileUpdate = createReqFiles(
   }
 )
 
-videosRouter.use('/', abuseVideoRouter)
 videosRouter.use('/', blacklistRouter)
 videosRouter.use('/', rateVideoRouter)
 videosRouter.use('/', videoCommentRouter)
@@ -96,6 +96,7 @@ videosRouter.use('/', videoCaptionsRouter)
 videosRouter.use('/', videoImportsRouter)
 videosRouter.use('/', ownershipVideoRouter)
 videosRouter.use('/', watchingRouter)
+videosRouter.use('/', liveRouter)
 
 videosRouter.get('/categories', listVideoCategories)
 videosRouter.get('/licences', listVideoLicences)
@@ -174,44 +175,28 @@ function listVideoPrivacies (req: express.Request, res: express.Response) {
 }
 
 async function addVideo (req: express.Request, res: express.Response) {
-  // Processing the video could be long
-  // Set timeout to 10 minutes
+  // Uploading the video could be long
+  // Set timeout to 10 minutes, as Express's default is 2 minutes
   req.setTimeout(1000 * 60 * 10, () => {
     logger.error('Upload video has timed out.')
-    return res.sendStatus(408)
+    return res.sendStatus(HttpStatusCode.REQUEST_TIMEOUT_408)
   })
 
   const videoPhysicalFile = req.files['videofile'][0]
   const videoInfo: VideoCreate = req.body
 
-  // Prepare data so we don't block the transaction
-  const videoData = {
-    name: videoInfo.name,
-    remote: false,
-    category: videoInfo.category,
-    licence: videoInfo.licence,
-    language: videoInfo.language,
-    commentsEnabled: videoInfo.commentsEnabled !== false, // If the value is not "false", the default is "true"
-    downloadEnabled: videoInfo.downloadEnabled !== false,
-    waitTranscoding: videoInfo.waitTranscoding || false,
-    state: CONFIG.TRANSCODING.ENABLED ? VideoState.TO_TRANSCODE : VideoState.PUBLISHED,
-    nsfw: videoInfo.nsfw || false,
-    description: videoInfo.description,
-    support: videoInfo.support,
-    privacy: videoInfo.privacy || VideoPrivacy.PRIVATE,
-    duration: videoPhysicalFile['duration'], // duration was added by a previous middleware
-    channelId: res.locals.videoChannel.id,
-    originallyPublishedAt: videoInfo.originallyPublishedAt
-  }
+  const videoData = buildLocalVideoFromReq(videoInfo, res.locals.videoChannel.id)
+  videoData.state = CONFIG.TRANSCODING.ENABLED ? VideoState.TO_TRANSCODE : VideoState.PUBLISHED
+  videoData.duration = videoPhysicalFile['duration'] // duration was added by a previous middleware
 
-  const video = new VideoModel(videoData) as MVideoDetails
-  video.url = getVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
+  const video = new VideoModel(videoData) as MVideoFullLight
+  video.url = getLocalVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
 
   const videoFile = new VideoFileModel({
     extname: extname(videoPhysicalFile.filename),
     size: videoPhysicalFile.size,
     videoStreamingPlaylistId: null,
-    metadata: await getMetadataFromFile<any>(videoPhysicalFile.path)
+    metadata: await getMetadataFromFile(videoPhysicalFile.path)
   })
 
   if (videoFile.isAudio()) {
@@ -228,17 +213,11 @@ async function addVideo (req: express.Request, res: express.Response) {
   videoPhysicalFile.filename = getVideoFilePath(video, videoFile)
   videoPhysicalFile.path = destination
 
-  // Process thumbnail or create it from the video
-  const thumbnailField = req.files['thumbnailfile']
-  const thumbnailModel = thumbnailField
-    ? await createVideoMiniatureFromExisting(thumbnailField[0].path, video, ThumbnailType.MINIATURE, false)
-    : await generateVideoMiniature(video, videoFile, ThumbnailType.MINIATURE)
-
-  // Process preview or create it from the video
-  const previewField = req.files['previewfile']
-  const previewModel = previewField
-    ? await createVideoMiniatureFromExisting(previewField[0].path, video, ThumbnailType.PREVIEW, false)
-    : await generateVideoMiniature(video, videoFile, ThumbnailType.PREVIEW)
+  const [ thumbnailModel, previewModel ] = await buildVideoThumbnailsFromReq({
+    video,
+    files: req.files,
+    fallback: type => generateVideoMiniature(video, videoFile, type)
+  })
 
   // Create the torrent file
   await createTorrentAndSetInfoHash(video, videoFile)
@@ -259,13 +238,7 @@ async function addVideo (req: express.Request, res: express.Response) {
 
     video.VideoFiles = [ videoFile ]
 
-    // Create tags
-    if (videoInfo.tags !== undefined) {
-      const tagInstances = await TagModel.findOrCreateTags(videoInfo.tags, t)
-
-      await video.$set('Tags', tagInstances, sequelizeOptions)
-      video.Tags = tagInstances
-    }
+    await setVideoTags({ video, tags: videoInfo.tags, transaction: t })
 
     // Schedule an update in the future?
     if (videoInfo.scheduleUpdate) {
@@ -304,7 +277,7 @@ async function addVideo (req: express.Request, res: express.Response) {
       id: videoCreated.id,
       uuid: videoCreated.uuid
     }
-  }).end()
+  })
 }
 
 async function updateVideo (req: express.Request, res: express.Response) {
@@ -316,14 +289,12 @@ async function updateVideo (req: express.Request, res: express.Response) {
   const wasConfidentialVideo = videoInstance.isConfidential()
   const hadPrivacyForFederation = videoInstance.hasPrivacyForFederation()
 
-  // Process thumbnail or create it from the video
-  const thumbnailModel = req.files?.['thumbnailfile']
-    ? await createVideoMiniatureFromExisting(req.files['thumbnailfile'][0].path, videoInstance, ThumbnailType.MINIATURE, false)
-    : undefined
-
-  const previewModel = req.files?.['previewfile']
-    ? await createVideoMiniatureFromExisting(req.files['previewfile'][0].path, videoInstance, ThumbnailType.PREVIEW, false)
-    : undefined
+  const [ thumbnailModel, previewModel ] = await buildVideoThumbnailsFromReq({
+    video: videoInstance,
+    files: req.files,
+    fallback: () => Promise.resolve(undefined),
+    automaticallyGenerated: false
+  })
 
   try {
     const videoInstanceUpdated = await sequelizeTypescript.transaction(async t => {
@@ -364,12 +335,12 @@ async function updateVideo (req: express.Request, res: express.Response) {
       if (previewModel) await videoInstanceUpdated.addAndSaveThumbnail(previewModel, t)
 
       // Video tags update?
-      if (videoInfoToUpdate.tags !== undefined) {
-        const tagInstances = await TagModel.findOrCreateTags(videoInfoToUpdate.tags, t)
-
-        await videoInstanceUpdated.$set('Tags', tagInstances, sequelizeOptions)
-        videoInstanceUpdated.Tags = tagInstances
-      }
+      await setVideoTags({
+        video: videoInstanceUpdated,
+        tags: videoInfoToUpdate.tags,
+        transaction: t,
+        defaultValue: videoInstanceUpdated.Tags
+      })
 
       // Video channel update?
       if (res.locals.videoChannel && videoInstanceUpdated.channelId !== res.locals.videoChannel.id) {
@@ -424,7 +395,9 @@ async function updateVideo (req: express.Request, res: express.Response) {
     throw err
   }
 
-  return res.type('json').status(204).end()
+  return res.type('json')
+            .status(HttpStatusCode.NO_CONTENT_204)
+            .end()
 }
 
 async function getVideo (req: express.Request, res: express.Response) {
@@ -445,26 +418,46 @@ async function getVideo (req: express.Request, res: express.Response) {
 }
 
 async function viewVideo (req: express.Request, res: express.Response) {
-  const videoInstance = res.locals.onlyImmutableVideo
+  const immutableVideoAttrs = res.locals.onlyImmutableVideo
 
   const ip = req.ip
-  const exists = await Redis.Instance.doesVideoIPViewExist(ip, videoInstance.uuid)
+  const exists = await Redis.Instance.doesVideoIPViewExist(ip, immutableVideoAttrs.uuid)
   if (exists) {
-    logger.debug('View for ip %s and video %s already exists.', ip, videoInstance.uuid)
-    return res.status(204).end()
+    logger.debug('View for ip %s and video %s already exists.', ip, immutableVideoAttrs.uuid)
+    return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
   }
 
-  await Promise.all([
-    Redis.Instance.addVideoView(videoInstance.id),
-    Redis.Instance.setIPVideoView(ip, videoInstance.uuid)
-  ])
+  const video = await VideoModel.load(immutableVideoAttrs.id)
 
-  const serverActor = await getServerActor()
-  await sendView(serverActor, videoInstance, undefined)
+  const promises: Promise<any>[] = [
+    Redis.Instance.setIPVideoView(ip, video.uuid, video.isLive)
+  ]
 
-  Hooks.runAction('action:api.video.viewed', { video: videoInstance, ip })
+  let federateView = true
 
-  return res.status(204).end()
+  // Increment our live manager
+  if (video.isLive && video.isOwned()) {
+    LiveManager.Instance.addViewTo(video.id)
+
+    // Views of our local live will be sent by our live manager
+    federateView = false
+  }
+
+  // Increment our video views cache counter
+  if (!video.isLive) {
+    promises.push(Redis.Instance.addVideoView(video.id))
+  }
+
+  if (federateView) {
+    const serverActor = await getServerActor()
+    promises.push(sendView(serverActor, video, undefined))
+  }
+
+  await Promise.all(promises)
+
+  Hooks.runAction('action:api.video.viewed', { video, ip })
+
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function getVideoDescription (req: express.Request, res: express.Response) {
@@ -527,5 +520,7 @@ async function removeVideo (req: express.Request, res: express.Response) {
 
   Hooks.runAction('action:api.video.deleted', { video: videoInstance })
 
-  return res.type('json').status(204).end()
+  return res.type('json')
+            .status(HttpStatusCode.NO_CONTENT_204)
+            .end()
 }

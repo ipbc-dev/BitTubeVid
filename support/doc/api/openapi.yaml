@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: PeerTube
-  version: 2.4.0
+  version: 3.0.1
   contact:
     name: PeerTube Community
     url: 'https://joinpeertube.org'
@@ -70,6 +70,9 @@ tags:
     description: >
       Operations related to your subscriptions to video channels, their
       new videos, and how to keep up to date with their latest publications!
+  - name: My History
+    description: >
+      Operations related to your watch history.
   - name: My Notifications
     description: >
       Notifications following new videos, follows or reports. They allow you
@@ -150,6 +153,7 @@ x-tagGroups:
       - My User
       - My Subscriptions
       - My Notifications
+      - My History
   - name: Videos
     tags:
       - Video
@@ -160,6 +164,7 @@ x-tagGroups:
       - Video Playlists
       - Video Ownership Change
       - Video Mirroring
+      - Live Videos
       - Feeds
   - name: Search
     tags:
@@ -305,7 +310,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -319,7 +324,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -335,7 +340,7 @@ paths:
         - Config
       security:
         - OAuth2:
-            - admin
+          - admin
       responses:
         '200':
           description: successful operation
@@ -344,22 +349,24 @@ paths:
       summary: List instance jobs
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Job
       parameters:
         - name: state
           in: path
           required: true
-          description: The state of the job
+          description: The state of the job ('' for for no filter)
           schema:
             type: string
             enum:
+              - ''
               - active
               - completed
               - failed
               - waiting
               - delayed
+        - $ref: '#/components/parameters/jobType'
         - $ref: '#/components/parameters/start'
         - $ref: '#/components/parameters/count'
         - $ref: '#/components/parameters/sort'
@@ -454,7 +461,7 @@ paths:
     post:
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Instance Follows
       summary: Follow a server
@@ -480,7 +487,7 @@ paths:
       summary: Create a user
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Users
       responses:
@@ -544,7 +551,7 @@ paths:
       summary: Delete a user
       security:
         - OAuth2:
-            - admin
+          - admin
       tags:
         - Users
       operationId: delUserId
@@ -633,7 +640,7 @@ paths:
       summary: Get video imports of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - Videos
         - My User
@@ -710,7 +717,7 @@ paths:
       summary: Get my user subscriptions
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -726,7 +733,7 @@ paths:
       summary: Add subscription to my user
       security:
         - OAuth2:
-            - user
+          - user
       requestBody:
         content:
           application/json:
@@ -751,7 +758,7 @@ paths:
       summary: Get if subscriptions exist for my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -796,7 +803,7 @@ paths:
       summary: Get subscription of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -812,7 +819,7 @@ paths:
       summary: Delete subscription of my user
       security:
         - OAuth2:
-            - user
+          - user
       tags:
         - My Subscriptions
       parameters:
@@ -916,6 +923,43 @@ paths:
       responses:
         '204':
           description: successful operation
+  /users/me/history/videos:
+    get:
+      summary: List watched videos history
+      security:
+        - OAuth2: []
+      tags:
+        - My History
+      parameters:
+        - $ref: '#/components/parameters/start'
+        - $ref: '#/components/parameters/count'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoListResponse'
+  /users/me/history/videos/remove:
+    post:
+      summary: Clear video history
+      security:
+        - OAuth2: []
+      tags:
+        - My History
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                beforeDate:
+                  description: history before this date will be deleted
+                  type: string
+                  format: date-time
+      responses:
+        '204':
+          description: successful operation
   /users/me/avatar/pick:
     post:
       summary: Update my user avatar
@@ -930,6 +974,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Avatar'
+        '413':
+          description: image file too large
+          headers:
+            X-File-Maximum-Size:
+              schema:
+                type: string
+                format: Nginx size
+              description: Maximum file size for the avatar
       requestBody:
         content:
           multipart/form-data:
@@ -1262,12 +1314,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoUploadResponse'
+        '400':
+          description: invalid file field, schedule date or parameter
         '403':
-          description: user video quota is exceeded with this video
+          description: video didn't pass upload filter
         '408':
           description: upload has timed out
+        '413':
+          description: video file too large, due to quota or max body size limit set by the reverse-proxy
+          headers:
+            X-File-Maximum-Size:
+              schema:
+                type: string
+                format: Nginx size
+              description: Maximum file size for the video
+        '415':
+          description: video type unsupported
         '422':
-          description: invalid input file
+          description: video unreadable
       requestBody:
         content:
           multipart/form-data:
@@ -1307,7 +1371,7 @@ paths:
                   type: string
                 waitTranscoding:
                   description: Whether or not we wait transcoding before publish the video
-                  type: string
+                  type: boolean
                 support:
                   description: A text tell the audience how to support the video creator
                   example: Please support my work on <insert crowdfunding plateform>! <3
@@ -1330,6 +1394,9 @@ paths:
                     maxLength: 30
                 commentsEnabled:
                   description: Enable or disable comments for this video
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for this video
                   type: boolean
                 originallyPublishedAt:
                   description: Date when the content was originally published
@@ -1428,14 +1495,14 @@ paths:
                   type: string
                 waitTranscoding:
                   description: Whether or not we wait transcoding before publish the video
-                  type: string
+                  type: boolean
                 support:
                   description: A text tell the audience how to support the video creator
                   example: Please support my work on <insert crowdfunding plateform>! <3
                   type: string
                 nsfw:
                   description: Whether or not this video contains sensitive content
-                  type: string
+                  type: boolean
                 name:
                   description: Video name
                   type: string
@@ -1450,7 +1517,10 @@ paths:
                     maxLength: 30
                 commentsEnabled:
                   description: Enable or disable comments for this video
-                  type: string
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for this video
+                  type: boolean
                 scheduleUpdate:
                   $ref: '#/components/schemas/VideoScheduledUpdate'
               required:
@@ -1470,10 +1540,138 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoUploadResponse'
-        '409':
-          description: HTTP or Torrent/magnetURI import not enabled
         '400':
           description: '`magnetUri` or `targetUrl` or a torrent file missing'
+        '403':
+          description: video didn't pass pre-import filter
+        '409':
+          description: HTTP or Torrent/magnetURI import not enabled
+
+  /videos/live:
+    post:
+      summary: Create a live
+      security:
+        - OAuth2: []
+      tags:
+        - Live Videos
+        - Video
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VideoUploadResponse'
+        '403':
+          description: Live is not enabled, allow replay is not enabled, or max instance/user live videos limit is exceeded
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                channelId:
+                  description: Channel id that will contain this live video
+                  type: integer
+                saveReplay:
+                  type: boolean
+                permanentLive:
+                  description: User can stream multiple times in a permanent live
+                  type: boolean
+                thumbnailfile:
+                  description: Live video/replay thumbnail file
+                  type: string
+                  format: binary
+                previewfile:
+                  description: Live video/replay preview file
+                  type: string
+                  format: binary
+                privacy:
+                  $ref: '#/components/schemas/VideoPrivacySet'
+                category:
+                  description: Live video/replay category
+                  type: string
+                licence:
+                  description: Live video/replay licence
+                  type: string
+                language:
+                  description: Live video/replay language
+                  type: string
+                description:
+                  description: Live video/replay description
+                  type: string
+                support:
+                  description: A text tell the audience how to support the creator
+                  example: Please support my work on <insert crowdfunding plateform>! <3
+                  type: string
+                nsfw:
+                  description: Whether or not this live video/replay contains sensitive content
+                  type: boolean
+                name:
+                  description: Live video/replay name
+                  type: string
+                tags:
+                  description: Live video/replay tags (maximum 5 tags each between 2 and 30 characters)
+                  type: array
+                  minItems: 1
+                  maxItems: 5
+                  items:
+                    type: string
+                    minLength: 2
+                    maxLength: 30
+                commentsEnabled:
+                  description: Enable or disable comments for this live video/replay
+                  type: boolean
+                downloadEnabled:
+                  description: Enable or disable downloading for the replay of this live
+                  type: boolean
+              required:
+                - channelId
+                - name
+            encoding:
+              thumbnailfile:
+                contentType: image/jpeg
+              previewfile:
+                contentType: image/jpeg
+
+  /videos/live/{id}:
+    get:
+      summary: Get a live information
+      security:
+        - OAuth2: []
+      tags:
+        - Live Videos
+        - Video
+      parameters:
+        - $ref: '#/components/parameters/idOrUUID'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiveVideoResponse'
+    put:
+      summary: Update a live information
+      security:
+        - OAuth2: []
+      tags:
+        - Live Videos
+        - Video
+      parameters:
+        - $ref: '#/components/parameters/idOrUUID'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LiveVideoUpdate'
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Bad parameters or trying to update a live that has already started
+        '403':
+          description: Trying to save replay of the live but saving replay is not enabled on the instance
 
   /users/me/abuses:
     get:
@@ -1671,8 +1869,8 @@ paths:
       summary: Delete an abuse
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       parameters:
         - $ref: '#/components/parameters/abuseId'
       responses:
@@ -1743,8 +1941,8 @@ paths:
       summary: Block a video
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       tags:
         - Video Blocks
       parameters:
@@ -1756,8 +1954,8 @@ paths:
       summary: Unblock a video by its id
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       tags:
         - Video Blocks
       parameters:
@@ -1774,8 +1972,8 @@ paths:
       summary: List video blocks
       security:
         - OAuth2:
-            - admin
-            - moderator
+          - admin
+          - moderator
       parameters:
         - name: type
           in: query
@@ -1838,6 +2036,9 @@ paths:
   /videos/{id}/captions/{captionLanguage}:
     put:
       summary: Add or replace a video caption
+      security:
+        - OAuth2:
+          - user
       tags:
         - Video Captions
       parameters:
@@ -1863,6 +2064,9 @@ paths:
           description: video or language not found
     delete:
       summary: Delete a video caption
+      security:
+        - OAuth2:
+          - user
       tags:
         - Video Captions
       parameters:
@@ -3376,7 +3580,7 @@ components:
       name: name
       in: path
       required: true
-      description: The name of the account
+      description: The username or handle of the account
       schema:
         type: string
         example: chocobozzz | chocobozzz@example.org
@@ -3551,9 +3755,10 @@ components:
       in: query
       required: false
       description: >
-        Special filters (local for instance) which might require special rights:
+        Special filters which might require special rights:
          * `local` - only videos local to the instance
          * `all-local` - only videos local to the instance, but showing private and unlisted videos (requires Admin privileges)
+         * `all` - all videos, showing private and unlisted videos (requires Admin privileges)
       schema:
         type: string
         enum:
@@ -3577,6 +3782,26 @@ components:
       schema:
         type: string
         example: peertube-plugin-auth-ldap
+    jobType:
+      name: jobType
+      in: query
+      required: false
+      description: job type
+      schema:
+        type: string
+        enum:
+          - activitypub-follow
+          - activitypub-http-broadcast
+          - activitypub-http-fetcher
+          - activitypub-http-unicast
+          - email
+          - video-transcoding
+          - video-file-import
+          - video-import
+          - videos-views
+          - activitypub-refresher
+          - video-redundancy
+          - video-live-ending
   securitySchemes:
     OAuth2:
       description: >
@@ -3852,6 +4077,8 @@ components:
           type: string
           format: uuid
           example: 9c9de5e8-0a1e-484a-b099-e80766180a6d
+        isLive:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -4981,7 +5208,7 @@ components:
           properties:
             name:
               type: string
-              description: The name for the default channel
+              description: The username for the default channel
               pattern: '/^[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\\-_.:]+$/'
             displayName:
               type: string
@@ -5418,6 +5645,28 @@ components:
           maxItems: 100
           items:
             $ref: '#/components/schemas/Plugin'
+
+    LiveVideoUpdate:
+      properties:
+        saveReplay:
+          type: boolean
+        permanentLive:
+          description: User can stream multiple times in a permanent live
+          type: boolean
+
+    LiveVideoResponse:
+      properties:
+        rtmpUrl:
+          type: string
+        streamKey:
+          type: string
+          description: RTMP stream key to use to stream into this live video
+        saveReplay:
+          type: boolean
+        permanentLive:
+          description: User can stream multiple times in a permanent live
+          type: boolean
+
   callbacks:
     searchIndex:
       'https://search.example.org/api/v1/search/videos':

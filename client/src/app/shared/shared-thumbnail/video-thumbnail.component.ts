@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core'
 import { ScreenService } from '@app/core'
+import { VideoState } from '@shared/models'
 import { Video } from '../shared-main'
 
 @Component({
@@ -27,6 +28,12 @@ export class VideoThumbnailComponent {
   constructor (private screenService: ScreenService) {
     this.addToWatchLaterText = $localize`Add to watch later`
     this.addedToWatchLaterText = $localize`Remove from watch later`
+  }
+
+  isLiveEnded () {
+    if (!this.video.state) return
+
+    return this.video.state.id === VideoState.LIVE_ENDED
   }
 
   getImageUrl () {

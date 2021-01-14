@@ -1,6 +1,13 @@
 import * as MarkdownIt from 'markdown-it'
 import { buildVideoLink } from 'src/assets/player/utils'
 import { Injectable } from '@angular/core'
+import {
+  COMPLETE_RULES,
+  ENHANCED_RULES,
+  ENHANCED_WITH_HTML_RULES,
+  TEXT_RULES,
+  TEXT_WITH_HTML_RULES
+} from '@shared/core-utils/renderer/markdown'
 import { HtmlRendererService } from './html-renderer.service'
 
 type MarkdownParsers = {
@@ -25,21 +32,6 @@ type MarkdownParserConfigs = {
 
 @Injectable()
 export class MarkdownService {
-  static TEXT_RULES = [
-    'linkify',
-    'autolink',
-    'emphasis',
-    'link',
-    'newline',
-    'list'
-  ]
-  static TEXT_WITH_HTML_RULES = MarkdownService.TEXT_RULES.concat([ 'html_inline', 'html_block' ])
-
-  static ENHANCED_RULES = MarkdownService.TEXT_RULES.concat([ 'image' ])
-  static ENHANCED_WITH_HTML_RULES = MarkdownService.TEXT_WITH_HTML_RULES.concat([ 'image' ])
-
-  static COMPLETE_RULES = MarkdownService.ENHANCED_WITH_HTML_RULES.concat([ 'block', 'inline', 'heading', 'paragraph' ])
-
   private markdownParsers: MarkdownParsers = {
     textMarkdownIt: null,
     textWithHTMLMarkdownIt: null,
@@ -48,14 +40,16 @@ export class MarkdownService {
     completeMarkdownIt: null
   }
   private parsersConfig: MarkdownParserConfigs = {
-    textMarkdownIt: { rules: MarkdownService.TEXT_RULES, html: false },
-    textWithHTMLMarkdownIt: { rules: MarkdownService.TEXT_WITH_HTML_RULES, html: true, escape: true },
+    textMarkdownIt: { rules: TEXT_RULES, html: false },
+    textWithHTMLMarkdownIt: { rules: TEXT_WITH_HTML_RULES, html: true, escape: true },
 
-    enhancedMarkdownIt: { rules: MarkdownService.ENHANCED_RULES, html: false },
-    enhancedWithHTMLMarkdownIt: { rules: MarkdownService.ENHANCED_WITH_HTML_RULES, html: true, escape: true },
+    enhancedMarkdownIt: { rules: ENHANCED_RULES, html: false },
+    enhancedWithHTMLMarkdownIt: { rules: ENHANCED_WITH_HTML_RULES, html: true, escape: true },
 
-    completeMarkdownIt: { rules: MarkdownService.COMPLETE_RULES, html: true }
+    completeMarkdownIt: { rules: COMPLETE_RULES, html: true }
   }
+
+  private emojiModule: any
 
   constructor (private htmlRenderer: HtmlRendererService) {}
 
@@ -91,9 +85,11 @@ export class MarkdownService {
       this.markdownParsers[ name ] = await this.createMarkdownIt(config)
 
       if (withEmoji) {
-        // TODO: write types
-        const emoji = require('markdown-it-emoji/light')
-        this.markdownParsers[ name ].use(emoji)
+        if (!this.emojiModule) {
+          this.emojiModule = (await import('markdown-it-emoji/light')).default
+        }
+
+        this.markdownParsers[ name ].use(this.emojiModule)
       }
     }
 
