@@ -3,7 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateVideoBlacklist = exports.getBlacklistedVideosList = exports.removeVideoFromBlacklist = exports.addVideoToBlacklist = void 0;
 const request = require("supertest");
 const __1 = require("..");
-function addVideoToBlacklist(url, token, videoId, reason, unfederate, specialStatus = 204) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function addVideoToBlacklist(url, token, videoId, reason, unfederate, specialStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + videoId + '/blacklist';
     return request(url)
         .post(path)
@@ -13,7 +14,7 @@ function addVideoToBlacklist(url, token, videoId, reason, unfederate, specialSta
         .expect(specialStatus);
 }
 exports.addVideoToBlacklist = addVideoToBlacklist;
-function updateVideoBlacklist(url, token, videoId, reason, specialStatus = 204) {
+function updateVideoBlacklist(url, token, videoId, reason, specialStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + videoId + '/blacklist';
     return request(url)
         .put(path)
@@ -23,7 +24,7 @@ function updateVideoBlacklist(url, token, videoId, reason, specialStatus = 204) 
         .expect(specialStatus);
 }
 exports.updateVideoBlacklist = updateVideoBlacklist;
-function removeVideoFromBlacklist(url, token, videoId, specialStatus = 204) {
+function removeVideoFromBlacklist(url, token, videoId, specialStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + videoId + '/blacklist';
     return request(url)
         .delete(path)
@@ -33,7 +34,7 @@ function removeVideoFromBlacklist(url, token, videoId, specialStatus = 204) {
 }
 exports.removeVideoFromBlacklist = removeVideoFromBlacklist;
 function getBlacklistedVideosList(parameters) {
-    const { url, token, sort, type, specialStatus = 200 } = parameters;
+    const { url, token, sort, type, specialStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/videos/blacklist/';
     const query = { sort, type };
     return __1.makeGetRequest({

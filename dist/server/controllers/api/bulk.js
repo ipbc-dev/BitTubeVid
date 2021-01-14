@@ -7,6 +7,7 @@ const middlewares_1 = require("../../middlewares");
 const bulk_1 = require("@server/middlewares/validators/bulk");
 const video_comment_1 = require("@server/models/video/video-comment");
 const video_comment_2 = require("@server/lib/video-comment");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const bulkRouter = express.Router();
 exports.bulkRouter = bulkRouter;
 bulkRouter.post('/remove-comments-of', middlewares_1.authenticate, middlewares_1.asyncMiddleware(bulk_1.bulkRemoveCommentsOfValidator), middlewares_1.asyncMiddleware(bulkRemoveCommentsOf));
@@ -19,7 +20,7 @@ function bulkRemoveCommentsOf(req, res) {
             ? { onVideosOfAccount: user.Account }
             : {};
         const comments = yield video_comment_1.VideoCommentModel.listForBulkDelete(account, filter);
-        res.sendStatus(204);
+        res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
         for (const comment of comments) {
             yield video_comment_2.removeComment(comment);
         }

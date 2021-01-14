@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
-const servers_1 = require("../../../shared/extra-utils/server/servers");
 const extra_utils_1 = require("../../../shared/extra-utils");
+const servers_1 = require("../../../shared/extra-utils/server/servers");
 describe('Test plugin action hooks', function () {
     let servers;
     let videoUUID;
@@ -16,13 +16,18 @@ describe('Test plugin action hooks', function () {
             this.timeout(30000);
             servers = yield servers_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
+            yield extra_utils_1.setDefaultVideoChannel(servers);
             yield extra_utils_1.installPlugin({
                 url: servers[0].url,
                 accessToken: servers[0].accessToken,
                 path: extra_utils_1.getPluginTestPath()
             });
             servers_1.killallServers([servers[0]]);
-            yield servers_1.reRunServer(servers[0]);
+            yield servers_1.reRunServer(servers[0], {
+                live: {
+                    enabled: true
+                }
+            });
         });
     });
     describe('Application hooks', function () {
@@ -50,6 +55,19 @@ describe('Test plugin action hooks', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.viewVideo(servers[0].url, videoUUID);
                 yield checkHook('action:api.video.viewed');
+            });
+        });
+    });
+    describe('Live hooks', function () {
+        it('Should run action:api.live-video.created', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const attributes = {
+                    name: 'live',
+                    privacy: 1,
+                    channelId: servers[0].videoChannel.id
+                };
+                yield extra_utils_1.createLive(servers[0].url, servers[0].accessToken, attributes);
+                yield checkHook('action:api.live-video.created');
             });
         });
     });

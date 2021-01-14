@@ -10,6 +10,7 @@ const express_validator_1 = require("express-validator");
 const users_1 = require("../../helpers/custom-validators/users");
 const redis_1 = require("../../lib/redis");
 const config_1 = require("../../initializers/config");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const serverGetValidator = [
     express_validator_1.body('host').custom(servers_1.isHostValid).withMessage('Should have a valid host'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -18,7 +19,7 @@ const serverGetValidator = [
             return;
         const server = yield server_1.ServerModel.loadByHost(req.body.host);
         if (!server) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .send({ error: 'Server host not found.' })
                 .end();
         }
@@ -40,20 +41,20 @@ const contactAdministratorValidator = [
             return;
         if (config_1.CONFIG.CONTACT_FORM.ENABLED === false) {
             return res
-                .status(409)
+                .status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .send({ error: 'Contact form is not enabled on this instance.' })
                 .end();
         }
         if (config_1.isEmailEnabled() === false) {
             return res
-                .status(409)
+                .status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .send({ error: 'Emailer is not enabled on this instance.' })
                 .end();
         }
         if (yield redis_1.Redis.Instance.doesContactFormIpExist(req.ip)) {
             logger_1.logger.info('Refusing a contact form by %s: already sent one recently.', req.ip);
             return res
-                .status(403)
+                .status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .send({ error: 'You already sent a contact form recently.' })
                 .end();
         }

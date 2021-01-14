@@ -11,17 +11,18 @@ const plugins_1 = require("../../middlewares/validators/plugins");
 const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const logger_1 = require("../../helpers/logger");
 const plugin_index_1 = require("../../lib/plugins/plugin-index");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const pluginRouter = express.Router();
 exports.pluginRouter = pluginRouter;
-pluginRouter.get('/available', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.listAvailablePluginsValidator, middlewares_1.paginationValidator, validators_1.availablePluginsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listAvailablePlugins));
-pluginRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.listPluginsValidator, middlewares_1.paginationValidator, validators_1.pluginsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listPlugins));
-pluginRouter.get('/:npmName/registered-settings', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), getPluginRegisteredSettings);
+pluginRouter.get('/available', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.listAvailablePluginsValidator, middlewares_1.paginationValidator, validators_1.availablePluginsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listAvailablePlugins));
+pluginRouter.get('/', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.listPluginsValidator, middlewares_1.paginationValidator, validators_1.pluginsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listPlugins));
+pluginRouter.get('/:npmName/registered-settings', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), getPluginRegisteredSettings);
 pluginRouter.get('/:npmName/public-settings', middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), getPublicPluginSettings);
-pluginRouter.put('/:npmName/settings', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.updatePluginSettingsValidator, middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), middlewares_1.asyncMiddleware(updatePluginSettings));
-pluginRouter.get('/:npmName', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), getPlugin);
-pluginRouter.post('/install', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.installOrUpdatePluginValidator, middlewares_1.asyncMiddleware(installPlugin));
-pluginRouter.post('/update', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.installOrUpdatePluginValidator, middlewares_1.asyncMiddleware(updatePlugin));
-pluginRouter.post('/uninstall', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), plugins_1.uninstallPluginValidator, middlewares_1.asyncMiddleware(uninstallPlugin));
+pluginRouter.put('/:npmName/settings', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.updatePluginSettingsValidator, middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), middlewares_1.asyncMiddleware(updatePluginSettings));
+pluginRouter.get('/:npmName', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), middlewares_1.asyncMiddleware(plugins_1.existingPluginValidator), getPlugin);
+pluginRouter.post('/install', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.installOrUpdatePluginValidator, middlewares_1.asyncMiddleware(installPlugin));
+pluginRouter.post('/update', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.installOrUpdatePluginValidator, middlewares_1.asyncMiddleware(updatePlugin));
+pluginRouter.post('/uninstall', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(22), plugins_1.uninstallPluginValidator, middlewares_1.asyncMiddleware(uninstallPlugin));
 function listPlugins(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const pluginType = req.query.pluginType;
@@ -51,7 +52,7 @@ function installPlugin(req, res) {
         }
         catch (err) {
             logger_1.logger.warn('Cannot install plugin %s.', toInstall, { err });
-            return res.sendStatus(400);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         }
     });
 }
@@ -66,7 +67,7 @@ function updatePlugin(req, res) {
         }
         catch (err) {
             logger_1.logger.warn('Cannot update plugin %s.', toUpdate, { err });
-            return res.sendStatus(400);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         }
     });
 }
@@ -74,7 +75,7 @@ function uninstallPlugin(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const body = req.body;
         yield plugin_manager_1.PluginManager.Instance.uninstall(body.npmName);
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function getPublicPluginSettings(req, res) {
@@ -95,7 +96,7 @@ function updatePluginSettings(req, res) {
         plugin.settings = req.body.settings;
         yield plugin.save();
         yield plugin_manager_1.PluginManager.Instance.onSettingsChanged(plugin.name, plugin.settings);
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function listAvailablePlugins(req, res) {
@@ -103,7 +104,7 @@ function listAvailablePlugins(req, res) {
         const query = req.query;
         const resultList = yield plugin_index_1.listAvailablePluginsFromIndex(query);
         if (!resultList) {
-            return res.status(503)
+            return res.status(http_error_codes_1.HttpStatusCode.SERVICE_UNAVAILABLE_503)
                 .json({ error: 'Plugin index unavailable. Please retry later' })
                 .end();
         }

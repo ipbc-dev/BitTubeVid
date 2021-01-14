@@ -1,12 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getExternalAuth = exports.getPublicSettings = exports.getPluginTestPath = exports.getPluginPackageJSON = exports.updatePluginPackageJSON = exports.getPackageJSONPath = exports.getPluginRegisteredSettings = exports.updatePluginSettings = exports.uninstallPlugin = exports.getPlugin = exports.updatePlugin = exports.getPluginsCSS = exports.getPluginTranslations = exports.installPlugin = exports.listAvailablePlugins = exports.listPlugins = void 0;
-const requests_1 = require("../requests/requests");
+exports.getExternalAuth = exports.getPublicSettings = exports.getPluginTestPath = exports.getPluginPackageJSON = exports.updatePluginPackageJSON = exports.getPackageJSONPath = exports.getPluginRegisteredSettings = exports.updatePluginSettings = exports.testHelloWorldRegisteredSettings = exports.uninstallPlugin = exports.getPlugin = exports.updatePlugin = exports.getPluginsCSS = exports.getPluginTranslations = exports.installPlugin = exports.listAvailablePlugins = exports.listPlugins = void 0;
+const tslib_1 = require("tslib");
+const chai_1 = require("chai");
 const fs_extra_1 = require("fs-extra");
-const miscs_1 = require("../miscs/miscs");
 const path_1 = require("path");
+const miscs_1 = require("../miscs/miscs");
+const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function listPlugins(parameters) {
-    const { url, accessToken, start, count, sort, pluginType, uninstalled, expectedStatus = 200 } = parameters;
+    const { url, accessToken, start, count, sort, pluginType, uninstalled, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/plugins';
     return requests_1.makeGetRequest({
         url,
@@ -24,7 +27,7 @@ function listPlugins(parameters) {
 }
 exports.listPlugins = listPlugins;
 function listAvailablePlugins(parameters) {
-    const { url, accessToken, start, count, sort, pluginType, search, currentPeerTubeEngine, expectedStatus = 200 } = parameters;
+    const { url, accessToken, start, count, sort, pluginType, search, currentPeerTubeEngine, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/plugins/available';
     const query = {
         start,
@@ -44,7 +47,7 @@ function listAvailablePlugins(parameters) {
 }
 exports.listAvailablePlugins = listAvailablePlugins;
 function getPlugin(parameters) {
-    const { url, accessToken, npmName, expectedStatus = 200 } = parameters;
+    const { url, accessToken, npmName, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/plugins/' + npmName;
     return requests_1.makeGetRequest({
         url,
@@ -55,7 +58,7 @@ function getPlugin(parameters) {
 }
 exports.getPlugin = getPlugin;
 function updatePluginSettings(parameters) {
-    const { url, accessToken, npmName, settings, expectedStatus = 204 } = parameters;
+    const { url, accessToken, npmName, settings, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204 } = parameters;
     const path = '/api/v1/plugins/' + npmName + '/settings';
     return requests_1.makePutBodyRequest({
         url,
@@ -67,7 +70,7 @@ function updatePluginSettings(parameters) {
 }
 exports.updatePluginSettings = updatePluginSettings;
 function getPluginRegisteredSettings(parameters) {
-    const { url, accessToken, npmName, expectedStatus = 200 } = parameters;
+    const { url, accessToken, npmName, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/plugins/' + npmName + '/registered-settings';
     return requests_1.makeGetRequest({
         url,
@@ -77,8 +80,22 @@ function getPluginRegisteredSettings(parameters) {
     });
 }
 exports.getPluginRegisteredSettings = getPluginRegisteredSettings;
+function testHelloWorldRegisteredSettings(server) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const res = yield getPluginRegisteredSettings({
+            url: server.url,
+            accessToken: server.accessToken,
+            npmName: 'peertube-plugin-hello-world'
+        });
+        const registeredSettings = res.body.registeredSettings;
+        chai_1.expect(registeredSettings).to.have.length.at.least(1);
+        const adminNameSettings = registeredSettings.find(s => s.name === 'admin-name');
+        chai_1.expect(adminNameSettings).to.not.be.undefined;
+    });
+}
+exports.testHelloWorldRegisteredSettings = testHelloWorldRegisteredSettings;
 function getPublicSettings(parameters) {
-    const { url, npmName, expectedStatus = 200 } = parameters;
+    const { url, npmName, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/plugins/' + npmName + '/public-settings';
     return requests_1.makeGetRequest({
         url,
@@ -88,7 +105,7 @@ function getPublicSettings(parameters) {
 }
 exports.getPublicSettings = getPublicSettings;
 function getPluginTranslations(parameters) {
-    const { url, locale, expectedStatus = 200 } = parameters;
+    const { url, locale, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/plugins/translations/' + locale + '.json';
     return requests_1.makeGetRequest({
         url,
@@ -98,7 +115,7 @@ function getPluginTranslations(parameters) {
 }
 exports.getPluginTranslations = getPluginTranslations;
 function installPlugin(parameters) {
-    const { url, accessToken, npmName, path, expectedStatus = 200 } = parameters;
+    const { url, accessToken, npmName, path, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const apiPath = '/api/v1/plugins/install';
     return requests_1.makePostBodyRequest({
         url,
@@ -110,7 +127,7 @@ function installPlugin(parameters) {
 }
 exports.installPlugin = installPlugin;
 function updatePlugin(parameters) {
-    const { url, accessToken, npmName, path, expectedStatus = 200 } = parameters;
+    const { url, accessToken, npmName, path, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const apiPath = '/api/v1/plugins/update';
     return requests_1.makePostBodyRequest({
         url,
@@ -122,7 +139,7 @@ function updatePlugin(parameters) {
 }
 exports.updatePlugin = updatePlugin;
 function uninstallPlugin(parameters) {
-    const { url, accessToken, npmName, expectedStatus = 204 } = parameters;
+    const { url, accessToken, npmName, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204 } = parameters;
     const apiPath = '/api/v1/plugins/uninstall';
     return requests_1.makePostBodyRequest({
         url,
@@ -138,12 +155,12 @@ function getPluginsCSS(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getPluginsCSS = getPluginsCSS;
 function getPackageJSONPath(server, npmName) {
-    return path_1.join(miscs_1.root(), 'test' + server.internalServerNumber, 'plugins', 'node_modules', npmName, 'package.json');
+    return miscs_1.buildServerDirectory(server, path_1.join('plugins', 'node_modules', npmName, 'package.json'));
 }
 exports.getPackageJSONPath = getPackageJSONPath;
 function updatePluginPackageJSON(server, npmName, json) {
@@ -167,7 +184,7 @@ function getExternalAuth(options) {
         url,
         path,
         query,
-        statusCodeExpected: statusCodeExpected || 200,
+        statusCodeExpected: statusCodeExpected || http_error_codes_1.HttpStatusCode.OK_200,
         redirects: 0
     });
 }

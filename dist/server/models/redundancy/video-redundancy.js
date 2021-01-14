@@ -3,22 +3,22 @@ var VideoRedundancyModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoRedundancyModel = exports.ScopeNames = void 0;
 const tslib_1 = require("tslib");
-const sequelize_typescript_1 = require("sequelize-typescript");
-const actor_1 = require("../activitypub/actor");
-const utils_1 = require("../utils");
-const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
-const constants_1 = require("../../initializers/constants");
-const video_file_1 = require("../video/video-file");
-const video_1 = require("../video/video");
-const logger_1 = require("../../helpers/logger");
-const video_channel_1 = require("../video/video-channel");
-const server_1 = require("../server/server");
 const lodash_1 = require("lodash");
-const core_utils_1 = require("../../helpers/core-utils");
 const sequelize_1 = require("sequelize");
-const video_streaming_playlist_1 = require("../video/video-streaming-playlist");
-const config_1 = require("../../initializers/config");
+const sequelize_typescript_1 = require("sequelize-typescript");
 const application_1 = require("@server/models/application/application");
+const core_utils_1 = require("../../helpers/core-utils");
+const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
+const logger_1 = require("../../helpers/logger");
+const config_1 = require("../../initializers/config");
+const constants_1 = require("../../initializers/constants");
+const actor_1 = require("../activitypub/actor");
+const server_1 = require("../server/server");
+const utils_1 = require("../utils");
+const video_1 = require("../video/video");
+const video_channel_1 = require("../video/video-channel");
+const video_file_1 = require("../video/video-file");
+const video_streaming_playlist_1 = require("../video/video-streaming-playlist");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_VIDEO"] = "WITH_VIDEO";
@@ -133,7 +133,8 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-views'),
                 where: {
-                    privacy: 1
+                    privacy: 1,
+                    isLive: false
                 },
                 include: [
                     yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
@@ -152,7 +153,8 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-trending'),
                 where: {
-                    privacy: 1
+                    privacy: 1,
+                    isLive: false
                 },
                 include: [
                     yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
@@ -171,6 +173,7 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
                 order: utils_1.getVideoSort('-publishedAt'),
                 where: {
                     privacy: 1,
+                    isLive: false,
                     views: {
                         [sequelize_1.Op.gte]: minViews
                     }
@@ -476,7 +479,9 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     getVideo() {
         if (this.VideoFile)
             return this.VideoFile.Video;
-        return this.VideoStreamingPlaylist.Video;
+        if (this.VideoStreamingPlaylist.Video)
+            return this.VideoStreamingPlaylist.Video;
+        return undefined;
     }
     isOwned() {
         return !!this.strategy;

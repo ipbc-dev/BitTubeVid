@@ -31,7 +31,7 @@ const trackerServer = new TrackerServer({
             }
             let ip;
             if (params.type === 'ws') {
-                ip = params.socket.ip;
+                ip = params.ip;
             }
             else {
                 ip = params.httpReq.ip;
@@ -48,7 +48,7 @@ const trackerServer = new TrackerServer({
                 const videoFileExists = yield video_file_1.VideoFileModel.doesInfohashExistCached(infoHash);
                 if (videoFileExists === true)
                     return cb();
-                const playlistExists = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.doesInfohashExist(infoHash);
+                const playlistExists = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.doesInfohashExistCached(infoHash);
                 if (playlistExists === true)
                     return cb();
                 cb(new Error(`Unknown infoHash ${infoHash} requested by ip ${ip}`));

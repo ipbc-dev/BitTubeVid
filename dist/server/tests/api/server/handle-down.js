@@ -7,6 +7,7 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test handle downs', function () {
     let servers = [];
@@ -250,7 +251,7 @@ describe('Test handle downs', function () {
                 yield jobs_1.waitJobs([servers[1]]);
             }
             for (const id of videoIdsServer1) {
-                yield extra_utils_1.getVideo(servers[1].url, id, 403);
+                yield extra_utils_1.getVideo(servers[1].url, id, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             }
         });
     });

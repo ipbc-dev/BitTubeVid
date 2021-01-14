@@ -74,6 +74,16 @@ describe('Test jobs', function () {
             }
         });
     });
+    it('Should list all jobs', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield jobs_1.getJobsList(servers[1].url, servers[1].accessToken);
+            const jobs = res.body.data;
+            expect(res.body.total).to.be.above(2);
+            expect(jobs).to.have.length.above(2);
+            expect(jobs.find(j => j.state === 'delayed')).to.not.be.undefined;
+            expect(jobs.find(j => j.state === 'completed')).to.not.be.undefined;
+        });
+    });
     after(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield index_1.cleanupTests(servers);

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendVideoRateChange = exports.createRates = exports.getRateUrl = void 0;
+exports.sendVideoRateChange = exports.createRates = exports.getLocalRateUrl = void 0;
 const tslib_1 = require("tslib");
 const send_1 = require("./send");
 const Bluebird = require("bluebird");
@@ -14,7 +14,6 @@ const url_1 = require("./url");
 const send_dislike_1 = require("./send/send-dislike");
 function createRates(ratesUrl, video, rate) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let rateCounts = 0;
         yield Bluebird.map(ratesUrl, (rateUrl) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             try {
                 const { body } = yield requests_1.doRequest({
@@ -38,19 +37,12 @@ function createRates(ratesUrl, video, rate) {
                     type: rate,
                     url: body.id
                 };
-                const created = yield account_video_rate_1.AccountVideoRateModel.upsert(entry);
-                if (created)
-                    rateCounts += 1;
+                yield account_video_rate_1.AccountVideoRateModel.upsert(entry);
             }
             catch (err) {
                 logger_1.logger.warn('Cannot add rate %s.', rateUrl, { err });
             }
         }), { concurrency: constants_1.CRAWL_REQUEST_CONCURRENCY });
-        logger_1.logger.info('Adding %d %s to video %s.', rateCounts, rate, video.uuid);
-        if (rateCounts !== 0) {
-            const field = rate === 'like' ? 'likes' : 'dislikes';
-            yield video.increment(field, { by: rateCounts });
-        }
     });
 }
 exports.createRates = createRates;
@@ -68,9 +60,9 @@ function sendVideoRateChange(account, video, likes, dislikes, t) {
     });
 }
 exports.sendVideoRateChange = sendVideoRateChange;
-function getRateUrl(rateType, actor, video) {
+function getLocalRateUrl(rateType, actor, video) {
     return rateType === 'like'
-        ? url_1.getVideoLikeActivityPubUrl(actor, video)
-        : url_1.getVideoDislikeActivityPubUrl(actor, video);
+        ? url_1.getVideoLikeActivityPubUrlByLocalActor(actor, video)
+        : url_1.getVideoDislikeActivityPubUrlByLocalActor(actor, video);
 }
-exports.getRateUrl = getRateUrl;
+exports.getLocalRateUrl = getLocalRateUrl;

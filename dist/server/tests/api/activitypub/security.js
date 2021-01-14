@@ -9,6 +9,7 @@ const chai = require("chai");
 const activitypub_1 = require("../../../helpers/activitypub");
 const activitypub_2 = require("../../../../shared/extra-utils/requests/activitypub");
 const peertube_crypto_1 = require("@server/helpers/peertube-crypto");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function setKeysOfServer(onServer, ofServer, publicKey, privateKey) {
     return Promise.all([
@@ -60,7 +61,7 @@ describe('Test ActivityPub security', function () {
                     Digest: peertube_crypto_1.buildDigest({ hello: 'coucou' })
                 };
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, body, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with an invalid date', function () {
@@ -69,7 +70,7 @@ describe('Test ActivityPub security', function () {
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(body);
                 headers['date'] = 'Wed, 21 Oct 2015 07:28:00 GMT';
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, body, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with bad keys', function () {
@@ -79,17 +80,34 @@ describe('Test ActivityPub security', function () {
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(body);
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, body, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
-        it('Should succeed with a valid HTTP signature', function () {
+        it('Should reject requests without appropriate signed headers', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield setKeysOfServer(servers[0], servers[1], keys.publicKey, keys.privateKey);
                 yield setKeysOfServer(servers[1], servers[1], keys.publicKey, keys.privateKey);
                 const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(body);
+                const signatureOptions = baseHttpSignature();
+                const badHeadersMatrix = [
+                    ['(request-target)', 'date', 'digest'],
+                    ['host', 'date', 'digest'],
+                    ['(request-target)', 'host', 'digest']
+                ];
+                for (const badHeaders of badHeadersMatrix) {
+                    signatureOptions.headers = badHeaders;
+                    const { response } = yield activitypub_2.makePOSTAPRequest(url, body, signatureOptions, headers);
+                    expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+                }
+            });
+        });
+        it('Should succeed with a valid HTTP signature', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const body = activitypub_1.activityPubContextify(getAnnounceWithoutContext(servers[1]));
+                const headers = activitypub_http_utils_1.buildGlobalHeaders(body);
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, body, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(204);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
             });
         });
     });
@@ -111,7 +129,7 @@ describe('Test ActivityPub security', function () {
                 const signedBody = yield activitypub_1.buildSignedActivity(signer, body);
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(signedBody);
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, signedBody, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with an altered body', function () {
@@ -126,7 +144,7 @@ describe('Test ActivityPub security', function () {
                 signedBody.actor = 'http://localhost:' + servers[2].port + '/account/peertube';
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(signedBody);
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, signedBody, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(403);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should succeed with a valid signature', function () {
@@ -138,7 +156,7 @@ describe('Test ActivityPub security', function () {
                 const signedBody = yield activitypub_1.buildSignedActivity(signer, body);
                 const headers = activitypub_http_utils_1.buildGlobalHeaders(signedBody);
                 const { response } = yield activitypub_2.makePOSTAPRequest(url, signedBody, baseHttpSignature(), headers);
-                expect(response.statusCode).to.equal(204);
+                expect(response.statusCode).to.equal(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
             });
         });
     });

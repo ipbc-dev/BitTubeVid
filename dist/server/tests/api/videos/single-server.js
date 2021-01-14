@@ -125,6 +125,7 @@ describe('Test a single server', function () {
     });
     it('Should upload the video', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             const videoAttributes = {
                 name: 'my super name',
                 category: 2,

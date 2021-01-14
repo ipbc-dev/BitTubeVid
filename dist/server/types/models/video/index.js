@@ -12,6 +12,7 @@ tslib_1.__exportStar(require("./video-channels"), exports);
 tslib_1.__exportStar(require("./video-comment"), exports);
 tslib_1.__exportStar(require("./video-file"), exports);
 tslib_1.__exportStar(require("./video-import"), exports);
+tslib_1.__exportStar(require("./video-live"), exports);
 tslib_1.__exportStar(require("./video-playlist"), exports);
 tslib_1.__exportStar(require("./video-playlist-element"), exports);
 tslib_1.__exportStar(require("./video-rate"), exports);

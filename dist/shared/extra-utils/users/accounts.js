@@ -8,7 +8,8 @@ const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const miscs_1 = require("../miscs/miscs");
 const requests_1 = require("../requests/requests");
-function getAccountsList(url, sort = '-createdAt', statusCodeExpected = 200) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function getAccountsList(url, sort = '-createdAt', statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/accounts';
     return requests_1.makeGetRequest({
         url,
@@ -18,7 +19,7 @@ function getAccountsList(url, sort = '-createdAt', statusCodeExpected = 200) {
     });
 }
 exports.getAccountsList = getAccountsList;
-function getAccount(url, accountName, statusCodeExpected = 200) {
+function getAccount(url, accountName, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/accounts/' + accountName;
     return requests_1.makeGetRequest({
         url,
@@ -52,7 +53,7 @@ function checkActorFilesWereRemoved(filename, serverNumber) {
     });
 }
 exports.checkActorFilesWereRemoved = checkActorFilesWereRemoved;
-function getAccountRatings(url, accountName, accessToken, rating, statusCodeExpected = 200) {
+function getAccountRatings(url, accountName, accessToken, rating, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/accounts/' + accountName + '/ratings';
     const query = rating ? { rating } : {};
     return request(url)

@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307377,
+  "timestamp": 1610615934605,
   "index": "/client/eu-ES/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/eu-ES/index.html": "d1a3ada0a117ff64ba42edb0b08c71bddaf9184f",
+    "/client/eu-ES/index.html": "d1e22d50b4e4e92c5eee9631c28c7e3cf5d1f34b",
     "/client/eu-ES/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

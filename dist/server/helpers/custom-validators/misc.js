@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isFileValid = exports.toIntArray = exports.toArray = exports.toIntOrNull = exports.isBooleanValid = exports.toBooleanOrNull = exports.toValueOrNull = exports.isDateValid = exports.isIdOrUUIDValid = exports.isUUIDValid = exports.isSafePath = exports.isIdValid = exports.isArray = exports.isNotEmptyIntArray = exports.isArrayOf = exports.exists = void 0;
+exports.isFileValid = exports.isFileMimeTypeValid = exports.isFileFieldValid = exports.toIntArray = exports.toArray = exports.toIntOrNull = exports.isBooleanValid = exports.toBooleanOrNull = exports.toValueOrNull = exports.isDateValid = exports.isIdOrUUIDValid = exports.isUUIDValid = exports.isSafePath = exports.isIdValid = exports.isIntOrNull = exports.isArray = exports.isNotEmptyIntArray = exports.isArrayOf = exports.exists = void 0;
 require("multer");
 const validator_1 = require("validator");
 const path_1 = require("path");
@@ -47,6 +47,10 @@ function isBooleanValid(value) {
     return typeof value === 'boolean' || (typeof value === 'string' && validator_1.default.isBoolean(value));
 }
 exports.isBooleanValid = isBooleanValid;
+function isIntOrNull(value) {
+    return value === null || validator_1.default.isInt('' + value);
+}
+exports.isIntOrNull = isIntOrNull;
 function toIntOrNull(value) {
     const v = toValueOrNull(value);
     if (v === null || v === undefined)
@@ -85,6 +89,36 @@ function toIntArray(value) {
     return value.map(v => validator_1.default.toInt(v));
 }
 exports.toIntArray = toIntArray;
+function isFileFieldValid(files, field, optional = false) {
+    if (!files)
+        return optional;
+    if (isArray(files))
+        return optional;
+    const fileArray = files[field];
+    if (!fileArray || fileArray.length === 0) {
+        return optional;
+    }
+    const file = fileArray[0];
+    if (!file || !file.originalname)
+        return false;
+    return file;
+}
+exports.isFileFieldValid = isFileFieldValid;
+function isFileMimeTypeValid(files, mimeTypeRegex, field, optional = false) {
+    if (!files)
+        return optional;
+    if (isArray(files))
+        return optional;
+    const fileArray = files[field];
+    if (!fileArray || fileArray.length === 0) {
+        return optional;
+    }
+    const file = fileArray[0];
+    if (!file || !file.originalname)
+        return false;
+    return new RegExp(`^${mimeTypeRegex}$`, 'i').test(file.mimetype);
+}
+exports.isFileMimeTypeValid = isFileMimeTypeValid;
 function isFileValid(files, mimeTypeRegex, field, maxSize, optional = false) {
     if (!files)
         return optional;

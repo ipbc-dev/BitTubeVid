@@ -102,6 +102,11 @@ function checkConfig() {
             return 'You cannot enable search index without enabling remote URI search for users.';
         }
     }
+    if (config_1.CONFIG.LIVE.ENABLED === true) {
+        if (config_1.CONFIG.LIVE.ALLOW_REPLAY === true && config_1.CONFIG.TRANSCODING.ENABLED === false) {
+            return 'Live allow replay cannot be enabled if transcoding is not enabled.';
+        }
+    }
     return null;
 }
 exports.checkConfig = checkConfig;

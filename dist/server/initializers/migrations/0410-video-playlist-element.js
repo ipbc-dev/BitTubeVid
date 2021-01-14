@@ -14,7 +14,8 @@ function up(utils) {
             yield utils.queryInterface.changeColumn('videoPlaylistElement', 'videoId', data);
         }
         yield utils.queryInterface.removeConstraint('videoPlaylistElement', 'videoPlaylistElement_videoId_fkey');
-        yield utils.queryInterface.addConstraint('videoPlaylistElement', ['videoId'], {
+        yield utils.queryInterface.addConstraint('videoPlaylistElement', {
+            fields: ['videoId'],
             type: 'foreign key',
             references: {
                 table: 'video',

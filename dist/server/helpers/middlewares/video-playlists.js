@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.doesVideoPlaylistExist = void 0;
 const tslib_1 = require("tslib");
 const video_playlist_1 = require("../../models/video/video-playlist");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function doesVideoPlaylistExist(id, res, fetchType = 'summary') {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (fetchType === 'summary') {
@@ -18,7 +19,7 @@ function doesVideoPlaylistExist(id, res, fetchType = 'summary') {
 exports.doesVideoPlaylistExist = doesVideoPlaylistExist;
 function handleVideoPlaylist(videoPlaylist, res) {
     if (!videoPlaylist) {
-        res.status(404)
+        res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
             .json({ error: 'Video playlist not found' })
             .end();
         return false;

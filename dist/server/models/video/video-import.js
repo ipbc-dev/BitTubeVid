@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoImportModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const constants_1 = require("../../initializers/constants");
-const utils_1 = require("../utils");
-const video_1 = require("./video");
 const video_imports_1 = require("../../helpers/custom-validators/video-imports");
 const videos_1 = require("../../helpers/custom-validators/videos");
+const constants_1 = require("../../initializers/constants");
 const user_1 = require("../account/user");
+const utils_1 = require("../utils");
+const video_1 = require("./video");
 let VideoImportModel = VideoImportModel_1 = class VideoImportModel extends sequelize_typescript_1.Model {
     static deleteVideoIfFailed(instance, options) {
         if (instance.state === 3) {

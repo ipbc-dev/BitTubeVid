@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAccountAbuse = exports.createVideoCommentAbuse = exports.createVideoAbuse = exports.createAbuse = exports.isPostImportVideoAccepted = exports.isPreImportVideoAccepted = exports.isLocalVideoCommentReplyAccepted = exports.isRemoteVideoCommentAccepted = exports.isRemoteVideoAccepted = exports.isLocalVideoThreadAccepted = exports.isLocalVideoAccepted = void 0;
+exports.createAccountAbuse = exports.createVideoCommentAbuse = exports.createVideoAbuse = exports.createAbuse = exports.isPostImportVideoAccepted = exports.isPreImportVideoAccepted = exports.isLocalVideoCommentReplyAccepted = exports.isRemoteVideoCommentAccepted = exports.isRemoteVideoAccepted = exports.isLocalVideoThreadAccepted = exports.isLocalVideoAccepted = exports.isLocalLiveVideoAccepted = void 0;
 const tslib_1 = require("tslib");
 const audit_logger_1 = require("@server/helpers/audit-logger");
 const logger_1 = require("@server/helpers/logger");
@@ -13,6 +13,10 @@ function isLocalVideoAccepted(object) {
     return { accepted: true };
 }
 exports.isLocalVideoAccepted = isLocalVideoAccepted;
+function isLocalLiveVideoAccepted(object) {
+    return { accepted: true };
+}
+exports.isLocalLiveVideoAccepted = isLocalLiveVideoAccepted;
 function isLocalVideoThreadAccepted(_object) {
     return { accepted: true };
 }

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.down = exports.up = void 0;
 const path_1 = require("path");
 const config_1 = require("../../initializers/config");
-const ffmpeg_utils_1 = require("../../helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("../../helpers/ffprobe-utils");
 const fs_extra_1 = require("fs-extra");
 function up(utils) {
     const torrentDir = config_1.CONFIG.STORAGE.TORRENTS_DIR;
@@ -19,7 +19,7 @@ function up(utils) {
             }
             const uuid = matches[1];
             const ext = matches[2];
-            const p = ffmpeg_utils_1.getVideoFileResolution(path_1.join(videoFileDir, videoFile))
+            const p = ffprobe_utils_1.getVideoFileResolution(path_1.join(videoFileDir, videoFile))
                 .then(height => {
                 const oldTorrentName = uuid + '.torrent';
                 const newTorrentName = uuid + '-' + height + '.torrent';

@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const accounts_1 = require("../../../../shared/extra-utils/users/accounts");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test AP refresher', function () {
     let servers = [];
     let videoUUID1;
@@ -50,8 +51,8 @@ describe('Test AP refresher', function () {
                 yield extra_utils_1.getVideo(servers[0].url, videoUUID1);
                 yield extra_utils_1.getVideo(servers[0].url, videoUUID2);
                 yield extra_utils_1.waitJobs(servers);
-                yield extra_utils_1.getVideo(servers[0].url, videoUUID1, 404);
-                yield extra_utils_1.getVideo(servers[0].url, videoUUID2, 200);
+                yield extra_utils_1.getVideo(servers[0].url, videoUUID1, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.getVideo(servers[0].url, videoUUID2, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
         it('Should not update a remote video if the remote instance is down', function () {
@@ -63,7 +64,7 @@ describe('Test AP refresher', function () {
                 yield extra_utils_1.getVideo(servers[0].url, videoUUID3);
                 yield extra_utils_1.waitJobs([servers[0]]);
                 yield extra_utils_1.reRunServer(servers[1]);
-                yield extra_utils_1.getVideo(servers[0].url, videoUUID3, 200);
+                yield extra_utils_1.getVideo(servers[0].url, videoUUID3, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
     });
@@ -77,8 +78,8 @@ describe('Test AP refresher', function () {
                 yield accounts_1.getAccount(servers[0].url, 'user1@localhost:' + servers[1].port);
                 yield accounts_1.getAccount(servers[0].url, 'user2@localhost:' + servers[1].port);
                 yield extra_utils_1.waitJobs(servers);
-                yield accounts_1.getAccount(servers[0].url, 'user1@localhost:' + servers[1].port, 200);
-                yield accounts_1.getAccount(servers[0].url, 'user2@localhost:' + servers[1].port, 404);
+                yield accounts_1.getAccount(servers[0].url, 'user1@localhost:' + servers[1].port, http_error_codes_1.HttpStatusCode.OK_200);
+                yield accounts_1.getAccount(servers[0].url, 'user2@localhost:' + servers[1].port, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
     });
@@ -91,8 +92,8 @@ describe('Test AP refresher', function () {
                 yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID1);
                 yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID2);
                 yield extra_utils_1.waitJobs(servers);
-                yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID1, 200);
-                yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID2, 404);
+                yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID1, http_error_codes_1.HttpStatusCode.OK_200);
+                yield extra_utils_1.getVideoPlaylist(servers[0].url, playlistUUID2, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
     });

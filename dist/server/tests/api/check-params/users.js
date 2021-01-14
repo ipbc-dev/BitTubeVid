@@ -11,6 +11,7 @@ const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test users API validators', function () {
     const path = '/api/v1/users/';
     let userId;
@@ -109,25 +110,12 @@ describe('Test users API validators', function () {
                 yield check_api_params_1.checkBadSortPagination(server.url, path, server.accessToken);
             });
         });
-        it('Should fail with a bad blocked/banned user filter', function () {
-            return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({
-                    url: server.url,
-                    path,
-                    query: {
-                        blocked: 42
-                    },
-                    token: server.accessToken,
-                    statusCodeExpected: 400
-                });
-            });
-        });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -137,7 +125,7 @@ describe('Test users API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -227,7 +215,7 @@ describe('Test users API validators', function () {
                     path: path,
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -244,20 +232,32 @@ describe('Test users API validators', function () {
                     path,
                     token: 'super token',
                     fields: baseCorrectParams,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
         it('Should fail if we add a user with the same username', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { username: 'user1' });
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
             });
         });
         it('Should fail if we add a user with the same email', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { email: 'user1@example.com' });
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
             });
         });
         it('Should fail without a videoQuota', function () {
@@ -304,7 +304,7 @@ describe('Test users API validators', function () {
                     path,
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -317,7 +317,7 @@ describe('Test users API validators', function () {
                         path,
                         token: moderatorAccessToken,
                         fields,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 }
             });
@@ -330,7 +330,7 @@ describe('Test users API validators', function () {
                     path,
                     token: moderatorAccessToken,
                     fields,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -341,7 +341,7 @@ describe('Test users API validators', function () {
                     path,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -358,7 +358,7 @@ describe('Test users API validators', function () {
                     password: 'my super password',
                     videoQuota: 42000000
                 };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: 403 });
+                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
     });
@@ -404,7 +404,13 @@ describe('Test users API validators', function () {
                     currentPassword: 'my super password fail',
                     password: 'super'.repeat(61)
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + 'me',
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
+                });
             });
         });
         it('Should fail with an invalid NSFW policy attribute', function () {
@@ -445,7 +451,13 @@ describe('Test users API validators', function () {
                     currentPassword: 'my super password',
                     password: 'my super password'
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: 'super token', fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + 'me',
+                    token: 'super token',
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
+                });
             });
         });
         it('Should fail with a too long description', function () {
@@ -516,7 +528,13 @@ describe('Test users API validators', function () {
                     noInstanceConfigWarningModal: true,
                     noWelcomeModal: true
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + 'me',
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
         it('Should succeed without password change with the correct params', function () {
@@ -525,7 +543,13 @@ describe('Test users API validators', function () {
                     nsfwPolicy: 'blur',
                     autoPlayVideo: false
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + 'me', token: userAccessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + 'me',
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
@@ -559,7 +583,7 @@ describe('Test users API validators', function () {
                     path: path + '/me/avatar/pick',
                     fields,
                     attaches,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -575,25 +599,62 @@ describe('Test users API validators', function () {
                     token: server.accessToken,
                     fields,
                     attaches,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
+            });
+        });
+    });
+    describe('When managing my scoped tokens', function () {
+        it('Should fail to get my scoped tokens with an non authenticated user', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getUserScopedTokens(server.url, null, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+            });
+        });
+        it('Should fail to get my scoped tokens with a bad token', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getUserScopedTokens(server.url, 'bad', http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+            });
+        });
+        it('Should succeed to get my scoped tokens', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getUserScopedTokens(server.url, server.accessToken);
+            });
+        });
+        it('Should fail to renew my scoped tokens with an non authenticated user', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.renewUserScopedTokens(server.url, null, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+            });
+        });
+        it('Should fail to renew my scoped tokens with a bad token', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.renewUserScopedTokens(server.url, 'bad', http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+            });
+        });
+        it('Should succeed to renew my scoped tokens', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.renewUserScopedTokens(server.url, server.accessToken);
             });
         });
     });
     describe('When getting a user', function () {
         it('Should fail with an non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + userId, token: 'super token', statusCodeExpected: 401 });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: path + userId,
+                    token: 'super token',
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
+                });
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + userId, token: server.accessToken, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + userId, token: server.accessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -653,7 +714,13 @@ describe('Test users API validators', function () {
                 const fields = {
                     videoQuota: 42
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + userId, token: 'super token', fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + userId,
+                    token: 'super token',
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
+                });
             });
         });
         it('Should fail when updating root role', function () {
@@ -680,7 +747,7 @@ describe('Test users API validators', function () {
                     path: path + moderatorId,
                     token: moderatorAccessToken,
                     fields,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -694,7 +761,7 @@ describe('Test users API validators', function () {
                     path: path + userId,
                     token: moderatorAccessToken,
                     fields,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -706,14 +773,20 @@ describe('Test users API validators', function () {
                     videoQuota: 42,
                     role: shared_1.UserRole.USER
                 };
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + userId, token: server.accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + userId,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
     describe('When getting my information', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserInformation(server.url, 'fake_token', 401);
+                yield extra_utils_1.getMyUserInformation(server.url, 'fake_token', http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should success with the correct parameters', function () {
@@ -725,17 +798,17 @@ describe('Test users API validators', function () {
     describe('When getting my video rating', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserVideoRating(server.url, 'fake_token', videoId, 401);
+                yield extra_utils_1.getMyUserVideoRating(server.url, 'fake_token', videoId, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with an incorrect video uuid', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, 'blabla', 400);
+                yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, 'blabla', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with an unknown video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', 404);
+                yield extra_utils_1.getMyUserVideoRating(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should succeed with the correct parameters', function () {
@@ -763,59 +836,65 @@ describe('Test users API validators', function () {
         });
         it('Should fail with a unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 401 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should fail with a bad type', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, query: { rating: 'toto ' }, statusCodeExpected: 400 });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    query: { rating: 'toto ' },
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
+                });
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
     describe('When blocking/unblocking/removing user', function () {
         it('Should fail with an incorrect id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeUser(server.url, 'blabla', server.accessToken, 400);
-                yield extra_utils_1.blockUser(server.url, 'blabla', server.accessToken, 400);
-                yield extra_utils_1.unblockUser(server.url, 'blabla', server.accessToken, 400);
+                yield extra_utils_1.removeUser(server.url, 'blabla', server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+                yield extra_utils_1.blockUser(server.url, 'blabla', server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+                yield extra_utils_1.unblockUser(server.url, 'blabla', server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with the root user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeUser(server.url, rootId, server.accessToken, 400);
-                yield extra_utils_1.blockUser(server.url, rootId, server.accessToken, 400);
-                yield extra_utils_1.unblockUser(server.url, rootId, server.accessToken, 400);
+                yield extra_utils_1.removeUser(server.url, rootId, server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+                yield extra_utils_1.blockUser(server.url, rootId, server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+                yield extra_utils_1.unblockUser(server.url, rootId, server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should return 404 with a non existing id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeUser(server.url, 4545454, server.accessToken, 404);
-                yield extra_utils_1.blockUser(server.url, 4545454, server.accessToken, 404);
-                yield extra_utils_1.unblockUser(server.url, 4545454, server.accessToken, 404);
+                yield extra_utils_1.removeUser(server.url, 4545454, server.accessToken, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.blockUser(server.url, 4545454, server.accessToken, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.unblockUser(server.url, 4545454, server.accessToken, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeUser(server.url, userId, userAccessToken, 403);
-                yield extra_utils_1.blockUser(server.url, userId, userAccessToken, 403);
-                yield extra_utils_1.unblockUser(server.url, userId, userAccessToken, 403);
+                yield extra_utils_1.removeUser(server.url, userId, userAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+                yield extra_utils_1.blockUser(server.url, userId, userAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+                yield extra_utils_1.unblockUser(server.url, userId, userAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail on a moderator with a moderator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeUser(server.url, moderatorId, moderatorAccessToken, 403);
-                yield extra_utils_1.blockUser(server.url, moderatorId, moderatorAccessToken, 403);
-                yield extra_utils_1.unblockUser(server.url, moderatorId, moderatorAccessToken, 403);
+                yield extra_utils_1.removeUser(server.url, moderatorId, moderatorAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+                yield extra_utils_1.blockUser(server.url, moderatorId, moderatorAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+                yield extra_utils_1.unblockUser(server.url, moderatorId, moderatorAccessToken, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should succeed on a user with a moderator', function () {
@@ -828,7 +907,7 @@ describe('Test users API validators', function () {
     describe('When deleting our account', function () {
         it('Should fail with with the root account', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteMe(server.url, server.accessToken, 400);
+                yield extra_utils_1.deleteMe(server.url, server.accessToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
     });
@@ -890,7 +969,7 @@ describe('Test users API validators', function () {
                     path: registrationPath,
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -902,7 +981,7 @@ describe('Test users API validators', function () {
                     path: registrationPath,
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -914,7 +993,7 @@ describe('Test users API validators', function () {
                     path: registrationPath,
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -948,7 +1027,13 @@ describe('Test users API validators', function () {
                 const videoChannelAttributesArg = { name: 'existing_channel', displayName: 'hello', description: 'super description' };
                 yield extra_utils_1.addVideoChannel(server.url, server.accessToken, videoChannelAttributesArg);
                 const fields = extra_utils_1.immutableAssign(baseCorrectParams, { channel: { name: 'existing_channel', displayName: 'toto' } });
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path: registrationPath, token: server.accessToken, fields, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path: registrationPath,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
             });
         });
         it('Should succeed with the correct params', function () {
@@ -959,7 +1044,7 @@ describe('Test users API validators', function () {
                     path: registrationPath,
                     token: server.accessToken,
                     fields: fields,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -975,7 +1060,7 @@ describe('Test users API validators', function () {
                     path: registrationPath,
                     token: serverWithRegistrationDisabled.accessToken,
                     fields,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -983,7 +1068,7 @@ describe('Test users API validators', function () {
     describe('When registering multiple users on a server with users limit', function () {
         it('Should fail when after 3 registrations', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.registerUser(server.url, 'user42', 'super password', 403);
+                yield extra_utils_1.registerUser(server.url, 'user42', 'super password', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
     });
@@ -996,7 +1081,7 @@ describe('Test users API validators', function () {
                     accessToken: server.accessToken,
                     videoQuota: 42
                 });
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, 403);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
             });
         });
         it('Should fail with a registered user having too many videos', function () {
@@ -1013,7 +1098,7 @@ describe('Test users API validators', function () {
                 yield extra_utils_1.uploadVideo(server.url, userAccessToken, videoAttributes);
                 yield extra_utils_1.uploadVideo(server.url, userAccessToken, videoAttributes);
                 yield extra_utils_1.uploadVideo(server.url, userAccessToken, videoAttributes);
-                yield extra_utils_1.uploadVideo(server.url, userAccessToken, videoAttributes, 403);
+                yield extra_utils_1.uploadVideo(server.url, userAccessToken, videoAttributes, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
             });
         });
         it('Should fail to import with HTTP/Torrent/magnet', function () {
@@ -1040,7 +1125,7 @@ describe('Test users API validators', function () {
         });
     });
     describe('When having a daily video quota', function () {
-        it('Should fail with a user having too many videos', function () {
+        it('Should fail with a user having too many videos daily', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.updateUser({
                     url: server.url,
@@ -1048,7 +1133,7 @@ describe('Test users API validators', function () {
                     accessToken: server.accessToken,
                     videoQuotaDaily: 42
                 });
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, 403);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
             });
         });
     });
@@ -1062,7 +1147,7 @@ describe('Test users API validators', function () {
                     videoQuota: 42,
                     videoQuotaDaily: 1024 * 1024 * 1024
                 });
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, 403);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
             });
         });
         it('Should fail if exceeding daily quota', function () {
@@ -1074,7 +1159,7 @@ describe('Test users API validators', function () {
                     videoQuota: 1024 * 1024 * 1024,
                     videoQuotaDaily: 42
                 });
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, 403);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, {}, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
             });
         });
     });
@@ -1095,7 +1180,13 @@ describe('Test users API validators', function () {
         it('Should success with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'admin@example.com' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
@@ -1116,7 +1207,13 @@ describe('Test users API validators', function () {
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { email: 'admin@example.com' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });

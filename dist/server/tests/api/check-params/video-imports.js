@@ -7,6 +7,7 @@ const path_1 = require("path");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const video_imports_1 = require("../../../../shared/extra-utils/videos/video-imports");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test video imports API validator', function () {
     const path = '/api/v1/videos/imports';
     let server;
@@ -46,7 +47,7 @@ describe('Test video imports API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: myPath, statusCodeExpected: 200, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: myPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200, token: server.accessToken });
             });
         });
     });
@@ -79,7 +80,13 @@ describe('Test video imports API validator', function () {
         it('Should fail without a target url', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 400 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
+                });
             });
         });
         it('Should fail with a bad target url', function () {
@@ -228,7 +235,7 @@ describe('Test video imports API validator', function () {
                     path,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -251,7 +258,7 @@ describe('Test video imports API validator', function () {
                     path,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -271,12 +278,25 @@ describe('Test video imports API validator', function () {
                 });
                 let fields = lodash_1.omit(baseCorrectParams, 'targetUrl');
                 fields = extra_utils_1.immutableAssign(fields, { magnetUri: video_imports_1.getMagnetURI() });
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: server.accessToken, fields, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
                 fields = lodash_1.omit(fields, 'magnetUri');
                 const attaches = {
                     torrentfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video-720p.torrent')
                 };
-                yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches, statusCodeExpected: 409 });
+                yield extra_utils_1.makeUploadRequest({
+                    url: server.url,
+                    path,
+                    token: server.accessToken,
+                    fields,
+                    attaches,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
             });
         });
     });

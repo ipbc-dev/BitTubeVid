@@ -72,7 +72,7 @@ let AccountBlocklistModel = AccountBlocklistModel_1 = class AccountBlocklistMode
     }
     static listHandlesBlockedBy(accountIds) {
         const query = {
-            attributes: [],
+            attributes: ['id'],
             where: {
                 accountId: {
                     [sequelize_1.Op.in]: accountIds

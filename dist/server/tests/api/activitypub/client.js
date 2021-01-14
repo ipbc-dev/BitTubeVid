@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test activitypub', function () {
     let servers = [];
@@ -41,7 +42,7 @@ describe('Test activitypub', function () {
     });
     it('Should redirect to the origin video object', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const res = yield extra_utils_1.makeActivityPubGetRequest(servers[1].url, '/videos/watch/' + videoUUID, 302);
+            const res = yield extra_utils_1.makeActivityPubGetRequest(servers[1].url, '/videos/watch/' + videoUUID, http_error_codes_1.HttpStatusCode.FOUND_302);
             expect(res.header.location).to.equal('http://localhost:' + servers[0].port + '/videos/watch/' + videoUUID);
         });
     });

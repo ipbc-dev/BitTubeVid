@@ -5,9 +5,8 @@ const tslib_1 = require("tslib");
 const database_utils_1 = require("../../../helpers/database-utils");
 const database_1 = require("../../../initializers/database");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
-const videos_1 = require("../videos");
 const utils_1 = require("../send/utils");
-const url_1 = require("../url");
+const videos_1 = require("../videos");
 function processDislikeActivity(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
@@ -17,14 +16,15 @@ function processDislikeActivity(options) {
 exports.processDislikeActivity = processDislikeActivity;
 function processDislike(activity, byActor) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const dislikeObject = activity.type === 'Dislike' ? activity.object : activity.object.object;
+        const dislikeObject = activity.type === 'Dislike'
+            ? activity.object
+            : activity.object.object;
         const byAccount = byActor.Account;
         if (!byAccount)
             throw new Error('Cannot create dislike with the non account actor ' + byActor.url);
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: dislikeObject });
         return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const url = url_1.getVideoDislikeActivityPubUrl(byActor, video);
-            const existingRate = yield account_video_rate_1.AccountVideoRateModel.loadByAccountAndVideoOrUrl(byAccount.id, video.id, url);
+            const existingRate = yield account_video_rate_1.AccountVideoRateModel.loadByAccountAndVideoOrUrl(byAccount.id, video.id, activity.id, t);
             if (existingRate && existingRate.type === 'dislike')
                 return;
             yield video.increment('dislikes', { transaction: t });
@@ -35,7 +35,7 @@ function processDislike(activity, byActor) {
             rate.type = 'dislike';
             rate.videoId = video.id;
             rate.accountId = byAccount.id;
-            rate.url = url;
+            rate.url = activity.id;
             yield rate.save({ transaction: t });
             if (video.isOwned()) {
                 const exceptions = [byActor];

@@ -100,7 +100,7 @@ function up(utils) {
             yield q.addColumn('Videos', 'url', data);
             const videos = yield db.Video.findAll();
             for (const video of videos) {
-                video.url = url_1.getVideoActivityPubUrl(video);
+                video.url = url_1.getLocalVideoActivityPubUrl(video);
                 yield video.save();
             }
             data.allowNull = false;
@@ -115,7 +115,7 @@ function up(utils) {
             yield q.addColumn('VideoChannels', 'url', data);
             const videoChannels = yield db.VideoChannel.findAll();
             for (const videoChannel of videoChannels) {
-                videoChannel.url = url_1.getVideoChannelActivityPubUrl(videoChannel);
+                videoChannel.url = url_1.getLocalVideoChannelActivityPubUrl(videoChannel);
                 yield videoChannel.save();
             }
             data.allowNull = false;

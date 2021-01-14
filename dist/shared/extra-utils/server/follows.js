@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const request = require("supertest");
 const jobs_1 = require("./jobs");
 const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getFollowersListPaginationAndSort(options) {
     const { url, start, count, sort, search, state, actorType } = options;
     const path = '/api/v1/server/followers';
@@ -20,11 +21,11 @@ function getFollowersListPaginationAndSort(options) {
         .get(path)
         .query(query)
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getFollowersListPaginationAndSort = getFollowersListPaginationAndSort;
-function acceptFollower(url, token, follower, statusCodeExpected = 204) {
+function acceptFollower(url, token, follower, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/server/followers/' + follower + '/accept';
     return requests_1.makePostBodyRequest({
         url,
@@ -34,7 +35,7 @@ function acceptFollower(url, token, follower, statusCodeExpected = 204) {
     });
 }
 exports.acceptFollower = acceptFollower;
-function rejectFollower(url, token, follower, statusCodeExpected = 204) {
+function rejectFollower(url, token, follower, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/server/followers/' + follower + '/reject';
     return requests_1.makePostBodyRequest({
         url,
@@ -59,11 +60,11 @@ function getFollowingListPaginationAndSort(options) {
         .get(path)
         .query(query)
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getFollowingListPaginationAndSort = getFollowingListPaginationAndSort;
-function follow(follower, following, accessToken, expectedStatus = 204) {
+function follow(follower, following, accessToken, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/server/following';
     const followingHosts = following.map(f => f.replace(/^http:\/\//, ''));
     return request(follower)
@@ -74,7 +75,7 @@ function follow(follower, following, accessToken, expectedStatus = 204) {
         .expect(expectedStatus);
 }
 exports.follow = follow;
-function unfollow(url, accessToken, target, expectedStatus = 204) {
+function unfollow(url, accessToken, target, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const path = '/api/v1/server/following/' + target.host;
         return request(url)
@@ -85,7 +86,7 @@ function unfollow(url, accessToken, target, expectedStatus = 204) {
     });
 }
 exports.unfollow = unfollow;
-function removeFollower(url, accessToken, follower, expectedStatus = 204) {
+function removeFollower(url, accessToken, follower, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/server/followers/peertube@' + follower.host;
     return request(url)
         .delete(path)

@@ -45,7 +45,10 @@ function isHTTPSignatureVerified(httpSignatureParsed, actor) {
 }
 exports.isHTTPSignatureVerified = isHTTPSignatureVerified;
 function parseHTTPSignature(req, clockSkew) {
-    return httpSignature.parse(req, { clockSkew });
+    const headers = req.method === 'POST'
+        ? constants_1.HTTP_SIGNATURE.REQUIRED_HEADERS.POST
+        : constants_1.HTTP_SIGNATURE.REQUIRED_HEADERS.ALL;
+    return httpSignature.parse(req, { clockSkew, headers });
 }
 exports.parseHTTPSignature = parseHTTPSignature;
 function isJsonLDSignatureVerified(fromActor, signedDocument) {

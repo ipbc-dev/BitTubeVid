@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoChannelRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const hooks_1 = require("@server/lib/plugins/hooks");
 const application_1 = require("@server/models/application/application");
 const audit_logger_1 = require("../../helpers/audit-logger");
 const database_utils_1 = require("../../helpers/database-utils");
@@ -25,6 +26,7 @@ const account_1 = require("../../models/account/account");
 const video_1 = require("../../models/video/video");
 const video_channel_2 = require("../../models/video/video-channel");
 const video_playlist_1 = require("../../models/video/video-playlist");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const auditLogger = audit_logger_1.auditLoggerFactory('channels');
 const reqAvatarFile = express_utils_1.createReqFiles(['avatarfile'], constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: config_1.CONFIG.STORAGE.TMP_DIR });
 const videoChannelRouter = express.Router();
@@ -116,7 +118,7 @@ function updateVideoChannel(req, res) {
             database_utils_1.resetSequelizeInstance(videoChannelInstance, videoChannelFieldsSave);
             throw err;
         }
-        res.type('json').status(204).end();
+        res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
         if (doBulkVideoUpdate) {
             yield video_channel_1.federateAllVideosOfChannel(videoChannelInstance);
         }
@@ -131,7 +133,7 @@ function removeVideoChannel(req, res) {
             auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoChannelAuditView(videoChannelInstance.toFormattedJSON()));
             logger_1.logger.info('Video channel %s deleted.', videoChannelInstance.Actor.url);
         }));
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function getVideoChannel(req, res) {
@@ -162,7 +164,7 @@ function listVideoChannelVideos(req, res) {
         const videoChannelInstance = res.locals.videoChannel;
         const followerActorId = express_utils_1.isUserAbleToSearchRemoteURI(res) ? null : undefined;
         const countVideos = express_utils_1.getCountVideos(req);
-        const resultList = yield video_1.VideoModel.listForApi({
+        const apiOptions = yield hooks_1.Hooks.wrapObject({
             followerActorId,
             start: req.query.start,
             count: req.query.count,
@@ -179,7 +181,8 @@ function listVideoChannelVideos(req, res) {
             videoChannelId: videoChannelInstance.id,
             user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
             countVideos
-        });
+        }, 'filter:api.video-channels.videos.list.params');
+        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.listForApi, apiOptions, 'filter:api.video-channels.videos.list.result');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

@@ -10,6 +10,7 @@ const path_1 = require("path");
 const misc_1 = require("./custom-validators/misc");
 const config_1 = require("../initializers/config");
 const video_1 = require("./video");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
 function buildNSFWFilter(res, paramNSFW) {
     if (paramNSFW === 'true')
         return true;
@@ -56,7 +57,9 @@ function getHostWithPort(host) {
 }
 exports.getHostWithPort = getHostWithPort;
 function badRequest(req, res) {
-    return res.type('json').status(400).end();
+    return res.type('json')
+        .status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+        .end();
 }
 exports.badRequest = badRequest;
 function createReqFiles(fieldNames, mimeTypes, destinations) {

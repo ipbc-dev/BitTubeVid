@@ -10,6 +10,7 @@ const videos_1 = require("@server/lib/activitypub/videos");
 const account_blocklist_1 = require("@server/models/account/account-blocklist");
 const application_1 = require("@server/models/application/application");
 const server_blocklist_1 = require("@server/models/server/server-blocklist");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const express_utils_1 = require("../../helpers/express-utils");
 const logger_1 = require("../../helpers/logger");
 const utils_1 = require("../../helpers/utils");
@@ -41,17 +42,17 @@ function searchVideoChannels(req, res) {
 }
 function searchVideoChannelsIndex(query, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        logger_1.logger.debug('Doing channels search on search index.');
         const result = yield buildMutedForSearchIndex(res);
         const body = Object.assign(query, result);
         const url = core_utils_1.sanitizeUrl(config_1.CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/video-channels';
         try {
+            logger_1.logger.debug('Doing video channels search index request on %s.', url, { body });
             const searchIndexResult = yield requests_1.doRequest({ uri: url, body, json: true });
             return res.json(searchIndexResult.body);
         }
         catch (err) {
             logger_1.logger.warn('Cannot use search index to make video channels search.', { err });
-            return res.sendStatus(500);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.INTERNAL_SERVER_ERROR_500);
         }
     });
 }
@@ -113,7 +114,6 @@ function searchVideos(req, res) {
 }
 function searchVideosIndex(query, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        logger_1.logger.debug('Doing videos search on search index.');
         const result = yield buildMutedForSearchIndex(res);
         const body = Object.assign(query, result);
         if (!body.nsfw) {
@@ -126,12 +126,13 @@ function searchVideosIndex(query, res) {
         }
         const url = core_utils_1.sanitizeUrl(config_1.CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/videos';
         try {
+            logger_1.logger.debug('Doing videos search index request on %s.', url, { body });
             const searchIndexResult = yield requests_1.doRequest({ uri: url, body, json: true });
             return res.json(searchIndexResult.body);
         }
         catch (err) {
             logger_1.logger.warn('Cannot use search index to make video search.', { err });
-            return res.sendStatus(500);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.INTERNAL_SERVER_ERROR_500);
         }
     });
 }

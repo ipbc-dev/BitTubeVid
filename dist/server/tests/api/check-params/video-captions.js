@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const path_1 = require("path");
 const video_captions_1 = require("../../../../shared/extra-utils/videos/video-captions");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test video captions API validator', function () {
     const path = '/api/v1/videos/';
     let server;
@@ -39,7 +40,7 @@ describe('Test video captions API validator', function () {
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
                     url: server.url,
-                    path: path + '4da6fde3-88f7-4d16-b119-108df563d0b06/captions',
+                    path: path + '4da6fde3-88f7-4d16-b119-108df563d0b06/captions/fr',
                     token: server.accessToken,
                     fields,
                     attaches
@@ -51,10 +52,11 @@ describe('Test video captions API validator', function () {
                 yield extra_utils_1.makeUploadRequest({
                     method: 'PUT',
                     url: server.url,
-                    path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions',
+                    path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions/fr',
                     token: server.accessToken,
                     fields,
-                    attaches
+                    attaches,
+                    statusCodeExpected: 404
                 });
             });
         });
@@ -93,7 +95,7 @@ describe('Test video captions API validator', function () {
                     path: captionPath,
                     fields,
                     attaches,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -107,7 +109,7 @@ describe('Test video captions API validator', function () {
                     token: 'blabla',
                     fields,
                     attaches,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -133,7 +135,7 @@ describe('Test video captions API validator', function () {
                     token: server.accessToken,
                     fields,
                     attaches,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -146,12 +148,16 @@ describe('Test video captions API validator', function () {
         });
         it('Should fail with an unknown id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions', statusCodeExpected: 404 });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions',
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
+                });
             });
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + videoUUID + '/captions', statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + videoUUID + '/captions', statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -171,7 +177,7 @@ describe('Test video captions API validator', function () {
                     url: server.url,
                     path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/captions/fr',
                     token: server.accessToken,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -199,25 +205,35 @@ describe('Test video captions API validator', function () {
         it('Should fail without access token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
-                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, statusCodeExpected: 401 });
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a bad access token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
-                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: 'coucou', statusCodeExpected: 401 });
+                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: 'coucou', statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
-                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: userAccessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makeDeleteRequest({
+                    url: server.url,
+                    path: captionPath,
+                    token: userAccessToken,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
+                });
             });
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const captionPath = path + videoUUID + '/captions/fr';
-                yield extra_utils_1.makeDeleteRequest({ url: server.url, path: captionPath, token: server.accessToken, statusCodeExpected: 204 });
+                yield extra_utils_1.makeDeleteRequest({
+                    url: server.url,
+                    path: captionPath,
+                    token: server.accessToken,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });

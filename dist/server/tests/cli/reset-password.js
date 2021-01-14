@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 describe('Test reset password scripts', function () {
     let server;
     before(function () {
@@ -18,7 +19,7 @@ describe('Test reset password scripts', function () {
             this.timeout(60000);
             const env = extra_utils_1.getEnvCli(server);
             yield extra_utils_1.execCLI(`echo coucou | ${env} npm run reset-password -- -u user_1`);
-            yield extra_utils_1.login(server.url, server.client, { username: 'user_1', password: 'coucou' }, 200);
+            yield extra_utils_1.login(server.url, server.client, { username: 'user_1', password: 'coucou' }, http_error_codes_1.HttpStatusCode.OK_200);
         });
     });
     after(function () {

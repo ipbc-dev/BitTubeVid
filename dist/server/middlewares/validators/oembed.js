@@ -11,6 +11,7 @@ const misc_1 = require("../../helpers/custom-validators/misc");
 const logger_1 = require("../../helpers/logger");
 const constants_1 = require("../../initializers/constants");
 const utils_1 = require("./utils");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const startVideoPlaylistsURL = constants_1.WEBSERVER.SCHEME + '://' + path_1.join(constants_1.WEBSERVER.HOST, 'videos', 'watch', 'playlist') + '/';
 const startVideosURL = constants_1.WEBSERVER.SCHEME + '://' + path_1.join(constants_1.WEBSERVER.HOST, 'videos', 'watch') + '/';
 const watchRegex = new RegExp('([^/]+)$');
@@ -31,7 +32,7 @@ const oembedValidator = [
         if (utils_1.areValidationErrors(req, res))
             return;
         if (req.query.format !== undefined && req.query.format !== 'json') {
-            return res.status(501)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_IMPLEMENTED_501)
                 .json({ error: 'Requested format is not implemented on server.' });
         }
         const url = req.query.url;
@@ -40,22 +41,22 @@ const oembedValidator = [
         const startIsOk = isVideo || isPlaylist;
         const matches = watchRegex.exec(url);
         if (startIsOk === false || matches === null) {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Invalid url.' });
         }
         const elementId = matches[1];
         if (misc_1.isIdOrUUIDValid(elementId) === false) {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Invalid video or playlist id.' });
         }
         if (isVideo) {
             const video = yield video_1.fetchVideo(elementId, 'all');
             if (!video) {
-                return res.status(404)
+                return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                     .json({ error: 'Video not found' });
             }
             if (video.privacy !== 1) {
-                return res.status(403)
+                return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                     .json({ error: 'Video is not public' });
             }
             res.locals.videoAll = video;
@@ -63,11 +64,11 @@ const oembedValidator = [
         }
         const videoPlaylist = yield video_playlist_1.VideoPlaylistModel.loadWithAccountAndChannelSummary(elementId, undefined);
         if (!videoPlaylist) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video playlist not found' });
         }
         if (videoPlaylist.privacy !== 1) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Playlist is not public' });
         }
         res.locals.videoPlaylistSummary = videoPlaylist;

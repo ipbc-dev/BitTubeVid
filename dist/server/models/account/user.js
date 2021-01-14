@@ -20,6 +20,7 @@ const utils_1 = require("../utils");
 const video_1 = require("../video/video");
 const video_channel_1 = require("../video/video-channel");
 const video_import_1 = require("../video/video-import");
+const video_live_1 = require("../video/video-live");
 const video_playlist_1 = require("../video/video-playlist");
 const account_1 = require("./account");
 const user_notification_setting_1 = require("./user-notification-setting");
@@ -154,7 +155,10 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         };
         return UserModel_1.findAll(query);
     }
-    static loadById(id, withStats = false) {
+    static loadById(id) {
+        return UserModel_1.unscoped().findByPk(id);
+    }
+    static loadByIdWithChannels(id, withStats = false) {
         const scopes = [
             ScopeNames.WITH_VIDEOCHANNELS
         ];
@@ -165,15 +169,15 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
     static loadByUsername(username) {
         const query = {
             where: {
-                username: { [sequelize_1.Op.iLike]: username }
+                username
             }
         };
         return UserModel_1.findOne(query);
     }
-    static loadForMeAPI(username) {
+    static loadForMeAPI(id) {
         const query = {
             where: {
-                username: { [sequelize_1.Op.iLike]: username }
+                id
             }
         };
         return UserModel_1.scope(ScopeNames.FOR_ME_API).findOne(query);
@@ -280,20 +284,73 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         };
         return UserModel_1.findOne(query);
     }
-    static getOriginalVideoFileTotalFromUser(user) {
-        const query = UserModel_1.generateUserQuotaBaseSQL({
-            withSelect: true,
-            whereUserId: '$userId'
-        });
-        return UserModel_1.getTotalRawQuery(query, user.id);
+    static loadByLiveId(liveId) {
+        const query = {
+            include: [
+                {
+                    attributes: ['id'],
+                    model: account_1.AccountModel.unscoped(),
+                    required: true,
+                    include: [
+                        {
+                            attributes: ['id'],
+                            model: video_channel_1.VideoChannelModel.unscoped(),
+                            required: true,
+                            include: [
+                                {
+                                    attributes: ['id'],
+                                    model: video_1.VideoModel.unscoped(),
+                                    required: true,
+                                    include: [
+                                        {
+                                            attributes: [],
+                                            model: video_live_1.VideoLiveModel.unscoped(),
+                                            required: true,
+                                            where: {
+                                                id: liveId
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+        return UserModel_1.unscoped().findOne(query);
     }
-    static getOriginalVideoFileTotalDailyFromUser(user) {
-        const query = UserModel_1.generateUserQuotaBaseSQL({
-            withSelect: true,
-            whereUserId: '$userId',
-            where: '"video"."createdAt" > now() - interval \'24 hours\''
+    static generateUserQuotaBaseSQL(options) {
+        const andWhere = options.where
+            ? 'AND ' + options.where
+            : '';
+        const videoChannelJoin = 'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
+            'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
+            `WHERE "account"."userId" = ${options.whereUserId} ${andWhere}`;
+        const webtorrentFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+            'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
+            videoChannelJoin;
+        const hlsFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
+            'INNER JOIN "videoStreamingPlaylist" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist".id ' +
+            'INNER JOIN "video" ON "videoStreamingPlaylist"."videoId" = "video"."id" ' +
+            videoChannelJoin;
+        return 'SELECT COALESCE(SUM("size"), 0) AS "total" ' +
+            'FROM (' +
+            `SELECT MAX("t1"."size") AS "size" FROM (${webtorrentFiles} UNION ${hlsFiles}) t1 ` +
+            'GROUP BY "t1"."videoId"' +
+            ') t2';
+    }
+    static getTotalRawQuery(query, userId) {
+        const options = {
+            bind: { userId },
+            type: sequelize_1.QueryTypes.SELECT
+        };
+        return UserModel_1.sequelize.query(query, options)
+            .then(([{ total }]) => {
+            if (total === null)
+                return 0;
+            return parseInt(total, 10);
         });
-        return UserModel_1.getTotalRawQuery(query, user.id);
     }
     static getStats() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -311,11 +368,13 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
             const totalDailyActiveUsers = yield getActiveUsers(1);
             const totalWeeklyActiveUsers = yield getActiveUsers(7);
             const totalMonthlyActiveUsers = yield getActiveUsers(30);
+            const totalHalfYearActiveUsers = yield getActiveUsers(180);
             return {
                 totalUsers,
                 totalDailyActiveUsers,
                 totalWeeklyActiveUsers,
-                totalMonthlyActiveUsers
+                totalMonthlyActiveUsers,
+                totalHalfYearActiveUsers
             };
         });
     }
@@ -432,55 +491,6 @@ let UserModel = UserModel_1 = class UserModel extends sequelize_typescript_1.Mod
         const specialPlaylists = this.Account.VideoPlaylists
             .map(p => ({ id: p.id, name: p.name, type: p.type }));
         return Object.assign(formatted, { specialPlaylists });
-    }
-    isAbleToUploadVideo(videoFile) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (this.videoQuota === -1 && this.videoQuotaDaily === -1)
-                return Promise.resolve(true);
-            const [totalBytes, totalBytesDaily] = yield Promise.all([
-                UserModel_1.getOriginalVideoFileTotalFromUser(this),
-                UserModel_1.getOriginalVideoFileTotalDailyFromUser(this)
-            ]);
-            const uploadedTotal = videoFile.size + totalBytes;
-            const uploadedDaily = videoFile.size + totalBytesDaily;
-            if (this.videoQuotaDaily === -1)
-                return uploadedTotal < this.videoQuota;
-            if (this.videoQuota === -1)
-                return uploadedDaily < this.videoQuotaDaily;
-            return uploadedTotal < this.videoQuota && uploadedDaily < this.videoQuotaDaily;
-        });
-    }
-    static generateUserQuotaBaseSQL(options) {
-        const andWhere = options.where
-            ? 'AND ' + options.where
-            : '';
-        const videoChannelJoin = 'INNER JOIN "videoChannel" ON "videoChannel"."id" = "video"."channelId" ' +
-            'INNER JOIN "account" ON "videoChannel"."accountId" = "account"."id" ' +
-            `WHERE "account"."userId" = ${options.whereUserId} ${andWhere}`;
-        const webtorrentFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
-            'INNER JOIN "video" ON "videoFile"."videoId" = "video"."id" ' +
-            videoChannelJoin;
-        const hlsFiles = 'SELECT "videoFile"."size" AS "size", "video"."id" AS "videoId" FROM "videoFile" ' +
-            'INNER JOIN "videoStreamingPlaylist" ON "videoFile"."videoStreamingPlaylistId" = "videoStreamingPlaylist".id ' +
-            'INNER JOIN "video" ON "videoStreamingPlaylist"."videoId" = "video"."id" ' +
-            videoChannelJoin;
-        return 'SELECT COALESCE(SUM("size"), 0) AS "total" ' +
-            'FROM (' +
-            `SELECT MAX("t1"."size") AS "size" FROM (${webtorrentFiles} UNION ${hlsFiles}) t1 ` +
-            'GROUP BY "t1"."videoId"' +
-            ') t2';
-    }
-    static getTotalRawQuery(query, userId) {
-        const options = {
-            bind: { userId },
-            type: sequelize_1.QueryTypes.SELECT
-        };
-        return UserModel_1.sequelize.query(query, options)
-            .then(([{ total }]) => {
-            if (total === null)
-                return 0;
-            return parseInt(total, 10);
-        });
     }
 };
 tslib_1.__decorate([
@@ -628,6 +638,13 @@ tslib_1.__decorate([
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], UserModel.prototype, "pluginAuth", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Default(sequelize_typescript_1.DataType.UUIDV4),
+    sequelize_typescript_1.IsUUID(4),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.UUID),
+    tslib_1.__metadata("design:type", String)
+], UserModel.prototype, "feedToken", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Default(null),

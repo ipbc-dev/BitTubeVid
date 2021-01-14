@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getOEmbed = void 0;
 const request = require("supertest");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getOEmbed(url, oembedUrl, format, maxHeight, maxWidth) {
     const path = '/services/oembed';
     const query = {
@@ -14,6 +15,6 @@ function getOEmbed(url, oembedUrl, format, maxHeight, maxWidth) {
         .get(path)
         .query(query)
         .set('Accept', 'application/json')
-        .expect(200);
+        .expect(http_error_codes_1.HttpStatusCode.OK_200);
 }
 exports.getOEmbed = getOEmbed;

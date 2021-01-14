@@ -7,6 +7,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const path_1 = require("path");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test video channels API validator', function () {
     const videoChannelPath = '/api/v1/video-channels';
@@ -63,7 +64,7 @@ describe('Test video channels API validator', function () {
         });
         it('Should fail with a unknown account', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getAccountVideoChannelsList({ url: server.url, accountName: 'unknown', specialStatus: 404 });
+                yield extra_utils_1.getAccountVideoChannelsList({ url: server.url, accountName: 'unknown', specialStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
             });
         });
         it('Should succeed with the correct parameters', function () {
@@ -71,7 +72,7 @@ describe('Test video channels API validator', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: accountChannelPath,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -90,7 +91,7 @@ describe('Test video channels API validator', function () {
                     path: videoChannelPath,
                     token: 'none',
                     fields: baseCorrectParams,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -143,7 +144,7 @@ describe('Test video channels API validator', function () {
                     path: videoChannelPath,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -154,7 +155,7 @@ describe('Test video channels API validator', function () {
                     path: videoChannelPath,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 409
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
                 });
             });
         });
@@ -179,7 +180,7 @@ describe('Test video channels API validator', function () {
                     path,
                     token: 'hi',
                     fields: baseCorrectParams,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -190,7 +191,7 @@ describe('Test video channels API validator', function () {
                     path,
                     token: accessTokenUser,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -225,7 +226,7 @@ describe('Test video channels API validator', function () {
                     path,
                     token: server.accessToken,
                     fields: baseCorrectParams,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -266,7 +267,7 @@ describe('Test video channels API validator', function () {
                     path: path + '/avatar/pick',
                     fields,
                     attaches,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -282,7 +283,7 @@ describe('Test video channels API validator', function () {
                     token: server.accessToken,
                     fields,
                     attaches,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -293,7 +294,7 @@ describe('Test video channels API validator', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: videoChannelPath,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
                 expect(res.body.data).to.be.an('array');
             });
@@ -303,7 +304,7 @@ describe('Test video channels API validator', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: videoChannelPath + '/super_channel2',
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -312,7 +313,7 @@ describe('Test video channels API validator', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: videoChannelPath + '/super_channel',
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -320,17 +321,17 @@ describe('Test video channels API validator', function () {
     describe('When deleting a video channel', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoChannel(server.url, 'coucou', 'super_channel', 401);
+                yield extra_utils_1.deleteVideoChannel(server.url, 'coucou', 'super_channel', http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with another authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoChannel(server.url, accessTokenUser, 'super_channel', 403);
+                yield extra_utils_1.deleteVideoChannel(server.url, accessTokenUser, 'super_channel', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with an unknown video channel id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoChannel(server.url, server.accessToken, 'super_channel2', 404);
+                yield extra_utils_1.deleteVideoChannel(server.url, server.accessToken, 'super_channel2', http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should succeed with the correct parameters', function () {
@@ -340,7 +341,7 @@ describe('Test video channels API validator', function () {
         });
         it('Should fail to delete the last user video channel', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoChannel(server.url, server.accessToken, 'root_channel', 409);
+                yield extra_utils_1.deleteVideoChannel(server.url, server.accessToken, 'root_channel', http_error_codes_1.HttpStatusCode.CONFLICT_409);
             });
         });
     });

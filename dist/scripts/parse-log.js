@@ -13,6 +13,7 @@ const config_1 = require("../server/initializers/config");
 const logs_1 = require("../shared/core-utils/logs/logs");
 program
     .option('-l, --level [level]', 'Level log (debug/info/warn/error)')
+    .option('-f, --files [file...]', 'Files to parse. If not provided, the script will parse the latest log file from config)')
     .parse(process.argv);
 const excludedKeys = {
     level: true,
@@ -53,26 +54,41 @@ run()
     .catch(err => console.error(err));
 function run() {
     return new Promise((res) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const logFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.LOG_DIR);
-        const lastLogFile = yield getNewestFile(logFiles, config_1.CONFIG.STORAGE.LOG_DIR);
-        const path = path_1.join(config_1.CONFIG.STORAGE.LOG_DIR, lastLogFile);
-        console.log('Opening %s.', path);
-        const stream = fs_extra_1.createReadStream(path);
-        const rl = readline_1.createInterface({
-            input: stream
-        });
-        rl.on('line', line => {
-            const log = JSON.parse(line);
-            Object.assign(log, { splat: undefined });
-            logLevels[log.level](log);
-        });
-        stream.once('close', () => res());
+        const files = yield getFiles();
+        for (const file of files) {
+            console.log('Opening %s.', file);
+            const stream = fs_extra_1.createReadStream(file);
+            const rl = readline_1.createInterface({
+                input: stream
+            });
+            rl.on('line', line => {
+                try {
+                    const log = JSON.parse(line);
+                    Object.assign(log, { splat: undefined });
+                    logLevels[log.level](log);
+                }
+                catch (err) {
+                    console.error('Cannot parse line.', line);
+                    throw err;
+                }
+            });
+            stream.once('close', () => res());
+        }
     }));
 }
 function getNewestFile(files, basePath) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const sorted = yield logs_1.mtimeSortFilesDesc(files, basePath);
         return (sorted.length > 0) ? sorted[0].file : '';
+    });
+}
+function getFiles() {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        if (program['files'])
+            return program['files'];
+        const logFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.LOG_DIR);
+        const filename = yield getNewestFile(logFiles, config_1.CONFIG.STORAGE.LOG_DIR);
+        return [path_1.join(config_1.CONFIG.STORAGE.LOG_DIR, filename)];
     });
 }
 function toTimeFormat(time) {

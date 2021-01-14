@@ -14,6 +14,7 @@ const webfinger_1 = require("../../helpers/webfinger");
 const actor_2 = require("../../helpers/custom-validators/activitypub/actor");
 const follows_1 = require("@server/helpers/custom-validators/follows");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const listFollowsValidator = [
     express_validator_1.query('state')
         .optional()
@@ -32,7 +33,8 @@ const followValidator = [
     express_validator_1.body('hosts').custom(servers_1.isEachUniqueHostValid).withMessage('Should have an array of unique hosts'),
     (req, res, next) => {
         if (core_utils_1.isTestInstance() === false && constants_1.WEBSERVER.SCHEME === 'http') {
-            return res.status(500)
+            return res
+                .status(http_error_codes_1.HttpStatusCode.INTERNAL_SERVER_ERROR_500)
                 .json({
                 error: 'Cannot follow on a non HTTPS web server.'
             })
@@ -55,7 +57,7 @@ const removeFollowingValidator = [
         const follow = yield actor_follow_1.ActorFollowModel.loadByActorAndTargetNameAndHostForAPI(serverActor.id, constants_1.SERVER_ACTOR_NAME, req.params.host);
         if (!follow) {
             return res
-                .status(404)
+                .status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({
                 error: `Following ${req.params.host} not found.`
             })
@@ -84,7 +86,7 @@ const getFollowerValidator = [
         }
         if (!follow) {
             return res
-                .status(404)
+                .status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({
                 error: `Follower ${req.params.nameWithHost} not found.`
             })
@@ -100,7 +102,12 @@ const acceptOrRejectFollowerValidator = [
         logger_1.logger.debug('Checking accept/reject follower parameters', { parameters: req.params });
         const follow = res.locals.follow;
         if (follow.state !== 'pending') {
-            return res.status(400).json({ error: 'Follow is not in pending state.' }).end();
+            return res
+                .status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+                .json({
+                error: 'Follow is not in pending state.'
+            })
+                .end();
         }
         return next();
     }

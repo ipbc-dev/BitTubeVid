@@ -9,12 +9,13 @@ const redundancy_2 = require("../../../lib/redundancy");
 const logger_1 = require("../../../helpers/logger");
 const video_redundancy_1 = require("@server/models/redundancy/video-redundancy");
 const job_queue_1 = require("@server/lib/job-queue");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const serverRedundancyRouter = express.Router();
 exports.serverRedundancyRouter = serverRedundancyRouter;
 serverRedundancyRouter.put('/redundancy/:host', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(2), middlewares_1.asyncMiddleware(redundancy_1.updateServerRedundancyValidator), middlewares_1.asyncMiddleware(updateRedundancy));
-serverRedundancyRouter.get('/redundancy/videos', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(21), redundancy_1.listVideoRedundanciesValidator, middlewares_1.paginationValidator, middlewares_1.videoRedundanciesSortValidator, middlewares_1.setDefaultVideoRedundanciesSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listVideoRedundancies));
-serverRedundancyRouter.post('/redundancy/videos', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(21), redundancy_1.addVideoRedundancyValidator, middlewares_1.asyncMiddleware(addVideoRedundancy));
-serverRedundancyRouter.delete('/redundancy/videos/:redundancyId', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(21), redundancy_1.removeVideoRedundancyValidator, middlewares_1.asyncMiddleware(removeVideoRedundancyController));
+serverRedundancyRouter.get('/redundancy/videos', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(23), redundancy_1.listVideoRedundanciesValidator, middlewares_1.paginationValidator, middlewares_1.videoRedundanciesSortValidator, middlewares_1.setDefaultVideoRedundanciesSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listVideoRedundancies));
+serverRedundancyRouter.post('/redundancy/videos', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(23), redundancy_1.addVideoRedundancyValidator, middlewares_1.asyncMiddleware(addVideoRedundancy));
+serverRedundancyRouter.delete('/redundancy/videos/:redundancyId', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(23), redundancy_1.removeVideoRedundancyValidator, middlewares_1.asyncMiddleware(removeVideoRedundancyController));
 function listVideoRedundancies(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const resultList = yield video_redundancy_1.VideoRedundancyModel.listForApi({
@@ -40,13 +41,13 @@ function addVideoRedundancy(req, res) {
             type: 'video-redundancy',
             payload
         });
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function removeVideoRedundancyController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield redundancy_2.removeVideoRedundancy(res.locals.videoRedundancy);
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function updateRedundancy(req, res) {
@@ -56,6 +57,6 @@ function updateRedundancy(req, res) {
         yield server.save();
         redundancy_2.removeRedundanciesOfServer(server.id)
             .catch(err => logger_1.logger.error('Cannot remove redundancy of %s.', server.host, { err }));
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }

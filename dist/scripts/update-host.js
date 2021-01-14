@@ -51,8 +51,8 @@ function run() {
                 continue;
             console.log('Updating actor ' + actor.url);
             const newUrl = actor.Account
-                ? url_1.getAccountActivityPubUrl(actor.preferredUsername)
-                : url_1.getVideoChannelActivityPubUrl(actor.preferredUsername);
+                ? url_1.getLocalAccountActivityPubUrl(actor.preferredUsername)
+                : url_1.getLocalVideoChannelActivityPubUrl(actor.preferredUsername);
             actor.url = newUrl;
             actor.inboxUrl = newUrl + '/inbox';
             actor.outboxUrl = newUrl + '/outbox';
@@ -69,7 +69,7 @@ function run() {
             if (videoShare.Video.isOwned() === false)
                 continue;
             console.log('Updating video share ' + videoShare.url);
-            videoShare.url = url_1.getVideoAnnounceActivityPubUrl(videoShare.Actor, videoShare.Video);
+            videoShare.url = url_1.getLocalVideoAnnounceActivityPubUrl(videoShare.Actor, videoShare.Video);
             yield videoShare.save();
         }
         console.log('Updating video comments.');
@@ -92,14 +92,14 @@ function run() {
             if (comment.isOwned() === false)
                 continue;
             console.log('Updating comment ' + comment.url);
-            comment.url = url_1.getVideoCommentActivityPubUrl(comment.Video, comment);
+            comment.url = url_1.getLocalVideoCommentActivityPubUrl(comment.Video, comment);
             yield comment.save();
         }
         console.log('Updating video and torrent files.');
         const videos = yield video_1.VideoModel.listLocal();
         for (const video of videos) {
             console.log('Updating video ' + video.uuid);
-            video.url = url_1.getVideoActivityPubUrl(video);
+            video.url = url_1.getLocalVideoActivityPubUrl(video);
             yield video.save();
             for (const file of video.VideoFiles) {
                 console.log('Updating torrent file %s of video %s.', file.resolution, video.uuid);
@@ -107,7 +107,7 @@ function run() {
             }
             for (const playlist of video.VideoStreamingPlaylists) {
                 playlist.playlistUrl = constants_1.WEBSERVER.URL + video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsMasterPlaylistStaticPath(video.uuid);
-                playlist.segmentsSha256Url = constants_1.WEBSERVER.URL + video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsSha256SegmentsStaticPath(video.uuid);
+                playlist.segmentsSha256Url = constants_1.WEBSERVER.URL + video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsSha256SegmentsStaticPath(video.uuid, video.isLive);
                 yield playlist.save();
             }
         }

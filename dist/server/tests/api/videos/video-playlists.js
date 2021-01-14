@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const blocklist_1 = require("../../../../shared/extra-utils/users/blocklist");
 const expect = chai.expect;
@@ -45,18 +46,16 @@ describe('Test video playlists', function () {
             yield extra_utils_1.doubleFollow(servers[0], servers[1]);
             yield extra_utils_1.doubleFollow(servers[0], servers[2]);
             {
-                const serverPromises = [];
+                servers[0].videos = [];
+                servers[1].videos = [];
+                servers[2].videos = [];
                 for (const server of servers) {
-                    const videoPromises = [];
                     for (let i = 0; i < 7; i++) {
-                        videoPromises.push(extra_utils_1.uploadVideo(server.url, server.accessToken, { name: `video ${i} server ${server.serverNumber}`, nsfw: false })
-                            .then(res => res.body.video));
+                        const name = `video ${i} server ${server.serverNumber}`;
+                        const resVideo = yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name, nsfw: false });
+                        server.videos.push(resVideo.body.video);
                     }
-                    serverPromises.push(videoPromises);
                 }
-                servers[0].videos = yield Promise.all(serverPromises[0]);
-                servers[1].videos = yield Promise.all(serverPromises[1]);
-                servers[2].videos = yield Promise.all(serverPromises[2]);
             }
             nsfwVideoServer1 = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[0], videoName: 'NSFW video', nsfw: true })).id;
             {
@@ -132,6 +131,7 @@ describe('Test video playlists', function () {
                     }
                 });
                 yield extra_utils_1.waitJobs(servers);
+                yield extra_utils_1.wait(3000);
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideoPlaylistsList(server.url, 0, 5);
                     expect(res.body.total).to.equal(1);
@@ -203,6 +203,7 @@ describe('Test video playlists', function () {
                     });
                 }
                 yield extra_utils_1.waitJobs(servers);
+                yield extra_utils_1.wait(3000);
                 for (const server of [servers[0], servers[1]]) {
                     const res = yield extra_utils_1.getVideoPlaylistsList(server.url, 0, 5);
                     const playlist2 = res.body.data.find(p => p.displayName === 'playlist 2');
@@ -315,6 +316,7 @@ describe('Test video playlists', function () {
                     }
                 });
                 yield extra_utils_1.waitJobs(servers);
+                yield extra_utils_1.wait(3000);
                 for (const server of servers) {
                     const results = [
                         yield extra_utils_1.getAccountPlaylistsList(server.url, 'root@localhost:' + servers[1].port, 0, 5, '-createdAt'),
@@ -461,7 +463,7 @@ describe('Test video playlists', function () {
         let video3;
         before(function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(30000);
+                this.timeout(60000);
                 groupUser1 = [Object.assign({}, servers[0], { accessToken: userAccessTokenServer1 })];
                 groupWithoutToken1 = [Object.assign({}, servers[0], { accessToken: undefined })];
                 group1 = [servers[0]];
@@ -483,6 +485,7 @@ describe('Test video playlists', function () {
                 video1 = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[0], videoName: 'video 89', token: userAccessTokenServer1 })).uuid;
                 video2 = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'video 90' })).uuid;
                 video3 = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[0], videoName: 'video 91', nsfw: true })).uuid;
+                yield extra_utils_1.waitJobs(servers);
                 yield addVideo({ videoId: video1, startTimestamp: 15, stopTimestamp: 28 });
                 yield addVideo({ videoId: video2, startTimestamp: 35 });
                 yield addVideo({ videoId: video3 });
@@ -842,16 +845,16 @@ describe('Test video playlists', function () {
                 const videoPlaylistIds = res.body.videoPlaylist;
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of servers) {
-                    yield extra_utils_1.getVideoPlaylist(server.url, videoPlaylistIds.uuid, 200);
+                    yield extra_utils_1.getVideoPlaylist(server.url, videoPlaylistIds.uuid, http_error_codes_1.HttpStatusCode.OK_200);
                 }
                 const playlistAttrs = { privacy: 3 };
                 yield extra_utils_1.updateVideoPlaylist({ url: servers[0].url, token: servers[0].accessToken, playlistId: videoPlaylistIds.id, playlistAttrs });
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of [servers[1], servers[2]]) {
-                    yield extra_utils_1.getVideoPlaylist(server.url, videoPlaylistIds.uuid, 404);
+                    yield extra_utils_1.getVideoPlaylist(server.url, videoPlaylistIds.uuid, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 }
-                yield extra_utils_1.getVideoPlaylist(servers[0].url, videoPlaylistIds.uuid, 401);
-                yield extra_utils_1.getVideoPlaylistWithToken(servers[0].url, servers[0].accessToken, videoPlaylistIds.uuid, 200);
+                yield extra_utils_1.getVideoPlaylist(servers[0].url, videoPlaylistIds.uuid, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+                yield extra_utils_1.getVideoPlaylistWithToken(servers[0].url, servers[0].accessToken, videoPlaylistIds.uuid, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
     });
@@ -862,7 +865,7 @@ describe('Test video playlists', function () {
                 yield extra_utils_1.deleteVideoPlaylist(servers[0].url, servers[0].accessToken, playlistServer1Id);
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of servers) {
-                    yield extra_utils_1.getVideoPlaylist(server.url, playlistServer1UUID, 404);
+                    yield extra_utils_1.getVideoPlaylist(server.url, playlistServer1UUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 }
             });
         });
@@ -912,7 +915,7 @@ describe('Test video playlists', function () {
                 const res3 = yield extra_utils_1.getVideoPlaylistWithToken(servers[0].url, servers[0].accessToken, videoPlaylistUUID);
                 expect(res3.body.displayName).to.equal('channel playlist');
                 expect(res3.body.privacy.id).to.equal(3);
-                yield extra_utils_1.getVideoPlaylist(servers[1].url, videoPlaylistUUID, 404);
+                yield extra_utils_1.getVideoPlaylist(servers[1].url, videoPlaylistUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should delete an account and delete its playlists', function () {

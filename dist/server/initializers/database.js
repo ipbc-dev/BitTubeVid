@@ -4,12 +4,12 @@ exports.sequelizeTypescript = exports.checkDatabaseConnectionOrDie = exports.ini
 const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const abuse_1 = require("@server/models/abuse/abuse");
-const abuse_message_1 = require("@server/models/abuse/abuse-message");
-const video_abuse_1 = require("@server/models/abuse/video-abuse");
-const video_comment_abuse_1 = require("@server/models/abuse/video-comment-abuse");
 const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
+const abuse_1 = require("../models/abuse/abuse");
+const abuse_message_1 = require("../models/abuse/abuse-message");
+const video_abuse_1 = require("../models/abuse/video-abuse");
+const video_comment_abuse_1 = require("../models/abuse/video-comment-abuse");
 const account_1 = require("../models/account/account");
 const account_blocklist_1 = require("../models/account/account-blocklist");
 const account_video_rate_1 = require("../models/account/account-video-rate");
@@ -36,6 +36,7 @@ const video_channel_1 = require("../models/video/video-channel");
 const video_comment_1 = require("../models/video/video-comment");
 const video_file_1 = require("../models/video/video-file");
 const video_import_1 = require("../models/video/video-import");
+const video_live_1 = require("../models/video/video-live");
 const video_playlist_1 = require("../models/video/video-playlist");
 const video_playlist_element_1 = require("../models/video/video-playlist-element");
 const thumbnail_1 = require("../models/video/thumbnail");
@@ -121,6 +122,7 @@ function initDatabaseModels(silent) {
             video_view_1.VideoViewModel,
             video_redundancy_1.VideoRedundancyModel,
             user_video_history_1.UserVideoHistoryModel,
+            video_live_1.VideoLiveModel,
             account_blocklist_1.AccountBlocklistModel,
             server_blocklist_1.ServerBlocklistModel,
             user_notification_1.UserNotificationModel,

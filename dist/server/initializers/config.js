@@ -194,10 +194,33 @@ const CONFIG = {
             get ENABLED() { return config.get('transcoding.webtorrent.enabled'); }
         }
     },
+    LIVE: {
+        get ENABLED() { return config.get('live.enabled'); },
+        get MAX_DURATION() { return core_utils_1.parseDurationToMs(config.get('live.max_duration')); },
+        get MAX_INSTANCE_LIVES() { return config.get('live.max_instance_lives'); },
+        get MAX_USER_LIVES() { return config.get('live.max_user_lives'); },
+        get ALLOW_REPLAY() { return config.get('live.allow_replay'); },
+        RTMP: {
+            get PORT() { return config.get('live.rtmp.port'); }
+        },
+        TRANSCODING: {
+            get ENABLED() { return config.get('live.transcoding.enabled'); },
+            get THREADS() { return config.get('live.transcoding.threads'); },
+            RESOLUTIONS: {
+                get '240p'() { return config.get('live.transcoding.resolutions.240p'); },
+                get '360p'() { return config.get('live.transcoding.resolutions.360p'); },
+                get '480p'() { return config.get('live.transcoding.resolutions.480p'); },
+                get '720p'() { return config.get('live.transcoding.resolutions.720p'); },
+                get '1080p'() { return config.get('live.transcoding.resolutions.1080p'); },
+                get '2160p'() { return config.get('live.transcoding.resolutions.2160p'); }
+            }
+        }
+    },
     IMPORT: {
         VIDEOS: {
             HTTP: {
                 get ENABLED() { return config.get('import.videos.http.enabled'); },
+                get FORCE_IPV4() { return config.get('import.videos.http.force_ipv4'); },
                 PROXY: {
                     get ENABLED() { return config.get('import.videos.http.proxy.enabled'); },
                     get URL() { return config.get('import.videos.http.proxy.url'); }

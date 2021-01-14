@@ -4,17 +4,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActorFollowModel = void 0;
 const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const misc_1 = require("@server/helpers/custom-validators/activitypub/misc");
+const application_1 = require("@server/models/application/application");
+const video_1 = require("@server/models/video/video");
 const logger_1 = require("../../helpers/logger");
 const constants_1 = require("../../initializers/constants");
+const account_1 = require("../account/account");
 const server_1 = require("../server/server");
 const utils_1 = require("../utils");
-const actor_1 = require("./actor");
 const video_channel_1 = require("../video/video-channel");
-const account_1 = require("../account/account");
-const sequelize_1 = require("sequelize");
-const video_1 = require("@server/models/video/video");
-const application_1 = require("@server/models/application/application");
+const actor_1 = require("./actor");
 let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends sequelize_typescript_1.Model {
     static incrementFollowerAndFollowingCount(instance, options) {
         if (instance.state !== 'accepted')
@@ -164,7 +165,7 @@ let ActorFollowModel = ActorFollowModel_1 = class ActorFollowModel extends seque
             };
         });
         const query = {
-            attributes: [],
+            attributes: ['id'],
             where: {
                 [sequelize_1.Op.and]: [
                     {
@@ -544,6 +545,12 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:type", Number)
 ], ActorFollowModel.prototype, "score", void 0);
 tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Is('ActorFollowUrl', value => utils_1.throwIfNotValid(value, misc_1.isActivityPubUrlValid, 'url')),
+    sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.COMMONS.URL.max)),
+    tslib_1.__metadata("design:type", String)
+], ActorFollowModel.prototype, "url", void 0);
+tslib_1.__decorate([
     sequelize_typescript_1.CreatedAt,
     tslib_1.__metadata("design:type", Date)
 ], ActorFollowModel.prototype, "createdAt", void 0);
@@ -612,6 +619,10 @@ ActorFollowModel = ActorFollowModel_1 = tslib_1.__decorate([
             },
             {
                 fields: ['score']
+            },
+            {
+                fields: ['url'],
+                unique: true
             }
         ]
     })

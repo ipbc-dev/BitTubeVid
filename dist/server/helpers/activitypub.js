@@ -35,6 +35,15 @@ function getContextData(type) {
                 subtitleLanguage: 'sc:subtitleLanguage',
                 sensitive: 'as:sensitive',
                 language: 'sc:inLanguage',
+                isLiveBroadcast: 'sc:isLiveBroadcast',
+                liveSaveReplay: {
+                    '@type': 'sc:Boolean',
+                    '@id': 'pt:liveSaveReplay'
+                },
+                permanentLive: {
+                    '@type': 'sc:Boolean',
+                    '@id': 'pt:permanentLive'
+                },
                 Infohash: 'pt:Infohash',
                 Playlist: 'pt:Playlist',
                 PlaylistElement: 'pt:PlaylistElement',

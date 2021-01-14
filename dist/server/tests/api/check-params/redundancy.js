@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test server redundancy API validators', function () {
     let servers;
     let userAccessToken = null;
@@ -10,7 +11,7 @@ describe('Test server redundancy API validators', function () {
     let videoIdRemote;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(60000);
+            this.timeout(80000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
             yield extra_utils_1.doubleFollow(servers[0], servers[1]);
@@ -36,12 +37,12 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should fail with an invalid token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url, path, token: 'fake_token', statusCodeExpected: 401 });
+                yield extra_utils_1.makeGetRequest({ url, path, token: 'fake_token', statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail if the user is not an administrator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url, path, token: userAccessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makeGetRequest({ url, path, token: userAccessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should fail with a bad start pagination', function () {
@@ -71,7 +72,7 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url, path, token, query: { target: 'my-videos' }, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url, path, token, query: { target: 'my-videos' }, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -85,12 +86,12 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should fail with an invalid token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makePostBodyRequest({ url, path, token: 'fake_token', statusCodeExpected: 401 });
+                yield extra_utils_1.makePostBodyRequest({ url, path, token: 'fake_token', statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail if the user is not an administrator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makePostBodyRequest({ url, path, token: userAccessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makePostBodyRequest({ url, path, token: userAccessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should fail without a video id', function () {
@@ -105,7 +106,7 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should fail with a not found video id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: 6565 }, statusCodeExpected: 404 });
+                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: 6565 }, statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
             });
         });
         it('Should fail with a local a video id', function () {
@@ -115,14 +116,14 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: videoIdRemote }, statusCodeExpected: 204 });
+                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: videoIdRemote }, statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 });
             });
         });
         it('Should fail if the video is already duplicated', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 yield extra_utils_1.waitJobs(servers);
-                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: videoIdRemote }, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({ url, path, token, fields: { videoId: videoIdRemote }, statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409 });
             });
         });
     });
@@ -136,12 +137,12 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should fail with an invalid token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeDeleteRequest({ url, path: path + '1', token: 'fake_token', statusCodeExpected: 401 });
+                yield extra_utils_1.makeDeleteRequest({ url, path: path + '1', token: 'fake_token', statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail if the user is not an administrator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeDeleteRequest({ url, path: path + '1', token: userAccessToken, statusCodeExpected: 403 });
+                yield extra_utils_1.makeDeleteRequest({ url, path: path + '1', token: userAccessToken, statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should fail with an incorrect video id', function () {
@@ -151,7 +152,7 @@ describe('Test server redundancy API validators', function () {
         });
         it('Should fail with a not found video redundancy', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeDeleteRequest({ url, path: path + '454545', token, statusCodeExpected: 404 });
+                yield extra_utils_1.makeDeleteRequest({ url, path: path + '454545', token, statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
             });
         });
     });
@@ -164,7 +165,7 @@ describe('Test server redundancy API validators', function () {
                     path: path + '/localhost:' + servers[1].port,
                     fields: { redundancyAllowed: true },
                     token: 'fake_token',
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -175,7 +176,7 @@ describe('Test server redundancy API validators', function () {
                     path: path + '/localhost:' + servers[1].port,
                     fields: { redundancyAllowed: true },
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -186,7 +187,7 @@ describe('Test server redundancy API validators', function () {
                     path: path + '/example.com',
                     fields: { redundancyAllowed: true },
                     token: servers[0].accessToken,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -197,7 +198,7 @@ describe('Test server redundancy API validators', function () {
                     path: path + '/localhost:' + servers[1].port,
                     fields: { blabla: true },
                     token: servers[0].accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -208,7 +209,7 @@ describe('Test server redundancy API validators', function () {
                     path: path + '/localhost:' + servers[1].port,
                     fields: { redundancyAllowed: true },
                     token: servers[0].accessToken,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });

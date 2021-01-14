@@ -26,20 +26,20 @@ function resolveThread(params) {
             params.commentCreated = false;
         if (params.comments === undefined)
             params.comments = [];
-        if (isVideo !== true) {
+        if (isVideo === false || isVideo === undefined) {
             const result = yield resolveCommentFromDB(params);
             if (result)
                 return result;
         }
         try {
-            if (isVideo !== false)
+            if (isVideo === true || isVideo === undefined) {
                 return yield tryResolveThreadFromVideo(params);
-            return resolveParentComment(params);
+            }
         }
         catch (err) {
             logger_1.logger.debug('Cannot get or create account and video and channel for reply %s, fetch comment', url, { err });
-            return resolveParentComment(params);
         }
+        return resolveParentComment(params);
     });
 }
 exports.resolveThread = resolveThread;
@@ -68,6 +68,9 @@ function tryResolveThreadFromVideo(params) {
         const { url, comments, commentCreated } = params;
         const syncParam = { likes: true, dislikes: true, shares: true, comments: false, thumbnail: true, refreshVideo: false };
         const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: url, syncParam });
+        if (video.isOwned() && !video.hasPrivacyForFederation()) {
+            throw new Error('Cannot resolve thread of video with privacy that is not compatible with federation');
+        }
         let resultComment;
         if (comments.length !== 0) {
             const firstReply = comments[comments.length - 1];

@@ -55,6 +55,12 @@ function sanitizeAndCheckVideoTorrentObject(video) {
         video.downloadEnabled = true;
     if (!misc_1.isBooleanValid(video.commentsEnabled))
         video.commentsEnabled = false;
+    if (!misc_1.isBooleanValid(video.isLiveBroadcast))
+        video.isLiveBroadcast = false;
+    if (!misc_1.isBooleanValid(video.liveSaveReplay))
+        video.liveSaveReplay = false;
+    if (!misc_1.isBooleanValid(video.permanentLive))
+        video.permanentLive = false;
     return misc_2.isActivityPubUrlValid(video.id) &&
         videos_1.isVideoNameValid(video.name) &&
         isActivityPubVideoDurationValid(video.duration) &&
@@ -64,13 +70,10 @@ function sanitizeAndCheckVideoTorrentObject(video) {
         (!video.language || isRemoteStringIdentifierValid(video.language)) &&
         videos_1.isVideoViewsValid(video.views) &&
         misc_1.isBooleanValid(video.sensitive) &&
-        misc_1.isBooleanValid(video.commentsEnabled) &&
-        misc_1.isBooleanValid(video.downloadEnabled) &&
         misc_1.isDateValid(video.published) &&
         misc_1.isDateValid(video.updated) &&
         (!video.originallyPublishedAt || misc_1.isDateValid(video.originallyPublishedAt)) &&
         (!video.content || isRemoteVideoContentValid(video.mediaType, video.content)) &&
-        video.url.length !== 0 &&
         video.attributedTo.length !== 0;
 }
 exports.sanitizeAndCheckVideoTorrentObject = sanitizeAndCheckVideoTorrentObject;

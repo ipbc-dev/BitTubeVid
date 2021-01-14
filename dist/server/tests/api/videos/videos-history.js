@@ -5,6 +5,7 @@ const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const video_history_1 = require("../../../../shared/extra-utils/videos/video-history");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test videos history', function () {
     let server = null;
@@ -135,7 +136,7 @@ describe('Test videos history', function () {
                 accessToken: server.accessToken,
                 videosHistoryEnabled: false
             });
-            yield video_history_1.userWatchVideo(server.url, server.accessToken, video2UUID, 8, 409);
+            yield video_history_1.userWatchVideo(server.url, server.accessToken, video2UUID, 8, http_error_codes_1.HttpStatusCode.CONFLICT_409);
         });
     });
     it('Should re-enable videos history', function () {

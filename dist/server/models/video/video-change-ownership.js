@@ -5,8 +5,8 @@ exports.VideoChangeOwnershipModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const account_1 = require("../account/account");
-const video_1 = require("./video");
 const utils_1 = require("../utils");
+const video_1 = require("./video");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_ACCOUNTS"] = "WITH_ACCOUNTS";

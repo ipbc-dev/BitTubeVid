@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.oauthClientsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const logger_1 = require("../../helpers/logger");
 const config_1 = require("../../initializers/config");
 const middlewares_1 = require("../../middlewares");
@@ -20,7 +21,7 @@ function getLocalClient(req, res, next) {
         }
         if (process.env.NODE_ENV !== 'test' && req.get('host') !== headerHostShouldBe) {
             logger_1.logger.info('Getting client tokens for host %s is forbidden (expected %s).', req.get('host'), headerHostShouldBe);
-            return res.type('json').status(403).end();
+            return res.type('json').status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403).end();
         }
         const client = yield oauth_client_1.OAuthClientModel.loadFirstClient();
         if (!client)

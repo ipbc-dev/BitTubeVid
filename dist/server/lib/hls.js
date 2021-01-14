@@ -1,20 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateStreamingPlaylistsInfohashesIfNeeded = exports.downloadPlaylistSegments = exports.updateSha256Segments = exports.updateMasterHLSPlaylist = void 0;
+exports.updateStreamingPlaylistsInfohashesIfNeeded = exports.downloadPlaylistSegments = exports.buildSha256Segment = exports.updateSha256VODSegments = exports.updateMasterHLSPlaylist = void 0;
 const tslib_1 = require("tslib");
-const path_1 = require("path");
-const constants_1 = require("../initializers/constants");
 const fs_extra_1 = require("fs-extra");
-const ffmpeg_utils_1 = require("../helpers/ffmpeg-utils");
+const lodash_1 = require("lodash");
+const path_1 = require("path");
 const core_utils_1 = require("../helpers/core-utils");
-const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
+const ffprobe_utils_1 = require("../helpers/ffprobe-utils");
 const logger_1 = require("../helpers/logger");
 const requests_1 = require("../helpers/requests");
 const utils_1 = require("../helpers/utils");
-const lodash_1 = require("lodash");
-const video_file_1 = require("../models/video/video-file");
 const config_1 = require("../initializers/config");
+const constants_1 = require("../initializers/constants");
 const database_1 = require("../initializers/database");
+const video_file_1 = require("../models/video/video-file");
+const video_streaming_playlist_1 = require("../models/video/video-streaming-playlist");
 const video_paths_1 = require("./video-paths");
 function updateStreamingPlaylistsInfohashesIfNeeded() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -41,15 +41,15 @@ function updateMasterHLSPlaylist(video) {
             if ((yield fs_extra_1.pathExists(filePlaylistPath)) === false)
                 continue;
             const videoFilePath = video_paths_1.getVideoFilePath(streamingPlaylist, file);
-            const size = yield ffmpeg_utils_1.getVideoStreamSize(videoFilePath);
+            const size = yield ffprobe_utils_1.getVideoStreamSize(videoFilePath);
             const bandwidth = 'BANDWIDTH=' + video.getBandwidthBits(file);
             const resolution = `RESOLUTION=${size.width}x${size.height}`;
             let line = `#EXT-X-STREAM-INF:${bandwidth},${resolution}`;
             if (file.fps)
                 line += ',FRAME-RATE=' + file.fps;
-            const videoCodec = yield ffmpeg_utils_1.getVideoStreamCodec(videoFilePath);
+            const videoCodec = yield ffprobe_utils_1.getVideoStreamCodec(videoFilePath);
             line += `,CODECS="${videoCodec}`;
-            const audioCodec = yield ffmpeg_utils_1.getAudioStreamCodec(videoFilePath);
+            const audioCodec = yield ffprobe_utils_1.getAudioStreamCodec(videoFilePath);
             if (audioCodec)
                 line += `,${audioCodec}`;
             line += '"';
@@ -60,7 +60,7 @@ function updateMasterHLSPlaylist(video) {
     });
 }
 exports.updateMasterHLSPlaylist = updateMasterHLSPlaylist;
-function updateSha256Segments(video) {
+function updateSha256VODSegments(video) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const json = {};
         const playlistDirectory = path_1.join(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid);
@@ -87,19 +87,14 @@ function updateSha256Segments(video) {
         yield fs_extra_1.outputJSON(outputPath, json);
     });
 }
-exports.updateSha256Segments = updateSha256Segments;
-function getRangesFromPlaylist(playlistContent) {
-    const ranges = [];
-    const lines = playlistContent.split('\n');
-    const regex = /^#EXT-X-BYTERANGE:(\d+)@(\d+)$/;
-    for (const line of lines) {
-        const captured = regex.exec(line);
-        if (captured) {
-            ranges.push({ length: parseInt(captured[1], 10), offset: parseInt(captured[2], 10) });
-        }
-    }
-    return ranges;
+exports.updateSha256VODSegments = updateSha256VODSegments;
+function buildSha256Segment(segmentPath) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const buf = yield fs_extra_1.readFile(segmentPath);
+        return core_utils_1.sha256(buf);
+    });
 }
+exports.buildSha256Segment = buildSha256Segment;
 function downloadPlaylistSegments(playlistUrl, destinationDir, timeout) {
     let timer;
     logger_1.logger.info('Importing HLS playlist %s', playlistUrl);
@@ -150,3 +145,15 @@ function downloadPlaylistSegments(playlistUrl, destinationDir, timeout) {
     }
 }
 exports.downloadPlaylistSegments = downloadPlaylistSegments;
+function getRangesFromPlaylist(playlistContent) {
+    const ranges = [];
+    const lines = playlistContent.split('\n');
+    const regex = /^#EXT-X-BYTERANGE:(\d+)@(\d+)$/;
+    for (const line of lines) {
+        const captured = regex.exec(line);
+        if (captured) {
+            ranges.push({ length: parseInt(captured[1], 10), offset: parseInt(captured[2], 10) });
+        }
+    }
+    return ranges;
+}

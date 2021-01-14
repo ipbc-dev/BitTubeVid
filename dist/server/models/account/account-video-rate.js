@@ -6,13 +6,13 @@ const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
-const video_1 = require("../video/video");
-const account_1 = require("./account");
 const actor_1 = require("../activitypub/actor");
 const utils_1 = require("../utils");
-const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
+const video_1 = require("../video/video");
 const video_channel_1 = require("../video/video-channel");
+const account_1 = require("./account");
 let AccountVideoRateModel = AccountVideoRateModel_1 = class AccountVideoRateModel extends sequelize_typescript_1.Model {
     static load(accountId, videoId, transaction) {
         const options = {
@@ -84,7 +84,8 @@ let AccountVideoRateModel = AccountVideoRateModel_1 = class AccountVideoRateMode
                             model: actor_1.ActorModel.unscoped(),
                             required: true,
                             where: {
-                                preferredUsername: accountName
+                                preferredUsername: accountName,
+                                serverId: null
                             }
                         }
                     ]
@@ -150,17 +151,20 @@ let AccountVideoRateModel = AccountVideoRateModel_1 = class AccountVideoRateMode
                 },
                 transaction: t
             };
-            const deleted = yield AccountVideoRateModel_1.destroy(query);
-            const options = {
+            yield AccountVideoRateModel_1.destroy(query);
+            const field = type === 'like'
+                ? 'likes'
+                : 'dislikes';
+            const rawQuery = `UPDATE "video" SET "${field}" = ` +
+                '(' +
+                'SELECT COUNT(id) FROM "accountVideoRate" WHERE "accountVideoRate"."videoId" = "video"."id" AND type = :rateType' +
+                ') ' +
+                'WHERE "video"."id" = :videoId';
+            return AccountVideoRateModel_1.sequelize.query(rawQuery, {
                 transaction: t,
-                where: {
-                    id: videoId
-                }
-            };
-            if (type === 'like')
-                yield video_1.VideoModel.increment({ likes: -deleted }, options);
-            else if (type === 'dislike')
-                yield video_1.VideoModel.increment({ dislikes: -deleted }, options);
+                replacements: { videoId, rateType: type },
+                type: sequelize_1.QueryTypes.UPDATE
+            });
         }));
     }
     toFormattedJSON() {

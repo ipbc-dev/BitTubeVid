@@ -5,6 +5,7 @@ const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test video change ownership - nominal', function () {
     let servers = [];
@@ -105,7 +106,7 @@ describe('Test video change ownership - nominal', function () {
     it('Should not be possible to refuse the change of ownership from first user', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
-            yield extra_utils_1.refuseChangeOwnership(servers[0].url, firstUserAccessToken, lastRequestChangeOwnershipId, 403);
+            yield extra_utils_1.refuseChangeOwnership(servers[0].url, firstUserAccessToken, lastRequestChangeOwnershipId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should be possible to refuse the change of ownership from second user', function () {
@@ -139,7 +140,7 @@ describe('Test video change ownership - nominal', function () {
             const secondUserInformationResponse = yield extra_utils_1.getMyUserInformation(servers[0].url, secondUserAccessToken);
             const secondUserInformation = secondUserInformationResponse.body;
             const channelId = secondUserInformation.videoChannels[0].id;
-            yield extra_utils_1.acceptChangeOwnership(servers[0].url, firstUserAccessToken, lastRequestChangeOwnershipId, channelId, 403);
+            yield extra_utils_1.acceptChangeOwnership(servers[0].url, firstUserAccessToken, lastRequestChangeOwnershipId, channelId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should be possible to accept the change of ownership from second user', function () {
@@ -242,7 +243,7 @@ describe('Test video change ownership - quota too small', function () {
             const secondUserInformationResponse = yield extra_utils_1.getMyUserInformation(server.url, secondUserAccessToken);
             const secondUserInformation = secondUserInformationResponse.body;
             const channelId = secondUserInformation.videoChannels[0].id;
-            yield extra_utils_1.acceptChangeOwnership(server.url, secondUserAccessToken, lastRequestChangeOwnershipId, channelId, 403);
+            yield extra_utils_1.acceptChangeOwnership(server.url, secondUserAccessToken, lastRequestChangeOwnershipId, channelId, http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413);
         });
     });
     after(function () {

@@ -6,6 +6,7 @@ const Bluebird = require("bluebird");
 const lodash_1 = require("lodash");
 const magnetUtil = require("magnet-uri");
 const path_1 = require("path");
+const video_live_1 = require("@server/models/video/video-live");
 const activitypub_1 = require("../../helpers/activitypub");
 const videos_1 = require("../../helpers/custom-validators/activitypub/videos");
 const misc_1 = require("../../helpers/custom-validators/misc");
@@ -17,7 +18,6 @@ const video_1 = require("../../helpers/video");
 const constants_1 = require("../../initializers/constants");
 const database_1 = require("../../initializers/database");
 const account_video_rate_1 = require("../../models/account/account-video-rate");
-const tag_1 = require("../../models/video/tag");
 const video_2 = require("../../models/video/video");
 const video_caption_1 = require("../../models/video/video-caption");
 const video_comment_1 = require("../../models/video/video-comment");
@@ -27,7 +27,9 @@ const video_streaming_playlist_1 = require("../../models/video/video-streaming-p
 const files_cache_1 = require("../files-cache");
 const job_queue_1 = require("../job-queue");
 const notifier_1 = require("../notifier");
+const peertube_socket_1 = require("../peertube-socket");
 const thumbnail_1 = require("../thumbnail");
+const video_3 = require("../video");
 const video_blacklist_1 = require("../video-blacklist");
 const actor_1 = require("./actor");
 const crawl_1 = require("./crawl");
@@ -35,11 +37,12 @@ const send_1 = require("./send");
 const share_1 = require("./share");
 const video_comments_1 = require("./video-comments");
 const video_rates_1 = require("./video-rates");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
         if ((video.isBlacklisted() === false || (isNewVideo === false && video.VideoBlacklist.unfederated === false)) &&
-            video.hasPrivacyForFederation() && video.state === 1) {
+            video.hasPrivacyForFederation() && video.hasStateForFederation()) {
             if (misc_1.isArray(video.VideoCaptions) === false) {
                 video.VideoCaptions = yield video.$get('VideoCaptions', {
                     attributes: ['language'],
@@ -191,7 +194,7 @@ exports.getOrCreateVideoAndAccountAndChannel = getOrCreateVideoAndAccountAndChan
 function updateVideoFromAP(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { video, videoObject, account, channel, overrideTo } = options;
-        logger_1.logger.debug('Updating remote video "%s".', options.videoObject.uuid, { account, channel });
+        logger_1.logger.debug('Updating remote video "%s".', options.videoObject.uuid, { videoObject: options.videoObject, account, channel });
         let videoFieldsSave;
         const wasPrivateVideo = video.privacy === 3;
         const wasUnlistedVideo = video.privacy === 2;
@@ -232,6 +235,8 @@ function updateVideoFromAP(options) {
                 video.privacy = videoData.privacy;
                 video.channelId = videoData.channelId;
                 video.views = videoData.views;
+                video.isLive = videoData.isLive;
+                video.changed('updatedAt', true);
                 const videoUpdated = yield video.save(sequelizeOptions);
                 if (thumbnailModel)
                     yield videoUpdated.addAndSaveThumbnail(thumbnailModel, t);
@@ -274,8 +279,7 @@ function updateVideoFromAP(options) {
                     const tags = videoObject.tag
                         .filter(isAPHashTagObject)
                         .map(tag => tag.name);
-                    const tagInstances = yield tag_1.TagModel.findOrCreateTags(tags, t);
-                    yield videoUpdated.$set('Tags', tagInstances, sequelizeOptions);
+                    yield video_3.setVideoTags({ video: videoUpdated, tags, transaction: t, defaultValue: videoUpdated.Tags });
                 }
                 {
                     yield video_caption_1.VideoCaptionModel.deleteAllCaptionsOfRemoteVideo(videoUpdated.id, t);
@@ -283,6 +287,25 @@ function updateVideoFromAP(options) {
                         return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, c.url, t);
                     });
                     yield Promise.all(videoCaptionsPromises);
+                }
+                {
+                    if (video.isLive) {
+                        const [videoLive] = yield video_live_1.VideoLiveModel.upsert({
+                            saveReplay: videoObject.liveSaveReplay,
+                            permanentLive: videoObject.permanentLive,
+                            videoId: video.id
+                        }, { transaction: t, returning: true });
+                        videoUpdated.VideoLive = videoLive;
+                    }
+                    else {
+                        yield video_live_1.VideoLiveModel.destroy({
+                            where: {
+                                videoId: video.id
+                            },
+                            transaction: t
+                        });
+                        videoUpdated.VideoLive = null;
+                    }
                 }
                 return videoUpdated;
             }));
@@ -295,6 +318,10 @@ function updateVideoFromAP(options) {
             });
             if (wasPrivateVideo || wasUnlistedVideo)
                 notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoUpdated);
+            if (videoUpdated.isLive) {
+                peertube_socket_1.PeerTubeSocket.Instance.sendVideoLiveNewState(videoUpdated);
+                peertube_socket_1.PeerTubeSocket.Instance.sendVideoViewsUpdate(videoUpdated);
+            }
             logger_1.logger.info('Remote video with uuid %s updated', videoObject.uuid);
             return videoUpdated;
         }
@@ -317,7 +344,7 @@ function refreshVideoIfNeeded(options) {
             : yield video_2.VideoModel.loadByUrlAndPopulateAccount(options.video.url);
         try {
             const { response, videoObject } = yield fetchRemoteVideo(video.url);
-            if (response.statusCode === 404) {
+            if (response.statusCode === http_error_codes_1.HttpStatusCode.NOT_FOUND_404) {
                 logger_1.logger.info('Cannot refresh remote video %s: video does not exist anymore. Deleting it.', video.url);
                 yield video.destroy();
                 return undefined;
@@ -406,14 +433,21 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
             const tags = videoObject.tag
                 .filter(isAPHashTagObject)
                 .map(t => t.name);
-            const tagInstances = yield tag_1.TagModel.findOrCreateTags(tags, t);
-            yield videoCreated.$set('Tags', tagInstances, sequelizeOptions);
+            yield video_3.setVideoTags({ video: videoCreated, tags, transaction: t });
             const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
                 return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, c.url, t);
             });
             yield Promise.all(videoCaptionsPromises);
             videoCreated.VideoFiles = videoFiles;
-            videoCreated.Tags = tagInstances;
+            if (videoCreated.isLive) {
+                const videoLive = new video_live_1.VideoLiveModel({
+                    streamKey: null,
+                    saveReplay: videoObject.liveSaveReplay,
+                    permanentLive: videoObject.permanentLive,
+                    videoId: videoCreated.id
+                });
+                videoCreated.VideoLive = yield videoLive.save({ transaction: t });
+            }
             const autoBlacklisted = yield video_blacklist_1.autoBlacklistVideoIfNeeded({
                 video: videoCreated,
                 user: undefined,
@@ -463,6 +497,7 @@ function videoActivityObjectToDBAttributes(videoChannel, videoObject, to = []) {
         commentsEnabled: videoObject.commentsEnabled,
         downloadEnabled: videoObject.downloadEnabled,
         waitTranscoding: videoObject.waitTranscoding,
+        isLive: videoObject.isLiveBroadcast,
         state: videoObject.state,
         channelId: videoChannel.id,
         duration: parseInt(duration, 10),

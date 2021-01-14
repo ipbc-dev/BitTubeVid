@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.execPromise = exports.execPromise2 = exports.getPublicKey = exports.createPrivateKey = exports.randomBytesPromise = exports.promisify2 = exports.promisify1 = exports.promisify0 = exports.sha1 = exports.sha256 = exports.peertubeTruncate = exports.execShell = exports.buildPath = exports.sanitizeHost = exports.sanitizeUrl = exports.pageToStartAndCount = exports.escapeHTML = exports.root = exports.objectConverter = exports.getAppNumber = exports.isProdInstance = exports.isTestInstance = exports.parseBytes = exports.parseDurationToMs = void 0;
+exports.execPromise = exports.execPromise2 = exports.getPublicKey = exports.createPrivateKey = exports.randomBytesPromise = exports.promisify2 = exports.promisify1 = exports.promisify0 = exports.mapToJSON = exports.sha1 = exports.sha256 = exports.peertubeTruncate = exports.execShell = exports.buildPath = exports.sanitizeHost = exports.sanitizeUrl = exports.pageToStartAndCount = exports.escapeHTML = exports.root = exports.objectConverter = exports.getAppNumber = exports.isProdInstance = exports.isTestInstance = exports.parseBytes = exports.parseDurationToMs = void 0;
 const crypto_1 = require("crypto");
 const path_1 = require("path");
 const pem = require("pem");
@@ -32,6 +32,8 @@ const timeTable = {
     month: 3600000 * 24 * 30
 };
 function parseDurationToMs(duration) {
+    if (duration === null)
+        return null;
     if (typeof duration === 'number')
         return duration;
     if (typeof duration === 'string') {
@@ -161,6 +163,14 @@ function pageToStartAndCount(page, itemsPerPage) {
     return { start, count: itemsPerPage };
 }
 exports.pageToStartAndCount = pageToStartAndCount;
+function mapToJSON(map) {
+    const obj = {};
+    for (const [k, v] of map) {
+        obj[k] = v;
+    }
+    return obj;
+}
+exports.mapToJSON = mapToJSON;
 function buildPath(path) {
     if (path_1.isAbsolute(path))
         return path;

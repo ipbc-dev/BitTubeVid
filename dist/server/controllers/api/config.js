@@ -89,7 +89,21 @@ function getConfig(req, res) {
                 webtorrent: {
                     enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
                 },
-                enabledResolutions: getEnabledResolutions()
+                enabledResolutions: getEnabledResolutions('vod')
+            },
+            live: {
+                enabled: config_1.CONFIG.LIVE.ENABLED,
+                allowReplay: config_1.CONFIG.LIVE.ALLOW_REPLAY,
+                maxDuration: config_1.CONFIG.LIVE.MAX_DURATION,
+                maxInstanceLives: config_1.CONFIG.LIVE.MAX_INSTANCE_LIVES,
+                maxUserLives: config_1.CONFIG.LIVE.MAX_USER_LIVES,
+                transcoding: {
+                    enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
+                    enabledResolutions: getEnabledResolutions('live')
+                },
+                rtmp: {
+                    port: config_1.CONFIG.LIVE.RTMP.PORT
+                }
             },
             import: {
                 videos: {
@@ -198,7 +212,7 @@ function deleteCustomConfig(req, res) {
         config_1.reloadConfig();
         client_html_1.ClientHtml.invalidCache();
         const data = customConfig();
-        return res.json(data).end();
+        return res.json(data);
     });
 }
 function updateCustomConfig(req, res) {
@@ -210,7 +224,7 @@ function updateCustomConfig(req, res) {
         client_html_1.ClientHtml.invalidCache();
         const data = customConfig();
         auditLogger.update(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CustomConfigAuditView(data), oldCustomConfigAuditKeys);
-        return res.json(data).end();
+        return res.json(data);
     });
 }
 function getRegisteredThemes() {
@@ -224,9 +238,12 @@ function getRegisteredThemes() {
     }));
 }
 exports.getRegisteredThemes = getRegisteredThemes;
-function getEnabledResolutions() {
-    return Object.keys(config_1.CONFIG.TRANSCODING.RESOLUTIONS)
-        .filter(key => config_1.CONFIG.TRANSCODING.ENABLED && config_1.CONFIG.TRANSCODING.RESOLUTIONS[key] === true)
+function getEnabledResolutions(type) {
+    const transcoding = type === 'vod'
+        ? config_1.CONFIG.TRANSCODING
+        : config_1.CONFIG.LIVE.TRANSCODING;
+    return Object.keys(transcoding.RESOLUTIONS)
+        .filter(key => transcoding.ENABLED && transcoding.RESOLUTIONS[key] === true)
         .map(r => parseInt(r, 10));
 }
 exports.getEnabledResolutions = getEnabledResolutions;
@@ -345,6 +362,25 @@ function customConfig() {
             },
             hls: {
                 enabled: config_1.CONFIG.TRANSCODING.HLS.ENABLED
+            }
+        },
+        live: {
+            enabled: config_1.CONFIG.LIVE.ENABLED,
+            allowReplay: config_1.CONFIG.LIVE.ALLOW_REPLAY,
+            maxDuration: config_1.CONFIG.LIVE.MAX_DURATION,
+            maxInstanceLives: config_1.CONFIG.LIVE.MAX_INSTANCE_LIVES,
+            maxUserLives: config_1.CONFIG.LIVE.MAX_USER_LIVES,
+            transcoding: {
+                enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
+                threads: config_1.CONFIG.LIVE.TRANSCODING.THREADS,
+                resolutions: {
+                    '240p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['240p'],
+                    '360p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['360p'],
+                    '480p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['480p'],
+                    '720p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['720p'],
+                    '1080p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['1080p'],
+                    '2160p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['2160p']
+                }
             }
         },
         import: {

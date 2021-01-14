@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeMyVideosHistory = exports.listMyVideosHistory = exports.userWatchVideo = void 0;
 const requests_1 = require("../requests/requests");
-function userWatchVideo(url, token, videoId, currentTime, statusCodeExpected = 204) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function userWatchVideo(url, token, videoId, currentTime, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + videoId + '/watching';
     const fields = { currentTime };
     return requests_1.makePutBodyRequest({ url, path, token, fields, statusCodeExpected });
@@ -14,7 +15,7 @@ function listMyVideosHistory(url, token) {
         url,
         path,
         token,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.listMyVideosHistory = listMyVideosHistory;
@@ -25,7 +26,7 @@ function removeMyVideosHistory(url, token, beforeDate) {
         path,
         token,
         fields: beforeDate ? { beforeDate } : {},
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.removeMyVideosHistory = removeMyVideosHistory;

@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const requests_1 = require("../../../../shared/extra-utils/requests/requests");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test jobs API validators', function () {
     const path = '/api/v1/jobs/failed';
     let server;
@@ -64,7 +65,7 @@ describe('Test jobs API validators', function () {
                 yield requests_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -74,7 +75,7 @@ describe('Test jobs API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });

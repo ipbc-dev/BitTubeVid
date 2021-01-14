@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isValidJobType = exports.isValidJobState = void 0;
+exports.isValidJobType = exports.isValidJobState = exports.jobStates = void 0;
 const misc_1 = require("./misc");
 const job_queue_1 = require("@server/lib/job-queue/job-queue");
-const jobStates = ['active', 'completed', 'failed', 'waiting', 'delayed'];
+const jobStates = ['active', 'completed', 'failed', 'waiting', 'delayed', 'paused'];
+exports.jobStates = jobStates;
 function isValidJobState(value) {
     return misc_1.exists(value) && jobStates.includes(value);
 }

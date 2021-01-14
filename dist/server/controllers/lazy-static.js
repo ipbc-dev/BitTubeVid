@@ -10,6 +10,7 @@ const middlewares_1 = require("../middlewares");
 const avatar_1 = require("../models/avatar/avatar");
 const logger_1 = require("../helpers/logger");
 const avatar_2 = require("../lib/avatar");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
 const lazyStaticRouter = express.Router();
 exports.lazyStaticRouter = lazyStaticRouter;
 lazyStaticRouter.use(cors());
@@ -24,17 +25,17 @@ function getAvatar(req, res) {
         }
         const avatar = yield avatar_1.AvatarModel.loadByName(filename);
         if (!avatar)
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         if (avatar.onDisk === false) {
             if (!avatar.fileUrl)
-                return res.sendStatus(404);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             logger_1.logger.info('Lazy serve remote avatar image %s.', avatar.fileUrl);
             try {
                 yield avatar_2.pushAvatarProcessInQueue({ filename: avatar.filename, fileUrl: avatar.fileUrl });
             }
             catch (err) {
                 logger_1.logger.warn('Cannot process remote avatar %s.', avatar.fileUrl, { err });
-                return res.sendStatus(404);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             }
             avatar.onDisk = true;
             avatar.save()
@@ -49,7 +50,7 @@ function getPreview(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const result = yield files_cache_1.VideosPreviewCache.Instance.getFilePath(req.params.uuid);
         if (!result)
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         return res.sendFile(result.path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
     });
 }
@@ -61,7 +62,7 @@ function getVideoCaption(req, res) {
             language: req.params.captionLanguage
         });
         if (!result)
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         return res.sendFile(result.path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
     });
 }

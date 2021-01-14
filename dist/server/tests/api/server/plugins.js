@@ -160,15 +160,7 @@ describe('Test plugins', function () {
     });
     it('Should get registered settings', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const res = yield extra_utils_1.getPluginRegisteredSettings({
-                url: server.url,
-                accessToken: server.accessToken,
-                npmName: 'peertube-plugin-hello-world'
-            });
-            const registeredSettings = res.body.registeredSettings;
-            expect(registeredSettings).to.have.length.at.least(1);
-            const adminNameSettings = registeredSettings.find(s => s.name === 'admin-name');
-            expect(adminNameSettings).to.not.be.undefined;
+            yield extra_utils_1.testHelloWorldRegisteredSettings(server);
         });
     });
     it('Should get public settings', function () {

@@ -38,6 +38,12 @@ function setInstance(url, username, password, isDefault) {
 function isURLaPeerTubeInstance(url) {
     return url.startsWith('http://') || url.startsWith('https://');
 }
+function stripExtraneousFromPeerTubeUrl(url) {
+    const urlLength = url.includes('/', 8)
+        ? url.indexOf('/', 8)
+        : url.length;
+    return url.substr(0, urlLength);
+}
 program
     .name('auth')
     .usage('[command] [options]');
@@ -72,6 +78,7 @@ program
         }
     }, (_, result) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         try {
+            result.url = stripExtraneousFromPeerTubeUrl(result.url);
             yield extra_utils_1.getAccessToken(result.url, result.username, result.password);
         }
         catch (err) {

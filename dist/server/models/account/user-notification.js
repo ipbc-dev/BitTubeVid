@@ -103,6 +103,39 @@ let UserNotificationModel = UserNotificationModel_1 = class UserNotificationMode
         const query = { where: { userId } };
         return UserNotificationModel_1.update({ read: true }, query);
     }
+    static removeNotificationsOf(options) {
+        const id = parseInt(options.id + '', 10);
+        function buildAccountWhereQuery(base) {
+            const whereSuffix = options.forUserId
+                ? ` AND "userNotification"."userId" = ${options.forUserId}`
+                : '';
+            if (options.type === 'account') {
+                return base +
+                    ` WHERE "account"."id" = ${id} ${whereSuffix}`;
+            }
+            return base +
+                ` WHERE "actor"."serverId" = ${id} ${whereSuffix}`;
+        }
+        const queries = [
+            buildAccountWhereQuery(`SELECT "userNotification"."id" FROM "userNotification" ` +
+                `INNER JOIN "account" ON "userNotification"."accountId" = "account"."id" ` +
+                `INNER JOIN actor ON "actor"."id" = "account"."actorId" `),
+            buildAccountWhereQuery(`SELECT "userNotification"."id" FROM "userNotification" ` +
+                `INNER JOIN "actorFollow" ON "actorFollow".id = "userNotification"."actorFollowId" ` +
+                `INNER JOIN actor ON actor.id = "actorFollow"."actorId" ` +
+                `INNER JOIN account ON account."actorId" = actor.id `),
+            buildAccountWhereQuery(`SELECT "userNotification"."id" FROM "userNotification" ` +
+                `INNER JOIN "actorFollow" ON "actorFollow".id = "userNotification"."actorFollowId" ` +
+                `INNER JOIN actor ON actor.id = "actorFollow"."actorId" ` +
+                `INNER JOIN account ON account."actorId" = actor.id `),
+            buildAccountWhereQuery(`SELECT "userNotification"."id" FROM "userNotification" ` +
+                `INNER JOIN "videoComment" ON "videoComment".id = "userNotification"."commentId" ` +
+                `INNER JOIN account ON account.id = "videoComment"."accountId" ` +
+                `INNER JOIN actor ON "actor"."id" = "account"."actorId" `)
+        ];
+        const query = `DELETE FROM "userNotification" WHERE id IN (${queries.join(' UNION ')})`;
+        return UserNotificationModel_1.sequelize.query(query);
+    }
     toFormattedJSON() {
         const video = this.Video
             ? Object.assign(this.formatVideo(this.Video), { channel: this.formatActor(this.Video.VideoChannel) })
@@ -371,7 +404,7 @@ UserNotificationModel = UserNotificationModel_1 = tslib_1.__decorate([
                             include: [
                                 {
                                     attributes: ['id', 'originCommentId'],
-                                    model: video_comment_1.VideoCommentModel,
+                                    model: video_comment_1.VideoCommentModel.unscoped(),
                                     required: true,
                                     include: [
                                         {

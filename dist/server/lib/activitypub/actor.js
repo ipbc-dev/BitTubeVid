@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addFetchOutboxJob = exports.updateActorAvatarInstance = exports.refreshActorIfNeeded = exports.updateActorInstance = exports.getAvatarInfoIfExists = exports.fetchActorTotalItems = exports.setAsyncActorKeys = exports.buildActorInstance = exports.getOrCreateActorAndServerAndModel = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const url_1 = require("url");
 const uuid_1 = require("uuid");
 const activitypub_1 = require("../../helpers/activitypub");
@@ -23,6 +24,7 @@ const actor_3 = require("../../helpers/actor");
 const database_1 = require("../../initializers/database");
 const path_1 = require("path");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function setAsyncActorKeys(actor) {
     return peertube_crypto_1.createPrivateAndPublicKeys()
         .then(({ publicKey, privateKey }) => {
@@ -227,7 +229,7 @@ function refreshActorIfNeeded(actorArg, fetchedType) {
                 actorUrl = actor.url;
             }
             const { result, statusCode } = yield fetchRemoteActor(actorUrl);
-            if (statusCode === 404) {
+            if (statusCode === http_error_codes_1.HttpStatusCode.NOT_FOUND_404) {
                 logger_1.logger.info('Deleting actor %s because there is a 404 in refresh actor.', actor.url);
                 actor.Account
                     ? yield actor.Account.destroy()
@@ -298,13 +300,28 @@ function saveActorAndServerAndModelIfNotExist(result, ownerActor, t) {
                 }, { transaction: t });
                 actor.avatarId = avatar.id;
             }
-            const [actorCreated] = yield actor_2.ActorModel.findOrCreate({
+            const [actorCreated, created] = yield actor_2.ActorModel.findOrCreate({
                 defaults: actor.toJSON(),
                 where: {
-                    url: actor.url
+                    [sequelize_1.Op.or]: [
+                        {
+                            url: actor.url
+                        },
+                        {
+                            serverId: actor.serverId,
+                            preferredUsername: actor.preferredUsername
+                        }
+                    ]
                 },
                 transaction: t
             });
+            if (created !== true && actorCreated.url !== actor.url) {
+                if (actorCreated.url.replace(/^http:\/\//, '') !== actor.url.replace(/^https:\/\//, '')) {
+                    throw new Error(`Actor from DB with URL ${actorCreated.url} does not correspond to actor ${actor.url}`);
+                }
+                actorCreated.url = actor.url;
+                yield actorCreated.save({ transaction: t });
+            }
             if (actorCreated.type === 'Person' || actorCreated.type === 'Application') {
                 actorCreated.Account = (yield saveAccount(actorCreated, result, t));
                 actorCreated.Account.Actor = actorCreated;

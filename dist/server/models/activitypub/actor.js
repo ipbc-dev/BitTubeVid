@@ -5,7 +5,9 @@ exports.ActorModel = exports.unusedActorAttributesForAPI = void 0;
 const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 const path_1 = require("path");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const model_cache_1 = require("@server/models/model-cache");
 const activitypub_1 = require("../../helpers/activitypub");
 const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
@@ -14,11 +16,9 @@ const account_1 = require("../account/account");
 const avatar_1 = require("../avatar/avatar");
 const server_1 = require("../server/server");
 const utils_1 = require("../utils");
+const video_1 = require("../video/video");
 const video_channel_1 = require("../video/video-channel");
 const actor_follow_1 = require("./actor-follow");
-const video_1 = require("../video/video");
-const sequelize_1 = require("sequelize");
-const model_cache_1 = require("@server/models/model-cache");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FULL"] = "FULL";
@@ -31,7 +31,6 @@ exports.unusedActorAttributesForAPI = [
     'sharedInboxUrl',
     'followersUrl',
     'followingUrl',
-    'url',
     'createdAt',
     'updatedAt'
 ];

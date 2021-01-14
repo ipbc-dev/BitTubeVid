@@ -82,8 +82,11 @@ class Redis {
             return this.exists(this.generateContactFormKey(ip));
         });
     }
-    setIPVideoView(ip, videoUUID) {
-        return this.setValue(this.generateViewKey(ip, videoUUID), '1', constants_1.VIDEO_VIEW_LIFETIME);
+    setIPVideoView(ip, videoUUID, isLive) {
+        const lifetime = isLive
+            ? constants_1.VIEW_LIFETIME.LIVE
+            : constants_1.VIEW_LIFETIME.VIDEO;
+        return this.setValue(this.generateViewKey(ip, videoUUID), '1', lifetime);
     }
     doesVideoIPViewExist(ip, videoUUID) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -152,7 +155,7 @@ class Redis {
         return `videos-view-h${hour}`;
     }
     generateVideoViewKey(videoId, hour) {
-        if (!hour)
+        if (hour === undefined || hour === null)
             hour = new Date().getHours();
         return `video-view-${videoId}-h${hour}`;
     }

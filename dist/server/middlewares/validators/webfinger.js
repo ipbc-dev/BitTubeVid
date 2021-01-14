@@ -8,6 +8,7 @@ const logger_1 = require("../../helpers/logger");
 const actor_1 = require("../../models/activitypub/actor");
 const utils_1 = require("./utils");
 const express_utils_1 = require("../../helpers/express-utils");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const webfingerValidator = [
     express_validator_1.query('resource').custom(webfinger_1.isWebfingerLocalResourceValid).withMessage('Should have a valid webfinger resource'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -18,7 +19,7 @@ const webfingerValidator = [
         const [name] = nameWithHost.split('@');
         const actor = yield actor_1.ActorModel.loadLocalUrlByName(name);
         if (!actor) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .send({ error: 'Actor not found' })
                 .end();
         }

@@ -8,6 +8,7 @@ const video_blacklist_1 = require("../../../helpers/custom-validators/video-blac
 const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
 const utils_1 = require("../utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videosBlacklistRemoveValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -40,7 +41,7 @@ const videosBlacklistAddValidator = [
         const video = res.locals.videoAll;
         if (req.body.unfederate === true && video.remote === true) {
             return res
-                .status(409)
+                .status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .send({ error: 'You cannot unfederate a remote video.' })
                 .end();
         }

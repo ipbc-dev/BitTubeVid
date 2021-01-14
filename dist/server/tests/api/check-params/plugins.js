@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const plugin_type_1 = require("../../../../shared/models/plugins/plugin.type");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test server plugins API validators', function () {
     let server;
     let userAccessToken = null;
@@ -48,7 +49,7 @@ describe('Test server plugins API validators', function () {
                     '/themes/' + themeName + '/0.0.1/css/assets/style1.css'
                 ];
                 for (const p of paths) {
-                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 404 });
+                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 }
             });
         });
@@ -57,7 +58,7 @@ describe('Test server plugins API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/themes/' + pluginName + '/' + npmVersion + '/static/images/chocobo.png',
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -72,7 +73,7 @@ describe('Test server plugins API validators', function () {
                     '/themes/' + themeName + '/0.a.1/css/assets/style1.css'
                 ];
                 for (const p of paths) {
-                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 400 });
+                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400 });
                 }
             });
         });
@@ -86,14 +87,14 @@ describe('Test server plugins API validators', function () {
                     '/themes/' + themeName + '/' + themeVersion + '/css/../assets/style1.css'
                 ];
                 for (const p of paths) {
-                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 400 });
+                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400 });
                 }
             });
         });
         it('Should fail with an unknown auth name', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = '/plugins/' + pluginName + '/' + npmVersion + '/auth/bad-auth';
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 404 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
             });
         });
         it('Should fail with an unknown static file', function () {
@@ -105,7 +106,7 @@ describe('Test server plugins API validators', function () {
                     '/themes/' + themeName + '/' + themeVersion + '/client-scripts/client/fake.js'
                 ];
                 for (const p of paths) {
-                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 404 });
+                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 }
             });
         });
@@ -114,7 +115,7 @@ describe('Test server plugins API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/themes/' + themeName + '/' + themeVersion + '/css/assets/fake.css',
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -128,10 +129,10 @@ describe('Test server plugins API validators', function () {
                     '/themes/' + themeName + '/' + themeVersion + '/css/assets/style1.css'
                 ];
                 for (const p of paths) {
-                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: 200 });
+                    yield extra_utils_1.makeGetRequest({ url: server.url, path: p, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
                 }
                 const authPath = '/plugins/' + pluginName + '/' + npmVersion + '/auth/fake-auth';
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: authPath, statusCodeExpected: 302 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: authPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.FOUND_302 });
             });
         });
     });
@@ -149,7 +150,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: 'fake_token',
                     query: baseQuery,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -160,7 +161,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: userAccessToken,
                     query: baseQuery,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -208,7 +209,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: server.accessToken,
                     query: baseQuery,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -225,7 +226,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: 'fake_token',
                     query: baseQuery,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -236,7 +237,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: userAccessToken,
                     query: baseQuery,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -273,7 +274,7 @@ describe('Test server plugins API validators', function () {
                     path,
                     token: server.accessToken,
                     query: baseQuery,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -287,7 +288,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 }
             });
@@ -299,7 +300,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 }
             });
@@ -311,7 +312,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
                 for (const suffix of ['peertube-plugin-TOTO', 'peertube-plugin-TOTO/registered-settings', 'peertube-plugin-TOTO/public-settings']) {
@@ -319,7 +320,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
             });
@@ -331,7 +332,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: server.accessToken,
-                        statusCodeExpected: 404
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                     });
                 }
             });
@@ -343,7 +344,7 @@ describe('Test server plugins API validators', function () {
                         url: server.url,
                         path: path + suffix,
                         token: server.accessToken,
-                        statusCodeExpected: 200
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                     });
                 }
             });
@@ -359,7 +360,7 @@ describe('Test server plugins API validators', function () {
                     path: path + npmPlugin + '/settings',
                     fields: { settings },
                     token: 'fake_token',
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -370,7 +371,7 @@ describe('Test server plugins API validators', function () {
                     path: path + npmPlugin + '/settings',
                     fields: { settings },
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -381,14 +382,14 @@ describe('Test server plugins API validators', function () {
                     path: path + 'toto/settings',
                     fields: { settings },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makePutBodyRequest({
                     url: server.url,
                     path: path + 'peertube-plugin-TOTO/settings',
                     fields: { settings },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -399,7 +400,7 @@ describe('Test server plugins API validators', function () {
                     path: path + 'peertube-plugin-toto/settings',
                     fields: { settings },
                     token: server.accessToken,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -410,7 +411,7 @@ describe('Test server plugins API validators', function () {
                     path: path + npmPlugin + '/settings',
                     fields: { settings },
                     token: server.accessToken,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -425,7 +426,7 @@ describe('Test server plugins API validators', function () {
                         path: path + suffix,
                         fields: { npmName: npmPlugin },
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 }
             });
@@ -438,7 +439,7 @@ describe('Test server plugins API validators', function () {
                         path: path + suffix,
                         fields: { npmName: npmPlugin },
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 }
             });
@@ -451,7 +452,7 @@ describe('Test server plugins API validators', function () {
                         path: path + suffix,
                         fields: { npmName: 'toto' },
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
                 for (const suffix of ['install', 'update', 'uninstall']) {
@@ -460,7 +461,7 @@ describe('Test server plugins API validators', function () {
                         path: path + suffix,
                         fields: { npmName: 'peertube-plugin-TOTO' },
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
             });
@@ -469,9 +470,9 @@ describe('Test server plugins API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const it = [
-                    { suffix: 'install', status: 200 },
-                    { suffix: 'update', status: 200 },
-                    { suffix: 'uninstall', status: 204 }
+                    { suffix: 'install', status: http_error_codes_1.HttpStatusCode.OK_200 },
+                    { suffix: 'update', status: http_error_codes_1.HttpStatusCode.OK_200 },
+                    { suffix: 'uninstall', status: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 }
                 ];
                 for (const obj of it) {
                     yield extra_utils_1.makePostBodyRequest({

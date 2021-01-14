@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const requests_1 = require("../../../../shared/extra-utils/requests/requests");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test debug API validators', function () {
     const path = '/api/v1/server/debug';
     let server;
@@ -27,7 +28,7 @@ describe('Test debug API validators', function () {
                 yield requests_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -37,7 +38,7 @@ describe('Test debug API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -48,7 +49,7 @@ describe('Test debug API validators', function () {
                     path,
                     token: server.accessToken,
                     query: { startDate: new Date().toISOString() },
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });

@@ -80,13 +80,15 @@ function processCreateVideoComment(activity, byActor, notify) {
             logger_1.logger.debug('Cannot process video comment because we could not resolve thread %s. Maybe it was not a video thread, so skip it.', commentObject.inReplyTo, { err });
             return;
         }
-        if (video.isOwned() && (yield blocklist_1.isBlockedByServerOrAccount(comment.Account, video.VideoChannel.Account))) {
-            logger_1.logger.info('Skip comment forward from blocked account or server %s.', comment.Account.Actor.url);
-            return;
-        }
-        if (video.isOwned() && created === true) {
-            const exceptions = [byActor];
-            yield utils_1.forwardVideoRelatedActivity(activity, undefined, exceptions, video);
+        if (video.isOwned()) {
+            if (yield blocklist_1.isBlockedByServerOrAccount(comment.Account, video.VideoChannel.Account)) {
+                logger_1.logger.info('Skip comment forward from blocked account or server %s.', comment.Account.Actor.url);
+                return;
+            }
+            if (created === true) {
+                const exceptions = [byActor];
+                yield utils_1.forwardVideoRelatedActivity(activity, undefined, exceptions, video);
+            }
         }
         if (created && notify)
             notifier_1.Notifier.Instance.notifyOnNewComment(comment);

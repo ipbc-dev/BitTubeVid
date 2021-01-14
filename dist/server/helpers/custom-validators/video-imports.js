@@ -7,6 +7,7 @@ const validator_1 = require("validator");
 const constants_1 = require("../../initializers/constants");
 const misc_1 = require("./misc");
 const video_import_1 = require("../../models/video/video-import");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function isVideoImportTargetUrlValid(url) {
     const isURLOptions = {
         require_host: true,
@@ -36,7 +37,7 @@ function doesVideoImportExist(id, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoImport = yield video_import_1.VideoImportModel.loadAndPopulateVideo(id);
         if (!videoImport) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video import not found' })
                 .end();
             return false;

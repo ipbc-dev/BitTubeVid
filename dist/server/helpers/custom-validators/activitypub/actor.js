@@ -60,6 +60,7 @@ function isActorObjectValid(actor) {
         (!actor.following || misc_2.isActivityPubUrlValid(actor.following)) &&
         (!actor.followers || misc_2.isActivityPubUrlValid(actor.followers)) &&
         misc_2.setValidAttributedTo(actor) &&
+        setValidDescription(actor) &&
         (actor.type !== 'Group' || actor.attributedTo.length !== 0);
 }
 exports.isActorObjectValid = isActorObjectValid;
@@ -110,3 +111,8 @@ function areValidActorHandles(handles) {
     return misc_1.isArray(handles) && handles.every(h => isValidActorHandle(h));
 }
 exports.areValidActorHandles = areValidActorHandles;
+function setValidDescription(obj) {
+    if (!obj.summary)
+        obj.summary = null;
+    return true;
+}

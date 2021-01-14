@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
-const extra_utils_1 = require("../../../../shared/extra-utils");
+const chai = require("chai");
 const path_1 = require("path");
+const extra_utils_1 = require("../../../../shared/extra-utils");
 const constants_1 = require("../../../initializers/constants");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function checkHlsPlaylist(servers, videoUUID, hlsOnly, resolutions = [240, 360, 480, 720]) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -29,19 +30,18 @@ function checkHlsPlaylist(servers, videoUUID, hlsOnly, resolutions = [240, 360, 
                 expect(file.torrentUrl).to.equal(`${baseUrl}/static/torrents/${videoDetails.uuid}-${file.resolution.id}-hls.torrent`);
                 expect(file.fileUrl).to.equal(`${baseUrl}/static/streaming-playlists/hls/${videoDetails.uuid}/${videoDetails.uuid}-${file.resolution.id}-fragmented.mp4`);
                 expect(file.resolution.label).to.equal(resolution + 'p');
-                yield extra_utils_1.makeRawRequest(file.torrentUrl, 200);
-                yield extra_utils_1.makeRawRequest(file.fileUrl, 200);
+                yield extra_utils_1.makeRawRequest(file.torrentUrl, http_error_codes_1.HttpStatusCode.OK_200);
+                yield extra_utils_1.makeRawRequest(file.fileUrl, http_error_codes_1.HttpStatusCode.OK_200);
                 const torrent = yield extra_utils_1.webtorrentAdd(file.magnetUri, true);
                 expect(torrent.files).to.be.an('array');
                 expect(torrent.files.length).to.equal(1);
                 expect(torrent.files[0].path).to.exist.and.to.not.equal('');
             }
             {
+                yield extra_utils_1.checkResolutionsInMasterPlaylist(hlsPlaylist.playlistUrl, resolutions);
                 const res = yield extra_utils_1.getPlaylist(hlsPlaylist.playlistUrl);
                 const masterPlaylist = res.text;
                 for (const resolution of resolutions) {
-                    const reg = new RegExp('#EXT-X-STREAM-INF:BANDWIDTH=\\d+,RESOLUTION=\\d+x' + resolution + ',FRAME-RATE=\\d+,CODECS="avc1.64001f,mp4a.40.2"');
-                    expect(masterPlaylist).to.match(reg);
                     expect(masterPlaylist).to.contain(`${resolution}.m3u8`);
                     expect(masterPlaylist).to.contain(`${resolution}.m3u8`);
                 }
@@ -100,8 +100,8 @@ describe('Test HLS videos', function () {
                 yield extra_utils_1.removeVideo(servers[0].url, servers[0].accessToken, videoAudioUUID);
                 yield extra_utils_1.waitJobs(servers);
                 for (const server of servers) {
-                    yield extra_utils_1.getVideo(server.url, videoUUID, 404);
-                    yield extra_utils_1.getVideo(server.url, videoAudioUUID, 404);
+                    yield extra_utils_1.getVideo(server.url, videoUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                    yield extra_utils_1.getVideo(server.url, videoAudioUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 }
             });
         });

@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test services API validators', function () {
     let server;
     let playlistUUID;
@@ -52,7 +53,7 @@ describe('Test services API validators', function () {
         it('Should fail with an unknown element', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/88fc0165-d1f0-4a35-a51a-3b47f668689c`;
-                yield checkParamEmbed(server, embedUrl, 404);
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with an invalid path', function () {
@@ -64,25 +65,25 @@ describe('Test services API validators', function () {
         it('Should fail with an invalid max height', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/${server.video.uuid}`;
-                yield checkParamEmbed(server, embedUrl, 400, { maxheight: 'hello' });
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400, { maxheight: 'hello' });
             });
         });
         it('Should fail with an invalid max width', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/${server.video.uuid}`;
-                yield checkParamEmbed(server, embedUrl, 400, { maxwidth: 'hello' });
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400, { maxwidth: 'hello' });
             });
         });
         it('Should fail with an invalid format', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/${server.video.uuid}`;
-                yield checkParamEmbed(server, embedUrl, 400, { format: 'blabla' });
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400, { format: 'blabla' });
             });
         });
         it('Should fail with a non supported format', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const embedUrl = `http://localhost:${server.port}/videos/watch/${server.video.uuid}`;
-                yield checkParamEmbed(server, embedUrl, 501, { format: 'xml' });
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.NOT_IMPLEMENTED_501, { format: 'xml' });
             });
         });
         it('Should succeed with the correct params with a video', function () {
@@ -93,7 +94,7 @@ describe('Test services API validators', function () {
                     maxheight: 400,
                     maxwidth: 400
                 };
-                yield checkParamEmbed(server, embedUrl, 200, query);
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.OK_200, query);
             });
         });
         it('Should succeed with the correct params with a playlist', function () {
@@ -104,7 +105,7 @@ describe('Test services API validators', function () {
                     maxheight: 400,
                     maxwidth: 400
                 };
-                yield checkParamEmbed(server, embedUrl, 200, query);
+                yield checkParamEmbed(server, embedUrl, http_error_codes_1.HttpStatusCode.OK_200, query);
             });
         });
     });
@@ -114,7 +115,7 @@ describe('Test services API validators', function () {
         });
     });
 });
-function checkParamEmbed(server, embedUrl, statusCodeExpected = 400, query = {}) {
+function checkParamEmbed(server, embedUrl, statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400, query = {}) {
     const path = '/services/oembed';
     return extra_utils_1.makeGetRequest({
         url: server.url,

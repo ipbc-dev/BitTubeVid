@@ -103,17 +103,23 @@ class PluginManager {
             return true;
         });
     }
-    onLogout(npmName, authName, user) {
-        const auth = this.getAuth(npmName, authName);
-        if (auth === null || auth === void 0 ? void 0 : auth.onLogout) {
-            logger_1.logger.info('Running onLogout function from auth %s of plugin %s', authName, npmName);
-            try {
-                auth.onLogout(user);
+    onLogout(npmName, authName, user, req) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const auth = this.getAuth(npmName, authName);
+            if (auth === null || auth === void 0 ? void 0 : auth.onLogout) {
+                logger_1.logger.info('Running onLogout function from auth %s of plugin %s', authName, npmName);
+                try {
+                    const result = yield auth.onLogout(user, req);
+                    return typeof result === 'string'
+                        ? result
+                        : undefined;
+                }
+                catch (err) {
+                    logger_1.logger.warn('Cannot run onLogout function from auth %s of plugin %s.', authName, npmName, { err });
+                }
             }
-            catch (err) {
-                logger_1.logger.warn('Cannot run onLogout function from auth %s of plugin %s.', authName, npmName, { err });
-            }
-        }
+            return undefined;
+        });
     }
     onSettingsChanged(name, settings) {
         const registered = this.getRegisteredPluginByShortName(name);

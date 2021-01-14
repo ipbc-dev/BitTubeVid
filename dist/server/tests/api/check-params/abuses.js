@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test abuses API validators', function () {
     const basePath = '/api/v1/abuses/';
     let server;
@@ -49,7 +50,7 @@ describe('Test abuses API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -59,7 +60,7 @@ describe('Test abuses API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -99,7 +100,7 @@ describe('Test abuses API validators', function () {
                     state: 2,
                     videoIs: 'deleted'
                 };
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: server.accessToken, query, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -125,7 +126,7 @@ describe('Test abuses API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -146,7 +147,7 @@ describe('Test abuses API validators', function () {
                     id: 13,
                     state: 2
                 };
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, query, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, token: userAccessToken, query, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -167,7 +168,13 @@ describe('Test abuses API validators', function () {
         it('Should fail with an unknown video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { video: { id: 42 }, reason: 'my super reason' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path: path, token: userAccessToken, fields, statusCodeExpected: 404 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
+                });
             });
         });
         it('Should fail with a wrong comment', function () {
@@ -179,7 +186,13 @@ describe('Test abuses API validators', function () {
         it('Should fail with an unknown comment', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { comment: { id: 42 }, reason: 'my super reason' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path: path, token: userAccessToken, fields, statusCodeExpected: 404 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
+                });
             });
         });
         it('Should fail with a wrong account', function () {
@@ -191,19 +204,31 @@ describe('Test abuses API validators', function () {
         it('Should fail with an unknown account', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { account: { id: 42 }, reason: 'my super reason' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path: path, token: userAccessToken, fields, statusCodeExpected: 404 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
+                });
             });
         });
         it('Should fail with not account, comment or video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { reason: 'my super reason' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path: path, token: userAccessToken, fields, statusCodeExpected: 400 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
+                });
             });
         });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { video: { id: server.video.id }, reason: 'my super reason' };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: 'hello', fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: 'hello', fields, statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a reason too short', function () {
@@ -221,7 +246,13 @@ describe('Test abuses API validators', function () {
         it('Should succeed with the correct parameters (basic)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = { video: { id: server.video.id }, reason: 'my super reason' };
-                const res = yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: 200 });
+                const res = yield extra_utils_1.makePostBodyRequest({
+                    url: server.url,
+                    path,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
+                });
                 abuseId = res.body.abuse.id;
             });
         });
@@ -254,36 +285,36 @@ describe('Test abuses API validators', function () {
                     reason: 'my super reason',
                     predefinedReasons: ['serverRules']
                 };
-                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: 200 });
+                yield extra_utils_1.makePostBodyRequest({ url: server.url, path, token: userAccessToken, fields, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
     describe('When updating an abuse', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateAbuse(server.url, 'blabla', abuseId, {}, 401);
+                yield extra_utils_1.updateAbuse(server.url, 'blabla', abuseId, {}, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateAbuse(server.url, userAccessToken, abuseId, {}, 403);
+                yield extra_utils_1.updateAbuse(server.url, userAccessToken, abuseId, {}, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with a bad abuse id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateAbuse(server.url, server.accessToken, 45, {}, 404);
+                yield extra_utils_1.updateAbuse(server.url, server.accessToken, 45, {}, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a bad state', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const body = { state: 5 };
-                yield extra_utils_1.updateAbuse(server.url, server.accessToken, abuseId, body, 400);
+                yield extra_utils_1.updateAbuse(server.url, server.accessToken, abuseId, body, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with a bad moderation comment', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const body = { moderationComment: 'b'.repeat(3001) };
-                yield extra_utils_1.updateAbuse(server.url, server.accessToken, abuseId, body, 400);
+                yield extra_utils_1.updateAbuse(server.url, server.accessToken, abuseId, body, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should succeed with the correct params', function () {
@@ -297,22 +328,22 @@ describe('Test abuses API validators', function () {
         const message = 'my super message';
         it('Should fail with an invalid abuse id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken2, 888, message, 404);
+                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken2, 888, message, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.addAbuseMessage(server.url, 'fake_token', abuseId, message, 401);
+                yield extra_utils_1.addAbuseMessage(server.url, 'fake_token', abuseId, message, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with an invalid logged in user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken2, abuseId, message, 403);
+                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken2, abuseId, message, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with an invalid message', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken, abuseId, 'a'.repeat(5000), 400);
+                yield extra_utils_1.addAbuseMessage(server.url, userAccessToken, abuseId, 'a'.repeat(5000), http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should suceed with the correct params', function () {
@@ -325,17 +356,17 @@ describe('Test abuses API validators', function () {
     describe('When listing abuse messages', function () {
         it('Should fail with an invalid abuse id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.listAbuseMessages(server.url, userAccessToken, 888, 404);
+                yield extra_utils_1.listAbuseMessages(server.url, userAccessToken, 888, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.listAbuseMessages(server.url, 'fake_token', abuseId, 401);
+                yield extra_utils_1.listAbuseMessages(server.url, 'fake_token', abuseId, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with an invalid logged in user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.listAbuseMessages(server.url, userAccessToken2, abuseId, 403);
+                yield extra_utils_1.listAbuseMessages(server.url, userAccessToken2, abuseId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should succeed with the correct params', function () {
@@ -347,22 +378,22 @@ describe('Test abuses API validators', function () {
     describe('When deleting an abuse message', function () {
         it('Should fail with an invalid abuse id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken, 888, messageId, 404);
+                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken, 888, messageId, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with an invalid message id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken, abuseId, 888, 404);
+                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken, abuseId, 888, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuseMessage(server.url, 'fake_token', abuseId, messageId, 401);
+                yield extra_utils_1.deleteAbuseMessage(server.url, 'fake_token', abuseId, messageId, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with an invalid logged in user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken2, abuseId, messageId, 403);
+                yield extra_utils_1.deleteAbuseMessage(server.url, userAccessToken2, abuseId, messageId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should succeed with the correct params', function () {
@@ -374,17 +405,17 @@ describe('Test abuses API validators', function () {
     describe('When deleting a video abuse', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuse(server.url, 'blabla', abuseId, 401);
+                yield extra_utils_1.deleteAbuse(server.url, 'blabla', abuseId, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuse(server.url, userAccessToken, abuseId, 403);
+                yield extra_utils_1.deleteAbuse(server.url, userAccessToken, abuseId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with a bad abuse id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteAbuse(server.url, server.accessToken, 45, 404);
+                yield extra_utils_1.deleteAbuse(server.url, server.accessToken, 45, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should succeed with the correct params', function () {
@@ -398,7 +429,7 @@ describe('Test abuses API validators', function () {
         let anotherServer;
         before(function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(50000);
                 anotherServer = yield extra_utils_1.flushAndRunServer(2);
                 yield extra_utils_1.setAccessTokensToServers([anotherServer]);
                 yield extra_utils_1.doubleFollow(anotherServer, server);
@@ -416,12 +447,12 @@ describe('Test abuses API validators', function () {
         });
         it('Should fail when listing abuse messages of a remote abuse', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.listAbuseMessages(server.url, server.accessToken, remoteAbuseId, 400);
+                yield extra_utils_1.listAbuseMessages(server.url, server.accessToken, remoteAbuseId, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail when creating abuse message of a remote abuse', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.addAbuseMessage(server.url, server.accessToken, remoteAbuseId, 'message', 400);
+                yield extra_utils_1.addAbuseMessage(server.url, server.accessToken, remoteAbuseId, 'message', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         after(function () {

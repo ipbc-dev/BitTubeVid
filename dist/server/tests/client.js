@@ -5,6 +5,7 @@ require("mocha");
 const chai = require("chai");
 const request = require("supertest");
 const extra_utils_1 = require("../../shared/extra-utils");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function checkIndexTags(html, title, description, css) {
     expect(html).to.contain('<title>' + title + '</title>');
@@ -12,7 +13,7 @@ function checkIndexTags(html, title, description, css) {
     expect(html).to.contain('<style class="custom-css-style">' + css + '</style>');
 }
 describe('Test a client controllers', function () {
-    let server;
+    let servers = [];
     let account;
     const videoName = 'my super name for server 1';
     const videoDescription = 'my super description for server 1';
@@ -23,59 +24,61 @@ describe('Test a client controllers', function () {
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
-            server = yield extra_utils_1.flushAndRunServer(1);
-            server.accessToken = yield extra_utils_1.serverLogin(server);
-            yield extra_utils_1.setDefaultVideoChannel([server]);
-            yield extra_utils_1.updateVideoChannel(server.url, server.accessToken, server.videoChannel.name, { description: channelDescription });
+            servers = yield extra_utils_1.flushAndRunMultipleServers(2);
+            yield extra_utils_1.setAccessTokensToServers(servers);
+            yield extra_utils_1.doubleFollow(servers[0], servers[1]);
+            yield extra_utils_1.setDefaultVideoChannel(servers);
+            yield extra_utils_1.updateVideoChannel(servers[0].url, servers[0].accessToken, servers[0].videoChannel.name, { description: channelDescription });
             const videoAttributes = { name: videoName, description: videoDescription };
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, videoAttributes);
-            const resVideosRequest = yield extra_utils_1.getVideosList(server.url);
+            yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, videoAttributes);
+            const resVideosRequest = yield extra_utils_1.getVideosList(servers[0].url);
             const videos = resVideosRequest.body.data;
             expect(videos.length).to.equal(1);
-            server.video = videos[0];
+            servers[0].video = videos[0];
             const playlistAttrs = {
                 displayName: playlistName,
                 description: playlistDescription,
                 privacy: 1,
-                videoChannelId: server.videoChannel.id
+                videoChannelId: servers[0].videoChannel.id
             };
-            const resVideoPlaylistRequest = yield extra_utils_1.createVideoPlaylist({ url: server.url, token: server.accessToken, playlistAttrs });
+            const resVideoPlaylistRequest = yield extra_utils_1.createVideoPlaylist({ url: servers[0].url, token: servers[0].accessToken, playlistAttrs });
             const playlist = resVideoPlaylistRequest.body.videoPlaylist;
             const playlistId = playlist.id;
             playlistUUID = playlist.uuid;
             yield extra_utils_1.addVideoInPlaylist({
-                url: server.url,
-                token: server.accessToken,
+                url: servers[0].url,
+                token: servers[0].accessToken,
                 playlistId,
-                elementAttrs: { videoId: server.video.id }
+                elementAttrs: { videoId: servers[0].video.id }
             });
-            yield extra_utils_1.updateMyUser({ url: server.url, accessToken: server.accessToken, description: 'my account description' });
-            const resAccountRequest = yield extra_utils_1.getAccount(server.url, `${server.user.username}@${server.host}`);
+            yield extra_utils_1.updateMyUser({ url: servers[0].url, accessToken: servers[0].accessToken, description: 'my account description' });
+            const resAccountRequest = yield extra_utils_1.getAccount(servers[0].url, `${servers[0].user.username}@${servers[0].host}`);
             account = resAccountRequest.body;
+            yield extra_utils_1.waitJobs(servers);
         });
     });
     describe('oEmbed', function () {
         it('Should have valid oEmbed discovery tags for videos', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const path = '/videos/watch/' + server.video.uuid;
-                const res = yield request(server.url)
+                const path = '/videos/watch/' + servers[0].video.uuid;
+                const res = yield request(servers[0].url)
                     .get(path)
                     .set('Accept', 'text/html')
-                    .expect(200);
-                const port = server.port;
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
+                const port = servers[0].port;
                 const expectedLink = '<link rel="alternate" type="application/json+oembed" href="http://localhost:' + port + '/services/oembed?' +
-                    `url=http%3A%2F%2Flocalhost%3A${port}%2Fvideos%2Fwatch%2F${server.video.uuid}" ` +
-                    `title="${server.video.name}" />`;
+                    `url=http%3A%2F%2Flocalhost%3A${port}%2Fvideos%2Fwatch%2F${servers[0].video.uuid}" ` +
+                    `title="${servers[0].video.name}" />`;
                 expect(res.text).to.contain(expectedLink);
             });
         });
         it('Should have valid oEmbed discovery tags for a playlist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
+                const res = yield request(servers[0].url)
                     .get('/videos/watch/playlist/' + playlistUUID)
                     .set('Accept', 'text/html')
-                    .expect(200);
-                const port = server.port;
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
+                const port = servers[0].port;
                 const expectedLink = '<link rel="alternate" type="application/json+oembed" href="http://localhost:' + port + '/services/oembed?' +
                     `url=http%3A%2F%2Flocalhost%3A${port}%2Fvideos%2Fwatch%2Fplaylist%2F${playlistUUID}" ` +
                     `title="${playlistName}" />`;
@@ -86,62 +89,62 @@ describe('Test a client controllers', function () {
     describe('Open Graph', function () {
         it('Should have valid Open Graph tags on the account page', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
-                    .get('/accounts/' + server.user.username)
+                const res = yield request(servers[0].url)
+                    .get('/accounts/' + servers[0].user.username)
                     .set('Accept', 'text/html')
-                    .expect(200);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
                 expect(res.text).to.contain(`<meta property="og:title" content="${account.displayName}" />`);
                 expect(res.text).to.contain(`<meta property="og:description" content="${account.description}" />`);
                 expect(res.text).to.contain('<meta property="og:type" content="website" />');
-                expect(res.text).to.contain(`<meta property="og:url" content="${server.url}/accounts/${server.user.username}" />`);
+                expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/accounts/${servers[0].user.username}" />`);
             });
         });
         it('Should have valid Open Graph tags on the channel page', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
-                    .get('/video-channels/' + server.videoChannel.name)
+                const res = yield request(servers[0].url)
+                    .get('/video-channels/' + servers[0].videoChannel.name)
                     .set('Accept', 'text/html')
-                    .expect(200);
-                expect(res.text).to.contain(`<meta property="og:title" content="${server.videoChannel.displayName}" />`);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
+                expect(res.text).to.contain(`<meta property="og:title" content="${servers[0].videoChannel.displayName}" />`);
                 expect(res.text).to.contain(`<meta property="og:description" content="${channelDescription}" />`);
                 expect(res.text).to.contain('<meta property="og:type" content="website" />');
-                expect(res.text).to.contain(`<meta property="og:url" content="${server.url}/video-channels/${server.videoChannel.name}" />`);
+                expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/video-channels/${servers[0].videoChannel.name}" />`);
             });
         });
         it('Should have valid Open Graph tags on the watch page with video id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
-                    .get('/videos/watch/' + server.video.id)
+                const res = yield request(servers[0].url)
+                    .get('/videos/watch/' + servers[0].video.id)
                     .set('Accept', 'text/html')
-                    .expect(200);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
                 expect(res.text).to.contain(`<meta property="og:title" content="${videoName}" />`);
                 expect(res.text).to.contain(`<meta property="og:description" content="${videoDescription}" />`);
                 expect(res.text).to.contain('<meta property="og:type" content="video" />');
-                expect(res.text).to.contain(`<meta property="og:url" content="${server.url}/videos/watch/${server.video.uuid}" />`);
+                expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`);
             });
         });
         it('Should have valid Open Graph tags on the watch page with video uuid', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
-                    .get('/videos/watch/' + server.video.uuid)
+                const res = yield request(servers[0].url)
+                    .get('/videos/watch/' + servers[0].video.uuid)
                     .set('Accept', 'text/html')
-                    .expect(200);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
                 expect(res.text).to.contain(`<meta property="og:title" content="${videoName}" />`);
                 expect(res.text).to.contain(`<meta property="og:description" content="${videoDescription}" />`);
                 expect(res.text).to.contain('<meta property="og:type" content="video" />');
-                expect(res.text).to.contain(`<meta property="og:url" content="${server.url}/videos/watch/${server.video.uuid}" />`);
+                expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`);
             });
         });
         it('Should have valid Open Graph tags on the watch playlist page', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield request(server.url)
+                const res = yield request(servers[0].url)
                     .get('/videos/watch/playlist/' + playlistUUID)
                     .set('Accept', 'text/html')
-                    .expect(200);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
                 expect(res.text).to.contain(`<meta property="og:title" content="${playlistName}" />`);
                 expect(res.text).to.contain(`<meta property="og:description" content="${playlistDescription}" />`);
                 expect(res.text).to.contain('<meta property="og:type" content="video" />');
-                expect(res.text).to.contain(`<meta property="og:url" content="${server.url}/videos/watch/playlist/${playlistUUID}" />`);
+                expect(res.text).to.contain(`<meta property="og:url" content="${servers[0].url}/videos/watch/playlist/${playlistUUID}" />`);
             });
         });
     });
@@ -149,10 +152,10 @@ describe('Test a client controllers', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             it('Should have valid twitter card on the watch video page', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res = yield request(server.url)
-                        .get('/videos/watch/' + server.video.uuid)
+                    const res = yield request(servers[0].url)
+                        .get('/videos/watch/' + servers[0].video.uuid)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(res.text).to.contain('<meta property="twitter:card" content="summary_large_image" />');
                     expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />');
                     expect(res.text).to.contain(`<meta property="twitter:title" content="${videoName}" />`);
@@ -161,10 +164,10 @@ describe('Test a client controllers', function () {
             });
             it('Should have valid twitter card on the watch playlist page', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res = yield request(server.url)
+                    const res = yield request(servers[0].url)
                         .get('/videos/watch/playlist/' + playlistUUID)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(res.text).to.contain('<meta property="twitter:card" content="summary" />');
                     expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />');
                     expect(res.text).to.contain(`<meta property="twitter:title" content="${playlistName}" />`);
@@ -173,10 +176,10 @@ describe('Test a client controllers', function () {
             });
             it('Should have valid twitter card on the account page', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res = yield request(server.url)
+                    const res = yield request(servers[0].url)
                         .get('/accounts/' + account.name)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(res.text).to.contain('<meta property="twitter:card" content="summary" />');
                     expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />');
                     expect(res.text).to.contain(`<meta property="twitter:title" content="${account.name}" />`);
@@ -185,47 +188,47 @@ describe('Test a client controllers', function () {
             });
             it('Should have valid twitter card on the channel page', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res = yield request(server.url)
-                        .get('/video-channels/' + server.videoChannel.name)
+                    const res = yield request(servers[0].url)
+                        .get('/video-channels/' + servers[0].videoChannel.name)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(res.text).to.contain('<meta property="twitter:card" content="summary" />');
                     expect(res.text).to.contain('<meta property="twitter:site" content="@Chocobozzz" />');
-                    expect(res.text).to.contain(`<meta property="twitter:title" content="${server.videoChannel.displayName}" />`);
+                    expect(res.text).to.contain(`<meta property="twitter:title" content="${servers[0].videoChannel.displayName}" />`);
                     expect(res.text).to.contain(`<meta property="twitter:description" content="${channelDescription}" />`);
                 });
             });
             it('Should have valid twitter card if Twitter is whitelisted', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res1 = yield extra_utils_1.getCustomConfig(server.url, server.accessToken);
+                    const res1 = yield extra_utils_1.getCustomConfig(servers[0].url, servers[0].accessToken);
                     const config = res1.body;
                     config.services.twitter = {
                         username: '@Kuja',
                         whitelisted: true
                     };
-                    yield extra_utils_1.updateCustomConfig(server.url, server.accessToken, config);
-                    const resVideoRequest = yield request(server.url)
-                        .get('/videos/watch/' + server.video.uuid)
+                    yield extra_utils_1.updateCustomConfig(servers[0].url, servers[0].accessToken, config);
+                    const resVideoRequest = yield request(servers[0].url)
+                        .get('/videos/watch/' + servers[0].video.uuid)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(resVideoRequest.text).to.contain('<meta property="twitter:card" content="player" />');
                     expect(resVideoRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />');
-                    const resVideoPlaylistRequest = yield request(server.url)
+                    const resVideoPlaylistRequest = yield request(servers[0].url)
                         .get('/videos/watch/playlist/' + playlistUUID)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(resVideoPlaylistRequest.text).to.contain('<meta property="twitter:card" content="player" />');
                     expect(resVideoPlaylistRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />');
-                    const resAccountRequest = yield request(server.url)
+                    const resAccountRequest = yield request(servers[0].url)
                         .get('/accounts/' + account.name)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(resAccountRequest.text).to.contain('<meta property="twitter:card" content="summary" />');
                     expect(resAccountRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />');
-                    const resChannelRequest = yield request(server.url)
-                        .get('/video-channels/' + server.videoChannel.name)
+                    const resChannelRequest = yield request(servers[0].url)
+                        .get('/video-channels/' + servers[0].videoChannel.name)
                         .set('Accept', 'text/html')
-                        .expect(200);
+                        .expect(http_error_codes_1.HttpStatusCode.OK_200);
                     expect(resChannelRequest.text).to.contain('<meta property="twitter:card" content="summary" />');
                     expect(resChannelRequest.text).to.contain('<meta property="twitter:site" content="@Kuja" />');
                 });
@@ -235,14 +238,14 @@ describe('Test a client controllers', function () {
     describe('Index HTML', function () {
         it('Should have valid index html tags (title, description...)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.makeHTMLRequest(server.url, '/videos/trending');
+                const res = yield extra_utils_1.makeHTMLRequest(servers[0].url, '/videos/trending');
                 const description = 'PeerTube, an ActivityPub-federated video streaming platform using P2P directly in your web browser.';
                 checkIndexTags(res.text, 'PeerTube', description, '');
             });
         });
         it('Should update the customized configuration and have the correct index html tags', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
+                yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
                     instance: {
                         name: 'PeerTube updated',
                         shortDescription: 'my short description',
@@ -256,20 +259,44 @@ describe('Test a client controllers', function () {
                         }
                     }
                 });
-                const res = yield extra_utils_1.makeHTMLRequest(server.url, '/videos/trending');
+                const res = yield extra_utils_1.makeHTMLRequest(servers[0].url, '/videos/trending');
                 checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }');
             });
         });
         it('Should have valid index html updated tags (title, description...)', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.makeHTMLRequest(server.url, '/videos/trending');
+                const res = yield extra_utils_1.makeHTMLRequest(servers[0].url, '/videos/trending');
                 checkIndexTags(res.text, 'PeerTube updated', 'my short description', 'body { background-color: red; }');
+            });
+        });
+        it('Should use the original video URL for the canonical tag', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res = yield extra_utils_1.makeHTMLRequest(servers[1].url, '/videos/watch/' + servers[0].video.uuid);
+                expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/videos/watch/${servers[0].video.uuid}" />`);
+            });
+        });
+        it('Should use the original account URL for the canonical tag', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res = yield extra_utils_1.makeHTMLRequest(servers[1].url, '/accounts/root@' + servers[0].host);
+                expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/accounts/root" />`);
+            });
+        });
+        it('Should use the original channel URL for the canonical tag', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res = yield extra_utils_1.makeHTMLRequest(servers[1].url, '/video-channels/root_channel@' + servers[0].host);
+                expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/video-channels/root_channel" />`);
+            });
+        });
+        it('Should use the original playlist URL for the canonical tag', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res = yield extra_utils_1.makeHTMLRequest(servers[1].url, '/videos/watch/playlist/' + playlistUUID);
+                expect(res.text).to.contain(`<link rel="canonical" href="${servers[0].url}/video-playlists/${playlistUUID}" />`);
             });
         });
     });
     after(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield extra_utils_1.cleanupTests([server]);
+            yield extra_utils_1.cleanupTests(servers);
         });
     });
 });

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeVideoCommentValidator = exports.videoCommentGetValidator = exports.addVideoCommentReplyValidator = exports.addVideoCommentThreadValidator = exports.listVideoThreadCommentsValidator = exports.listVideoCommentThreadsValidator = void 0;
+exports.removeVideoCommentValidator = exports.videoCommentGetValidator = exports.addVideoCommentReplyValidator = exports.listVideoCommentsValidator = exports.addVideoCommentThreadValidator = exports.listVideoThreadCommentsValidator = exports.listVideoCommentThreadsValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const misc_1 = require("../../../helpers/custom-validators/misc");
@@ -10,6 +10,30 @@ const middlewares_1 = require("../../../helpers/middlewares");
 const moderation_1 = require("../../../lib/moderation");
 const hooks_1 = require("../../../lib/plugins/hooks");
 const utils_1 = require("../utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
+const listVideoCommentsValidator = [
+    express_validator_1.query('isLocal')
+        .optional()
+        .customSanitizer(misc_1.toBooleanOrNull)
+        .custom(misc_1.isBooleanValid)
+        .withMessage('Should have a valid is local boolean'),
+    express_validator_1.query('search')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid search'),
+    express_validator_1.query('searchAccount')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid account search'),
+    express_validator_1.query('searchVideo')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid video search'),
+    (req, res, next) => {
+        logger_1.logger.debug('Checking listVideoCommentsValidator parameters.', { parameters: req.query });
+        if (utils_1.areValidationErrors(req, res))
+            return;
+        return next();
+    }
+];
+exports.listVideoCommentsValidator = listVideoCommentsValidator;
 const listVideoCommentThreadsValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -108,7 +132,7 @@ const removeVideoCommentValidator = [
 exports.removeVideoCommentValidator = removeVideoCommentValidator;
 function isVideoCommentsEnabled(video, res) {
     if (video.commentsEnabled !== true) {
-        res.status(409)
+        res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
             .json({ error: 'Video comments are disabled for this video.' });
         return false;
     }
@@ -116,7 +140,7 @@ function isVideoCommentsEnabled(video, res) {
 }
 function checkUserCanDeleteVideoComment(user, videoComment, res) {
     if (videoComment.isDeleted()) {
-        res.status(409)
+        res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
             .json({ error: 'This comment is already deleted' });
         return false;
     }
@@ -124,7 +148,7 @@ function checkUserCanDeleteVideoComment(user, videoComment, res) {
     if (user.hasRight(15) === false &&
         videoComment.accountId !== userAccount.id &&
         videoComment.Video.VideoChannel.accountId !== userAccount.id) {
-        res.status(403)
+        res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'Cannot remove video comment of another user' });
         return false;
     }
@@ -147,7 +171,7 @@ function isVideoCommentAccepted(req, res, video, isReply) {
         }
         if (!acceptedResult || acceptedResult.accepted !== true) {
             logger_1.logger.info('Refused local comment.', { acceptedResult, acceptParameters });
-            res.status(403)
+            res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: acceptedResult.errorMessage || 'Refused local comment' });
             return false;
         }

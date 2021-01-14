@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addAbuseMessage = exports.deleteAbuseMessage = exports.listAbuseMessages = exports.getUserAbusesList = exports.deleteAbuse = exports.updateAbuse = exports.getAdminAbusesList = exports.reportAbuse = void 0;
 const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function reportAbuse(options) {
     const path = '/api/v1/abuses';
     const video = options.videoId ? {
@@ -27,7 +28,7 @@ function reportAbuse(options) {
         path,
         token: options.token,
         fields: body,
-        statusCodeExpected: options.statusCodeExpected || 200
+        statusCodeExpected: options.statusCodeExpected || http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.reportAbuse = reportAbuse;
@@ -54,7 +55,7 @@ function getAdminAbusesList(options) {
         path,
         token,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getAdminAbusesList = getAdminAbusesList;
@@ -74,11 +75,11 @@ function getUserAbusesList(options) {
         path,
         token,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getUserAbusesList = getUserAbusesList;
-function updateAbuse(url, token, abuseId, body, statusCodeExpected = 204) {
+function updateAbuse(url, token, abuseId, body, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/abuses/' + abuseId;
     return requests_1.makePutBodyRequest({
         url,
@@ -89,7 +90,7 @@ function updateAbuse(url, token, abuseId, body, statusCodeExpected = 204) {
     });
 }
 exports.updateAbuse = updateAbuse;
-function deleteAbuse(url, token, abuseId, statusCodeExpected = 204) {
+function deleteAbuse(url, token, abuseId, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/abuses/' + abuseId;
     return requests_1.makeDeleteRequest({
         url,
@@ -99,7 +100,7 @@ function deleteAbuse(url, token, abuseId, statusCodeExpected = 204) {
     });
 }
 exports.deleteAbuse = deleteAbuse;
-function listAbuseMessages(url, token, abuseId, statusCodeExpected = 200) {
+function listAbuseMessages(url, token, abuseId, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/abuses/' + abuseId + '/messages';
     return requests_1.makeGetRequest({
         url,
@@ -109,7 +110,7 @@ function listAbuseMessages(url, token, abuseId, statusCodeExpected = 200) {
     });
 }
 exports.listAbuseMessages = listAbuseMessages;
-function deleteAbuseMessage(url, token, abuseId, messageId, statusCodeExpected = 204) {
+function deleteAbuseMessage(url, token, abuseId, messageId, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/abuses/' + abuseId + '/messages/' + messageId;
     return requests_1.makeDeleteRequest({
         url,
@@ -119,7 +120,7 @@ function deleteAbuseMessage(url, token, abuseId, messageId, statusCodeExpected =
     });
 }
 exports.deleteAbuseMessage = deleteAbuseMessage;
-function addAbuseMessage(url, token, abuseId, message, statusCodeExpected = 200) {
+function addAbuseMessage(url, token, abuseId, message, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/abuses/' + abuseId + '/messages';
     return requests_1.makePostBodyRequest({
         url,

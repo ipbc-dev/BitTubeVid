@@ -39,7 +39,7 @@ describe('Test users account verification', function () {
     });
     it('Should register user and send verification email if verification required', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(5000);
+            this.timeout(30000);
             yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, {
                 signup: {
                     enabled: true,
@@ -80,6 +80,7 @@ describe('Test users account verification', function () {
     });
     it('Should be able to change the user email', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             let updateVerificationString;
             {
                 yield extra_utils_1.updateMyUser({

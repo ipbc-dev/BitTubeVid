@@ -370,10 +370,10 @@ class Notifier {
             function buildReporterOptions() {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
                     if (abuse.ReporterAccount.isOwned() !== true)
-                        return;
+                        return undefined;
                     const reporter = yield user_1.UserModel.loadByAccountActorId(abuse.ReporterAccount.actorId);
                     if (reporter.Account.id === message.accountId)
-                        return;
+                        return undefined;
                     return { users: [reporter], settingGetter, notificationCreator, emailSender: emailSenderReporter };
                 });
             }
@@ -382,18 +382,17 @@ class Notifier {
                     let moderators = yield user_1.UserModel.listWithRight(6);
                     moderators = moderators.filter(m => m.Account.id !== message.accountId);
                     if (moderators.length === 0)
-                        return;
+                        return undefined;
                     return { users: moderators, settingGetter, notificationCreator, emailSender: emailSenderModerators };
                 });
             }
-            const [reporterOptions, moderatorsOptions] = yield Promise.all([
+            const options = yield Promise.all([
                 buildReporterOptions(),
                 buildModeratorsOptions()
             ]);
-            return Promise.all([
-                this.notify(reporterOptions),
-                this.notify(moderatorsOptions)
-            ]);
+            return Promise.all(options
+                .filter(opt => !!opt)
+                .map(opt => this.notify(opt)));
         });
     }
     notifyModeratorsOfVideoAutoBlacklist(videoBlacklist) {

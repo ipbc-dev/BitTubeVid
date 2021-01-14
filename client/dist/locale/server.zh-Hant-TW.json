@@ -31,6 +31,8 @@
     "Published": "已發佈",
     "To transcode": "待轉換編碼",
     "To import": "待匯入",
+    "Waiting for livestream": "Waiting for livestream",
+    "Livestream ended": "Livestream ended",
     "Pending": "擱置中",
     "Success": "成功",
     "Failed": "失敗",
@@ -240,5 +242,7 @@
     "Yoruba": "約魯巴語",
     "Zhuang": "壯語",
     "Chinese": "漢語",
-    "Zulu": "祖魯語"
+    "Zulu": "祖魯語",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode"
 }

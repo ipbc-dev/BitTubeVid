@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function checkInitialConfig(server, data) {
     expect(data.instance.name).to.equal('PeerTube');
@@ -47,6 +48,19 @@ function checkInitialConfig(server, data) {
     expect(data.transcoding.resolutions['2160p']).to.be.true;
     expect(data.transcoding.webtorrent.enabled).to.be.true;
     expect(data.transcoding.hls.enabled).to.be.true;
+    expect(data.live.enabled).to.be.false;
+    expect(data.live.allowReplay).to.be.false;
+    expect(data.live.maxDuration).to.equal(-1);
+    expect(data.live.maxInstanceLives).to.equal(20);
+    expect(data.live.maxUserLives).to.equal(3);
+    expect(data.live.transcoding.enabled).to.be.false;
+    expect(data.live.transcoding.threads).to.equal(2);
+    expect(data.live.transcoding.resolutions['240p']).to.be.false;
+    expect(data.live.transcoding.resolutions['360p']).to.be.false;
+    expect(data.live.transcoding.resolutions['480p']).to.be.false;
+    expect(data.live.transcoding.resolutions['720p']).to.be.false;
+    expect(data.live.transcoding.resolutions['1080p']).to.be.false;
+    expect(data.live.transcoding.resolutions['2160p']).to.be.false;
     expect(data.import.videos.http.enabled).to.be.true;
     expect(data.import.videos.torrent.enabled).to.be.true;
     expect(data.autoBlacklist.videos.ofUsers.enabled).to.be.false;
@@ -104,6 +118,19 @@ function checkUpdatedConfig(data) {
     expect(data.transcoding.resolutions['2160p']).to.be.false;
     expect(data.transcoding.hls.enabled).to.be.false;
     expect(data.transcoding.webtorrent.enabled).to.be.true;
+    expect(data.live.enabled).to.be.true;
+    expect(data.live.allowReplay).to.be.true;
+    expect(data.live.maxDuration).to.equal(5000);
+    expect(data.live.maxInstanceLives).to.equal(-1);
+    expect(data.live.maxUserLives).to.equal(10);
+    expect(data.live.transcoding.enabled).to.be.true;
+    expect(data.live.transcoding.threads).to.equal(4);
+    expect(data.live.transcoding.resolutions['240p']).to.be.true;
+    expect(data.live.transcoding.resolutions['360p']).to.be.true;
+    expect(data.live.transcoding.resolutions['480p']).to.be.true;
+    expect(data.live.transcoding.resolutions['720p']).to.be.true;
+    expect(data.live.transcoding.resolutions['1080p']).to.be.true;
+    expect(data.live.transcoding.resolutions['2160p']).to.be.true;
     expect(data.import.videos.http.enabled).to.be.false;
     expect(data.import.videos.torrent.enabled).to.be.false;
     expect(data.autoBlacklist.videos.ofUsers.enabled).to.be.true;
@@ -154,8 +181,8 @@ describe('Test config', function () {
             expect(data.video.file.extensions).to.contain('.mp4');
             expect(data.video.file.extensions).to.contain('.webm');
             expect(data.video.file.extensions).to.contain('.ogv');
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'video_short.mkv' }, 400);
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'sample.ogg' }, 400);
+            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'video_short.mkv' }, http_error_codes_1.HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415);
+            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'sample.ogg' }, http_error_codes_1.HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415);
             expect(data.contactForm.enabled).to.be.true;
         });
     });
@@ -244,6 +271,25 @@ describe('Test config', function () {
                         enabled: false
                     }
                 },
+                live: {
+                    enabled: true,
+                    allowReplay: true,
+                    maxDuration: 5000,
+                    maxInstanceLives: -1,
+                    maxUserLives: 10,
+                    transcoding: {
+                        enabled: true,
+                        threads: 4,
+                        resolutions: {
+                            '240p': true,
+                            '360p': true,
+                            '480p': true,
+                            '720p': true,
+                            '1080p': true,
+                            '2160p': true
+                        }
+                    }
+                },
                 import: {
                     videos: {
                         http: {
@@ -321,8 +367,8 @@ describe('Test config', function () {
             expect(data.video.file.extensions).to.contain('.mp3');
             expect(data.video.file.extensions).to.contain('.ogg');
             expect(data.video.file.extensions).to.contain('.flac');
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'video_short.mkv' }, 200);
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'sample.ogg' }, 200);
+            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'video_short.mkv' }, http_error_codes_1.HttpStatusCode.OK_200);
+            yield extra_utils_1.uploadVideo(server.url, server.accessToken, { fixture: 'sample.ogg' }, http_error_codes_1.HttpStatusCode.OK_200);
         });
     });
     it('Should have the configuration updated after a restart', function () {

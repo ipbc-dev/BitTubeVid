@@ -6,6 +6,7 @@ const chai = require("chai");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const video_imports_1 = require("../../../shared/extra-utils/videos/video-imports");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test plugin filter hooks', function () {
     let servers;
@@ -33,6 +34,16 @@ describe('Test plugin filter hooks', function () {
             }
             const res = yield extra_utils_1.getVideosList(servers[0].url);
             videoUUID = res.body.data[0].uuid;
+            yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+                live: { enabled: true },
+                signup: { enabled: true },
+                import: {
+                    videos: {
+                        http: { enabled: true },
+                        torrent: { enabled: true }
+                    }
+                }
+            });
         });
     });
     it('Should run filter:api.videos.list.params', function () {
@@ -47,6 +58,30 @@ describe('Test plugin filter hooks', function () {
             expect(res.body.total).to.equal(11);
         });
     });
+    it('Should run filter:api.accounts.videos.list.params', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getAccountVideos(servers[0].url, servers[0].accessToken, 'root', 0, 2);
+            expect(res.body.data).to.have.lengthOf(3);
+        });
+    });
+    it('Should run filter:api.accounts.videos.list.result', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getAccountVideos(servers[0].url, servers[0].accessToken, 'root', 0, 2);
+            expect(res.body.total).to.equal(12);
+        });
+    });
+    it('Should run filter:api.video-channels.videos.list.params', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getVideoChannelVideos(servers[0].url, servers[0].accessToken, 'root_channel', 0, 2);
+            expect(res.body.data).to.have.lengthOf(5);
+        });
+    });
+    it('Should run filter:api.video-channels.videos.list.result', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getVideoChannelVideos(servers[0].url, servers[0].accessToken, 'root_channel', 0, 2);
+            expect(res.body.total).to.equal(13);
+        });
+    });
     it('Should run filter:api.video.get.result', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideo(servers[0].url, videoUUID);
@@ -55,7 +90,17 @@ describe('Test plugin filter hooks', function () {
     });
     it('Should run filter:api.video.upload.accept.result', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video with bad word' }, 403);
+            yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video with bad word' }, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+        });
+    });
+    it('Should run filter:api.live-video.create.accept.result', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const attributes = {
+                name: 'video with bad word',
+                privacy: 1,
+                channelId: servers[0].videoChannel.id
+            };
+            yield extra_utils_1.createLive(servers[0].url, servers[0].accessToken, attributes, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should run filter:api.video.pre-import-url.accept.result', function () {
@@ -66,7 +111,7 @@ describe('Test plugin filter hooks', function () {
                 channelId: servers[0].videoChannel.id,
                 targetUrl: video_imports_1.getGoodVideoUrl() + 'bad'
             };
-            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403);
+            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should run filter:api.video.pre-import-torrent.accept.result', function () {
@@ -77,7 +122,7 @@ describe('Test plugin filter hooks', function () {
                 channelId: servers[0].videoChannel.id,
                 torrentfile: 'video-720p.torrent'
             };
-            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403);
+            yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, baseAttributes, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should run filter:api.video.post-import-url.accept.result', function () {
@@ -130,15 +175,15 @@ describe('Test plugin filter hooks', function () {
     });
     it('Should run filter:api.video-thread.create.accept.result', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield extra_utils_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'comment with bad word', 403);
+            yield extra_utils_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'comment with bad word', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should run filter:api.video-comment-reply.create.accept.result', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'thread');
             threadId = res.body.comment.id;
-            yield extra_utils_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with bad word', 403);
-            yield extra_utils_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with good word', 200);
+            yield extra_utils_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with bad word', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+            yield extra_utils_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with good word', http_error_codes_1.HttpStatusCode.OK_200);
         });
     });
     it('Should run filter:api.video-threads.list.params', function () {
@@ -232,7 +277,7 @@ describe('Test plugin filter hooks', function () {
         });
         it('Should not allow a signup', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.registerUser(servers[0].url, 'jma', 'password', 403);
+                const res = yield extra_utils_1.registerUser(servers[0].url, 'jma', 'password', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
                 expect(res.body.error).to.equal('No jma');
             });
         });

@@ -12,6 +12,7 @@ const middlewares_1 = require("../../../helpers/middlewares");
 const actor_2 = require("../../../models/activitypub/actor");
 const video_channel_1 = require("../../../models/video/video-channel");
 const utils_1 = require("../utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videoChannelsAddValidator = [
     express_validator_1.body('name').custom(actor_1.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
     express_validator_1.body('displayName').custom(video_channels_1.isVideoChannelNameValid).withMessage('Should have a valid display name'),
@@ -23,14 +24,14 @@ const videoChannelsAddValidator = [
             return;
         const actor = yield actor_2.ActorModel.loadLocalByName(req.body.name);
         if (actor) {
-            res.status(409)
+            res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .send({ error: 'Another actor (account/channel) with this name on this instance already exists or has already existed.' })
                 .end();
             return false;
         }
         const count = yield video_channel_1.VideoChannelModel.countByAccount(res.locals.oauth.token.User.Account.id);
         if (count >= constants_1.VIDEO_CHANNELS.MAX_PER_USER) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .send({ error: `You cannot create more than ${constants_1.VIDEO_CHANNELS.MAX_PER_USER} channels` })
                 .end();
             return false;
@@ -60,12 +61,12 @@ const videoChannelsUpdateValidator = [
         if (!(yield middlewares_1.doesVideoChannelNameWithHostExist(req.params.nameWithHost, res)))
             return;
         if (res.locals.videoChannel.Actor.isOwned() === false) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Cannot update video channel of another server' })
                 .end();
         }
         if (res.locals.videoChannel.Account.userId !== res.locals.oauth.token.User.id) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Cannot update video channel of another user' })
                 .end();
         }
@@ -127,13 +128,13 @@ const videoChannelStatsValidator = [
 exports.videoChannelStatsValidator = videoChannelStatsValidator;
 function checkUserCanDeleteVideoChannel(user, videoChannel, res) {
     if (videoChannel.Actor.isOwned() === false) {
-        res.status(403)
+        res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'Cannot remove video channel of another server.' })
             .end();
         return false;
     }
     if (user.hasRight(13) === false && videoChannel.Account.userId !== user.id) {
-        res.status(403)
+        res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'Cannot remove video channel of another user' })
             .end();
         return false;
@@ -144,7 +145,7 @@ function checkVideoChannelIsNotTheLastOne(res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const count = yield video_channel_1.VideoChannelModel.countByAccount(res.locals.oauth.token.User.Account.id);
         if (count <= 1) {
-            res.status(409)
+            res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'Cannot remove the last channel of this user' })
                 .end();
             return false;

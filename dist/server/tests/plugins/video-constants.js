@@ -5,6 +5,7 @@ const chai = require("chai");
 require("mocha");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const extra_utils_1 = require("../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test plugin altering video constants', function () {
     let server;
@@ -72,13 +73,18 @@ describe('Test plugin altering video constants', function () {
     it('Should not be able to create a video with this privacy', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attrs = { name: 'video', privacy: 2 };
-            yield extra_utils_1.uploadVideo(server.url, server.accessToken, attrs, 400);
+            yield extra_utils_1.uploadVideo(server.url, server.accessToken, attrs, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         });
     });
     it('Should not be able to create a video with this privacy', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attrs = { displayName: 'video playlist', privacy: 3 };
-            yield extra_utils_1.createVideoPlaylist({ url: server.url, token: server.accessToken, playlistAttrs: attrs, expectedStatus: 400 });
+            yield extra_utils_1.createVideoPlaylist({
+                url: server.url,
+                token: server.accessToken,
+                playlistAttrs: attrs,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
+            });
         });
     });
     it('Should be able to upload a video with these values', function () {

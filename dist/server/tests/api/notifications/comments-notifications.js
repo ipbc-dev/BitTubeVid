@@ -16,6 +16,10 @@ describe('Test comments notifications', function () {
     let userAccessToken;
     let userNotifications = [];
     let emails = [];
+    const commentText = '**hello** <a href="https://joinpeertube.org">world</a>, <h1>what do you think about peertube?</h1>';
+    const expectedHtml = '<strong style="-ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">hello</strong> ' +
+        '<a href="https://joinpeertube.org" target="_blank" rel="noopener noreferrer" style="-ms-text-size-adjust: 100%; ' +
+        '-webkit-text-size-adjust: 100%; text-decoration: none; color: #f2690d;">world</a>, </p>what do you think about peertube?';
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
@@ -38,7 +42,7 @@ describe('Test comments notifications', function () {
         });
         it('Should not send a new comment notification after a comment on another video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 const resComment = yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, uuid, 'comment');
@@ -49,7 +53,7 @@ describe('Test comments notifications', function () {
         });
         it('Should not send a new comment notification if I comment my own video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 const resComment = yield video_comments_1.addVideoCommentThread(servers[0].url, userAccessToken, uuid, 'comment');
@@ -60,7 +64,7 @@ describe('Test comments notifications', function () {
         });
         it('Should not send a new comment notification if the account is muted', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 yield blocklist_1.addAccountToAccountBlocklist(servers[0].url, userAccessToken, 'root');
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
@@ -73,7 +77,7 @@ describe('Test comments notifications', function () {
         });
         it('Should send a new comment notification after a local comment on my video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 const resComment = yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, uuid, 'comment');
@@ -84,7 +88,7 @@ describe('Test comments notifications', function () {
         });
         it('Should send a new comment notification after a remote comment on my video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 yield jobs_1.waitJobs(servers);
@@ -98,7 +102,7 @@ describe('Test comments notifications', function () {
         });
         it('Should send a new comment notification after a local reply on my video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 const resThread = yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, uuid, 'comment');
@@ -111,7 +115,7 @@ describe('Test comments notifications', function () {
         });
         it('Should send a new comment notification after a remote reply on my video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'super video' });
                 const uuid = resVideo.body.video.uuid;
                 yield jobs_1.waitJobs(servers);
@@ -129,6 +133,17 @@ describe('Test comments notifications', function () {
                 expect(tree.children).to.have.lengthOf(1);
                 const commentId = tree.children[0].comment.id;
                 yield user_notifications_1.checkNewCommentOnMyVideo(baseParams, uuid, commentId, threadId, 'presence');
+            });
+        });
+        it('Should convert markdown in comment to html', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'cool video' });
+                const uuid = resVideo.body.video.uuid;
+                yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, uuid, commentText);
+                yield jobs_1.waitJobs(servers);
+                const latestEmail = emails[emails.length - 1];
+                expect(latestEmail['html']).to.contain(expectedHtml);
             });
         });
     });
@@ -236,6 +251,19 @@ describe('Test comments notifications', function () {
                 expect(tree.children).to.have.lengthOf(1);
                 const commentId = tree.children[0].comment.id;
                 yield user_notifications_1.checkCommentMention(baseParams, uuid, commentId, server1ThreadId, 'super root 2 name', 'presence');
+            });
+        });
+        it('Should convert markdown in comment to html', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const resVideo = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'super video' });
+                const uuid = resVideo.body.video.uuid;
+                const resThread = yield video_comments_1.addVideoCommentThread(servers[0].url, servers[0].accessToken, uuid, '@user_1 hello 1');
+                const threadId = resThread.body.comment.id;
+                yield video_comments_1.addVideoCommentReply(servers[0].url, servers[0].accessToken, uuid, threadId, '@user_1 ' + commentText);
+                yield jobs_1.waitJobs(servers);
+                const latestEmail = emails[emails.length - 1];
+                expect(latestEmail['html']).to.contain(expectedHtml);
             });
         });
     });

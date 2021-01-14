@@ -54,7 +54,12 @@ exports.sendUpdateActor = sendUpdateActor;
 function sendUpdateCacheFile(byActor, redundancyModel) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Creating job to update cache file %s.', redundancyModel.url);
-        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(redundancyModel.getVideo().id);
+        const associatedVideo = redundancyModel.getVideo();
+        if (!associatedVideo) {
+            logger_1.logger.warn('Cannot send update activity for redundancy %s: no video files associated.', redundancyModel.url);
+            return;
+        }
+        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(associatedVideo.id);
         const activityBuilder = (audience) => {
             const redundancyObject = redundancyModel.toActivityPubObject();
             const url = url_1.getUpdateActivityPubUrl(redundancyModel.url, redundancyModel.updatedAt.toISOString());

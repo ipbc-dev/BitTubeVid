@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const validator_1 = require("validator");
 const video_comment_1 = require("@server/models/video/video-comment");
 const constants_1 = require("../../initializers/constants");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const VIDEO_COMMENTS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.VIDEO_COMMENTS;
 function isValidVideoCommentText(value) {
     return value === null || validator_1.default.isLength(value, VIDEO_COMMENTS_CONSTRAINTS_FIELDS.TEXT);
@@ -15,19 +16,19 @@ function doesVideoCommentThreadExist(idArg, video, res) {
         const id = parseInt(idArg + '', 10);
         const videoComment = yield video_comment_1.VideoCommentModel.loadById(id);
         if (!videoComment) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video comment thread not found' })
                 .end();
             return false;
         }
         if (videoComment.videoId !== video.id) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Video comment is not associated to this video.' })
                 .end();
             return false;
         }
         if (videoComment.inReplyToCommentId !== null) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Video comment is not a thread.' })
                 .end();
             return false;
@@ -42,13 +43,13 @@ function doesVideoCommentExist(idArg, video, res) {
         const id = parseInt(idArg + '', 10);
         const videoComment = yield video_comment_1.VideoCommentModel.loadByIdAndPopulateVideoAndAccountAndReply(id);
         if (!videoComment) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video comment thread not found' })
                 .end();
             return false;
         }
         if (videoComment.videoId !== video.id) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Video comment is not associated to this video.' })
                 .end();
             return false;
@@ -63,7 +64,7 @@ function doesCommentIdExist(idArg, res) {
         const id = parseInt(idArg + '', 10);
         const videoComment = yield video_comment_1.VideoCommentModel.loadByIdAndPopulateVideoAndAccountAndReply(id);
         if (!videoComment) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video comment thread not found' });
             return false;
         }

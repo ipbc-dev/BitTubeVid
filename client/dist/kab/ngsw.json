@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307423,
+  "timestamp": 1610615934660,
   "index": "/client/kab/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/kab/index.html": "40951c6d6c4ce61c53a50a536b59c84a5a8adf47",
+    "/client/kab/index.html": "983f0a3b54d4c8e86c4a54b1257cf7c343a2973a",
     "/client/kab/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

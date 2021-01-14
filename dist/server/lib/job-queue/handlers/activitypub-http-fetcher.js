@@ -3,17 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.processActivityPubHttpFetcher = void 0;
 const tslib_1 = require("tslib");
 const logger_1 = require("../../../helpers/logger");
-const process_1 = require("../../activitypub/process");
-const video_comments_1 = require("../../activitypub/video-comments");
-const crawl_1 = require("../../activitypub/crawl");
-const video_1 = require("../../../models/video/video");
-const share_1 = require("../../activitypub/share");
-const video_rates_1 = require("../../activitypub/video-rates");
-const playlist_1 = require("../../activitypub/playlist");
 const account_1 = require("../../../models/account/account");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
-const video_share_1 = require("../../../models/video/video-share");
+const video_1 = require("../../../models/video/video");
 const video_comment_1 = require("../../../models/video/video-comment");
+const video_share_1 = require("../../../models/video/video-share");
+const crawl_1 = require("../../activitypub/crawl");
+const playlist_1 = require("../../activitypub/playlist");
+const process_1 = require("../../activitypub/process");
+const share_1 = require("../../activitypub/share");
+const video_comments_1 = require("../../activitypub/video-comments");
+const video_rates_1 = require("../../activitypub/video-rates");
 function processActivityPubHttpFetcher(job) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         logger_1.logger.info('Processing ActivityPub fetcher in job %d.', job.id);

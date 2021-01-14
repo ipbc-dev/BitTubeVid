@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.customConfigUpdateValidator = void 0;
 const express_validator_1 = require("express-validator");
+const misc_1 = require("@server/helpers/custom-validators/misc");
+const config_1 = require("@server/initializers/config");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+const plugins_1 = require("../../helpers/custom-validators/plugins");
 const users_1 = require("../../helpers/custom-validators/users");
 const logger_1 = require("../../helpers/logger");
-const utils_1 = require("./utils");
-const plugins_1 = require("../../helpers/custom-validators/plugins");
 const theme_utils_1 = require("../../lib/plugins/theme-utils");
-const config_1 = require("@server/initializers/config");
+const utils_1 = require("./utils");
 const customConfigUpdateValidator = [
     express_validator_1.body('instance.name').exists().withMessage('Should have a valid instance name'),
     express_validator_1.body('instance.shortDescription').exists().withMessage('Should have a valid instance short description'),
@@ -37,6 +39,7 @@ const customConfigUpdateValidator = [
     express_validator_1.body('transcoding.resolutions.480p').isBoolean().withMessage('Should have a valid transcoding 480p resolution enabled boolean'),
     express_validator_1.body('transcoding.resolutions.720p').isBoolean().withMessage('Should have a valid transcoding 720p resolution enabled boolean'),
     express_validator_1.body('transcoding.resolutions.1080p').isBoolean().withMessage('Should have a valid transcoding 1080p resolution enabled boolean'),
+    express_validator_1.body('transcoding.resolutions.2160p').isBoolean().withMessage('Should have a valid transcoding 2160p resolution enabled boolean'),
     express_validator_1.body('transcoding.webtorrent.enabled').isBoolean().withMessage('Should have a valid webtorrent transcoding enabled boolean'),
     express_validator_1.body('transcoding.hls.enabled').isBoolean().withMessage('Should have a valid hls transcoding enabled boolean'),
     express_validator_1.body('import.videos.http.enabled').isBoolean().withMessage('Should have a valid import video http enabled boolean'),
@@ -49,6 +52,19 @@ const customConfigUpdateValidator = [
     express_validator_1.body('broadcastMessage.message').exists().withMessage('Should have a valid broadcast message'),
     express_validator_1.body('broadcastMessage.level').exists().withMessage('Should have a valid broadcast level'),
     express_validator_1.body('broadcastMessage.dismissable').isBoolean().withMessage('Should have a valid broadcast dismissable boolean'),
+    express_validator_1.body('live.enabled').isBoolean().withMessage('Should have a valid live enabled boolean'),
+    express_validator_1.body('live.allowReplay').isBoolean().withMessage('Should have a valid live allow replay boolean'),
+    express_validator_1.body('live.maxDuration').isInt().withMessage('Should have a valid live max duration'),
+    express_validator_1.body('live.maxInstanceLives').custom(misc_1.isIntOrNull).withMessage('Should have a valid max instance lives'),
+    express_validator_1.body('live.maxUserLives').custom(misc_1.isIntOrNull).withMessage('Should have a valid max user lives'),
+    express_validator_1.body('live.transcoding.enabled').isBoolean().withMessage('Should have a valid live transcoding enabled boolean'),
+    express_validator_1.body('live.transcoding.threads').isInt().withMessage('Should have a valid live transcoding threads'),
+    express_validator_1.body('live.transcoding.resolutions.240p').isBoolean().withMessage('Should have a valid transcoding 240p resolution enabled boolean'),
+    express_validator_1.body('live.transcoding.resolutions.360p').isBoolean().withMessage('Should have a valid transcoding 360p resolution enabled boolean'),
+    express_validator_1.body('live.transcoding.resolutions.480p').isBoolean().withMessage('Should have a valid transcoding 480p resolution enabled boolean'),
+    express_validator_1.body('live.transcoding.resolutions.720p').isBoolean().withMessage('Should have a valid transcoding 720p resolution enabled boolean'),
+    express_validator_1.body('live.transcoding.resolutions.1080p').isBoolean().withMessage('Should have a valid transcoding 1080p resolution enabled boolean'),
+    express_validator_1.body('live.transcoding.resolutions.2160p').isBoolean().withMessage('Should have a valid transcoding 2160p resolution enabled boolean'),
     express_validator_1.body('search.remoteUri.users').isBoolean().withMessage('Should have a remote URI search for users boolean'),
     express_validator_1.body('search.remoteUri.anonymous').isBoolean().withMessage('Should have a valid remote URI search for anonymous boolean'),
     express_validator_1.body('search.searchIndex.enabled').isBoolean().withMessage('Should have a valid search index enabled boolean'),
@@ -63,6 +79,8 @@ const customConfigUpdateValidator = [
             return;
         if (!checkInvalidTranscodingConfig(req.body, res))
             return;
+        if (!checkInvalidLiveConfig(req.body, res))
+            return;
         return next();
     }
 ];
@@ -71,7 +89,7 @@ function checkInvalidConfigIfEmailDisabled(customConfig, res) {
     if (config_1.isEmailEnabled())
         return true;
     if (customConfig.signup.requiresEmailVerification === true) {
-        res.status(400)
+        res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
             .send({ error: 'Emailer is disabled but you require signup email verification.' })
             .end();
         return false;
@@ -82,8 +100,19 @@ function checkInvalidTranscodingConfig(customConfig, res) {
     if (customConfig.transcoding.enabled === false)
         return true;
     if (customConfig.transcoding.webtorrent.enabled === false && customConfig.transcoding.hls.enabled === false) {
-        res.status(400)
+        res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
             .send({ error: 'You need to enable at least webtorrent transcoding or hls transcoding' })
+            .end();
+        return false;
+    }
+    return true;
+}
+function checkInvalidLiveConfig(customConfig, res) {
+    if (customConfig.live.enabled === false)
+        return true;
+    if (customConfig.live.allowReplay === true && customConfig.transcoding.enabled === false) {
+        res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+            .send({ error: 'You cannot allow live replay if transcoding is not enabled' })
             .end();
         return false;
     }

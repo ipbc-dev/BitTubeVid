@@ -4,6 +4,8 @@ exports.meRouter = void 0;
 const tslib_1 = require("tslib");
 require("multer");
 const express = require("express");
+const audit_logger_1 = require("@server/helpers/audit-logger");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const express_utils_1 = require("../../../helpers/express-utils");
 const utils_1 = require("../../../helpers/utils");
 const config_1 = require("../../../initializers/config");
@@ -20,6 +22,7 @@ const account_video_rate_1 = require("../../../models/account/account-video-rate
 const user_2 = require("../../../models/account/user");
 const video_1 = require("../../../models/video/video");
 const video_import_1 = require("../../../models/video/video-import");
+const auditLogger = audit_logger_1.auditLoggerFactory('users');
 const reqAvatarFile = express_utils_1.createReqFiles(['avatarfile'], constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: config_1.CONFIG.STORAGE.TMP_DIR });
 const meRouter = express.Router();
 exports.meRouter = meRouter;
@@ -53,15 +56,15 @@ function getUserVideoImports(req, res) {
 }
 function getUserInformation(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const user = yield user_2.UserModel.loadForMeAPI(res.locals.oauth.token.user.username);
+        const user = yield user_2.UserModel.loadForMeAPI(res.locals.oauth.token.user.id);
         return res.json(user.toMeFormattedJSON());
     });
 }
 function getUserVideoQuotaUsed(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.user;
-        const videoQuotaUsed = yield user_2.UserModel.getOriginalVideoFileTotalFromUser(user);
-        const videoQuotaUsedDaily = yield user_2.UserModel.getOriginalVideoFileTotalDailyFromUser(user);
+        const videoQuotaUsed = yield user_1.getOriginalVideoFileTotalFromUser(user);
+        const videoQuotaUsedDaily = yield user_1.getOriginalVideoFileTotalDailyFromUser(user);
         const data = {
             videoQuotaUsed,
             videoQuotaUsedDaily
@@ -84,9 +87,10 @@ function getUserVideoRating(req, res) {
 }
 function deleteMe(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const user = res.locals.oauth.token.User;
+        const user = yield user_2.UserModel.loadByIdWithChannels(res.locals.oauth.token.User.id);
+        auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
         yield user.destroy();
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function updateMe(req, res) {
@@ -140,7 +144,7 @@ function updateMe(req, res) {
         if (sendVerificationEmail === true) {
             yield user_1.sendVerifyUserEmail(user, true);
         }
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function updateMyAvatar(req, res) {

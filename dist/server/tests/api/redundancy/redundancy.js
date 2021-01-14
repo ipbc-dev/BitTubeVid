@@ -10,6 +10,7 @@ const redundancy_1 = require("../../../../shared/extra-utils/server/redundancy")
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const stats_1 = require("../../../../shared/extra-utils/server/stats");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 let servers = [];
 let video1Server2UUID;
@@ -91,13 +92,13 @@ function check2Webseeds(videoUUID) {
                 checkMagnetWebseeds(file, webseeds, server);
                 yield extra_utils_1.makeGetRequest({
                     url: servers[0].url,
-                    statusCodeExpected: 200,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200,
                     path: '/static/redundancy/' + `${videoUUID}-${file.resolution.id}.mp4`,
                     contentType: null
                 });
                 yield extra_utils_1.makeGetRequest({
                     url: servers[1].url,
-                    statusCodeExpected: 200,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200,
                     path: `/static/webseed/${videoUUID}-${file.resolution.id}.mp4`,
                     contentType: null
                 });

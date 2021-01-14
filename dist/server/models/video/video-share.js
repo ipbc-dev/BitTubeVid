@@ -3,13 +3,13 @@ var VideoShareModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoShareModel = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
 const actor_1 = require("../activitypub/actor");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
-const sequelize_1 = require("sequelize");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["FULL"] = "FULL";

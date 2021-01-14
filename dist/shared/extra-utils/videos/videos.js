@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getVideoIdFromUUID = exports.getLocalIdByUUID = exports.uploadVideoAndGetId = exports.getPlaylistVideos = exports.checkVideoFilesWereRemoved = exports.completeVideoCheck = exports.getLocalVideos = exports.parseTorrentVideo = exports.viewVideo = exports.rateVideo = exports.updateVideo = exports.uploadRandomVideoOnServers = exports.getVideosWithFilters = exports.uploadVideo = exports.getVideosListWithToken = exports.removeVideo = exports.getVideosListSort = exports.getVideosListPagination = exports.getVideosList = exports.getVideoWithToken = exports.getVideoFileMetadataUrl = exports.getVideo = exports.getVideoChannelVideos = exports.getAccountVideos = exports.getMyVideos = exports.getVideoLanguages = exports.getVideoPrivacies = exports.videoUUIDToId = exports.getVideoLicences = exports.uploadRandomVideo = exports.getVideoCategories = exports.getVideoDescription = void 0;
+exports.getVideoIdFromUUID = exports.getLocalIdByUUID = exports.uploadVideoAndGetId = exports.getPlaylistVideos = exports.checkVideoFilesWereRemoved = exports.completeVideoCheck = exports.getLocalVideos = exports.parseTorrentVideo = exports.viewVideo = exports.rateVideo = exports.updateVideo = exports.uploadRandomVideoOnServers = exports.getVideosWithFilters = exports.uploadVideo = exports.getVideosListWithToken = exports.removeVideo = exports.getVideosListSort = exports.getVideosListPagination = exports.removeAllVideos = exports.getVideosList = exports.getVideoWithToken = exports.getVideoFileMetadataUrl = exports.getVideo = exports.getVideoChannelVideos = exports.getAccountVideos = exports.getMyVideos = exports.getVideoLanguages = exports.getVideoPrivacies = exports.videoUUIDToId = exports.getVideoLicences = exports.uploadRandomVideo = exports.getVideoCategories = exports.getVideoDescription = void 0;
 const tslib_1 = require("tslib");
+const core_utils_1 = require("@shared/core-utils");
 const chai_1 = require("chai");
 const fs_extra_1 = require("fs-extra");
 const parseTorrent = require("parse-torrent");
@@ -20,7 +21,7 @@ function getVideoCategories(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoCategories = getVideoCategories;
@@ -29,7 +30,7 @@ function getVideoLicences(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoLicences = getVideoLicences;
@@ -38,7 +39,7 @@ function getVideoLanguages(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoLanguages = getVideoLanguages;
@@ -47,11 +48,11 @@ function getVideoPrivacies(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoPrivacies = getVideoPrivacies;
-function getVideo(url, id, expectedStatus = 200) {
+function getVideo(url, id, expectedStatus = core_utils_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/videos/' + id;
     return request(url)
         .get(path)
@@ -70,11 +71,11 @@ function getVideoFileMetadataUrl(url) {
     return request(url)
         .get('/')
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoFileMetadataUrl = getVideoFileMetadataUrl;
-function viewVideo(url, id, expectedStatus = 204, xForwardedFor) {
+function viewVideo(url, id, expectedStatus = core_utils_1.HttpStatusCode.NO_CONTENT_204, xForwardedFor) {
     const path = '/api/v1/videos/' + id + '/views';
     const req = request(url)
         .post(path)
@@ -85,7 +86,7 @@ function viewVideo(url, id, expectedStatus = 204, xForwardedFor) {
     return req.expect(expectedStatus);
 }
 exports.viewVideo = viewVideo;
-function getVideoWithToken(url, token, id, expectedStatus = 200) {
+function getVideoWithToken(url, token, id, expectedStatus = core_utils_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/videos/' + id;
     return request(url)
         .get(path)
@@ -98,7 +99,7 @@ function getVideoDescription(url, descriptionPath) {
     return request(url)
         .get(descriptionPath)
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoDescription = getVideoDescription;
@@ -108,7 +109,7 @@ function getVideosList(url) {
         .get(path)
         .query({ sort: 'name' })
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideosList = getVideosList;
@@ -119,7 +120,7 @@ function getVideosListWithToken(url, token, query = {}) {
         .set('Authorization', 'Bearer ' + token)
         .query(miscs_1.immutableAssign(query, { sort: 'name' }))
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideosListWithToken = getVideosListWithToken;
@@ -129,7 +130,7 @@ function getLocalVideos(url) {
         .get(path)
         .query({ sort: 'name', filter: 'local' })
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getLocalVideos = getLocalVideos;
@@ -144,7 +145,7 @@ function getMyVideos(url, accessToken, start, count, sort, search) {
         req.query({ sort });
     return req.set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getMyVideos = getMyVideos;
@@ -159,7 +160,7 @@ function getAccountVideos(url, accessToken, accountName, start, count, sort, que
             sort
         }),
         token: accessToken,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getAccountVideos = getAccountVideos;
@@ -174,7 +175,7 @@ function getVideoChannelVideos(url, accessToken, videoChannelName, start, count,
             sort
         }),
         token: accessToken,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoChannelVideos = getVideoChannelVideos;
@@ -188,7 +189,7 @@ function getPlaylistVideos(url, accessToken, playlistId, start, count, query = {
             count
         }),
         token: accessToken,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getPlaylistVideos = getPlaylistVideos;
@@ -203,7 +204,7 @@ function getVideosListPagination(url, start, count, sort, skipCount) {
     if (skipCount)
         req.query({ skipCount });
     return req.set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideosListPagination = getVideosListPagination;
@@ -213,7 +214,7 @@ function getVideosListSort(url, sort) {
         .get(path)
         .query({ sort: sort })
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideosListSort = getVideosListSort;
@@ -223,11 +224,11 @@ function getVideosWithFilters(url, query) {
         .get(path)
         .query(query)
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(core_utils_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideosWithFilters = getVideosWithFilters;
-function removeVideo(url, token, id, expectedStatus = 204) {
+function removeVideo(url, token, id, expectedStatus = core_utils_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos';
     return request(url)
         .delete(path + '/' + id)
@@ -236,6 +237,15 @@ function removeVideo(url, token, id, expectedStatus = 204) {
         .expect(expectedStatus);
 }
 exports.removeVideo = removeVideo;
+function removeAllVideos(server) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const resVideos = yield getVideosList(server.url);
+        for (const v of resVideos.body.data) {
+            yield removeVideo(server.url, server.accessToken, v.id);
+        }
+    });
+}
+exports.removeAllVideos = removeAllVideos;
 function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
     'redundancy',
     'videos',
@@ -248,7 +258,7 @@ function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
 ]) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const directory of directories) {
-            const directoryPath = miscs_1.buildServerDirectory(serverNumber, directory);
+            const directoryPath = miscs_1.buildServerDirectory({ internalServerNumber: serverNumber }, directory);
             const directoryExists = yield fs_extra_1.pathExists(directoryPath);
             if (directoryExists === false)
                 continue;
@@ -260,7 +270,7 @@ function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
     });
 }
 exports.checkVideoFilesWereRemoved = checkVideoFilesWereRemoved;
-function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) {
+function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = core_utils_1.HttpStatusCode.OK_200) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const path = '/api/v1/videos/upload';
         let defaultChannelId = '1';
@@ -335,7 +345,7 @@ function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = 200) 
     });
 }
 exports.uploadVideo = uploadVideo;
-function updateVideo(url, accessToken, id, attributes, statusCodeExpected = 204) {
+function updateVideo(url, accessToken, id, attributes, statusCodeExpected = core_utils_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + id;
     const body = {};
     if (attributes.name)
@@ -389,7 +399,7 @@ function updateVideo(url, accessToken, id, attributes, statusCodeExpected = 204)
     });
 }
 exports.updateVideo = updateVideo;
-function rateVideo(url, accessToken, id, rating, specialStatus = 204) {
+function rateVideo(url, accessToken, id, rating, specialStatus = core_utils_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + id + '/rate';
     return request(url)
         .put(path)
@@ -402,7 +412,7 @@ exports.rateVideo = rateVideo;
 function parseTorrentVideo(server, videoUUID, resolution) {
     return new Promise((res, rej) => {
         const torrentName = videoUUID + '-' + resolution + '.torrent';
-        const torrentPath = path_1.join(miscs_1.root(), 'test' + server.internalServerNumber, 'torrents', torrentName);
+        const torrentPath = miscs_1.buildServerDirectory(server, path_1.join('torrents', torrentName));
         fs_extra_1.readFile(torrentPath, (err, data) => {
             if (err)
                 return rej(err);

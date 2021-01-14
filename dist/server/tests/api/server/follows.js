@@ -255,7 +255,7 @@ describe('Test follows', function () {
     });
     it('Should upload a video on server 2 and 3 and propagate only the video of server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(35000);
+            this.timeout(60000);
             yield index_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'server2' });
             yield index_1.uploadVideo(servers[2].url, servers[2].accessToken, { name: 'server3' });
             yield jobs_1.waitJobs(servers);

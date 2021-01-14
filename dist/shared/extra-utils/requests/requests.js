@@ -6,6 +6,7 @@ const miscs_1 = require("../miscs/miscs");
 const path_1 = require("path");
 const url_1 = require("url");
 const querystring_1 = require("querystring");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function get4KFileUrl() {
     return 'https://download.cpy.re/peertube/4k_file.txt';
 }
@@ -17,7 +18,7 @@ function makeRawRequest(url, statusCodeExpected, range) {
 exports.makeRawRequest = makeRawRequest;
 function makeGetRequest(options) {
     if (!options.statusCodeExpected)
-        options.statusCodeExpected = 400;
+        options.statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400;
     if (options.contentType === undefined)
         options.contentType = 'application/json';
     const req = request(options.url).get(options.path);
@@ -36,7 +37,7 @@ function makeGetRequest(options) {
 exports.makeGetRequest = makeGetRequest;
 function makeDeleteRequest(options) {
     if (!options.statusCodeExpected)
-        options.statusCodeExpected = 400;
+        options.statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400;
     const req = request(options.url)
         .delete(options.path)
         .set('Accept', 'application/json');
@@ -47,7 +48,7 @@ function makeDeleteRequest(options) {
 exports.makeDeleteRequest = makeDeleteRequest;
 function makeUploadRequest(options) {
     if (!options.statusCodeExpected)
-        options.statusCodeExpected = 400;
+        options.statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400;
     let req;
     if (options.method === 'PUT') {
         req = request(options.url).put(options.path);
@@ -71,7 +72,7 @@ function makeUploadRequest(options) {
             req.field(field, value);
         }
     });
-    Object.keys(options.attaches).forEach(attach => {
+    Object.keys(options.attaches || {}).forEach(attach => {
         const value = options.attaches[attach];
         if (Array.isArray(value)) {
             req.attach(attach, miscs_1.buildAbsoluteFixturePath(value[0]), value[1]);
@@ -87,7 +88,7 @@ function makePostBodyRequest(options) {
     if (!options.fields)
         options.fields = {};
     if (!options.statusCodeExpected)
-        options.statusCodeExpected = 400;
+        options.statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400;
     const req = request(options.url)
         .post(options.path)
         .set('Accept', 'application/json');
@@ -99,7 +100,7 @@ function makePostBodyRequest(options) {
 exports.makePostBodyRequest = makePostBodyRequest;
 function makePutBodyRequest(options) {
     if (!options.statusCodeExpected)
-        options.statusCodeExpected = 400;
+        options.statusCodeExpected = http_error_codes_1.HttpStatusCode.BAD_REQUEST_400;
     const req = request(options.url)
         .put(options.path)
         .set('Accept', 'application/json');
@@ -113,7 +114,7 @@ function makeHTMLRequest(url, path) {
     return request(url)
         .get(path)
         .set('Accept', 'text/html')
-        .expect(200);
+        .expect(http_error_codes_1.HttpStatusCode.OK_200);
 }
 exports.makeHTMLRequest = makeHTMLRequest;
 function updateAvatarRequest(options) {
@@ -130,7 +131,7 @@ function updateAvatarRequest(options) {
         token: options.accessToken,
         fields: {},
         attaches: { avatarfile: filePath },
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.updateAvatarRequest = updateAvatarRequest;

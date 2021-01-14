@@ -9,6 +9,7 @@ const login_1 = require("../../../../shared/extra-utils/users/login");
 const users_1 = require("../../../../shared/extra-utils/users/users");
 const videos_1 = require("../../../../shared/extra-utils/videos/videos");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test video privacy', function () {
     const servers = [];
@@ -84,8 +85,8 @@ describe('Test video privacy', function () {
     });
     it('Should not be able to watch the private/internal video with non authenticated user', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield videos_1.getVideo(servers[0].url, privateVideoUUID, 401);
-            yield videos_1.getVideo(servers[0].url, internalVideoUUID, 401);
+            yield videos_1.getVideo(servers[0].url, privateVideoUUID, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+            yield videos_1.getVideo(servers[0].url, internalVideoUUID, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
         });
     });
     it('Should not be able to watch the private video with another user', function () {
@@ -97,22 +98,22 @@ describe('Test video privacy', function () {
             };
             yield users_1.createUser({ url: servers[0].url, accessToken: servers[0].accessToken, username: user.username, password: user.password });
             anotherUserToken = yield login_1.userLogin(servers[0], user);
-            yield videos_1.getVideoWithToken(servers[0].url, anotherUserToken, privateVideoUUID, 403);
+            yield videos_1.getVideoWithToken(servers[0].url, anotherUserToken, privateVideoUUID, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         });
     });
     it('Should be able to watch the internal video with another user', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield videos_1.getVideoWithToken(servers[0].url, anotherUserToken, internalVideoUUID, 200);
+            yield videos_1.getVideoWithToken(servers[0].url, anotherUserToken, internalVideoUUID, http_error_codes_1.HttpStatusCode.OK_200);
         });
     });
     it('Should be able to watch the private video with the correct user', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield videos_1.getVideoWithToken(servers[0].url, servers[0].accessToken, privateVideoUUID, 200);
+            yield videos_1.getVideoWithToken(servers[0].url, servers[0].accessToken, privateVideoUUID, http_error_codes_1.HttpStatusCode.OK_200);
         });
     });
     it('Should upload an unlisted video on server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(30000);
+            this.timeout(60000);
             const attributes = {
                 name: 'unlisted video',
                 privacy: 2
@@ -173,7 +174,7 @@ describe('Test video privacy', function () {
     });
     it('Should not be able to get non-federated unlisted video from federated server', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield videos_1.getVideo(servers[1].url, nonFederatedUnlistedVideoUUID, 404);
+            yield videos_1.getVideo(servers[1].url, nonFederatedUnlistedVideoUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         });
     });
     it('Should update the private and internal videos to public on server 1', function () {

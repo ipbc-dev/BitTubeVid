@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.optionalAuthenticate = exports.authenticatePromiseIfNeeded = exports.authenticateSocket = exports.authenticate = void 0;
+const auth_1 = require("@server/lib/auth");
 const logger_1 = require("../helpers/logger");
 const oauth_model_1 = require("../lib/oauth-model");
-const auth_1 = require("@server/lib/auth");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
 function authenticate(req, res, next, authenticateInQuery = false) {
     const options = authenticateInQuery ? { allowBearerTokensInQueryString: true } : {};
     auth_1.oAuthServer.authenticate(options)(req, res, err => {
@@ -16,12 +17,13 @@ function authenticate(req, res, next, authenticateInQuery = false) {
             })
                 .end();
         }
+        res.locals.authenticated = true;
         return next();
     });
 }
 exports.authenticate = authenticate;
 function authenticateSocket(socket, next) {
-    const accessToken = socket.handshake.query.accessToken;
+    const accessToken = socket.handshake.query['accessToken'];
     logger_1.logger.debug('Checking socket access token %s.', accessToken);
     if (!accessToken)
         return next(new Error('No access token provided'));
@@ -31,7 +33,7 @@ function authenticateSocket(socket, next) {
         if (!tokenDB || tokenDB.accessTokenExpiresAt < now || tokenDB.refreshTokenExpiresAt < now) {
             return next(new Error('Invalid access token.'));
         }
-        socket.handshake.query.user = tokenDB.User;
+        socket.handshake.query['user'] = tokenDB.User;
         return next();
     })
         .catch(err => logger_1.logger.error('Cannot get access token.', { err }));
@@ -43,7 +45,7 @@ function authenticatePromiseIfNeeded(req, res, authenticateInQuery = false) {
         if ((_a = res.locals.oauth) === null || _a === void 0 ? void 0 : _a.token.User)
             return resolve();
         if (res.locals.authenticated === false)
-            return res.sendStatus(401);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
         authenticate(req, res, () => resolve(), authenticateInQuery);
     });
 }

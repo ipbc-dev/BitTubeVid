@@ -74,6 +74,81 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
             query.transaction = t;
         return VideoCommentModel_1.scope([ScopeNames.WITH_IN_REPLY_TO, ScopeNames.WITH_ACCOUNT]).findOne(query);
     }
+    static listCommentsForApi(parameters) {
+        const { start, count, sort, isLocal, search, searchAccount, searchVideo } = parameters;
+        const where = {
+            deletedAt: null
+        };
+        const whereAccount = {};
+        const whereActor = {};
+        const whereVideo = {};
+        if (isLocal === true) {
+            Object.assign(whereActor, {
+                serverId: null
+            });
+        }
+        else if (isLocal === false) {
+            Object.assign(whereActor, {
+                serverId: {
+                    [sequelize_1.Op.ne]: null
+                }
+            });
+        }
+        if (search) {
+            Object.assign(where, {
+                [sequelize_1.Op.or]: [
+                    utils_1.searchAttribute(search, 'text'),
+                    utils_1.searchAttribute(search, '$Account.Actor.preferredUsername$'),
+                    utils_1.searchAttribute(search, '$Account.name$'),
+                    utils_1.searchAttribute(search, '$Video.name$')
+                ]
+            });
+        }
+        if (searchAccount) {
+            Object.assign(whereActor, {
+                [sequelize_1.Op.or]: [
+                    utils_1.searchAttribute(searchAccount, '$Account.Actor.preferredUsername$'),
+                    utils_1.searchAttribute(searchAccount, '$Account.name$')
+                ]
+            });
+        }
+        if (searchVideo) {
+            Object.assign(whereVideo, utils_1.searchAttribute(searchVideo, 'name'));
+        }
+        const query = {
+            offset: start,
+            limit: count,
+            order: utils_1.getCommentSort(sort),
+            where,
+            include: [
+                {
+                    model: account_1.AccountModel.unscoped(),
+                    required: true,
+                    where: whereAccount,
+                    include: [
+                        {
+                            attributes: {
+                                exclude: actor_2.unusedActorAttributesForAPI
+                            },
+                            model: actor_2.ActorModel,
+                            required: true,
+                            where: whereActor
+                        }
+                    ]
+                },
+                {
+                    model: video_1.VideoModel.unscoped(),
+                    required: true,
+                    where: whereVideo
+                }
+            ]
+        };
+        return VideoCommentModel_1
+            .findAndCountAll(query)
+            .then(({ rows, count }) => {
+            return { total: count, data: rows };
+        });
+    }
     static listThreadsForApi(parameters) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { videoId, isVideoOwned, start, count, sort, user } = parameters;
@@ -367,7 +442,29 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
             isDeleted: this.isDeleted(),
             totalRepliesFromVideoAuthor: this.get('totalRepliesFromVideoAuthor') || 0,
             totalReplies: this.get('totalReplies') || 0,
-            account: this.Account ? this.Account.toFormattedJSON() : null
+            account: this.Account
+                ? this.Account.toFormattedJSON()
+                : null
+        };
+    }
+    toFormattedAdminJSON() {
+        return {
+            id: this.id,
+            url: this.url,
+            text: this.text,
+            threadId: this.getThreadId(),
+            inReplyToCommentId: this.inReplyToCommentId || null,
+            videoId: this.videoId,
+            createdAt: this.createdAt,
+            updatedAt: this.updatedAt,
+            video: {
+                id: this.Video.id,
+                uuid: this.Video.uuid,
+                name: this.Video.name
+            },
+            account: this.Account
+                ? this.Account.toFormattedJSON()
+                : null
         };
     }
     toActivityPubObject(threadParentComments) {

@@ -8,16 +8,17 @@ const extra_utils_1 = require("../../../shared/extra-utils");
 const fs_extra_1 = require("fs-extra");
 const uuid_1 = require("uuid");
 const path_1 = require("path");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function countFiles(internalServerNumber, directory) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory(internalServerNumber, directory));
+        const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory({ internalServerNumber }, directory));
         return files.length;
     });
 }
 function assertNotExists(internalServerNumber, directory, substring) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory(internalServerNumber, directory));
+        const files = yield fs_extra_1.readdir(extra_utils_1.buildServerDirectory({ internalServerNumber }, directory));
         for (const f of files) {
             expect(f).to.not.contain(substring);
         }
@@ -70,7 +71,7 @@ describe('Test prune storage scripts', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: servers[0].url,
                     path: account.avatar.path,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             }
             {
@@ -79,7 +80,7 @@ describe('Test prune storage scripts', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: servers[1].url,
                     path: account.avatar.path,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             }
             yield extra_utils_1.wait(1000);
@@ -95,7 +96,7 @@ describe('Test prune storage scripts', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             for (let i = 0; i < 2; i++) {
                 {
-                    const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'videos');
+                    const base = extra_utils_1.buildServerDirectory(servers[0], 'videos');
                     const n1 = uuid_1.v4() + '.mp4';
                     const n2 = uuid_1.v4() + '.webm';
                     yield fs_extra_1.createFile(path_1.join(base, n1));
@@ -103,7 +104,7 @@ describe('Test prune storage scripts', function () {
                     badNames['videos'] = [n1, n2];
                 }
                 {
-                    const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'torrents');
+                    const base = extra_utils_1.buildServerDirectory(servers[0], 'torrents');
                     const n1 = uuid_1.v4() + '-240.torrent';
                     const n2 = uuid_1.v4() + '-480.torrent';
                     yield fs_extra_1.createFile(path_1.join(base, n1));
@@ -111,7 +112,7 @@ describe('Test prune storage scripts', function () {
                     badNames['torrents'] = [n1, n2];
                 }
                 {
-                    const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'thumbnails');
+                    const base = extra_utils_1.buildServerDirectory(servers[0], 'thumbnails');
                     const n1 = uuid_1.v4() + '.jpg';
                     const n2 = uuid_1.v4() + '.jpg';
                     yield fs_extra_1.createFile(path_1.join(base, n1));
@@ -119,7 +120,7 @@ describe('Test prune storage scripts', function () {
                     badNames['thumbnails'] = [n1, n2];
                 }
                 {
-                    const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'previews');
+                    const base = extra_utils_1.buildServerDirectory(servers[0], 'previews');
                     const n1 = uuid_1.v4() + '.jpg';
                     const n2 = uuid_1.v4() + '.jpg';
                     yield fs_extra_1.createFile(path_1.join(base, n1));
@@ -127,7 +128,7 @@ describe('Test prune storage scripts', function () {
                     badNames['previews'] = [n1, n2];
                 }
                 {
-                    const base = extra_utils_1.buildServerDirectory(servers[0].internalServerNumber, 'avatars');
+                    const base = extra_utils_1.buildServerDirectory(servers[0], 'avatars');
                     const n1 = uuid_1.v4() + '.png';
                     const n2 = uuid_1.v4() + '.jpg';
                     yield fs_extra_1.createFile(path_1.join(base, n1));

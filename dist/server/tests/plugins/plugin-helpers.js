@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const chai_1 = require("chai");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function postCommand(server, command, bodyArg) {
     const body = { command };
     if (bodyArg)
@@ -13,7 +14,7 @@ function postCommand(server, command, bodyArg) {
         url: server.url,
         path: '/plugins/test-four/router/commander',
         fields: body,
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 describe('Test plugin helpers', function () {
@@ -64,7 +65,7 @@ describe('Test plugin helpers', function () {
         let videoUUIDServer1;
         before(function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(15000);
+                this.timeout(30000);
                 {
                     const res = yield extra_utils_1.uploadVideoAndGetId({ server: servers[0], videoName: 'video server 1' });
                     videoUUIDServer1 = res.uuid;
@@ -147,7 +148,7 @@ describe('Test plugin helpers', function () {
         }));
         it('Should remove a video after a view', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 yield extra_utils_1.getVideo(servers[0].url, videoUUID);
                 yield extra_utils_1.viewVideo(servers[0].url, videoUUID);
                 yield servers_1.waitUntilLog(servers[0], 'Video deleted by plugin four.');

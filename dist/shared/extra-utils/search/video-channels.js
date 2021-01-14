@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.advancedVideoChannelSearch = exports.searchVideoChannel = void 0;
 const requests_1 = require("../requests/requests");
-function searchVideoChannel(url, search, token, statusCodeExpected = 200) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function searchVideoChannel(url, search, token, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/search/video-channels';
     return requests_1.makeGetRequest({
         url,
@@ -22,7 +23,7 @@ function advancedVideoChannelSearch(url, search) {
         url,
         path,
         query: search,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.advancedVideoChannelSearch = advancedVideoChannelSearch;

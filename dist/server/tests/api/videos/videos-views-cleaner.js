@@ -11,7 +11,7 @@ describe('Test video views cleaner', function () {
     let videoIdServer2;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(50000);
+            this.timeout(120000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield extra_utils_1.setAccessTokensToServers(servers);
             yield extra_utils_1.doubleFollow(servers[0], servers[1]);
@@ -34,13 +34,13 @@ describe('Test video views cleaner', function () {
             {
                 for (const server of servers) {
                     const total = yield extra_utils_1.countVideoViewsOf(server.internalServerNumber, videoIdServer1);
-                    expect(total).to.equal(2);
+                    expect(total).to.equal(2, 'Server ' + server.serverNumber + ' does not have the correct amount of views');
                 }
             }
             {
                 for (const server of servers) {
                     const total = yield extra_utils_1.countVideoViewsOf(server.internalServerNumber, videoIdServer2);
-                    expect(total).to.equal(2);
+                    expect(total).to.equal(2, 'Server ' + server.serverNumber + ' does not have the correct amount of views');
                 }
             }
         });

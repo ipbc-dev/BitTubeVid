@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.getExtFromMimetype = exports.extractVideo = exports.addOptimizeOrMergeAudioJob = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
+exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.isStateForFederation = exports.getExtFromMimetype = exports.extractVideo = exports.addOptimizeOrMergeAudioJob = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
 const config_1 = require("@server/initializers/config");
 const constants_1 = require("@server/initializers/constants");
 const job_queue_1 = require("@server/lib/job-queue");
@@ -64,6 +64,11 @@ function isPrivacyForFederation(privacy) {
         (config_1.CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true && castedPrivacy === 2);
 }
 exports.isPrivacyForFederation = isPrivacyForFederation;
+function isStateForFederation(state) {
+    const castedState = parseInt(state + '', 10);
+    return castedState === 1 || castedState === 4 || castedState === 5;
+}
+exports.isStateForFederation = isStateForFederation;
 function getPrivaciesForFederation() {
     return (config_1.CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true)
         ? [{ privacy: 1 }, { privacy: 2 }]

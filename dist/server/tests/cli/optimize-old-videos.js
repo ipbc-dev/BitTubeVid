@@ -3,12 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
-const videos_1 = require("../../../shared/models/videos");
+const path_1 = require("path");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
-const ffmpeg_utils_1 = require("../../helpers/ffmpeg-utils");
+const videos_1 = require("../../../shared/models/videos");
+const ffprobe_utils_1 = require("../../helpers/ffprobe-utils");
 const constants_1 = require("../../initializers/constants");
-const path_1 = require("path");
 const expect = chai.expect;
 describe('Test optimize old videos', function () {
     let servers = [];
@@ -21,7 +21,7 @@ describe('Test optimize old videos', function () {
             let tempFixturePath;
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
-                const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
+                const bitrate = yield ffprobe_utils_1.getVideoFileBitrate(tempFixturePath);
                 expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video1', fixture: tempFixturePath });
@@ -64,10 +64,10 @@ describe('Test optimize old videos', function () {
                     expect(videosDetails.files).to.have.lengthOf(1);
                     const file = videosDetails.files[0];
                     expect(file.size).to.be.below(8000000);
-                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[0].internalServerNumber, 'videos', video.uuid + '-' + file.resolution.id + '.mp4');
-                    const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(path);
-                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
-                    const resolution = yield ffmpeg_utils_1.getVideoFileResolution(path);
+                    const path = extra_utils_1.buildServerDirectory(servers[0], path_1.join('videos', video.uuid + '-' + file.resolution.id + '.mp4'));
+                    const bitrate = yield ffprobe_utils_1.getVideoFileBitrate(path);
+                    const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
+                    const resolution = yield ffprobe_utils_1.getVideoFileResolution(path);
                     expect(resolution.videoFileResolution).to.equal(file.resolution.id);
                     expect(bitrate).to.be.below(videos_1.getMaxBitrate(resolution.videoFileResolution, fps, constants_1.VIDEO_TRANSCODING_FPS));
                 }

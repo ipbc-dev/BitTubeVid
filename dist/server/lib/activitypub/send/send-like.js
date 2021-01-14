@@ -8,7 +8,7 @@ const logger_1 = require("../../../helpers/logger");
 function sendLike(byActor, video, t) {
     logger_1.logger.info('Creating job to like %s.', video.url);
     const activityBuilder = (audience) => {
-        const url = url_1.getVideoLikeActivityPubUrl(byActor, video);
+        const url = url_1.getVideoLikeActivityPubUrlByLocalActor(byActor, video);
         return buildLikeActivity(url, byActor, video, audience);
     };
     return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video, transaction: t });

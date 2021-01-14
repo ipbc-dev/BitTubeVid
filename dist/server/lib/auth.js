@@ -11,6 +11,7 @@ const plugin_manager_1 = require("@server/lib/plugins/plugin-manager");
 const oauth_token_1 = require("@server/models/oauth/oauth-token");
 const models_1 = require("@shared/models");
 const OAuthServer = require("express-oauth-server");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const oAuthServer = new OAuthServer({
     useErrorHandler: true,
     accessTokenLifetime: constants_1.OAUTH_LIFETIME.ACCESS_TOKEN,
@@ -40,8 +41,8 @@ function handleTokenRevocation(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const token = res.locals.oauth.token;
         res.locals.explicitLogout = true;
-        yield oauth_model_1.revokeToken(token);
-        return res.json();
+        const result = yield oauth_model_1.revokeToken(token);
+        return res.json(result);
     });
 }
 exports.handleTokenRevocation = handleTokenRevocation;
@@ -158,17 +159,17 @@ function proxifyExternalAuthBypass(req, res) {
     const obj = authBypassTokens.get(req.body.externalAuthToken);
     if (!obj) {
         logger_1.logger.error('Cannot authenticate user with unknown bypass token');
-        return res.sendStatus(400);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
     }
     const { expires, user, authName, npmName } = obj;
     const now = new Date();
     if (now.getTime() > expires.getTime()) {
         logger_1.logger.error('Cannot authenticate user with an expired external auth token');
-        return res.sendStatus(400);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
     }
     if (user.username !== req.body.username) {
         logger_1.logger.error('Cannot authenticate user %s with invalid username %s.', req.body.username);
-        return res.sendStatus(400);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
     }
     req.body.password = 'fake';
     logger_1.logger.info('Auth success with external auth method %s of plugin %s for %s.', authName, npmName, user.email);

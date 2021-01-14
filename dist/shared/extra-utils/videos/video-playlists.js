@@ -9,6 +9,7 @@ const path_1 = require("path");
 const __1 = require("..");
 const fs_extra_1 = require("fs-extra");
 const chai_1 = require("chai");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getVideoPlaylistsList(url, start, count, sort) {
     const path = '/api/v1/video-playlists';
     const query = {
@@ -20,7 +21,7 @@ function getVideoPlaylistsList(url, start, count, sort) {
         url,
         path,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoPlaylistsList = getVideoPlaylistsList;
@@ -35,7 +36,7 @@ function getVideoChannelPlaylistsList(url, videoChannelName, start, count, sort)
         url,
         path,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoChannelPlaylistsList = getVideoChannelPlaylistsList;
@@ -51,7 +52,7 @@ function getAccountPlaylistsList(url, accountName, start, count, sort, search) {
         url,
         path,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getAccountPlaylistsList = getAccountPlaylistsList;
@@ -68,11 +69,11 @@ function getAccountPlaylistsListWithToken(url, token, accountName, start, count,
         token,
         path,
         query,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getAccountPlaylistsListWithToken = getAccountPlaylistsListWithToken;
-function getVideoPlaylist(url, playlistId, statusCodeExpected = 200) {
+function getVideoPlaylist(url, playlistId, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/video-playlists/' + playlistId;
     return requests_1.makeGetRequest({
         url,
@@ -81,7 +82,7 @@ function getVideoPlaylist(url, playlistId, statusCodeExpected = 200) {
     });
 }
 exports.getVideoPlaylist = getVideoPlaylist;
-function getVideoPlaylistWithToken(url, token, playlistId, statusCodeExpected = 200) {
+function getVideoPlaylistWithToken(url, token, playlistId, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/video-playlists/' + playlistId;
     return requests_1.makeGetRequest({
         url,
@@ -91,7 +92,7 @@ function getVideoPlaylistWithToken(url, token, playlistId, statusCodeExpected = 
     });
 }
 exports.getVideoPlaylistWithToken = getVideoPlaylistWithToken;
-function deleteVideoPlaylist(url, token, playlistId, statusCodeExpected = 204) {
+function deleteVideoPlaylist(url, token, playlistId, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/video-playlists/' + playlistId;
     return requests_1.makeDeleteRequest({
         url,
@@ -114,7 +115,7 @@ function createVideoPlaylist(options) {
         token: options.token,
         fields,
         attaches,
-        statusCodeExpected: options.expectedStatus || 200
+        statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.createVideoPlaylist = createVideoPlaylist;
@@ -131,7 +132,7 @@ function updateVideoPlaylist(options) {
         token: options.token,
         fields,
         attaches,
-        statusCodeExpected: options.expectedStatus || 204
+        statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.updateVideoPlaylist = updateVideoPlaylist;
@@ -144,7 +145,7 @@ function addVideoInPlaylist(options) {
             path,
             token: options.token,
             fields: options.elementAttrs,
-            statusCodeExpected: options.expectedStatus || 200
+            statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.OK_200
         });
     });
 }
@@ -156,7 +157,7 @@ function updateVideoPlaylistElement(options) {
         path,
         token: options.token,
         fields: options.elementAttrs,
-        statusCodeExpected: options.expectedStatus || 204
+        statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.updateVideoPlaylistElement = updateVideoPlaylistElement;
@@ -166,7 +167,7 @@ function removeVideoFromPlaylist(options) {
         url: options.url,
         path,
         token: options.token,
-        statusCodeExpected: options.expectedStatus || 204
+        statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.removeVideoFromPlaylist = removeVideoFromPlaylist;
@@ -177,7 +178,7 @@ function reorderVideosPlaylist(options) {
         path,
         token: options.token,
         fields: options.elementAttrs,
-        statusCodeExpected: options.expectedStatus || 204
+        statusCodeExpected: options.expectedStatus || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.reorderVideosPlaylist = reorderVideosPlaylist;
@@ -199,7 +200,7 @@ function getVideoPlaylistPrivacies(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getVideoPlaylistPrivacies = getVideoPlaylistPrivacies;
@@ -210,7 +211,7 @@ function doVideosExistInMyPlaylist(url, token, videoIds) {
         token,
         path,
         query: { videoIds },
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.doVideosExistInMyPlaylist = doVideosExistInMyPlaylist;

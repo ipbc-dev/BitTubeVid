@@ -38,6 +38,17 @@ describe('Test CLI wrapper', function () {
                 yield extra_utils_1.execCLI(`${env} ${cmd} auth add -u ${server.url} -U user_1 -p super_password`);
             });
         });
+        it('Should not fail to add a user if there is a slash at the end of the instance URL', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(60000);
+                const env = extra_utils_1.getEnvCli(server);
+                let fullServerURL;
+                fullServerURL = server.url + '/';
+                yield extra_utils_1.execCLI(`${env} ${cmd} auth add -u ${fullServerURL} -U user_1 -p super_password`);
+                fullServerURL = server.url + '/asdfasdf';
+                yield extra_utils_1.execCLI(`${env} ${cmd} auth add -u ${fullServerURL} -U user_1 -p super_password`);
+            });
+        });
         it('Should default to this user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(60000);
@@ -78,6 +89,8 @@ describe('Test CLI wrapper', function () {
         });
         it('Should import a video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                if (extra_utils_1.areHttpImportTestsDisabled())
+                    return;
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `--target-url ${video_imports_1.getYoutubeVideoUrl()} --channel-name user_channel`;
@@ -86,6 +99,8 @@ describe('Test CLI wrapper', function () {
         });
         it('Should have imported the video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                if (extra_utils_1.areHttpImportTestsDisabled())
+                    return;
                 this.timeout(60000);
                 yield extra_utils_1.waitJobs([server]);
                 const res = yield extra_utils_1.getVideosList(server.url);
@@ -102,6 +117,8 @@ describe('Test CLI wrapper', function () {
         });
         it('Should import and override some imported attributes', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                if (extra_utils_1.areHttpImportTestsDisabled())
+                    return;
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 const params = `--target-url ${video_imports_1.getYoutubeVideoUrl()} --channel-name user_channel --video-name toto --nsfw --support support`;
@@ -144,6 +161,11 @@ describe('Test CLI wrapper', function () {
                 this.timeout(60000);
                 const env = extra_utils_1.getEnvCli(server);
                 yield extra_utils_1.execCLI(`${env} ${cmd} plugins install --npm-name peertube-plugin-hello-world`);
+            });
+        });
+        it('Should have registered settings', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.testHelloWorldRegisteredSettings(server);
             });
         });
         it('Should list installed plugins', function () {

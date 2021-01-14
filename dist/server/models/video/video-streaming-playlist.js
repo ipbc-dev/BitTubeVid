@@ -58,6 +58,15 @@ let VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = class VideoStr
         };
         return VideoStreamingPlaylistModel_1.findByPk(id, options);
     }
+    static loadHLSPlaylistByVideo(videoId) {
+        const options = {
+            where: {
+                type: 1,
+                videoId
+            }
+        };
+        return VideoStreamingPlaylistModel_1.findOne(options);
+    }
     static getHlsPlaylistFilename(resolution) {
         return resolution + '.m3u8';
     }
@@ -73,7 +82,9 @@ let VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = class VideoStr
     static getHlsPlaylistStaticPath(videoUUID, resolution) {
         return path_1.join(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, videoUUID, VideoStreamingPlaylistModel_1.getHlsPlaylistFilename(resolution));
     }
-    static getHlsSha256SegmentsStaticPath(videoUUID) {
+    static getHlsSha256SegmentsStaticPath(videoUUID, isLive) {
+        if (isLive)
+            return path_1.join('/live', 'segments-sha256', videoUUID);
         return path_1.join(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, videoUUID, VideoStreamingPlaylistModel_1.getHlsSha256SegmentsFilename());
     }
     getStringType() {

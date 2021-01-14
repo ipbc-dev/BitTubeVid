@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307312,
+  "timestamp": 1610615934546,
   "index": "/client/pt-BR/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/pt-BR/index.html": "95edcfbe304b697deb9d3e58797c8b483ac51de0",
+    "/client/pt-BR/index.html": "d2ed4beda7b7a22a063238db0f70aa4d2ad17bcf",
     "/client/pt-BR/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

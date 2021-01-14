@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
 const lodash_1 = require("lodash");
-const videos_1 = require("../../../../shared/models/videos");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
-const extra_utils_1 = require("../../../../shared/extra-utils");
 const path_1 = require("path");
 const constants_1 = require("../../../../server/initializers/constants");
+const extra_utils_1 = require("../../../../shared/extra-utils");
+const videos_1 = require("../../../../shared/models/videos");
+const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test video transcoding', function () {
     let servers = [];
@@ -47,7 +48,7 @@ describe('Test video transcoding', function () {
     });
     it('Should transcode video on server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(60000);
+            this.timeout(120000);
             const videoAttributes = {
                 name: 'my super name for server 2',
                 description: 'my super description for server 2',
@@ -85,8 +86,8 @@ describe('Test video transcoding', function () {
                 const res2 = yield extra_utils_1.getVideo(server.url, video.id);
                 const videoDetails = res2.body;
                 expect(videoDetails.files).to.have.lengthOf(4);
-                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4');
-                const probe = yield ffmpeg_utils_1.audio.get(path);
+                const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-240.mp4'));
+                const probe = yield ffprobe_utils_1.getAudioStream(path);
                 if (probe.audioStream) {
                     expect(probe.audioStream['codec_name']).to.be.equal('aac');
                     expect(probe.audioStream['bit_rate']).to.be.at.most(384 * 8000);
@@ -112,8 +113,8 @@ describe('Test video transcoding', function () {
                 const res2 = yield extra_utils_1.getVideo(server.url, video.id);
                 const videoDetails = res2.body;
                 expect(videoDetails.files).to.have.lengthOf(4);
-                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4');
-                const probe = yield ffmpeg_utils_1.audio.get(path);
+                const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-240.mp4'));
+                const probe = yield ffprobe_utils_1.getAudioStream(path);
                 expect(probe).to.not.have.property('audioStream');
             }
         });
@@ -134,9 +135,9 @@ describe('Test video transcoding', function () {
                 const videoDetails = res2.body;
                 expect(videoDetails.files).to.have.lengthOf(4);
                 const fixturePath = extra_utils_1.buildAbsoluteFixturePath(videoAttributes.fixture);
-                const fixtureVideoProbe = yield ffmpeg_utils_1.audio.get(fixturePath);
-                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4');
-                const videoProbe = yield ffmpeg_utils_1.audio.get(path);
+                const fixtureVideoProbe = yield ffprobe_utils_1.getAudioStream(fixturePath);
+                const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-240.mp4'));
+                const videoProbe = yield ffprobe_utils_1.getAudioStream(path);
                 if (videoProbe.audioStream && fixtureVideoProbe.audioStream) {
                     const toOmit = ['max_bit_rate', 'duration', 'duration_ts', 'nb_frames', 'start_time', 'start_pts'];
                     expect(lodash_1.omit(videoProbe.audioStream, toOmit)).to.be.deep.equal(lodash_1.omit(fixtureVideoProbe.audioStream, toOmit));
@@ -168,12 +169,12 @@ describe('Test video transcoding', function () {
                 expect(videoDetails.files[2].fps).to.be.below(31);
                 expect(videoDetails.files[3].fps).to.be.below(31);
                 for (const resolution of ['240', '360', '480']) {
-                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-' + resolution + '.mp4');
-                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                    const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-' + resolution + '.mp4'));
+                    const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
                     expect(fps).to.be.below(31);
                 }
-                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-720.mp4');
-                const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-720.mp4'));
+                const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
                 expect(fps).to.be.above(58).and.below(62);
             }
         });
@@ -203,7 +204,7 @@ describe('Test video transcoding', function () {
                 const resVideos = yield extra_utils_1.getVideosList(servers[1].url);
                 const videoToFindInList = resVideos.body.data.find(v => v.name === videoAttributes.name);
                 expect(videoToFindInList).to.be.undefined;
-                yield extra_utils_1.getVideo(servers[0].url, videoId, 404);
+                yield extra_utils_1.getVideo(servers[0].url, videoId, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             }
             yield extra_utils_1.waitJobs(servers);
             for (const server of servers) {
@@ -224,7 +225,7 @@ describe('Test video transcoding', function () {
             let tempFixturePath;
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
-                const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
+                const bitrate = yield ffprobe_utils_1.getVideoFileBitrate(tempFixturePath);
                 expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             const videoAttributes = {
@@ -238,10 +239,10 @@ describe('Test video transcoding', function () {
                 const res = yield extra_utils_1.getVideosList(server.url);
                 const video = res.body.data.find(v => v.name === videoAttributes.name);
                 for (const resolution of ['240', '360', '480', '720', '1080']) {
-                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-' + resolution + '.mp4');
-                    const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(path);
-                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
-                    const resolution2 = yield ffmpeg_utils_1.getVideoFileResolution(path);
+                    const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-' + resolution + '.mp4'));
+                    const bitrate = yield ffprobe_utils_1.getVideoFileBitrate(path);
+                    const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
+                    const resolution2 = yield ffprobe_utils_1.getVideoFileResolution(path);
                     expect(resolution2.videoFileResolution.toString()).to.equal(resolution);
                     expect(bitrate).to.be.below(videos_1.getMaxBitrate(resolution2.videoFileResolution, fps, constants_1.VIDEO_TRANSCODING_FPS));
                 }
@@ -254,7 +255,7 @@ describe('Test video transcoding', function () {
             let tempFixturePath;
             {
                 tempFixturePath = yield extra_utils_1.generateHighBitrateVideo();
-                const bitrate = yield ffmpeg_utils_1.getVideoFileBitrate(tempFixturePath);
+                const bitrate = yield ffprobe_utils_1.getVideoFileBitrate(tempFixturePath);
                 expect(bitrate).to.be.above(videos_1.getMaxBitrate(1080, 25, constants_1.VIDEO_TRANSCODING_FPS));
             }
             for (const fixture of ['video_short.mkv', 'video_short.avi']) {
@@ -279,8 +280,8 @@ describe('Test video transcoding', function () {
     it('Should correctly detect if quick transcode is possible', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
-            expect(yield ffmpeg_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.mp4'))).to.be.true;
-            expect(yield ffmpeg_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.webm'))).to.be.false;
+            expect(yield ffprobe_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.mp4'))).to.be.true;
+            expect(yield ffprobe_utils_1.canDoQuickTranscode(extra_utils_1.buildAbsoluteFixturePath('video_short.webm'))).to.be.false;
         });
     });
     it('Should merge an audio file with the preview file', function () {
@@ -295,8 +296,8 @@ describe('Test video transcoding', function () {
                 const res2 = yield extra_utils_1.getVideo(server.url, video.id);
                 const videoDetails = res2.body;
                 expect(videoDetails.files).to.have.lengthOf(1);
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: 200 });
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
                 const magnetUri = videoDetails.files[0].magnetUri;
                 expect(magnetUri).to.contain('.mp4');
             }
@@ -314,8 +315,8 @@ describe('Test video transcoding', function () {
                 const res2 = yield extra_utils_1.getVideo(server.url, video.id);
                 const videoDetails = res2.body;
                 expect(videoDetails.files).to.have.lengthOf(1);
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: 200 });
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.thumbnailPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoDetails.previewPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
                 const magnetUri = videoDetails.files[0].magnetUri;
                 expect(magnetUri).to.contain('.mp4');
             }
@@ -323,11 +324,11 @@ describe('Test video transcoding', function () {
     });
     it('Should downscale to the closest divisor standard framerate', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(160000);
+            this.timeout(200000);
             let tempFixturePath;
             {
                 tempFixturePath = yield extra_utils_1.generateVideoWithFramerate(59);
-                const fps = yield ffmpeg_utils_1.getVideoFileFPS(tempFixturePath);
+                const fps = yield ffprobe_utils_1.getVideoFileFPS(tempFixturePath);
                 expect(fps).to.be.equal(59);
             }
             const videoAttributes = {
@@ -341,15 +342,46 @@ describe('Test video transcoding', function () {
                 const res = yield extra_utils_1.getVideosList(server.url);
                 const video = res.body.data.find(v => v.name === videoAttributes.name);
                 {
-                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-240.mp4');
-                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                    const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-240.mp4'));
+                    const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
                     expect(fps).to.be.equal(25);
                 }
                 {
-                    const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', video.uuid + '-720.mp4');
-                    const fps = yield ffmpeg_utils_1.getVideoFileFPS(path);
+                    const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', video.uuid + '-720.mp4'));
+                    const fps = yield ffprobe_utils_1.getVideoFileFPS(path);
                     expect(fps).to.be.equal(59);
                 }
+            }
+        });
+    });
+    it('Should not transcode to an higher bitrate than the original file', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(160000);
+            const config = {
+                transcoding: {
+                    enabled: true,
+                    resolutions: {
+                        '240p': true,
+                        '360p': true,
+                        '480p': true,
+                        '720p': true,
+                        '1080p': true
+                    },
+                    webtorrent: { enabled: true },
+                    hls: { enabled: true }
+                }
+            };
+            yield extra_utils_1.updateCustomSubConfig(servers[1].url, servers[1].accessToken, config);
+            const videoAttributes = {
+                name: 'low bitrate',
+                fixture: 'low-bitrate.mp4'
+            };
+            const resUpload = yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, videoAttributes);
+            const videoUUID = resUpload.body.video.uuid;
+            yield extra_utils_1.waitJobs(servers);
+            const resolutions = [240, 360, 480, 720, 1080];
+            for (const r of resolutions) {
+                expect(yield extra_utils_1.getServerFileSize(servers[1], `videos/${videoUUID}-${r}.mp4`)).to.be.below(60000);
             }
         });
     });
@@ -359,8 +391,8 @@ describe('Test video transcoding', function () {
             const videoUUID = (yield extra_utils_1.uploadVideoAndGetId({ server: servers[1], videoName: 'ffprobe data' })).uuid;
             yield extra_utils_1.waitJobs(servers);
             {
-                const path = path_1.join(extra_utils_1.root(), 'test' + servers[1].internalServerNumber, 'videos', videoUUID + '-240.mp4');
-                const metadata = yield ffmpeg_utils_1.getMetadataFromFile(path);
+                const path = extra_utils_1.buildServerDirectory(servers[1], path_1.join('videos', videoUUID + '-240.mp4'));
+                const metadata = yield ffprobe_utils_1.getMetadataFromFile(path);
                 for (const p of [
                     'tags.encoder',
                     'format_long_name',

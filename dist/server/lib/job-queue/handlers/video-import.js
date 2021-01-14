@@ -7,8 +7,9 @@ const path_1 = require("path");
 const video_1 = require("@server/helpers/video");
 const moderation_1 = require("@server/lib/moderation");
 const hooks_1 = require("@server/lib/plugins/hooks");
+const user_1 = require("@server/lib/user");
 const video_paths_1 = require("@server/lib/video-paths");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
 const webtorrent_1 = require("../../../helpers/webtorrent");
@@ -79,13 +80,13 @@ function processFile(downloader, videoImport, options) {
         try {
             tempVideoPath = yield downloader();
             const stats = yield fs_extra_1.stat(tempVideoPath);
-            const isAble = yield videoImport.User.isAbleToUploadVideo({ size: stats.size });
+            const isAble = yield user_1.isAbleToUploadVideo(videoImport.User.id, stats.size);
             if (isAble === false) {
                 throw new Error('The user video quota is exceeded with this video to import.');
             }
-            const { videoFileResolution } = yield ffmpeg_utils_1.getVideoFileResolution(tempVideoPath);
-            const fps = yield ffmpeg_utils_1.getVideoFileFPS(tempVideoPath);
-            const duration = yield ffmpeg_utils_1.getDurationFromVideoFile(tempVideoPath);
+            const { videoFileResolution } = yield ffprobe_utils_1.getVideoFileResolution(tempVideoPath);
+            const fps = yield ffprobe_utils_1.getVideoFileFPS(tempVideoPath);
+            const duration = yield ffprobe_utils_1.getDurationFromVideoFile(tempVideoPath);
             const videoFileData = {
                 extname: path_1.extname(tempVideoPath),
                 resolution: videoFileResolution,

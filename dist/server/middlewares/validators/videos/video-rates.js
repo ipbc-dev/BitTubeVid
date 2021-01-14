@@ -11,6 +11,7 @@ const utils_1 = require("../utils");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
 const accounts_1 = require("../../../helpers/custom-validators/accounts");
 const middlewares_1 = require("../../../helpers/middlewares");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videoUpdateRateValidator = [
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('rating').custom(videos_1.isVideoRatingTypeValid).withMessage('Should have a valid rate type'),
@@ -34,9 +35,8 @@ const getAccountVideoRateValidatorFactory = function (rateType) {
                 return;
             const rate = yield account_video_rate_1.AccountVideoRateModel.loadLocalAndPopulateVideo(rateType, req.params.name, req.params.videoId);
             if (!rate) {
-                return res.status(404)
-                    .json({ error: 'Video rate not found' })
-                    .end();
+                return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
+                    .json({ error: 'Video rate not found' });
             }
             res.locals.accountVideoRate = rate;
             return next();

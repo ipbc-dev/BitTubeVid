@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test user subscriptions API validators', function () {
     const path = '/api/v1/users/me/subscriptions';
     let server;
@@ -43,7 +44,7 @@ describe('Test user subscriptions API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -53,7 +54,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -80,7 +81,7 @@ describe('Test user subscriptions API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -90,7 +91,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -102,7 +103,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path,
                     fields: { uri: 'user1_channel@localhost:' + server.port },
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -113,21 +114,21 @@ describe('Test user subscriptions API validators', function () {
                     path,
                     token: server.accessToken,
                     fields: { uri: 'root' },
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
                     token: server.accessToken,
                     fields: { uri: 'root@' },
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
                     token: server.accessToken,
                     fields: { uri: 'root@hello@' },
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -139,7 +140,7 @@ describe('Test user subscriptions API validators', function () {
                     path,
                     token: server.accessToken,
                     fields: { uri: 'user1_channel@localhost:' + server.port },
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
                 yield jobs_1.waitJobs([server]);
             });
@@ -151,7 +152,7 @@ describe('Test user subscriptions API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path + '/user1_channel@localhost:' + server.port,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -161,19 +162,19 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/root',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path + '/root@',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path + '/root@hello@',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -183,7 +184,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/root1@localhost:' + server.port,
                     token: server.accessToken,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -193,7 +194,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/user1_channel@localhost:' + server.port,
                     token: server.accessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -205,7 +206,7 @@ describe('Test user subscriptions API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: existPath,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -216,14 +217,14 @@ describe('Test user subscriptions API validators', function () {
                     path: existPath,
                     query: { uris: 'toto' },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: existPath,
                     query: { 'uris[]': 1 },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -234,7 +235,7 @@ describe('Test user subscriptions API validators', function () {
                     path: existPath,
                     query: { 'uris[]': 'coucou@localhost:' + server.port },
                     token: server.accessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -245,7 +246,7 @@ describe('Test user subscriptions API validators', function () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '/user1_channel@localhost:' + server.port,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -255,19 +256,19 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/root',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '/root@',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path: path + '/root@hello@',
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -277,7 +278,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/root1@localhost:' + server.port,
                     token: server.accessToken,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -287,7 +288,7 @@ describe('Test user subscriptions API validators', function () {
                     url: server.url,
                     path: path + '/user1_channel@localhost:' + server.port,
                     token: server.accessToken,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });

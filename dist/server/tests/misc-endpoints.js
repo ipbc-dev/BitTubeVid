@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
 const extra_utils_1 = require("../../shared/extra-utils");
+const core_utils_1 = require("@shared/core-utils");
 const expect = chai.expect;
 describe('Test misc endpoints', function () {
     let server;
@@ -20,7 +21,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/security.txt',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('security issue');
             });
@@ -30,7 +31,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/nodeinfo',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.body.links).to.be.an('array');
                 expect(res.body.links).to.have.lengthOf(1);
@@ -42,7 +43,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/dnt-policy.txt',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('http://www.w3.org/TR/tracking-dnt');
             });
@@ -52,7 +53,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/dnt',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.body.tracking).to.equal('N');
             });
@@ -62,7 +63,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/.well-known/change-password',
-                    statusCodeExpected: 302
+                    statusCodeExpected: core_utils_1.HttpStatusCode.FOUND_302
                 });
                 expect(res.header.location).to.equal('/my-account/settings');
             });
@@ -74,7 +75,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/robots.txt',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('User-agent');
             });
@@ -84,7 +85,7 @@ describe('Test misc endpoints', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/security.txt',
-                    statusCodeExpected: 301
+                    statusCodeExpected: core_utils_1.HttpStatusCode.MOVED_PERMANENTLY_301
                 });
             });
         });
@@ -93,9 +94,11 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/nodeinfo/2.0.json',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.body.software.name).to.equal('peertube');
+                expect(res.body.usage.users.activeMonth).to.equal(1);
+                expect(res.body.usage.users.activeHalfyear).to.equal(1);
             });
         });
     });
@@ -105,7 +108,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/sitemap.xml',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
                 expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');
@@ -116,7 +119,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/sitemap.xml',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
                 expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');
@@ -135,7 +138,7 @@ describe('Test misc endpoints', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: '/sitemap.xml?t=1',
-                    statusCodeExpected: 200
+                    statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
                 });
                 expect(res.text).to.contain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
                 expect(res.text).to.contain('<url><loc>http://localhost:' + server.port + '/about/instance</loc></url>');

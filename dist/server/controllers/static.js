@@ -17,6 +17,8 @@ const lazy_static_1 = require("./lazy-static");
 const video_paths_1 = require("@server/lib/video-paths");
 const theme_utils_1 = require("../lib/plugins/theme-utils");
 const config_2 = require("@server/controllers/api/config");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
+const client_html_1 = require("@server/lib/client-html");
 const staticRouter = express.Router();
 exports.staticRouter = staticRouter;
 staticRouter.use(cors());
@@ -39,8 +41,9 @@ staticRouter.get('/robots.txt', middlewares_1.asyncMiddleware(cache_1.cacheRoute
     res.type('text/plain');
     return res.send(config_1.CONFIG.INSTANCE.ROBOTS);
 });
+staticRouter.all('/teapot', getCup, middlewares_1.asyncMiddleware(client_html_1.serveIndexHTML));
 staticRouter.get('/security.txt', (_, res) => {
-    return res.redirect(301, '/.well-known/security.txt');
+    return res.redirect(http_error_codes_1.HttpStatusCode.MOVED_PERMANENTLY_301, '/.well-known/security.txt');
 });
 staticRouter.get('/.well-known/security.txt', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.SECURITYTXT)), (_, res) => {
     res.type('text/plain');
@@ -79,7 +82,7 @@ function generateNodeinfo(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { totalVideos } = yield video_1.VideoModel.getStats();
         const { totalLocalVideoComments } = yield video_comment_1.VideoCommentModel.getStats();
-        const { totalUsers } = yield user_1.UserModel.getStats();
+        const { totalUsers, totalMonthlyActiveUsers, totalHalfYearActiveUsers } = yield user_1.UserModel.getStats();
         let json = {};
         if (req.params.version && (req.params.version === '2.0')) {
             json = {
@@ -101,7 +104,9 @@ function generateNodeinfo(req, res) {
                 openRegistrations: config_1.CONFIG.SIGNUP.ENABLED,
                 usage: {
                     users: {
-                        total: totalUsers
+                        total: totalUsers,
+                        activeMonth: totalMonthlyActiveUsers,
+                        activeHalfyear: totalHalfYearActiveUsers
                     },
                     localPosts: totalVideos,
                     localComments: totalLocalVideoComments
@@ -139,7 +144,14 @@ function generateNodeinfo(req, res) {
                             webtorrent: {
                                 enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
                             },
-                            enabledResolutions: config_2.getEnabledResolutions()
+                            enabledResolutions: config_2.getEnabledResolutions('vod')
+                        },
+                        live: {
+                            enabled: config_1.CONFIG.LIVE.ENABLED,
+                            transcoding: {
+                                enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
+                                enabledResolutions: config_2.getEnabledResolutions('live')
+                            }
                         },
                         import: {
                             videos: {
@@ -204,7 +216,7 @@ function generateNodeinfo(req, res) {
         }
         else {
             json = { error: 'Nodeinfo schema version not handled' };
-            res.status(404);
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         }
         return res.send(json).end();
     });
@@ -213,34 +225,34 @@ function downloadTorrent(req, res) {
     const video = res.locals.videoAll;
     const videoFile = getVideoFile(req, video.VideoFiles);
     if (!videoFile)
-        return res.status(404).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
     return res.download(video_paths_1.getTorrentFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p.torrent`);
 }
 function downloadHLSVideoFileTorrent(req, res) {
     const video = res.locals.videoAll;
     const playlist = getHLSPlaylist(video);
     if (!playlist)
-        return res.status(404).end;
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end;
     const videoFile = getVideoFile(req, playlist.VideoFiles);
     if (!videoFile)
-        return res.status(404).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
     return res.download(video_paths_1.getTorrentFilePath(playlist, videoFile), `${video.name}-${videoFile.resolution}p-hls.torrent`);
 }
 function downloadVideoFile(req, res) {
     const video = res.locals.videoAll;
     const videoFile = getVideoFile(req, video.VideoFiles);
     if (!videoFile)
-        return res.status(404).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
     return res.download(video_paths_1.getVideoFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p${videoFile.extname}`);
 }
 function downloadHLSVideoFile(req, res) {
     const video = res.locals.videoAll;
     const playlist = getHLSPlaylist(video);
     if (!playlist)
-        return res.status(404).end;
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end;
     const videoFile = getVideoFile(req, playlist.VideoFiles);
     if (!videoFile)
-        return res.status(404).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
     const filename = `${video.name}-${videoFile.resolution}p-${playlist.getStringType()}${videoFile.extname}`;
     return res.download(video_paths_1.getVideoFilePath(playlist, videoFile), filename);
 }
@@ -253,4 +265,10 @@ function getHLSPlaylist(video) {
     if (!playlist)
         return undefined;
     return Object.assign(playlist, { Video: video });
+}
+function getCup(req, res, next) {
+    res.status(http_error_codes_1.HttpStatusCode.I_AM_A_TEAPOT_418);
+    res.setHeader('Accept-Additions', 'Non-Dairy;1,Sugar;1');
+    res.setHeader('Safe', 'if-sepia-awake');
+    return next();
 }

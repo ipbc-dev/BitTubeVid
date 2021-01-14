@@ -12,6 +12,8 @@ fs_extra_1.mkdirpSync(config_1.CONFIG.STORAGE.LOG_DIR);
 function getLoggerReplacer() {
     const seen = new WeakSet();
     return (key, value) => {
+        if (key === 'cert')
+            return 'Replaced by the logger to avoid large log message';
         if (typeof value === 'object' && value !== null) {
             if (seen.has(value))
                 return;

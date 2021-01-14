@@ -7,6 +7,7 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const contact_form_1 = require("../../../../shared/extra-utils/server/contact-form");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test contact form', function () {
     let server;
@@ -60,7 +61,7 @@ describe('Test contact form', function () {
                 body: 'my super message',
                 fromName: 'Super toto',
                 subject: 'my subject',
-                expectedStatus: 403
+                expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
             });
         });
     });
@@ -74,6 +75,12 @@ describe('Test contact form', function () {
                 subject: 'my subject',
                 body: 'my super message'
             });
+        });
+    });
+    it('Should not have the manage preferences link in the email', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const email = emails[0];
+            expect(email['text']).to.not.contain('Manage your notification preferences');
         });
     });
     after(function () {

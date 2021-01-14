@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test server follows API validators', function () {
     let server;
     before(function () {
@@ -33,7 +34,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path,
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -44,7 +45,7 @@ describe('Test server follows API validators', function () {
                         path,
                         token: server.accessToken,
                         fields: { hosts: 'localhost:9002' },
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -55,7 +56,7 @@ describe('Test server follows API validators', function () {
                         path,
                         fields: { hosts: ['localhost:9002', 'localhost:coucou'] },
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -66,7 +67,7 @@ describe('Test server follows API validators', function () {
                         path,
                         fields: { hosts: ['localhost:9002', 'http://localhost:9003'] },
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -77,7 +78,7 @@ describe('Test server follows API validators', function () {
                         path,
                         fields: { urls: ['localhost:9002', 'localhost:9002'] },
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -88,7 +89,7 @@ describe('Test server follows API validators', function () {
                         path,
                         fields: { hosts: ['localhost:9002'] },
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 });
             });
@@ -99,7 +100,7 @@ describe('Test server follows API validators', function () {
                         path,
                         fields: { hosts: ['localhost:9002'] },
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 });
             });
@@ -148,7 +149,7 @@ describe('Test server follows API validators', function () {
                     yield extra_utils_1.makeGetRequest({
                         url: server.url,
                         path,
-                        statusCodeExpected: 200,
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200,
                         query: {
                             state: 'accepted',
                             actorType: 'Application'
@@ -202,7 +203,7 @@ describe('Test server follows API validators', function () {
                     yield extra_utils_1.makeGetRequest({
                         url: server.url,
                         path,
-                        statusCodeExpected: 200,
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200,
                         query: {
                             state: 'accepted'
                         }
@@ -218,7 +219,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002',
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 });
             });
@@ -228,7 +229,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002',
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 });
             });
@@ -238,7 +239,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto',
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -248,7 +249,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9003',
                         token: server.accessToken,
-                        statusCodeExpected: 404
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                     });
                 });
             });
@@ -261,7 +262,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002/accept',
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 });
             });
@@ -271,7 +272,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002/accept',
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 });
             });
@@ -281,7 +282,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto/accept',
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -291,7 +292,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9003/accept',
                         token: server.accessToken,
-                        statusCodeExpected: 404
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                     });
                 });
             });
@@ -304,7 +305,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002/reject',
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 });
             });
@@ -314,7 +315,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9002/reject',
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 });
             });
@@ -324,7 +325,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto/reject',
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 });
             });
@@ -334,7 +335,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/toto@localhost:9003/reject',
                         token: server.accessToken,
-                        statusCodeExpected: 404
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                     });
                 });
             });
@@ -347,7 +348,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/localhost:9002',
                         token: 'fake_token',
-                        statusCodeExpected: 401
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                     });
                 });
             });
@@ -357,7 +358,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/localhost:9002',
                         token: userAccessToken,
-                        statusCodeExpected: 403
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                     });
                 });
             });
@@ -367,7 +368,7 @@ describe('Test server follows API validators', function () {
                         url: server.url,
                         path: path + '/example.com',
                         token: server.accessToken,
-                        statusCodeExpected: 404
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                     });
                 });
             });

@@ -40,7 +40,7 @@ function createVideoComment(obj, t) {
             accountId: obj.account.id,
             url: new Date().toISOString()
         }, { transaction: t, validate: false });
-        comment.url = url_1.getVideoCommentActivityPubUrl(obj.video, comment);
+        comment.url = url_1.getLocalVideoCommentActivityPubUrl(obj.video, comment);
         const savedComment = yield comment.save({ transaction: t });
         savedComment.InReplyToVideoComment = obj.inReplyToComment;
         savedComment.Video = obj.video;

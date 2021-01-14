@@ -3,11 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createSortableColumns = exports.checkSort = exports.areValidationErrors = void 0;
 const express_validator_1 = require("express-validator");
 const logger_1 = require("../../helpers/logger");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function areValidationErrors(req, res) {
     const errors = express_validator_1.validationResult(req);
     if (!errors.isEmpty()) {
         logger_1.logger.warn('Incorrect request parameters', { path: req.originalUrl, err: errors.mapped() });
-        res.status(400).json({ errors: errors.mapped() });
+        res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+            .json({ errors: errors.mapped() });
         return true;
     }
     return false;

@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendAccept = void 0;
-const url_1 = require("../url");
-const utils_1 = require("./utils");
-const send_follow_1 = require("./send-follow");
 const logger_1 = require("../../../helpers/logger");
+const url_1 = require("../url");
+const send_follow_1 = require("./send-follow");
+const utils_1 = require("./utils");
 function sendAccept(actorFollow) {
     const follower = actorFollow.ActorFollower;
     const me = actorFollow.ActorFollowing;
@@ -13,9 +13,8 @@ function sendAccept(actorFollow) {
         return;
     }
     logger_1.logger.info('Creating job to accept follower %s.', follower.url);
-    const followUrl = url_1.getActorFollowActivityPubUrl(follower, me);
-    const followData = send_follow_1.buildFollowActivity(followUrl, follower, me);
-    const url = url_1.getActorFollowAcceptActivityPubUrl(actorFollow);
+    const followData = send_follow_1.buildFollowActivity(actorFollow.url, follower, me);
+    const url = url_1.getLocalActorFollowAcceptActivityPubUrl(actorFollow);
     const data = buildAcceptActivity(url, me, followData);
     return utils_1.unicastTo(data, me, follower.inboxUrl);
 }

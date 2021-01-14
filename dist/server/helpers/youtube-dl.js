@@ -11,12 +11,16 @@ const fs_extra_1 = require("fs-extra");
 const request = require("request");
 const fs_1 = require("fs");
 const config_1 = require("@server/initializers/config");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
 const processOptions = {
     maxBuffer: 1024 * 1024 * 10
 };
 function getYoutubeDLInfo(url, opts) {
     return new Promise((res, rej) => {
         let args = opts || ['-j', '--flat-playlist'];
+        if (config_1.CONFIG.IMPORT.VIDEOS.HTTP.FORCE_IPV4) {
+            args.push('--force-ipv4');
+        }
         args = wrapWithProxyOptions(args);
         safeGetYoutubeDL()
             .then(youtubeDL => {
@@ -108,7 +112,7 @@ function updateYoutubeDLBinary() {
         const binDirectory = path_1.join(core_utils_1.root(), 'node_modules', 'youtube-dl', 'bin');
         const bin = path_1.join(binDirectory, 'youtube-dl');
         const detailsPath = path_1.join(binDirectory, 'details');
-        const url = 'https://yt-dl.org/downloads/latest/youtube-dl';
+        const url = process.env.YOUTUBE_DL_DOWNLOAD_HOST || 'https://yt-dl.org/downloads/latest/youtube-dl';
         yield fs_extra_1.ensureDir(binDirectory);
         return new Promise(res => {
             request.get(url, { followRedirect: false }, (err, result) => {
@@ -116,7 +120,7 @@ function updateYoutubeDLBinary() {
                     logger_1.logger.error('Cannot update youtube-dl.', { err });
                     return res();
                 }
-                if (result.statusCode !== 302) {
+                if (result.statusCode !== http_error_codes_1.HttpStatusCode.FOUND_302) {
                     logger_1.logger.error('youtube-dl update error: did not get redirect for the latest version link. Status %d', result.statusCode);
                     return res();
                 }
@@ -124,11 +128,15 @@ function updateYoutubeDLBinary() {
                 const downloadFile = request.get(url);
                 const newVersion = /yt-dl\.org\/downloads\/(\d{4}\.\d\d\.\d\d(\.\d)?)\/youtube-dl/.exec(url)[1];
                 downloadFile.on('response', result => {
-                    if (result.statusCode !== 200) {
+                    if (result.statusCode !== http_error_codes_1.HttpStatusCode.OK_200) {
                         logger_1.logger.error('Cannot update youtube-dl: new version response is not 200, it\'s %d.', result.statusCode);
                         return res();
                     }
-                    downloadFile.pipe(fs_1.createWriteStream(bin, { mode: 493 }));
+                    const writeStream = fs_1.createWriteStream(bin, { mode: 493 }).on('error', err => {
+                        logger_1.logger.error('youtube-dl update error in write stream', { err });
+                        return res();
+                    });
+                    downloadFile.pipe(writeStream);
                 });
                 downloadFile.on('error', err => {
                     logger_1.logger.error('youtube-dl update error.', { err });

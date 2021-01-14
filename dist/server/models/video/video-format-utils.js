@@ -46,6 +46,7 @@ function videoModelToFormattedJSON(video, options) {
         updatedAt: video.updatedAt,
         publishedAt: video.publishedAt,
         originallyPublishedAt: video.originallyPublishedAt,
+        isLive: video.isLive,
         account: video.VideoChannel.Account.toFormattedSummaryJSON(),
         channel: video.VideoChannel.toFormattedSummaryJSON(),
         userHistory: userHistory ? {
@@ -139,6 +140,7 @@ function sortByResolutionDesc(fileA, fileB) {
 function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFiles) {
     const video = video_2.extractVideo(model);
     return [...videoFiles]
+        .filter(f => !f.isLive())
         .sort(sortByResolutionDesc)
         .map(videoFile => {
         return {
@@ -159,7 +161,9 @@ function videoFilesModelToFormattedJSON(model, baseUrlHttp, baseUrlWs, videoFile
 }
 exports.videoFilesModelToFormattedJSON = videoFilesModelToFormattedJSON;
 function addVideoFilesInAPAcc(acc, model, baseUrlHttp, baseUrlWs, files) {
-    const sortedFiles = [...files].sort(sortByResolutionDesc);
+    const sortedFiles = [...files]
+        .filter(f => !f.isLive())
+        .sort(sortByResolutionDesc);
     for (const file of sortedFiles) {
         acc.push({
             type: 'Link',
@@ -268,11 +272,20 @@ function videoModelToActivityPubObject(video) {
         views: video.views,
         sensitive: video.nsfw,
         waitTranscoding: video.waitTranscoding,
+        isLiveBroadcast: video.isLive,
+        liveSaveReplay: video.isLive
+            ? video.VideoLive.saveReplay
+            : null,
+        permanentLive: video.isLive
+            ? video.VideoLive.permanentLive
+            : null,
         state: video.state,
         commentsEnabled: video.commentsEnabled,
         downloadEnabled: video.downloadEnabled,
         published: video.publishedAt.toISOString(),
-        originallyPublishedAt: video.originallyPublishedAt ? video.originallyPublishedAt.toISOString() : null,
+        originallyPublishedAt: video.originallyPublishedAt
+            ? video.originallyPublishedAt.toISOString()
+            : null,
         updated: video.updatedAt.toISOString(),
         mediaType: 'text/markdown',
         content: video.description,
@@ -286,10 +299,10 @@ function videoModelToActivityPubObject(video) {
             height: i.height
         })),
         url,
-        likes: url_1.getVideoLikesActivityPubUrl(video),
-        dislikes: url_1.getVideoDislikesActivityPubUrl(video),
-        shares: url_1.getVideoSharesActivityPubUrl(video),
-        comments: url_1.getVideoCommentsActivityPubUrl(video),
+        likes: url_1.getLocalVideoLikesActivityPubUrl(video),
+        dislikes: url_1.getLocalVideoDislikesActivityPubUrl(video),
+        shares: url_1.getLocalVideoSharesActivityPubUrl(video),
+        comments: url_1.getLocalVideoCommentsActivityPubUrl(video),
         attributedTo: [
             {
                 type: 'Person',

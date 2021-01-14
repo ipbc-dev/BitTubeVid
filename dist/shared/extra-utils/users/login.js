@@ -4,7 +4,8 @@ exports.loginUsingExternalToken = exports.setAccessTokensToServers = exports.get
 const tslib_1 = require("tslib");
 const request = require("supertest");
 const clients_1 = require("../server/clients");
-function login(url, client, user, expectedStatus = 200) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function login(url, client, user, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/token';
     const body = {
         client_id: client.id,
@@ -22,7 +23,7 @@ function login(url, client, user, expectedStatus = 200) {
         .expect(expectedStatus);
 }
 exports.login = login;
-function logout(url, token, expectedStatus = 200) {
+function logout(url, token, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/revoke-token';
     return request(url)
         .post(path)
@@ -33,12 +34,12 @@ function logout(url, token, expectedStatus = 200) {
 exports.logout = logout;
 function serverLogin(server) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const res = yield login(server.url, server.client, server.user, 200);
+        const res = yield login(server.url, server.client, server.user, http_error_codes_1.HttpStatusCode.OK_200);
         return res.body.access_token;
     });
 }
 exports.serverLogin = serverLogin;
-function refreshToken(server, refreshToken, expectedStatus = 200) {
+function refreshToken(server, refreshToken, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/token';
     const body = {
         client_id: server.client.id,
@@ -54,7 +55,7 @@ function refreshToken(server, refreshToken, expectedStatus = 200) {
         .expect(expectedStatus);
 }
 exports.refreshToken = refreshToken;
-function userLogin(server, user, expectedStatus = 200) {
+function userLogin(server, user, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield login(server.url, server.client, user, expectedStatus);
         return res.body.access_token;
@@ -88,7 +89,7 @@ function setAccessTokensToServers(servers) {
     return Promise.all(tasks);
 }
 exports.setAccessTokensToServers = setAccessTokensToServers;
-function loginUsingExternalToken(server, username, externalAuthToken, expectedStatus = 200) {
+function loginUsingExternalToken(server, username, externalAuthToken, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/token';
     const body = {
         client_id: server.client.id,

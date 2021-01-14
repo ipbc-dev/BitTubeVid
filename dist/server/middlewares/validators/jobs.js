@@ -7,6 +7,7 @@ const logger_1 = require("../../helpers/logger");
 const utils_1 = require("./utils");
 const listJobsValidator = [
     express_validator_1.param('state')
+        .optional()
         .custom(jobs_1.isValidJobState).not().isEmpty().withMessage('Should have a valid job state'),
     express_validator_1.query('jobType')
         .optional()

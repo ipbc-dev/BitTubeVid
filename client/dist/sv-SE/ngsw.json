@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307329,
+  "timestamp": 1610615934558,
   "index": "/client/sv-SE/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/sv-SE/index.html": "9679e52c22c2fde8e0184439fec06fe257e3f9aa",
+    "/client/sv-SE/index.html": "52d2a478ba59d63f597761bc7e1b80fa1898995d",
     "/client/sv-SE/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

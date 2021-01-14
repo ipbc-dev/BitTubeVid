@@ -23,6 +23,11 @@ feedsRouter.get('/feeds/videos.:format', middlewares_1.videosSortValidator, midd
         'Content-Type'
     ]
 })(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(middlewares_1.videoFeedsValidator), middlewares_1.asyncMiddleware(generateVideoFeed));
+feedsRouter.get('/feeds/subscriptions.:format', middlewares_1.videosSortValidator, middlewares_1.setDefaultVideosSort, middlewares_1.feedsFormatValidator, middlewares_1.setFeedFormatContentType, middlewares_1.asyncMiddleware(cache_1.cacheRoute({
+    headerBlacklist: [
+        'Content-Type'
+    ]
+})(constants_1.ROUTE_CACHE_LIFETIME.FEEDS)), middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(middlewares_1.videoSubscriptionFeedsValidator), middlewares_1.asyncMiddleware(generateVideoFeedForSubscriptions));
 function generateVideoCommentsFeed(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const start = 0;
@@ -105,83 +110,40 @@ function generateVideoFeed(req, res) {
             resourceType: 'videos',
             queryString: new URL(constants_1.WEBSERVER.URL + req.url).search
         });
+        const options = {
+            accountId: account ? account.id : null,
+            videoChannelId: videoChannel ? videoChannel.id : null
+        };
+        const resultList = yield video_1.VideoModel.listForApi(Object.assign({ start, count: constants_1.FEEDS.COUNT, sort: req.query.sort, includeLocalVideos: true, nsfw, filter: req.query.filter, withFiles: true }, options));
+        addVideosToFeed(feed, resultList.data);
+        return sendFeed(feed, req, res);
+    });
+}
+function generateVideoFeedForSubscriptions(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const start = 0;
+        const account = res.locals.account;
+        const nsfw = express_utils_1.buildNSFWFilter(res, req.query.nsfw);
+        const name = account.getDisplayName();
+        const description = account.description;
+        const feed = initFeed({
+            name,
+            description,
+            resourceType: 'videos',
+            queryString: new URL(constants_1.WEBSERVER.URL + req.url).search
+        });
         const resultList = yield video_1.VideoModel.listForApi({
             start,
             count: constants_1.FEEDS.COUNT,
             sort: req.query.sort,
-            includeLocalVideos: true,
+            includeLocalVideos: false,
             nsfw,
             filter: req.query.filter,
             withFiles: true,
-            accountId: account ? account.id : null,
-            videoChannelId: videoChannel ? videoChannel.id : null
+            followerActorId: res.locals.user.Account.Actor.id,
+            user: res.locals.user
         });
-        resultList.data.forEach(video => {
-            const formattedVideoFiles = video.getFormattedVideoFilesJSON();
-            const torrents = formattedVideoFiles.map(videoFile => ({
-                title: video.name,
-                url: videoFile.torrentUrl,
-                size_in_bytes: videoFile.size
-            }));
-            const videos = formattedVideoFiles.map(videoFile => {
-                const result = {
-                    type: 'video/mp4',
-                    medium: 'video',
-                    height: videoFile.resolution.label.replace('p', ''),
-                    fileSize: videoFile.size,
-                    url: videoFile.fileUrl,
-                    framerate: videoFile.fps,
-                    duration: video.duration
-                };
-                if (video.language)
-                    Object.assign(result, { lang: video.language });
-                return result;
-            });
-            const categories = [];
-            if (video.category) {
-                categories.push({
-                    value: video.category,
-                    label: video_1.VideoModel.getCategoryLabel(video.category)
-                });
-            }
-            feed.addItem({
-                title: video.name,
-                id: video.url,
-                link: constants_1.WEBSERVER.URL + '/videos/watch/' + video.uuid,
-                description: video.getTruncatedDescription(),
-                content: video.description,
-                author: [
-                    {
-                        name: video.VideoChannel.Account.getDisplayName(),
-                        link: video.VideoChannel.Account.Actor.url
-                    }
-                ],
-                date: video.publishedAt,
-                nsfw: video.nsfw,
-                torrent: torrents,
-                videos,
-                embed: {
-                    url: video.getEmbedStaticPath(),
-                    allowFullscreen: true
-                },
-                player: {
-                    url: video.getWatchStaticPath()
-                },
-                categories,
-                community: {
-                    statistics: {
-                        views: video.views
-                    }
-                },
-                thumbnail: [
-                    {
-                        url: constants_1.WEBSERVER.URL + video.getMiniatureStaticPath(),
-                        height: constants_1.THUMBNAILS_SIZE.height,
-                        width: constants_1.THUMBNAILS_SIZE.width
-                    }
-                ]
-            });
-        });
+        addVideosToFeed(feed, resultList.data);
         return sendFeed(feed, req, res);
     });
 }
@@ -209,6 +171,74 @@ function initFeed(parameters) {
             link: `${webserverUrl}/about`
         }
     });
+}
+function addVideosToFeed(feed, videos) {
+    for (const video of videos) {
+        const formattedVideoFiles = video.getFormattedVideoFilesJSON();
+        const torrents = formattedVideoFiles.map(videoFile => ({
+            title: video.name,
+            url: videoFile.torrentUrl,
+            size_in_bytes: videoFile.size
+        }));
+        const videos = formattedVideoFiles.map(videoFile => {
+            const result = {
+                type: 'video/mp4',
+                medium: 'video',
+                height: videoFile.resolution.label.replace('p', ''),
+                fileSize: videoFile.size,
+                url: videoFile.fileUrl,
+                framerate: videoFile.fps,
+                duration: video.duration
+            };
+            if (video.language)
+                Object.assign(result, { lang: video.language });
+            return result;
+        });
+        const categories = [];
+        if (video.category) {
+            categories.push({
+                value: video.category,
+                label: video_1.VideoModel.getCategoryLabel(video.category)
+            });
+        }
+        feed.addItem({
+            title: video.name,
+            id: video.url,
+            link: constants_1.WEBSERVER.URL + '/videos/watch/' + video.uuid,
+            description: video.getTruncatedDescription(),
+            content: video.description,
+            author: [
+                {
+                    name: video.VideoChannel.Account.getDisplayName(),
+                    link: video.VideoChannel.Account.Actor.url
+                }
+            ],
+            date: video.publishedAt,
+            nsfw: video.nsfw,
+            torrent: torrents,
+            videos,
+            embed: {
+                url: video.getEmbedStaticPath(),
+                allowFullscreen: true
+            },
+            player: {
+                url: video.getWatchStaticPath()
+            },
+            categories,
+            community: {
+                statistics: {
+                    views: video.views
+                }
+            },
+            thumbnail: [
+                {
+                    url: constants_1.WEBSERVER.URL + video.getMiniatureStaticPath(),
+                    height: constants_1.THUMBNAILS_SIZE.height,
+                    width: constants_1.THUMBNAILS_SIZE.width
+                }
+            ]
+        });
+    }
 }
 function sendFeed(feed, req, res) {
     const format = req.params.format;

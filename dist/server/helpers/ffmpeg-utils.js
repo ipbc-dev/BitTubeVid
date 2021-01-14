@@ -1,183 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.canDoQuickTranscode = exports.getVideoFileBitrate = exports.audio = exports.computeResolutionsToTranscode = exports.getVideoFileFPS = exports.transcode = exports.generateImageFromVideoFile = exports.getDurationFromVideoFile = exports.getMetadataFromFile = exports.getVideoFileResolution = exports.getVideoStreamSize = exports.convertWebPToJPG = exports.getAudioStreamCodec = exports.getVideoStreamCodec = void 0;
+exports.transcode = exports.generateImageFromVideoFile = exports.processGIF = exports.convertWebPToJPG = exports.buildStreamSuffix = exports.getLiveMuxingCommand = exports.getLiveTranscodingCommand = void 0;
 const tslib_1 = require("tslib");
 const ffmpeg = require("fluent-ffmpeg");
+const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
-const videos_1 = require("../../shared/models/videos");
-const constants_1 = require("../initializers/constants");
+const constants_1 = require("@server/initializers/constants");
+const checker_before_init_1 = require("../initializers/checker-before-init");
+const config_1 = require("../initializers/config");
+const ffprobe_utils_1 = require("./ffprobe-utils");
 const image_utils_1 = require("./image-utils");
 const logger_1 = require("./logger");
-const checker_before_init_1 = require("../initializers/checker-before-init");
-const fs_extra_1 = require("fs-extra");
-const config_1 = require("../initializers/config");
-const video_file_metadata_1 = require("@shared/models/videos/video-file-metadata");
-var audio;
-(function (audio) {
-    audio.get = (videoPath) => {
-        return new Promise((res, rej) => {
-            function parseFfprobe(err, data) {
-                if (err)
-                    return rej(err);
-                if ('streams' in data) {
-                    const audioStream = data.streams.find(stream => stream['codec_type'] === 'audio');
-                    if (audioStream) {
-                        return res({
-                            absolutePath: data.format.filename,
-                            audioStream
-                        });
-                    }
-                }
-                return res({ absolutePath: data.format.filename });
-            }
-            return ffmpeg.ffprobe(videoPath, parseFfprobe);
-        });
-    };
-    let bitrate;
-    (function (bitrate_1) {
-        const baseKbitrate = 384;
-        const toBits = (kbits) => kbits * 8000;
-        bitrate_1.aac = (bitrate) => {
-            switch (true) {
-                case bitrate > toBits(baseKbitrate):
-                    return baseKbitrate;
-                default:
-                    return -1;
-            }
-        };
-        bitrate_1.mp3 = (bitrate) => {
-            switch (true) {
-                case bitrate <= toBits(192):
-                    return 128;
-                case bitrate <= toBits(384):
-                    return 256;
-                default:
-                    return baseKbitrate;
-            }
-        };
-    })(bitrate = audio.bitrate || (audio.bitrate = {}));
-})(audio || (audio = {}));
-exports.audio = audio;
-function computeResolutionsToTranscode(videoFileResolution) {
-    const resolutionsEnabled = [];
-    const configResolutions = config_1.CONFIG.TRANSCODING.RESOLUTIONS;
-    const resolutions = [
-        0,
-        480,
-        360,
-        720,
-        240,
-        1080,
-        2160
-    ];
-    for (const resolution of resolutions) {
-        if (configResolutions[resolution + 'p'] === true && videoFileResolution > resolution) {
-            resolutionsEnabled.push(resolution);
-        }
-    }
-    return resolutionsEnabled;
+function convertWebPToJPG(path, destination) {
+    const command = ffmpeg(path)
+        .output(destination);
+    return runCommand(command);
 }
-exports.computeResolutionsToTranscode = computeResolutionsToTranscode;
-function getVideoStreamSize(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const videoStream = yield getVideoStreamFromFile(path);
-        return videoStream === null
-            ? { width: 0, height: 0 }
-            : { width: videoStream.width, height: videoStream.height };
-    });
+exports.convertWebPToJPG = convertWebPToJPG;
+function processGIF(path, destination, newSize) {
+    const command = ffmpeg(path)
+        .fps(20)
+        .size(`${newSize.width}x${newSize.height}`)
+        .output(destination);
+    return runCommand(command);
 }
-exports.getVideoStreamSize = getVideoStreamSize;
-function getVideoStreamCodec(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const videoStream = yield getVideoStreamFromFile(path);
-        if (!videoStream)
-            return '';
-        const videoCodec = videoStream.codec_tag_string;
-        const baseProfileMatrix = {
-            High: '6400',
-            Main: '4D40',
-            Baseline: '42E0'
-        };
-        let baseProfile = baseProfileMatrix[videoStream.profile];
-        if (!baseProfile) {
-            logger_1.logger.warn('Cannot get video profile codec of %s.', path, { videoStream });
-            baseProfile = baseProfileMatrix['High'];
-        }
-        let level = videoStream.level.toString(16);
-        if (level.length === 1)
-            level = `0${level}`;
-        return `${videoCodec}.${baseProfile}${level}`;
-    });
-}
-exports.getVideoStreamCodec = getVideoStreamCodec;
-function getAudioStreamCodec(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { audioStream } = yield audio.get(path);
-        if (!audioStream)
-            return '';
-        const audioCodec = audioStream.codec_name;
-        if (audioCodec === 'aac')
-            return 'mp4a.40.2';
-        logger_1.logger.warn('Cannot get audio codec of %s.', path, { audioStream });
-        return 'mp4a.40.2';
-    });
-}
-exports.getAudioStreamCodec = getAudioStreamCodec;
-function getVideoFileResolution(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const size = yield getVideoStreamSize(path);
-        return {
-            videoFileResolution: Math.min(size.height, size.width),
-            isPortraitMode: size.height > size.width
-        };
-    });
-}
-exports.getVideoFileResolution = getVideoFileResolution;
-function getVideoFileFPS(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const videoStream = yield getVideoStreamFromFile(path);
-        if (videoStream === null)
-            return 0;
-        for (const key of ['avg_frame_rate', 'r_frame_rate']) {
-            const valuesText = videoStream[key];
-            if (!valuesText)
-                continue;
-            const [frames, seconds] = valuesText.split('/');
-            if (!frames || !seconds)
-                continue;
-            const result = parseInt(frames, 10) / parseInt(seconds, 10);
-            if (result > 0)
-                return Math.round(result);
-        }
-        return 0;
-    });
-}
-exports.getVideoFileFPS = getVideoFileFPS;
-function getMetadataFromFile(path, cb = metadata => metadata) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return new Promise((res, rej) => {
-            ffmpeg.ffprobe(path, (err, metadata) => {
-                if (err)
-                    return rej(err);
-                return res(cb(new video_file_metadata_1.VideoFileMetadata(metadata)));
-            });
-        });
-    });
-}
-exports.getMetadataFromFile = getMetadataFromFile;
-function getVideoFileBitrate(path) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return getMetadataFromFile(path, metadata => metadata.format.bit_rate);
-    });
-}
-exports.getVideoFileBitrate = getVideoFileBitrate;
-function getDurationFromVideoFile(path) {
-    return getMetadataFromFile(path, metadata => Math.floor(metadata.format.duration));
-}
-exports.getDurationFromVideoFile = getDurationFromVideoFile;
-function getVideoStreamFromFile(path) {
-    return getMetadataFromFile(path, metadata => metadata.streams.find(s => s.codec_type === 'video') || null);
-}
+exports.processGIF = processGIF;
 function generateImageFromVideoFile(fromPath, folder, imageName, size) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const pendingImageName = 'pending-' + imageName;
@@ -209,115 +56,141 @@ function generateImageFromVideoFile(fromPath, folder, imageName, size) {
     });
 }
 exports.generateImageFromVideoFile = generateImageFromVideoFile;
+const builders = {
+    'quick-transcode': buildQuickTranscodeCommand,
+    'hls': buildHLSVODCommand,
+    'hls-from-ts': buildHLSVODFromTSCommand,
+    'merge-audio': buildAudioMergeCommand,
+    'only-audio': buildOnlyAudioCommand,
+    'video': buildx264VODCommand
+};
 function transcode(options) {
-    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-        try {
-            let command = ffmpeg(options.inputPath, { niceness: constants_1.FFMPEG_NICE.TRANSCODING })
-                .output(options.outputPath);
-            if (options.type === 'quick-transcode') {
-                command = buildQuickTranscodeCommand(command);
-            }
-            else if (options.type === 'hls') {
-                command = yield buildHLSCommand(command, options);
-            }
-            else if (options.type === 'merge-audio') {
-                command = yield buildAudioMergeCommand(command, options);
-            }
-            else if (options.type === 'only-audio') {
-                command = buildOnlyAudioCommand(command, options);
-            }
-            else {
-                command = yield buildx264Command(command, options);
-            }
-            if (config_1.CONFIG.TRANSCODING.THREADS > 0) {
-                command = command.outputOption('-threads ' + config_1.CONFIG.TRANSCODING.THREADS);
-            }
-            command
-                .on('error', (err, stdout, stderr) => {
-                logger_1.logger.error('Error in transcoding job.', { stdout, stderr, err });
-                return rej(err);
-            })
-                .on('end', () => {
-                return fixHLSPlaylistIfNeeded(options)
-                    .then(() => res())
-                    .catch(err => rej(err));
-            })
-                .run();
-        }
-        catch (err) {
-            return rej(err);
-        }
-    }));
-}
-exports.transcode = transcode;
-function canDoQuickTranscode(path) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const videoStream = yield getVideoStreamFromFile(path);
-        const parsedAudio = yield audio.get(path);
-        const fps = yield getVideoFileFPS(path);
-        const bitRate = yield getVideoFileBitrate(path);
-        const resolution = yield getVideoFileResolution(path);
-        if (videoStream == null)
-            return false;
-        if (videoStream['codec_name'] !== 'h264')
-            return false;
-        if (videoStream['pix_fmt'] !== 'yuv420p')
-            return false;
-        if (fps < constants_1.VIDEO_TRANSCODING_FPS.MIN || fps > constants_1.VIDEO_TRANSCODING_FPS.MAX)
-            return false;
-        if (bitRate > videos_1.getMaxBitrate(resolution.videoFileResolution, fps, constants_1.VIDEO_TRANSCODING_FPS))
-            return false;
-        if (parsedAudio.audioStream) {
-            if (parsedAudio.audioStream['codec_name'] !== 'aac')
-                return false;
-            const maxAudioBitrate = audio.bitrate['aac'](parsedAudio.audioStream['bit_rate']);
-            if (maxAudioBitrate !== -1 && parsedAudio.audioStream['bit_rate'] > maxAudioBitrate)
-                return false;
-        }
-        return true;
+        logger_1.logger.debug('Will run transcode.', { options });
+        let command = getFFmpeg(options.inputPath, 'vod')
+            .output(options.outputPath);
+        command = yield builders[options.type](command, options);
+        yield runCommand(command);
+        yield fixHLSPlaylistIfNeeded(options);
     });
 }
-exports.canDoQuickTranscode = canDoQuickTranscode;
-function getClosestFramerateStandard(fps, type) {
-    return constants_1.VIDEO_TRANSCODING_FPS[type].slice(0)
-        .sort((a, b) => fps % a - fps % b)[0];
-}
-function convertWebPToJPG(path, destination) {
-    return new Promise((res, rej) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-        try {
-            const command = ffmpeg(path).output(destination);
-            command.on('error', (err, stdout, stderr) => {
-                logger_1.logger.error('Error in ffmpeg webp convert process.', { stdout, stderr });
-                return rej(err);
-            })
-                .on('end', () => res())
-                .run();
-        }
-        catch (err) {
-            return rej(err);
-        }
-    }));
-}
-exports.convertWebPToJPG = convertWebPToJPG;
-function buildx264Command(command, options) {
+exports.transcode = transcode;
+function getLiveTranscodingCommand(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let fps = yield getVideoFileFPS(options.inputPath);
-        if (options.resolution !== undefined &&
-            options.resolution < constants_1.VIDEO_TRANSCODING_FPS.KEEP_ORIGIN_FPS_RESOLUTION_MIN &&
-            fps > constants_1.VIDEO_TRANSCODING_FPS.AVERAGE) {
-            fps = getClosestFramerateStandard(fps, 'STANDARD');
+        const { rtmpUrl, outPath, resolutions, fps, availableEncoders, profile } = options;
+        const input = rtmpUrl;
+        const command = getFFmpeg(input, 'live');
+        const varStreamMap = [];
+        command.complexFilter([
+            {
+                inputs: '[v:0]',
+                filter: 'split',
+                options: resolutions.length,
+                outputs: resolutions.map(r => `vtemp${r}`)
+            },
+            ...resolutions.map(r => ({
+                inputs: `vtemp${r}`,
+                filter: 'scale',
+                options: `w=-2:h=${r}`,
+                outputs: `vout${r}`
+            }))
+        ]);
+        command.outputOption('-preset superfast');
+        command.outputOption('-sc_threshold 0');
+        addDefaultEncoderGlobalParams({ command });
+        for (let i = 0; i < resolutions.length; i++) {
+            const resolution = resolutions[i];
+            const resolutionFPS = ffprobe_utils_1.computeFPS(fps, resolution);
+            const baseEncoderBuilderParams = {
+                input,
+                availableEncoders,
+                profile,
+                fps: resolutionFPS,
+                resolution,
+                streamNum: i,
+                videoType: 'live'
+            };
+            {
+                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType: 'VIDEO' }));
+                if (!builderResult) {
+                    throw new Error('No available live video encoder found');
+                }
+                command.outputOption(`-map [vout${resolution}]`);
+                addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
+                logger_1.logger.debug('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult);
+                command.outputOption(`${buildStreamSuffix('-c:v', i)} ${builderResult.encoder}`);
+                command.addOutputOptions(builderResult.result.outputOptions);
+            }
+            {
+                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType: 'AUDIO' }));
+                if (!builderResult) {
+                    throw new Error('No available live audio encoder found');
+                }
+                command.outputOption('-map a:0');
+                addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
+                logger_1.logger.debug('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult);
+                command.outputOption(`${buildStreamSuffix('-c:a', i)} ${builderResult.encoder}`);
+                command.addOutputOptions(builderResult.result.outputOptions);
+            }
+            varStreamMap.push(`v:${i},a:${i}`);
         }
-        command = yield presetH264(command, options.inputPath, options.resolution, fps);
+        addDefaultLiveHLSParams(command, outPath);
+        command.outputOption('-var_stream_map', varStreamMap.join(' '));
+        return command;
+    });
+}
+exports.getLiveTranscodingCommand = getLiveTranscodingCommand;
+function getLiveMuxingCommand(rtmpUrl, outPath) {
+    const command = getFFmpeg(rtmpUrl, 'live');
+    command.outputOption('-c:v copy');
+    command.outputOption('-c:a copy');
+    command.outputOption('-map 0:a?');
+    command.outputOption('-map 0:v?');
+    addDefaultLiveHLSParams(command, outPath);
+    return command;
+}
+exports.getLiveMuxingCommand = getLiveMuxingCommand;
+function buildStreamSuffix(base, streamNum) {
+    if (streamNum !== undefined) {
+        return `${base}:${streamNum}`;
+    }
+    return base;
+}
+exports.buildStreamSuffix = buildStreamSuffix;
+function addDefaultEncoderGlobalParams(options) {
+    const { command } = options;
+    command.outputOption('-max_muxing_queue_size 1024')
+        .outputOption('-map_metadata -1')
+        .outputOption('-b_strategy 1')
+        .outputOption('-bf 16')
+        .outputOption('-pix_fmt yuv420p');
+}
+function addDefaultEncoderParams(options) {
+    const { command, encoder, fps, streamNum } = options;
+    if (encoder === 'libx264') {
+        command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
+        if (fps) {
+            command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2));
+        }
+    }
+}
+function addDefaultLiveHLSParams(command, outPath) {
+    command.outputOption('-hls_time ' + constants_1.VIDEO_LIVE.SEGMENT_TIME_SECONDS);
+    command.outputOption('-hls_list_size ' + constants_1.VIDEO_LIVE.SEGMENTS_LIST_SIZE);
+    command.outputOption('-hls_flags delete_segments+independent_segments');
+    command.outputOption(`-hls_segment_filename ${path_1.join(outPath, '%v-%06d.ts')}`);
+    command.outputOption('-master_pl_name master.m3u8');
+    command.outputOption(`-f hls`);
+    command.output(path_1.join(outPath, '%v.m3u8'));
+}
+function buildx264VODCommand(command, options) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        let fps = yield ffprobe_utils_1.getVideoFileFPS(options.inputPath);
+        fps = ffprobe_utils_1.computeFPS(fps, options.resolution);
+        command = yield presetVideo(command, options.inputPath, options, fps);
         if (options.resolution !== undefined) {
             const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`;
             command = command.videoFilter(size);
-        }
-        if (fps) {
-            if (fps > constants_1.VIDEO_TRANSCODING_FPS.MAX)
-                fps = getClosestFramerateStandard(fps, 'HD_STANDARD');
-            else if (fps < constants_1.VIDEO_TRANSCODING_FPS.MIN)
-                fps = constants_1.VIDEO_TRANSCODING_FPS.MIN;
-            command = command.withFPS(fps);
         }
         return command;
     });
@@ -325,7 +198,8 @@ function buildx264Command(command, options) {
 function buildAudioMergeCommand(command, options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         command = command.loop(undefined);
-        command = yield presetH264VeryFast(command, options.audioPath, options.resolution);
+        command = yield presetVideo(command, options.audioPath, options);
+        command.outputOption('-preset:v veryfast');
         command = command.input(options.audioPath)
             .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuvj422p'`)
             .outputOption('-tune stillimage')
@@ -333,7 +207,7 @@ function buildAudioMergeCommand(command, options) {
         return command;
     });
 }
-function buildOnlyAudioCommand(command, options) {
+function buildOnlyAudioCommand(command, _options) {
     command = presetOnlyAudio(command);
     return command;
 }
@@ -343,7 +217,16 @@ function buildQuickTranscodeCommand(command) {
         .outputOption('-movflags faststart');
     return command;
 }
-function buildHLSCommand(command, options) {
+function addCommonHLSVODCommandOptions(command, outputPath) {
+    return command.outputOption('-hls_time 4')
+        .outputOption('-hls_list_size 0')
+        .outputOption('-hls_playlist_type vod')
+        .outputOption('-hls_segment_filename ' + outputPath)
+        .outputOption('-hls_segment_type fmp4')
+        .outputOption('-f hls')
+        .outputOption('-hls_flags single_file');
+}
+function buildHLSVODCommand(command, options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoPath = getHLSVideoPath(options);
         if (options.copyCodecs)
@@ -351,23 +234,25 @@ function buildHLSCommand(command, options) {
         else if (options.resolution === 0)
             command = presetOnlyAudio(command);
         else
-            command = yield buildx264Command(command, options);
-        command = command.outputOption('-hls_time 4')
-            .outputOption('-hls_list_size 0')
-            .outputOption('-hls_playlist_type vod')
-            .outputOption('-hls_segment_filename ' + videoPath)
-            .outputOption('-hls_segment_type fmp4')
-            .outputOption('-f hls')
-            .outputOption('-hls_flags single_file');
+            command = yield buildx264VODCommand(command, options);
+        addCommonHLSVODCommandOptions(command, videoPath);
         return command;
     });
 }
-function getHLSVideoPath(options) {
-    return `${path_1.dirname(options.outputPath)}/${options.hlsPlaylist.videoFilename}`;
+function buildHLSVODFromTSCommand(command, options) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const videoPath = getHLSVideoPath(options);
+        command.outputOption('-c copy');
+        if (options.isAAC) {
+            command.outputOption('-bsf:a aac_adtstoasc');
+        }
+        addCommonHLSVODCommandOptions(command, videoPath);
+        return command;
+    });
 }
 function fixHLSPlaylistIfNeeded(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (options.type !== 'hls')
+        if (options.type !== 'hls' && options.type !== 'hls-from-ts')
             return;
         const fileContent = yield fs_extra_1.readFile(options.outputPath);
         const videoFileName = options.hlsPlaylist.videoFilename;
@@ -377,44 +262,70 @@ function fixHLSPlaylistIfNeeded(options) {
         yield fs_extra_1.writeFile(options.outputPath, newContent);
     });
 }
-function presetH264VeryFast(command, input, resolution, fps) {
+function getHLSVideoPath(options) {
+    return `${path_1.dirname(options.outputPath)}/${options.hlsPlaylist.videoFilename}`;
+}
+function getEncoderBuilderResult(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        let localCommand = yield presetH264(command, input, resolution, fps);
-        if (!input.includes('.mp3') && !input.includes('.wav') && !input.includes('.flac')) {
-            localCommand = localCommand.outputOption('-preset:v veryfast');
+        const { availableEncoders, input, profile, resolution, streamType, fps, streamNum, videoType } = options;
+        const encodersToTry = constants_1.VIDEO_TRANSCODING_ENCODERS[streamType];
+        for (const encoder of encodersToTry) {
+            if (!(yield checker_before_init_1.checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder])
+                continue;
+            const builderProfiles = availableEncoders[videoType][encoder];
+            let builder = builderProfiles[profile];
+            if (!builder) {
+                logger_1.logger.debug('Profile %s for encoder %s not available. Fallback to default.', profile, encoder);
+                builder = builderProfiles.default;
+            }
+            const result = yield builder({ input, resolution: resolution, fps, streamNum });
+            return {
+                result,
+                encoder: result.copy === true
+                    ? 'copy'
+                    : encoder
+            };
         }
-        return localCommand;
+        return null;
     });
 }
-function presetH264(command, input, resolution, fps) {
+function presetVideo(command, input, transcodeOptions, fps) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let localCommand = command
             .format('mp4')
             .videoCodec('h264_qsv')
             .outputOption('-map_metadata -1')
             .outputOption('-movflags faststart');
-        const parsedAudio = yield audio.get(input);
+        addDefaultEncoderGlobalParams({ command });
+        const parsedAudio = yield ffprobe_utils_1.getAudioStream(input);
+        let streamsToProcess = ['AUDIO', 'VIDEO'];
         if (!parsedAudio.audioStream) {
             localCommand = localCommand.noAudio();
+            streamsToProcess = ['VIDEO'];
         }
-        else if ((yield checker_before_init_1.checkFFmpegEncoders()).get('libfdk_aac')) {
-            localCommand = localCommand
-                .audioCodec('libfdk_aac')
-                .audioQuality(5);
-        }
-        else {
-            localCommand = localCommand.audioCodec('aac');
-            const audioCodecName = parsedAudio.audioStream['codec_name'];
-            if (audio.bitrate[audioCodecName]) {
-                const bitrate = audio.bitrate[audioCodecName](parsedAudio.audioStream['bit_rate']);
-                if (bitrate !== undefined && bitrate !== -1)
-                    localCommand = localCommand.audioBitrate(bitrate);
+        for (const streamType of streamsToProcess) {
+            const { profile, resolution, availableEncoders } = transcodeOptions;
+            const builderResult = yield getEncoderBuilderResult({
+                streamType,
+                input,
+                resolution,
+                availableEncoders,
+                profile,
+                fps,
+                videoType: 'vod'
+            });
+            if (!builderResult) {
+                throw new Error('No available encoder found for stream ' + streamType);
             }
-        }
-        if (fps) {
-            const targetBitrate = videos_1.getTargetBitrate(resolution, fps, constants_1.VIDEO_TRANSCODING_FPS);
-            localCommand = localCommand.outputOptions([`-maxrate ${targetBitrate}`, `-bufsize ${targetBitrate * 2}`]);
-            localCommand = localCommand.outputOption(`-g ${fps * 2}`);
+            logger_1.logger.debug('Apply ffmpeg params from %s.', builderResult.encoder, builderResult);
+            if (streamType === 'VIDEO') {
+                localCommand.videoCodec(builderResult.encoder);
+            }
+            else if (streamType === 'AUDIO') {
+                localCommand.audioCodec(builderResult.encoder);
+            }
+            command.addOutputOptions(builderResult.result.outputOptions);
+            addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
         }
         return localCommand;
     });
@@ -430,4 +341,32 @@ function presetOnlyAudio(command) {
         .format('mp4')
         .audioCodec('copy')
         .noVideo();
+}
+function getFFmpeg(input, type) {
+    const command = ffmpeg(input, { niceness: constants_1.FFMPEG_NICE.TRANSCODING, cwd: config_1.CONFIG.STORAGE.TMP_DIR });
+    const threads = type === 'live'
+        ? config_1.CONFIG.LIVE.TRANSCODING.THREADS
+        : config_1.CONFIG.TRANSCODING.THREADS;
+    if (threads > 0) {
+        command.outputOption('-threads ' + threads);
+    }
+    return command;
+}
+function runCommand(command, onEnd) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return new Promise((res, rej) => {
+            command.on('error', (err, stdout, stderr) => {
+                if (onEnd)
+                    onEnd();
+                logger_1.logger.error('Error in transcoding job.', { stdout, stderr });
+                rej(err);
+            });
+            command.on('end', () => {
+                if (onEnd)
+                    onEnd();
+                res();
+            });
+            command.run();
+        });
+    });
 }

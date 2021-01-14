@@ -4,12 +4,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoBlacklistModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const utils_1 = require("../utils");
-const video_1 = require("./video");
-const video_channel_1 = require("./video-channel");
 const video_blacklist_1 = require("../../helpers/custom-validators/video-blacklist");
 const constants_1 = require("../../initializers/constants");
+const utils_1 = require("../utils");
 const thumbnail_1 = require("./thumbnail");
+const video_1 = require("./video");
+const video_channel_1 = require("./video-channel");
 let VideoBlacklistModel = VideoBlacklistModel_1 = class VideoBlacklistModel extends sequelize_typescript_1.Model {
     static listForApi(parameters) {
         const { start, count, sort, search, type } = parameters;

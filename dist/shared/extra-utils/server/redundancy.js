@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeVideoRedundancy = exports.addVideoRedundancy = exports.listVideoRedundancies = exports.updateRedundancy = void 0;
 const requests_1 = require("../requests/requests");
-function updateRedundancy(url, accessToken, host, redundancyAllowed, expectedStatus = 204) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function updateRedundancy(url, accessToken, host, redundancyAllowed, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/server/redundancy/' + host;
     return requests_1.makePutBodyRequest({
         url,
@@ -26,7 +27,7 @@ function listVideoRedundancies(options) {
             sort: sort !== null && sort !== void 0 ? sort : 'name',
             target
         },
-        statusCodeExpected: statusCodeExpected || 200
+        statusCodeExpected: statusCodeExpected || http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.listVideoRedundancies = listVideoRedundancies;
@@ -38,7 +39,7 @@ function addVideoRedundancy(options) {
         token: accessToken,
         path,
         fields: { videoId },
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.addVideoRedundancy = addVideoRedundancy;
@@ -49,7 +50,7 @@ function removeVideoRedundancy(options) {
         url,
         token: accessToken,
         path,
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.removeVideoRedundancy = removeVideoRedundancy;

@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const index_1 = require("../../../../shared/extra-utils/index");
+const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const stats_1 = require("../../../../shared/extra-utils/server/stats");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
-const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const expect = chai.expect;
 describe('Test stats (excluding redundancy)', function () {
     let servers = [];
@@ -103,6 +103,68 @@ describe('Test stats (excluding redundancy)', function () {
                 expect(data.totalWeeklyActiveUsers).to.equal(2);
                 expect(data.totalMonthlyActiveUsers).to.equal(2);
             }
+        });
+    });
+    it('Should correctly count video file sizes if transcoding is enabled', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(60000);
+            yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+                transcoding: {
+                    enabled: true,
+                    webtorrent: {
+                        enabled: true
+                    },
+                    hls: {
+                        enabled: true
+                    },
+                    resolutions: {
+                        '0p': false,
+                        '240p': false,
+                        '360p': false,
+                        '480p': false,
+                        '720p': false,
+                        '1080p': false,
+                        '2160p': false
+                    }
+                }
+            });
+            yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video', fixture: 'video_short.webm' });
+            yield jobs_1.waitJobs(servers);
+            {
+                const res = yield stats_1.getStats(servers[1].url);
+                const data = res.body;
+                expect(data.totalLocalVideoFilesSize).to.equal(0);
+            }
+            {
+                const res = yield stats_1.getStats(servers[0].url);
+                const data = res.body;
+                expect(data.totalLocalVideoFilesSize).to.be.greaterThan(300000);
+                expect(data.totalLocalVideoFilesSize).to.be.lessThan(400000);
+            }
+        });
+    });
+    it('Should have the correct AP stats', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(60000);
+            yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+                transcoding: {
+                    enabled: false
+                }
+            });
+            const res1 = yield stats_1.getStats(servers[1].url);
+            const first = res1.body;
+            for (let i = 0; i < 10; i++) {
+                yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video' });
+            }
+            yield jobs_1.waitJobs(servers);
+            const res2 = yield stats_1.getStats(servers[1].url);
+            const second = res2.body;
+            expect(second.totalActivityPubMessagesProcessed).to.be.greaterThan(first.totalActivityPubMessagesProcessed);
+            yield extra_utils_1.wait(5000);
+            const res3 = yield stats_1.getStats(servers[1].url);
+            const third = res3.body;
+            expect(third.totalActivityPubMessagesWaiting).to.equal(0);
+            expect(third.activityPubMessagesProcessedPerSecond).to.be.lessThan(second.activityPubMessagesProcessedPerSecond);
         });
     });
     after(function () {

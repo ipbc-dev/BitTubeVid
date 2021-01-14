@@ -12,6 +12,7 @@ const server_1 = require("../../models/server/server");
 const constants_1 = require("../../initializers/constants");
 const middlewares_1 = require("../../helpers/middlewares");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const blockAccountValidator = [
     express_validator_1.body('accountName').exists().withMessage('Should have an account name with host'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -23,7 +24,7 @@ const blockAccountValidator = [
         const user = res.locals.oauth.token.User;
         const accountToBlock = res.locals.account;
         if (user.Account.id === accountToBlock.id) {
-            res.status(409)
+            res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'You cannot block yourself.' });
             return;
         }
@@ -71,7 +72,7 @@ const blockServerValidator = [
             return;
         const host = req.body.host;
         if (host === constants_1.WEBSERVER.HOST) {
-            return res.status(409)
+            return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'You cannot block your own server.' });
         }
         const server = yield server_1.ServerModel.loadOrCreateByHost(host);
@@ -110,7 +111,7 @@ function doesUnblockAccountExist(accountId, targetAccountId, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const accountBlock = yield account_blocklist_1.AccountBlocklistModel.loadByAccountAndTarget(accountId, targetAccountId);
         if (!accountBlock) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Account block entry not found.' });
             return false;
         }
@@ -122,7 +123,7 @@ function doesUnblockServerExist(accountId, host, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverBlock = yield server_blocklist_1.ServerBlocklistModel.loadByAccountAndHost(accountId, host);
         if (!serverBlock) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Server block entry not found.' });
             return false;
         }

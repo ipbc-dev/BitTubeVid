@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const contact_form_1 = require("../../../../shared/extra-utils/server/contact-form");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test contact form API validators', function () {
     let server;
     const emails = [];
@@ -24,7 +25,7 @@ describe('Test contact form API validators', function () {
     });
     it('Should not accept a contact form if emails are disabled', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 409 }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: http_error_codes_1.HttpStatusCode.CONFLICT_409 }));
         });
     });
     it('Should not accept a contact form if it is disabled in the configuration', function () {
@@ -32,7 +33,7 @@ describe('Test contact form API validators', function () {
             this.timeout(10000);
             extra_utils_1.killallServers([server]);
             yield extra_utils_1.reRunServer(server, { smtp: { hostname: 'localhost', port: emailPort }, contact_form: { enabled: false } });
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 409 }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: http_error_codes_1.HttpStatusCode.CONFLICT_409 }));
         });
     });
     it('Should not accept a contact form if from email is invalid', function () {
@@ -40,23 +41,59 @@ describe('Test contact form API validators', function () {
             this.timeout(10000);
             extra_utils_1.killallServers([server]);
             yield extra_utils_1.reRunServer(server, { smtp: { hostname: 'localhost', port: emailPort } });
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromEmail: 'badEmail' }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromEmail: 'badEmail@' }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromEmail: undefined }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromEmail: 'badEmail'
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromEmail: 'badEmail@'
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromEmail: undefined
+            }));
         });
     });
     it('Should not accept a contact form if from name is invalid', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromName: 'name'.repeat(100) }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromName: '' }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, fromName: undefined }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromName: 'name'.repeat(100)
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromName: ''
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                fromName: undefined
+            }));
         });
     });
     it('Should not accept a contact form if body is invalid', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, body: 'body'.repeat(5000) }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, body: 'a' }));
-            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, { url: server.url, expectedStatus: 400, body: undefined }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                body: 'body'.repeat(5000)
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                body: 'a'
+            }));
+            yield contact_form_1.sendContactForm(extra_utils_1.immutableAssign(defaultBody, {
+                url: server.url,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
+                body: undefined
+            }));
         });
     });
     it('Should accept a contact form with the correct parameters', function () {

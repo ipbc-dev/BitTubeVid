@@ -8,7 +8,7 @@ const audience_1 = require("../audience");
 function sendDislike(byActor, video, t) {
     logger_1.logger.info('Creating job to dislike %s.', video.url);
     const activityBuilder = (audience) => {
-        const url = url_1.getVideoDislikeActivityPubUrl(byActor, video);
+        const url = url_1.getVideoDislikeActivityPubUrlByLocalActor(byActor, video);
         return buildDislikeActivity(url, byActor, video, audience);
     };
     return utils_1.sendVideoRelatedActivity(activityBuilder, { byActor, video, transaction: t });

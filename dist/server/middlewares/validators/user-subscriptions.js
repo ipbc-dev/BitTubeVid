@@ -9,6 +9,7 @@ const actor_follow_1 = require("../../models/activitypub/actor-follow");
 const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const constants_1 = require("../../initializers/constants");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const userSubscriptionListValidator = [
     express_validator_1.query('search').optional().not().isEmpty().withMessage('Should have a valid search'),
     (req, res, next) => {
@@ -54,7 +55,7 @@ const userSubscriptionGetValidator = [
         const subscription = yield actor_follow_1.ActorFollowModel.loadByActorAndTargetNameAndHostForAPI(user.Account.Actor.id, name, host);
         if (!subscription || !subscription.ActorFollowing.VideoChannel) {
             return res
-                .status(404)
+                .status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({
                 error: `Subscription ${req.params.uri} not found.`
             });

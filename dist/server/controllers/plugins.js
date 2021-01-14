@@ -7,10 +7,12 @@ const path_1 = require("path");
 const plugin_manager_1 = require("../lib/plugins/plugin-manager");
 const plugins_1 = require("../middlewares/validators/plugins");
 const themes_1 = require("../middlewares/validators/themes");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
+const i18n_1 = require("../../shared/core-utils/i18n");
 const plugin_type_1 = require("../../shared/models/plugins/plugin.type");
 const core_utils_1 = require("../helpers/core-utils");
-const i18n_1 = require("../../shared/core-utils/i18n");
 const logger_1 = require("@server/helpers/logger");
+const oauth_1 = require("@server/middlewares/oauth");
 const sendFileOptions = {
     maxAge: '30 days',
     immutable: !core_utils_1.isTestInstance()
@@ -22,8 +24,8 @@ pluginsRouter.get('/plugins/translations/:locale.json', getPluginTranslations);
 pluginsRouter.get('/plugins/:pluginName/:pluginVersion/auth/:authName', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN), plugins_1.getExternalAuthValidator, handleAuthInPlugin);
 pluginsRouter.get('/plugins/:pluginName/:pluginVersion/static/:staticEndpoint(*)', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN), plugins_1.pluginStaticDirectoryValidator, servePluginStaticDirectory);
 pluginsRouter.get('/plugins/:pluginName/:pluginVersion/client-scripts/:staticEndpoint(*)', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN), plugins_1.pluginStaticDirectoryValidator, servePluginClientScripts);
-pluginsRouter.use('/plugins/:pluginName/router', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN, false), servePluginCustomRoutes);
-pluginsRouter.use('/plugins/:pluginName/:pluginVersion/router', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN), servePluginCustomRoutes);
+pluginsRouter.use('/plugins/:pluginName/router', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN, false), oauth_1.optionalAuthenticate, servePluginCustomRoutes);
+pluginsRouter.use('/plugins/:pluginName/:pluginVersion/router', plugins_1.getPluginValidator(plugin_type_1.PluginType.PLUGIN), oauth_1.optionalAuthenticate, servePluginCustomRoutes);
 pluginsRouter.get('/themes/:pluginName/:pluginVersion/static/:staticEndpoint(*)', plugins_1.getPluginValidator(plugin_type_1.PluginType.THEME), plugins_1.pluginStaticDirectoryValidator, servePluginStaticDirectory);
 pluginsRouter.get('/themes/:pluginName/:pluginVersion/client-scripts/:staticEndpoint(*)', plugins_1.getPluginValidator(plugin_type_1.PluginType.THEME), plugins_1.pluginStaticDirectoryValidator, servePluginClientScripts);
 pluginsRouter.get('/themes/:themeName/:themeVersion/css/:staticEndpoint(*)', themes_1.serveThemeCSSValidator, serveThemeCSSDirectory);
@@ -40,7 +42,7 @@ function getPluginTranslations(req, res) {
         const json = plugin_manager_1.PluginManager.Instance.getTranslations(completeLocale);
         return res.json(json);
     }
-    return res.sendStatus(404);
+    return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
 }
 function servePluginStaticDirectory(req, res) {
     const plugin = res.locals.registeredPlugin;
@@ -48,7 +50,7 @@ function servePluginStaticDirectory(req, res) {
     const [directory, ...file] = staticEndpoint.split('/');
     const staticPath = plugin.staticDirs[directory];
     if (!staticPath)
-        return res.sendStatus(404);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
     const filepath = file.join('/');
     return res.sendFile(path_1.join(plugin.path, staticPath, filepath), sendFileOptions);
 }
@@ -56,7 +58,7 @@ function servePluginCustomRoutes(req, res, next) {
     const plugin = res.locals.registeredPlugin;
     const router = plugin_manager_1.PluginManager.Instance.getRouter(plugin.npmName);
     if (!router)
-        return res.sendStatus(404);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
     return router(req, res, next);
 }
 function servePluginClientScripts(req, res) {
@@ -64,14 +66,14 @@ function servePluginClientScripts(req, res) {
     const staticEndpoint = req.params.staticEndpoint;
     const file = plugin.clientScripts[staticEndpoint];
     if (!file)
-        return res.sendStatus(404);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
     return res.sendFile(path_1.join(plugin.path, staticEndpoint), sendFileOptions);
 }
 function serveThemeCSSDirectory(req, res) {
     const plugin = res.locals.registeredPlugin;
     const staticEndpoint = req.params.staticEndpoint;
     if (plugin.css.includes(staticEndpoint) === false) {
-        return res.sendStatus(404);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
     }
     return res.sendFile(path_1.join(plugin.path, staticEndpoint), sendFileOptions);
 }

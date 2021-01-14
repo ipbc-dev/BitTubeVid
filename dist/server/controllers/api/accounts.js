@@ -6,6 +6,7 @@ const express = require("express");
 const application_1 = require("@server/models/application/application");
 const express_utils_1 = require("../../helpers/express-utils");
 const utils_1 = require("../../helpers/utils");
+const hooks_1 = require("../../lib/plugins/hooks");
 const job_queue_1 = require("../../lib/job-queue");
 const middlewares_1 = require("../../middlewares");
 const validators_1 = require("../../middlewares/validators");
@@ -75,7 +76,7 @@ function listAccountVideos(req, res) {
         const account = res.locals.account;
         const followerActorId = express_utils_1.isUserAbleToSearchRemoteURI(res) ? null : undefined;
         const countVideos = express_utils_1.getCountVideos(req);
-        const resultList = yield video_1.VideoModel.listForApi({
+        const apiOptions = yield hooks_1.Hooks.wrapObject({
             followerActorId,
             start: req.query.start,
             count: req.query.count,
@@ -92,7 +93,8 @@ function listAccountVideos(req, res) {
             accountId: account.id,
             user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
             countVideos
-        });
+        }, 'filter:api.accounts.videos.list.params');
+        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.listForApi, apiOptions, 'filter:api.accounts.videos.list.result');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

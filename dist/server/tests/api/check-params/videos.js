@@ -7,6 +7,7 @@ require("mocha");
 const path_1 = require("path");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test videos API validator', function () {
     const path = '/api/v1/videos/';
@@ -51,12 +52,12 @@ describe('Test videos API validator', function () {
         });
         it('Should fail with a bad skipVideos query', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 200, query: { skipCount: 'toto' } });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200, query: { skipCount: 'toto' } });
             });
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 200, query: { skipCount: false } });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200, query: { skipCount: false } });
             });
         });
     });
@@ -66,7 +67,7 @@ describe('Test videos API validator', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path_1.join(path, 'search'),
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -87,7 +88,7 @@ describe('Test videos API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -110,7 +111,7 @@ describe('Test videos API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, token: server.accessToken, path, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, token: server.accessToken, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -138,7 +139,7 @@ describe('Test videos API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -166,7 +167,7 @@ describe('Test videos API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
@@ -336,11 +337,25 @@ describe('Test videos API validator', function () {
                 let attaches = {
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short_fake.webm')
                 };
-                yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
+                yield extra_utils_1.makeUploadRequest({
+                    url: server.url,
+                    path: path + '/upload',
+                    token: server.accessToken,
+                    fields,
+                    attaches,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNPROCESSABLE_ENTITY_422
+                });
                 attaches = {
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mkv')
                 };
-                yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
+                yield extra_utils_1.makeUploadRequest({
+                    url: server.url,
+                    path: path + '/upload',
+                    token: server.accessToken,
+                    fields,
+                    attaches,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415
+                });
             });
         });
         it('Should fail with an incorrect thumbnail file', function () {
@@ -395,7 +410,7 @@ describe('Test videos API validator', function () {
                         token: server.accessToken,
                         fields,
                         attaches,
-                        statusCodeExpected: 200
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                     });
                 }
                 {
@@ -408,7 +423,7 @@ describe('Test videos API validator', function () {
                         token: server.accessToken,
                         fields,
                         attaches,
-                        statusCodeExpected: 200
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                     });
                 }
                 {
@@ -421,7 +436,7 @@ describe('Test videos API validator', function () {
                         token: server.accessToken,
                         fields,
                         attaches,
-                        statusCodeExpected: 200
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                     });
                 }
             });
@@ -466,7 +481,7 @@ describe('Test videos API validator', function () {
                     path: path + '4da6fde3-88f7-4d16-b119-108df5630b06',
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -615,14 +630,26 @@ describe('Test videos API validator', function () {
         it('Should fail with a video of another user without the appropriate right', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + videoId, token: userAccessToken, fields, statusCodeExpected: 403 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + videoId,
+                    token: userAccessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
+                });
             });
         });
         it('Should fail with a video of another server');
         it('Should succeed with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
-                yield extra_utils_1.makePutBodyRequest({ url: server.url, path: path + videoId, token: server.accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: server.url,
+                    path: path + videoId,
+                    token: server.accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
@@ -632,7 +659,7 @@ describe('Test videos API validator', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
                 expect(res.body.data).to.be.an('array');
                 expect(res.body.data.length).to.equal(3);
@@ -640,12 +667,12 @@ describe('Test videos API validator', function () {
         });
         it('Should fail without a correct uuid', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideo(server.url, 'coucou', 400);
+                yield extra_utils_1.getVideo(server.url, 'coucou', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should return 404 with an incorrect video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideo(server.url, '4da6fde3-88f7-4d16-b119-108df5630b06', 404);
+                yield extra_utils_1.getVideo(server.url, '4da6fde3-88f7-4d16-b119-108df5630b06', http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should succeed with the correct parameters', function () {
@@ -680,7 +707,7 @@ describe('Test videos API validator', function () {
                     path: path + '4da6fde3-88f7-4d16-b119-108df5630b06/rate',
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             });
         });
@@ -702,7 +729,7 @@ describe('Test videos API validator', function () {
                     path: path + videoId + '/rate',
                     token: server.accessToken,
                     fields,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -713,23 +740,23 @@ describe('Test videos API validator', function () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
         it('Should fail without a correct uuid', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideo(server.url, server.accessToken, 'hello', 400);
+                yield extra_utils_1.removeVideo(server.url, server.accessToken, 'hello', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with a video which does not exist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideo(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', 404);
+                yield extra_utils_1.removeVideo(server.url, server.accessToken, '4da6fde3-88f7-4d16-b119-108df5630b06', http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a video of another user without the appropriate right', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideo(server.url, userAccessToken, videoId, 403);
+                yield extra_utils_1.removeVideo(server.url, userAccessToken, videoId, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with a video of another server');

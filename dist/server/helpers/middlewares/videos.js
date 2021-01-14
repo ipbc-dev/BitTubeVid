@@ -5,12 +5,13 @@ const tslib_1 = require("tslib");
 const video_1 = require("../video");
 const video_channel_1 = require("../../models/video/video-channel");
 const video_file_1 = require("@server/models/video/video-file");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function doesVideoExist(id, res, fetchType = 'all') {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : undefined;
         const video = yield video_1.fetchVideo(id, fetchType, userId);
         if (video === null) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video not found' })
                 .end();
             return false;
@@ -39,7 +40,7 @@ exports.doesVideoExist = doesVideoExist;
 function doesVideoFileOfVideoExist(id, videoIdOrUUID, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (!(yield video_file_1.VideoFileModel.doesVideoExistForVideoFile(id, videoIdOrUUID))) {
-            res.status(404)
+            res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'VideoFile matching Video not found' })
                 .end();
             return false;
@@ -53,7 +54,7 @@ function doesVideoChannelOfAccountExist(channelId, user, res) {
         if (user.hasRight(16) === true) {
             const videoChannel = yield video_channel_1.VideoChannelModel.loadAndPopulateAccount(channelId);
             if (videoChannel === null) {
-                res.status(400)
+                res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'Unknown video `video channel` on this instance.' })
                     .end();
                 return false;
@@ -63,7 +64,7 @@ function doesVideoChannelOfAccountExist(channelId, user, res) {
         }
         const videoChannel = yield video_channel_1.VideoChannelModel.loadByIdAndAccount(channelId, user.Account.id);
         if (videoChannel === null) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Unknown video `video channel` for this account.' })
                 .end();
             return false;
@@ -73,16 +74,16 @@ function doesVideoChannelOfAccountExist(channelId, user, res) {
     });
 }
 exports.doesVideoChannelOfAccountExist = doesVideoChannelOfAccountExist;
-function checkUserCanManageVideo(user, video, right, res) {
-    if (video.isOwned() === false) {
-        res.status(403)
+function checkUserCanManageVideo(user, video, right, res, onlyOwned = true) {
+    if (onlyOwned && video.isOwned() === false) {
+        res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'Cannot manage a video of another server.' })
             .end();
         return false;
     }
     const account = video.VideoChannel.Account;
     if (user.hasRight(right) === false && account.userId !== user.id) {
-        res.status(403)
+        res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'Cannot manage a video of another user.' })
             .end();
         return false;

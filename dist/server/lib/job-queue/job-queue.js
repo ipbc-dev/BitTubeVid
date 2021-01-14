@@ -3,21 +3,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JobQueue = exports.jobTypes = void 0;
 const tslib_1 = require("tslib");
 const Bull = require("bull");
+const jobs_1 = require("@server/helpers/custom-validators/jobs");
+const video_redundancy_1 = require("@server/lib/job-queue/handlers/video-redundancy");
 const logger_1 = require("../../helpers/logger");
-const redis_1 = require("../redis");
 const constants_1 = require("../../initializers/constants");
+const redis_1 = require("../redis");
+const activitypub_follow_1 = require("./handlers/activitypub-follow");
 const activitypub_http_broadcast_1 = require("./handlers/activitypub-http-broadcast");
 const activitypub_http_fetcher_1 = require("./handlers/activitypub-http-fetcher");
 const activitypub_http_unicast_1 = require("./handlers/activitypub-http-unicast");
 const email_1 = require("./handlers/email");
-const video_transcoding_1 = require("./handlers/video-transcoding");
-const activitypub_follow_1 = require("./handlers/activitypub-follow");
 const video_import_1 = require("./handlers/video-import");
+const video_live_ending_1 = require("./handlers/video-live-ending");
+const video_transcoding_1 = require("./handlers/video-transcoding");
 const video_views_1 = require("./handlers/video-views");
 const premium_storage_checker_1 = require("./handlers/premium-storage-checker");
 const activitypub_refresher_1 = require("./handlers/activitypub-refresher");
 const video_file_import_1 = require("./handlers/video-file-import");
-const video_redundancy_1 = require("@server/lib/job-queue/handlers/video-redundancy");
 const handlers = {
     'activitypub-http-broadcast': activitypub_http_broadcast_1.processActivityPubHttpBroadcast,
     'activitypub-http-unicast': activitypub_http_unicast_1.processActivityPubHttpUnicast,
@@ -30,6 +32,7 @@ const handlers = {
     'videos-views': video_views_1.processVideosViews,
     'premium-storage-checker': premium_storage_checker_1.processPremiumStorageChecker,
     'activitypub-refresher': activitypub_refresher_1.refreshAPObject,
+    'video-live-ending': video_live_ending_1.processVideoLiveEnding,
     'video-redundancy': video_redundancy_1.processVideoRedundancy
 };
 const jobTypes = [
@@ -44,7 +47,8 @@ const jobTypes = [
     'videos-views',
     'premium-storage-checker',
     'activitypub-refresher',
-    'video-redundancy'
+    'video-redundancy',
+    'video-live-ending'
 ];
 exports.jobTypes = jobTypes;
 class JobQueue {
@@ -85,11 +89,11 @@ class JobQueue {
             queue.close();
         }
     }
-    createJob(obj) {
-        this.createJobWithPromise(obj)
+    createJob(obj, options = {}) {
+        this.createJobWithPromise(obj, options)
             .catch(err => logger_1.logger.error('Cannot create job.', { err, obj }));
     }
-    createJobWithPromise(obj) {
+    createJobWithPromise(obj, options = {}) {
         const queue = this.queues[obj.type];
         if (queue === undefined) {
             logger_1.logger.error('Unknown queue %s: cannot create job.', obj.type);
@@ -98,13 +102,15 @@ class JobQueue {
         const jobArgs = {
             backoff: { delay: 60 * 1000, type: 'exponential' },
             attempts: constants_1.JOB_ATTEMPTS[obj.type],
-            timeout: constants_1.JOB_TTL[obj.type]
+            timeout: constants_1.JOB_TTL[obj.type],
+            delay: options.delay
         };
         return queue.add(obj.payload, jobArgs);
     }
     listForApi(options) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { state, start, count, asc, jobType } = options;
+            const states = state ? [state] : jobs_1.jobStates;
             let results = [];
             const filteredJobTypes = this.filterJobTypes(jobType);
             for (const jobType of filteredJobTypes) {
@@ -113,7 +119,7 @@ class JobQueue {
                     logger_1.logger.error('Unknown queue %s to list jobs.', jobType);
                     continue;
                 }
-                const jobs = yield queue.getJobs([state], 0, start + count, asc);
+                const jobs = yield queue.getJobs(states, 0, start + count, asc);
                 results = results.concat(jobs);
             }
             results.sort((j1, j2) => {
@@ -130,6 +136,7 @@ class JobQueue {
     }
     count(state, jobType) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const states = state ? [state] : jobs_1.jobStates;
             let total = 0;
             const filteredJobTypes = this.filterJobTypes(jobType);
             for (const type of filteredJobTypes) {
@@ -139,7 +146,9 @@ class JobQueue {
                     continue;
                 }
                 const counts = yield queue.getJobCounts();
-                total += counts[state];
+                for (const s of states) {
+                    total += counts[s];
+                }
             }
             return total;
         });

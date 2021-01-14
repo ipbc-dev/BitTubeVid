@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
-const extra_utils_1 = require("../../../../shared/extra-utils");
+const chai = require("chai");
 const path_1 = require("path");
-const ffmpeg_utils_1 = require("@server/helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("@server/helpers/ffprobe-utils");
+const extra_utils_1 = require("../../../../shared/extra-utils");
 const expect = chai.expect;
 describe('Test audio only video transcoding', function () {
     let servers = [];
@@ -60,14 +60,14 @@ describe('Test audio only video transcoding', function () {
     it('0p transcoded video should not have video', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const paths = [
-                path_1.join(extra_utils_1.root(), 'test' + servers[0].internalServerNumber, 'videos', videoUUID + '-0.mp4'),
-                path_1.join(extra_utils_1.root(), 'test' + servers[0].internalServerNumber, 'streaming-playlists', 'hls', videoUUID, videoUUID + '-0-fragmented.mp4')
+                extra_utils_1.buildServerDirectory(servers[0], path_1.join('videos', videoUUID + '-0.mp4')),
+                extra_utils_1.buildServerDirectory(servers[0], path_1.join('streaming-playlists', 'hls', videoUUID, videoUUID + '-0-fragmented.mp4'))
             ];
             for (const path of paths) {
-                const { audioStream } = yield ffmpeg_utils_1.audio.get(path);
+                const { audioStream } = yield ffprobe_utils_1.getAudioStream(path);
                 expect(audioStream['codec_name']).to.be.equal('aac');
                 expect(audioStream['bit_rate']).to.be.at.most(384 * 8000);
-                const size = yield ffmpeg_utils_1.getVideoStreamSize(path);
+                const size = yield ffprobe_utils_1.getVideoStreamSize(path);
                 expect(size.height).to.equal(0);
                 expect(size.width).to.equal(0);
             }

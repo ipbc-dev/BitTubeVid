@@ -3,14 +3,14 @@ var VideoPlaylistElementModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoPlaylistElementModel = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const video_1 = require("./video");
-const video_playlist_1 = require("./video-playlist");
-const utils_1 = require("../utils");
+const validator_1 = require("validator");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const constants_1 = require("../../initializers/constants");
-const validator_1 = require("validator");
-const sequelize_1 = require("sequelize");
+const utils_1 = require("../utils");
+const video_1 = require("./video");
+const video_playlist_1 = require("./video-playlist");
 let VideoPlaylistElementModel = VideoPlaylistElementModel_1 = class VideoPlaylistElementModel extends sequelize_typescript_1.Model {
     static deleteAllOf(videoPlaylistId, transaction) {
         const query = {

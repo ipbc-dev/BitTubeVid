@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307247,
+  "timestamp": 1610615934486,
   "index": "/client/th-TH/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/th-TH/index.html": "b23cc2d4d711f8503556a6a289255120d1b294f4",
+    "/client/th-TH/index.html": "aac036eec5977357634271cea7c2f4230e33643f",
     "/client/th-TH/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

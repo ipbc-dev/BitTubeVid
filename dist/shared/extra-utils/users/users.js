@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyEmail = exports.generateUserAccessToken = exports.askSendVerifyEmail = exports.updateMyAvatar = exports.resetPassword = exports.askResetPassword = exports.unblockUser = exports.blockUser = exports.getUserInformation = exports.updateMyUser = exports.updateUser = exports.removeUser = exports.getUsersListPaginationAndSort = exports.getUsersList = exports.getMyUserVideoQuotaUsed = exports.registerUserWithChannel = exports.deleteMe = exports.getMyUserVideoRating = exports.getMyUserInformation = exports.registerUser = exports.createUser = void 0;
+exports.getUserScopedTokens = exports.verifyEmail = exports.generateUserAccessToken = exports.askSendVerifyEmail = exports.updateMyAvatar = exports.renewUserScopedTokens = exports.resetPassword = exports.askResetPassword = exports.unblockUser = exports.blockUser = exports.getUserInformation = exports.updateMyUser = exports.updateUser = exports.removeUser = exports.getUsersListPaginationAndSort = exports.getUsersList = exports.getMyUserVideoQuotaUsed = exports.registerUserWithChannel = exports.deleteMe = exports.getMyUserVideoRating = exports.getMyUserInformation = exports.registerUser = exports.createUser = void 0;
 const tslib_1 = require("tslib");
-const request = require("supertest");
-const requests_1 = require("../requests/requests");
-const user_role_1 = require("../../models/users/user-role");
-const login_1 = require("./login");
 const lodash_1 = require("lodash");
+const request = require("supertest");
+const user_role_1 = require("../../models/users/user-role");
+const requests_1 = require("../requests/requests");
+const login_1 = require("./login");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function createUser(parameters) {
-    const { url, accessToken, username, adminFlags, password = 'password', videoQuota = 1000000, videoQuotaDaily = -1, role = user_role_1.UserRole.USER, specialStatus = 200 } = parameters;
+    const { url, accessToken, username, adminFlags, password = 'password', videoQuota = 1000000, videoQuotaDaily = -1, role = user_role_1.UserRole.USER, specialStatus = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/users';
     const body = {
         username,
@@ -35,7 +36,7 @@ function generateUserAccessToken(server, username) {
     });
 }
 exports.generateUserAccessToken = generateUserAccessToken;
-function registerUser(url, username, password, specialStatus = 204) {
+function registerUser(url, username, password, specialStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/register';
     const body = {
         username,
@@ -64,11 +65,11 @@ function registerUserWithChannel(options) {
         url: options.url,
         path,
         fields: body,
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.registerUserWithChannel = registerUserWithChannel;
-function getMyUserInformation(url, accessToken, specialStatus = 200) {
+function getMyUserInformation(url, accessToken, specialStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me';
     return request(url)
         .get(path)
@@ -78,7 +79,27 @@ function getMyUserInformation(url, accessToken, specialStatus = 200) {
         .expect('Content-Type', /json/);
 }
 exports.getMyUserInformation = getMyUserInformation;
-function deleteMe(url, accessToken, specialStatus = 204) {
+function getUserScopedTokens(url, token, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
+    const path = '/api/v1/users/scoped-tokens';
+    return requests_1.makeGetRequest({
+        url,
+        path,
+        token,
+        statusCodeExpected
+    });
+}
+exports.getUserScopedTokens = getUserScopedTokens;
+function renewUserScopedTokens(url, token, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
+    const path = '/api/v1/users/scoped-tokens';
+    return requests_1.makePostBodyRequest({
+        url,
+        path,
+        token,
+        statusCodeExpected
+    });
+}
+exports.renewUserScopedTokens = renewUserScopedTokens;
+function deleteMe(url, accessToken, specialStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me';
     return request(url)
         .delete(path)
@@ -87,7 +108,7 @@ function deleteMe(url, accessToken, specialStatus = 204) {
         .expect(specialStatus);
 }
 exports.deleteMe = deleteMe;
-function getMyUserVideoQuotaUsed(url, accessToken, specialStatus = 200) {
+function getMyUserVideoQuotaUsed(url, accessToken, specialStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me/video-quota-used';
     return request(url)
         .get(path)
@@ -104,11 +125,11 @@ function getUserInformation(url, accessToken, userId, withStats = false) {
         .query({ withStats })
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getUserInformation = getUserInformation;
-function getMyUserVideoRating(url, accessToken, videoId, specialStatus = 200) {
+function getMyUserVideoRating(url, accessToken, videoId, specialStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me/videos/' + videoId + '/rating';
     return request(url)
         .get(path)
@@ -124,7 +145,7 @@ function getUsersList(url, accessToken) {
         .get(path)
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getUsersList = getUsersList;
@@ -142,11 +163,11 @@ function getUsersListPaginationAndSort(url, accessToken, start, count, sort, sea
         .query(query)
         .set('Accept', 'application/json')
         .set('Authorization', 'Bearer ' + accessToken)
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getUsersListPaginationAndSort = getUsersListPaginationAndSort;
-function removeUser(url, userId, accessToken, expectedStatus = 204) {
+function removeUser(url, userId, accessToken, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users';
     return request(url)
         .delete(path + '/' + userId)
@@ -155,7 +176,7 @@ function removeUser(url, userId, accessToken, expectedStatus = 204) {
         .expect(expectedStatus);
 }
 exports.removeUser = removeUser;
-function blockUser(url, userId, accessToken, expectedStatus = 204, reason) {
+function blockUser(url, userId, accessToken, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204, reason) {
     const path = '/api/v1/users';
     let body;
     if (reason)
@@ -168,7 +189,7 @@ function blockUser(url, userId, accessToken, expectedStatus = 204, reason) {
         .expect(expectedStatus);
 }
 exports.blockUser = blockUser;
-function unblockUser(url, userId, accessToken, expectedStatus = 204) {
+function unblockUser(url, userId, accessToken, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users';
     return request(url)
         .post(path + '/' + userId + '/unblock')
@@ -185,7 +206,7 @@ function updateMyUser(options) {
         path,
         token: options.accessToken,
         fields: toSend,
-        statusCodeExpected: options.statusCodeExpected || 204
+        statusCodeExpected: options.statusCodeExpected || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.updateMyUser = updateMyUser;
@@ -216,7 +237,7 @@ function updateUser(options) {
         path,
         token: options.accessToken,
         fields: toSend,
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.updateUser = updateUser;
@@ -226,11 +247,11 @@ function askResetPassword(url, email) {
         url,
         path,
         fields: { email },
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.askResetPassword = askResetPassword;
-function resetPassword(url, userId, verificationString, password, statusCodeExpected = 204) {
+function resetPassword(url, userId, verificationString, password, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/' + userId + '/reset-password';
     return requests_1.makePostBodyRequest({
         url,
@@ -246,11 +267,11 @@ function askSendVerifyEmail(url, email) {
         url,
         path,
         fields: { email },
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.askSendVerifyEmail = askSendVerifyEmail;
-function verifyEmail(url, userId, verificationString, isPendingEmail = false, statusCodeExpected = 204) {
+function verifyEmail(url, userId, verificationString, isPendingEmail = false, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/' + userId + '/verify-email';
     return requests_1.makePostBodyRequest({
         url,

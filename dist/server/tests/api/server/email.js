@@ -6,6 +6,7 @@ const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const email_1 = require("../../../../shared/extra-utils/miscs/email");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test emails', function () {
     let server;
@@ -65,7 +66,7 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(1);
                 const email = emails[0];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains('password');
@@ -81,7 +82,7 @@ describe('Test emails', function () {
         });
         it('Should not reset the password with an invalid verification string', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.resetPassword(server.url, userId, verificationString + 'b', 'super_password2', 403);
+                yield extra_utils_1.resetPassword(server.url, userId, verificationString + 'b', 'super_password2', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should reset the password', function () {
@@ -91,7 +92,7 @@ describe('Test emails', function () {
         });
         it('Should not reset the password with the same verification string', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.resetPassword(server.url, userId, verificationString, 'super_password3', 403);
+                yield extra_utils_1.resetPassword(server.url, userId, verificationString, 'super_password3', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should login with this new password', function () {
@@ -114,7 +115,7 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(2);
                 const email = emails[1];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('create_password@example.com');
                 expect(email['subject']).contains('account');
@@ -130,7 +131,7 @@ describe('Test emails', function () {
         });
         it('Should not reset the password with an invalid verification string', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.resetPassword(server.url, userId2, verificationString2 + 'c', 'newly_created_password', 403);
+                yield extra_utils_1.resetPassword(server.url, userId2, verificationString2 + 'c', 'newly_created_password', http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should reset the password', function () {
@@ -156,7 +157,7 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(3);
                 const email = emails[2];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('admin' + server.internalServerNumber + '@example.com');
                 expect(email['subject']).contains('abuse');
@@ -169,26 +170,26 @@ describe('Test emails', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
                 const reason = 'my super bad reason';
-                yield extra_utils_1.blockUser(server.url, userId, server.accessToken, 204, reason);
+                yield extra_utils_1.blockUser(server.url, userId, server.accessToken, http_error_codes_1.HttpStatusCode.NO_CONTENT_204, reason);
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(4);
                 const email = emails[3];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains(' blocked');
                 expect(email['text']).contains(' blocked');
-                expect(email['text']).contains(reason);
+                expect(email['text']).contains('bad reason');
             });
         });
         it('Should send the notification email when unblocking a user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(10000);
-                yield extra_utils_1.unblockUser(server.url, userId, server.accessToken, 204);
+                yield extra_utils_1.unblockUser(server.url, userId, server.accessToken, http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(5);
                 const email = emails[4];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains(' unblocked');
@@ -205,7 +206,7 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(6);
                 const email = emails[5];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains(' blacklisted');
@@ -220,11 +221,17 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(7);
                 const email = emails[6];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains(' unblacklisted');
                 expect(email['text']).contains('my super user video');
+            });
+        });
+        it('Should have the manage preferences link in the email', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const email = emails[6];
+                expect(email['text']).to.contain('Manage your notification preferences');
             });
         });
     });
@@ -236,7 +243,7 @@ describe('Test emails', function () {
                 yield jobs_1.waitJobs(server);
                 expect(emails).to.have.lengthOf(8);
                 const email = emails[7];
-                expect(email['from'][0]['name']).equal('localhost:' + server.port);
+                expect(email['from'][0]['name']).equal('PeerTube');
                 expect(email['from'][0]['address']).equal('test-admin@localhost');
                 expect(email['to'][0]['address']).equal('user_1@example.com');
                 expect(email['subject']).contains('Verify');
@@ -252,7 +259,7 @@ describe('Test emails', function () {
         });
         it('Should not verify the email with an invalid verification string', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.verifyEmail(server.url, userId, verificationString + 'b', false, 403);
+                yield extra_utils_1.verifyEmail(server.url, userId, verificationString + 'b', false, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should verify the email', function () {

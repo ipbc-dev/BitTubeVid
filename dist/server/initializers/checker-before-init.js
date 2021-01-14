@@ -9,7 +9,7 @@ function checkMissedConfig() {
     const required = ['listen.port', 'listen.hostname',
         'webserver.https', 'webserver.hostname', 'webserver.port',
         'trust_proxy',
-        'database.hostname', 'database.port', 'database.suffix', 'database.username', 'database.password', 'database.pool.max',
+        'database.hostname', 'database.port', 'database.username', 'database.password', 'database.pool.max',
         'smtp.hostname', 'smtp.port', 'smtp.username', 'smtp.password', 'smtp.tls', 'smtp.from_address',
         'email.body.signature', 'email.subject.prefix',
         'storage.avatars', 'storage.videos', 'storage.logs', 'storage.previews', 'storage.thumbnails', 'storage.torrents', 'storage.cache',
@@ -37,7 +37,11 @@ function checkMissedConfig() {
         'remote_redundancy.videos.accept_from',
         'federation.videos.federate_unlisted',
         'search.remote_uri.users', 'search.remote_uri.anonymous', 'search.search_index.enabled', 'search.search_index.url',
-        'search.search_index.disable_local_search', 'search.search_index.is_default_search'
+        'search.search_index.disable_local_search', 'search.search_index.is_default_search',
+        'live.enabled', 'live.allow_replay', 'live.max_duration', 'live.max_user_lives', 'live.max_instance_lives',
+        'live.transcoding.enabled', 'live.transcoding.threads',
+        'live.transcoding.resolutions.240p', 'live.transcoding.resolutions.360p', 'live.transcoding.resolutions.480p',
+        'live.transcoding.resolutions.720p', 'live.transcoding.resolutions.1080p', 'live.transcoding.resolutions.2160p'
     ];
     const requiredAlternatives = [
         [
@@ -86,21 +90,25 @@ function checkFFmpeg(CONFIG) {
     });
 }
 exports.checkFFmpeg = checkFFmpeg;
-let supportedOptionalEncoders;
+let supportedEncoders;
 function checkFFmpegEncoders() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (supportedOptionalEncoders !== undefined) {
-            return supportedOptionalEncoders;
+        if (supportedEncoders !== undefined) {
+            return supportedEncoders;
         }
         const Ffmpeg = require('fluent-ffmpeg');
         const getAvailableEncodersPromise = core_utils_1.promisify0(Ffmpeg.getAvailableEncoders);
-        const encoders = yield getAvailableEncodersPromise();
-        const optionalEncoders = ['libfdk_aac'];
-        supportedOptionalEncoders = new Map();
-        for (const encoder of optionalEncoders) {
-            supportedOptionalEncoders.set(encoder, encoders[encoder] !== undefined);
+        const availableEncoders = yield getAvailableEncodersPromise();
+        const searchEncoders = [
+            'aac',
+            'libfdk_aac',
+            'libx264'
+        ];
+        supportedEncoders = new Map();
+        for (const searchEncoder of searchEncoders) {
+            supportedEncoders.set(searchEncoder, availableEncoders[searchEncoder] !== undefined);
         }
-        return supportedOptionalEncoders;
+        return supportedEncoders;
     });
 }
 exports.checkFFmpegEncoders = checkFFmpegEncoders;

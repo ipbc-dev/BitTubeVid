@@ -8,6 +8,7 @@ const request = require("supertest");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const video_comments_1 = require("../../../../shared/extra-utils/videos/video-comments");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test multiple servers', function () {
     let servers = [];
@@ -112,7 +113,7 @@ describe('Test multiple servers', function () {
         });
         it('Should upload the video on server 2 and propagate on each server', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(50000);
+                this.timeout(100000);
                 const user = {
                     username: 'user1',
                     password: 'super_password'
@@ -164,19 +165,19 @@ describe('Test multiple servers', function () {
                         files: [
                             {
                                 resolution: 240,
-                                size: 189000
+                                size: 270000
                             },
                             {
                                 resolution: 360,
-                                size: 278000
+                                size: 359000
                             },
                             {
                                 resolution: 480,
-                                size: 384000
+                                size: 465000
                             },
                             {
                                 resolution: 720,
-                                size: 706000
+                                size: 788000
                             }
                         ],
                         thumbnailfile: 'thumbnail',
@@ -480,7 +481,7 @@ describe('Test multiple servers', function () {
         });
         it('Should like and dislikes videos on different services', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 yield extra_utils_1.rateVideo(servers[0].url, servers[0].accessToken, remoteVideosServer1[0], 'like');
                 yield extra_utils_1.wait(500);
                 yield extra_utils_1.rateVideo(servers[0].url, servers[0].accessToken, remoteVideosServer1[0], 'dislike');
@@ -493,6 +494,7 @@ describe('Test multiple servers', function () {
                 yield extra_utils_1.wait(500);
                 yield extra_utils_1.rateVideo(servers[2].url, servers[2].accessToken, remoteVideosServer3[0], 'like');
                 yield jobs_1.waitJobs(servers);
+                yield extra_utils_1.wait(5000);
                 let baseVideos = null;
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideosList(server.url);
@@ -856,7 +858,7 @@ describe('Test multiple servers', function () {
                     expect(res.body.commentsEnabled).to.be.false;
                     expect(res.body.downloadEnabled).to.be.false;
                     const text = 'my super forbidden comment';
-                    yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, videoUUID, text, 409);
+                    yield video_comments_1.addVideoCommentThread(server.url, server.accessToken, videoUUID, text, http_error_codes_1.HttpStatusCode.CONFLICT_409);
                 }
             });
         });
@@ -875,7 +877,7 @@ describe('Test multiple servers', function () {
                     .field('channelId', '1');
                 const filePath = path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.webm');
                 yield req.attach('videofile', filePath)
-                    .expect(200);
+                    .expect(http_error_codes_1.HttpStatusCode.OK_200);
                 yield jobs_1.waitJobs(servers);
                 for (const server of servers) {
                     const res = yield extra_utils_1.getVideosList(server.url);

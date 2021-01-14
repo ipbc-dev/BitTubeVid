@@ -395,7 +395,7 @@ describe('Test moderation notifications', function () {
         }));
         it('Should send notification to moderators on new video with auto-blacklist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 videoName = 'video with auto-blacklist ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: videoName });
                 videoUUID = resVideo.body.video.uuid;
@@ -420,7 +420,7 @@ describe('Test moderation notifications', function () {
         });
         it('Should send video published and unblacklist after video unblacklisted', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, videoUUID);
                 yield jobs_1.waitJobs(servers);
             });
@@ -437,7 +437,7 @@ describe('Test moderation notifications', function () {
         });
         it('Should send unblacklist but not published/subscription notes after unblacklisted if scheduled update pending', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 const updateAt = new Date(new Date().getTime() + 1000000);
                 const name = 'video with auto-blacklist and future schedule ' + uuid_1.v4();
                 const data = {
@@ -459,7 +459,7 @@ describe('Test moderation notifications', function () {
         });
         it('Should not send publish/subscription notifications after scheduled update if video still auto-blacklisted', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 const updateAt = new Date(new Date().getTime() + 2000);
                 const name = 'video with schedule done and still auto-blacklisted ' + uuid_1.v4();
                 const data = {
@@ -480,7 +480,7 @@ describe('Test moderation notifications', function () {
         });
         it('Should not send a notification to moderators on new video without auto-blacklist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(40000);
                 const name = 'video without auto-blacklist ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name });
                 const uuid = resVideo.body.video.uuid;

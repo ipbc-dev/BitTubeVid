@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const accounts_1 = require("../../../../shared/extra-utils/users/accounts");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test accounts API validators', function () {
     const path = '/api/v1/accounts/';
     let server;
@@ -34,7 +35,7 @@ describe('Test accounts API validators', function () {
     describe('When getting an account', function () {
         it('Should return 404 with a non existing name', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield accounts_1.getAccount(server.url, 'arfaze', 404);
+                yield accounts_1.getAccount(server.url, 'arfaze', http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
     });

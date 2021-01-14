@@ -6,6 +6,7 @@ const requests_1 = require("../requests/requests");
 const request = require("supertest");
 const chai = require("chai");
 const miscs_1 = require("../miscs/miscs");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 function createVideoCaption(args) {
     const path = '/api/v1/videos/' + args.videoId + '/captions/' + args.language;
@@ -20,7 +21,7 @@ function createVideoCaption(args) {
         attaches: {
             captionfile: captionfileAttach
         },
-        statusCodeExpected: args.statusCodeExpected || 204
+        statusCodeExpected: args.statusCodeExpected || http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.createVideoCaption = createVideoCaption;
@@ -29,7 +30,7 @@ function listVideoCaptions(url, videoId) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.listVideoCaptions = listVideoCaptions;
@@ -39,7 +40,7 @@ function deleteVideoCaption(url, token, videoId, language) {
         url,
         token,
         path,
-        statusCodeExpected: 204
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
     });
 }
 exports.deleteVideoCaption = deleteVideoCaption;
@@ -47,7 +48,7 @@ function testCaptionFile(url, captionPath, containsString) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield request(url)
             .get(captionPath)
-            .expect(200);
+            .expect(http_error_codes_1.HttpStatusCode.OK_200);
         expect(res.text).to.contain(containsString);
     });
 }

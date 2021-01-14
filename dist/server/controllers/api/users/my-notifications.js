@@ -10,6 +10,7 @@ const user_notification_1 = require("../../../models/account/user-notification")
 const me_1 = require("./me");
 const user_notifications_1 = require("../../../middlewares/validators/user-notifications");
 const user_notification_setting_1 = require("../../../models/account/user-notification-setting");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const myNotificationsRouter = express.Router();
 exports.myNotificationsRouter = myNotificationsRouter;
 me_1.meRouter.put('/me/notification-settings', middlewares_1.authenticate, user_notifications_1.updateNotificationSettingsValidator, middlewares_1.asyncRetryTransactionMiddleware(updateNotificationSettings));
@@ -42,7 +43,7 @@ function updateNotificationSettings(req, res) {
             abuseStateChange: body.abuseStateChange
         };
         yield user_notification_setting_1.UserNotificationSettingModel.update(values, query);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function listUserNotifications(req, res) {
@@ -56,13 +57,13 @@ function markAsReadUserNotifications(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         yield user_notification_1.UserNotificationModel.markAsRead(user.id, req.body.ids);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function markAsReadAllUserNotifications(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
         yield user_notification_1.UserNotificationModel.markAllAsRead(user.id);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }

@@ -12,7 +12,8 @@ const servers_1 = require("../server/servers");
 const socket_io_1 = require("../socket/socket-io");
 const login_1 = require("./login");
 const users_2 = require("./users");
-function updateMyNotificationSettings(url, token, settings, statusCodeExpected = 204) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function updateMyNotificationSettings(url, token, settings, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me/notification-settings';
     return requests_1.makePutBodyRequest({
         url,
@@ -23,7 +24,7 @@ function updateMyNotificationSettings(url, token, settings, statusCodeExpected =
     });
 }
 exports.updateMyNotificationSettings = updateMyNotificationSettings;
-function getUserNotifications(url, token, start, count, unread, sort = '-createdAt', statusCodeExpected = 200) {
+function getUserNotifications(url, token, start, count, unread, sort = '-createdAt', statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const path = '/api/v1/users/me/notifications';
         return requests_1.makeGetRequest({
@@ -41,7 +42,7 @@ function getUserNotifications(url, token, start, count, unread, sort = '-created
     });
 }
 exports.getUserNotifications = getUserNotifications;
-function markAsReadNotifications(url, token, ids, statusCodeExpected = 204) {
+function markAsReadNotifications(url, token, ids, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me/notifications/read';
     return requests_1.makePostBodyRequest({
         url,
@@ -52,7 +53,7 @@ function markAsReadNotifications(url, token, ids, statusCodeExpected = 204) {
     });
 }
 exports.markAsReadNotifications = markAsReadNotifications;
-function markAsReadAllNotifications(url, token, statusCodeExpected = 204) {
+function markAsReadAllNotifications(url, token, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me/notifications/read-all';
     return requests_1.makePostBodyRequest({
         url,

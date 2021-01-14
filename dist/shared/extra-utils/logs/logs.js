@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAuditLogs = exports.getLogs = void 0;
 const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getLogs(url, accessToken, startDate, endDate, level) {
     const path = '/api/v1/server/logs';
     return requests_1.makeGetRequest({
@@ -9,7 +10,7 @@ function getLogs(url, accessToken, startDate, endDate, level) {
         path,
         token: accessToken,
         query: { startDate, endDate, level },
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getLogs = getLogs;
@@ -20,7 +21,7 @@ function getAuditLogs(url, accessToken, startDate, endDate) {
         path,
         token: accessToken,
         query: { startDate, endDate },
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getAuditLogs = getAuditLogs;

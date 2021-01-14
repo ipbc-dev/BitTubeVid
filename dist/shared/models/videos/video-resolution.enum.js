@@ -27,7 +27,7 @@ function getTargetBitrate(resolution, fps, fpsTranscodingConstants) {
     const maxBitrate = baseBitrate * 1.4;
     const maxBitrateDifference = maxBitrate - baseBitrate;
     const maxFpsDifference = fpsTranscodingConstants.MAX - fpsTranscodingConstants.AVERAGE;
-    return baseBitrate + (fps - fpsTranscodingConstants.AVERAGE) * (maxBitrateDifference / maxFpsDifference);
+    return Math.floor(baseBitrate + (fps - fpsTranscodingConstants.AVERAGE) * (maxBitrateDifference / maxFpsDifference));
 }
 exports.getTargetBitrate = getTargetBitrate;
 function getMaxBitrate(resolution, fps, fpsTranscodingConstants) {

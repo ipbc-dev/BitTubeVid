@@ -62,6 +62,7 @@ describe('Test follows moderation', function () {
     });
     it('Should remove follower on server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             yield follows_1.removeFollower(servers[1].url, servers[1].accessToken, servers[0]);
             yield jobs_1.waitJobs(servers);
         });
@@ -73,6 +74,7 @@ describe('Test follows moderation', function () {
     });
     it('Should disable followers on server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             const subConfig = {
                 followers: {
                     instance: {
@@ -89,6 +91,7 @@ describe('Test follows moderation', function () {
     });
     it('Should re enable followers on server 2', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             const subConfig = {
                 followers: {
                     instance: {
@@ -125,6 +128,7 @@ describe('Test follows moderation', function () {
     });
     it('Should accept a follower', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
             yield index_1.acceptFollower(servers[1].url, servers[1].accessToken, 'peertube@localhost:' + servers[0].port);
             yield jobs_1.waitJobs(servers);
             yield checkServer1And2HasFollowers(servers);

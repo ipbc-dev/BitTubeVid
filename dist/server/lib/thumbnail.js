@@ -30,9 +30,10 @@ function createVideoMiniatureFromUrl(fileUrl, video, type, size) {
     return createThumbnailFromFunction({ thumbnailCreator, filename, height, width, type, existingThumbnail, fileUrl });
 }
 exports.createVideoMiniatureFromUrl = createVideoMiniatureFromUrl;
-function createVideoMiniatureFromExisting(inputPath, video, type, automaticallyGenerated, size) {
+function createVideoMiniatureFromExisting(options) {
+    const { inputPath, video, type, automaticallyGenerated, size, keepOriginal } = options;
     const { filename, outputPath, height, width, existingThumbnail } = buildMetadataFromVideo(video, type, size);
-    const thumbnailCreator = () => image_utils_1.processImage(inputPath, outputPath, { width, height });
+    const thumbnailCreator = () => image_utils_1.processImage(inputPath, outputPath, { width, height }, keepOriginal);
     return createThumbnailFromFunction({ thumbnailCreator, filename, height, width, type, automaticallyGenerated, existingThumbnail });
 }
 exports.createVideoMiniatureFromExisting = createVideoMiniatureFromExisting;

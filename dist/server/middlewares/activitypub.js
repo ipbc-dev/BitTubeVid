@@ -9,6 +9,7 @@ const actor_1 = require("../lib/activitypub/actor");
 const webfinger_1 = require("../helpers/webfinger");
 const actor_2 = require("@server/helpers/custom-validators/activitypub/actor");
 const activitypub_1 = require("@server/helpers/activitypub");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
 function checkSignature(req, res, next) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
@@ -29,10 +30,10 @@ function checkSignature(req, res, next) {
             const activity = req.body;
             if (actor_2.isActorDeleteActivityValid(activity) && activity.object === activity.actor) {
                 logger_1.logger.debug('Handling signature error on actor delete activity', { err });
-                return res.sendStatus(204);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
             }
             logger_1.logger.warn('Error in ActivityPub signature checker.', { err });
-            return res.sendStatus(403);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
         }
     });
 }
@@ -51,10 +52,18 @@ function checkHttpSignature(req, res) {
         const sig = req.headers[constants_1.HTTP_SIGNATURE.HEADER_NAME];
         if (sig && sig.startsWith('Signature ') === true)
             req.headers[constants_1.HTTP_SIGNATURE.HEADER_NAME] = sig.replace(/^Signature /, '');
-        const parsed = peertube_crypto_1.parseHTTPSignature(req, constants_1.HTTP_SIGNATURE.CLOCK_SKEW_SECONDS);
+        let parsed;
+        try {
+            parsed = peertube_crypto_1.parseHTTPSignature(req, constants_1.HTTP_SIGNATURE.CLOCK_SKEW_SECONDS);
+        }
+        catch (err) {
+            logger_1.logger.warn('Invalid signature because of exception in signature parser', { reqBody: req.body, err });
+            res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403).json({ error: err.message });
+            return false;
+        }
         const keyId = parsed.keyId;
         if (!keyId) {
-            res.sendStatus(403);
+            res.sendStatus(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             return false;
         }
         logger_1.logger.debug('Checking HTTP signature of actor %s...', keyId);
@@ -66,7 +75,7 @@ function checkHttpSignature(req, res) {
         const verified = peertube_crypto_1.isHTTPSignatureVerified(parsed, actor);
         if (verified !== true) {
             logger_1.logger.warn('Signature from %s is invalid', actorUrl, { parsed });
-            res.sendStatus(403);
+            res.sendStatus(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             return false;
         }
         res.locals.signature = { actor };
@@ -78,7 +87,7 @@ function checkJsonLDSignature(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const signatureObject = req.body.signature;
         if (!signatureObject || !signatureObject.creator) {
-            res.sendStatus(403);
+            res.sendStatus(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             return false;
         }
         const [creator] = signatureObject.creator.split('#');
@@ -87,7 +96,7 @@ function checkJsonLDSignature(req, res) {
         const verified = yield peertube_crypto_1.isJsonLDSignatureVerified(actor, req.body);
         if (verified !== true) {
             logger_1.logger.warn('Signature not verified.', req.body);
-            res.sendStatus(403);
+            res.sendStatus(http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             return false;
         }
         res.locals.signature = { actor };

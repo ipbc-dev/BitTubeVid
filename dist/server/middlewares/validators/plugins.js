@@ -10,6 +10,7 @@ const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const misc_1 = require("../../helpers/custom-validators/misc");
 const plugin_1 = require("../../models/server/plugin");
 const config_1 = require("../../initializers/config");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const getPluginValidator = (pluginType, withVersion = true) => {
     const validators = [
         express_validator_1.param('pluginName').custom(plugins_1.isPluginNameValid).withMessage('Should have a valid plugin name')
@@ -25,9 +26,9 @@ const getPluginValidator = (pluginType, withVersion = true) => {
             const npmName = plugin_1.PluginModel.buildNpmName(req.params.pluginName, pluginType);
             const plugin = plugin_manager_1.PluginManager.Instance.getRegisteredPluginOrTheme(npmName);
             if (!plugin)
-                return res.sendStatus(404);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             if (withVersion && plugin.version !== req.params.pluginVersion)
-                return res.sendStatus(404);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             res.locals.registeredPlugin = plugin;
             return next();
         }
@@ -42,10 +43,10 @@ const getExternalAuthValidator = [
             return;
         const plugin = res.locals.registeredPlugin;
         if (!plugin.registerHelpersStore)
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         const externalAuth = plugin.registerHelpersStore.getExternalAuths().find(a => a.authName === req.params.authName);
         if (!externalAuth)
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         res.locals.externalAuth = externalAuth;
         return next();
     }
@@ -91,7 +92,7 @@ const installOrUpdatePluginValidator = [
             return;
         const body = req.body;
         if (!body.path && !body.npmName) {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Should have either a npmName or a path' })
                 .end();
         }
@@ -117,7 +118,7 @@ const existingPluginValidator = [
             return;
         const plugin = yield plugin_1.PluginModel.loadByNpmName(req.params.npmName);
         if (!plugin) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Plugin not found' })
                 .end();
         }
@@ -152,7 +153,7 @@ const listAvailablePluginsValidator = [
         if (utils_1.areValidationErrors(req, res))
             return;
         if (config_1.CONFIG.PLUGINS.INDEX.ENABLED === false) {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Plugin index is not enabled' })
                 .end();
         }

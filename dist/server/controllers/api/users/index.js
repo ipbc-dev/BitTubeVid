@@ -29,6 +29,7 @@ const my_history_1 = require("./my-history");
 const my_notifications_1 = require("./my-notifications");
 const my_subscriptions_1 = require("./my-subscriptions");
 const my_video_playlists_1 = require("./my-video-playlists");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const auditLogger = audit_logger_1.auditLoggerFactory('users');
 const signupRateLimiter = RateLimit({
     windowMs: config_1.CONFIG.RATES_LIMIT.SIGNUP.WINDOW_MS,
@@ -130,7 +131,7 @@ function registerUser(req, res) {
         }
         notifier_1.Notifier.Instance.notifyOnNewUserRegistration(user);
         hooks_1.Hooks.runAction('action:api.user.registered', { body, user, account, videoChannel });
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function unblockUser(req, res) {
@@ -138,7 +139,7 @@ function unblockUser(req, res) {
         const user = res.locals.user;
         yield changeUserBlock(res, user, false);
         hooks_1.Hooks.runAction('action:api.user.unblocked', { user });
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function blockUser(req, res) {
@@ -147,7 +148,7 @@ function blockUser(req, res) {
         const reason = req.body.reason;
         yield changeUserBlock(res, user, true, reason);
         hooks_1.Hooks.runAction('action:api.user.blocked', { user });
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function getUser(req, res) {
@@ -174,10 +175,10 @@ function listUsers(req, res) {
 function removeUser(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
-        yield user.destroy();
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
+        yield user.destroy();
         hooks_1.Hooks.runAction('action:api.user.deleted', { user });
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function updateUser(req, res) {
@@ -205,7 +206,7 @@ function updateUser(req, res) {
             yield oauth_model_1.deleteUserToken(userToUpdate.id);
         auditLogger.update(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()), oldUserAuditView);
         hooks_1.Hooks.runAction('action:api.user.updated', { user });
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function askResetUserPassword(req, res) {
@@ -214,7 +215,7 @@ function askResetUserPassword(req, res) {
         const verificationString = yield redis_1.Redis.Instance.setResetPasswordVerificationString(user.id);
         const url = constants_1.WEBSERVER.URL + '/reset-password?userId=' + user.id + '&verificationString=' + verificationString;
         yield emailer_1.Emailer.Instance.addPasswordResetEmailJob(user.username, user.email, url);
-        return res.status(202).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function resetUserPassword(req, res) {
@@ -223,14 +224,14 @@ function resetUserPassword(req, res) {
         user.password = req.body.password;
         yield user.save();
         yield redis_1.Redis.Instance.removePasswordVerificationString(user.id);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function reSendVerifyUserEmail(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         yield user_1.sendVerifyUserEmail(user);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function verifyUserEmail(req, res) {
@@ -242,7 +243,7 @@ function verifyUserEmail(req, res) {
             user.pendingEmail = null;
         }
         yield user.save();
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function changeUserBlock(res, user, block, reason) {

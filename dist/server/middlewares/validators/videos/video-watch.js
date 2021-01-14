@@ -7,6 +7,7 @@ const misc_1 = require("../../../helpers/custom-validators/misc");
 const utils_1 = require("../utils");
 const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videoWatchingValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('currentTime')
@@ -21,7 +22,7 @@ const videoWatchingValidator = [
         const user = res.locals.oauth.token.User;
         if (user.videosHistoryEnabled === false) {
             logger_1.logger.warn('Cannot set videos to watch by user %d: videos history is disabled.', user.id);
-            return res.status(409).end();
+            return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409).end();
         }
         return next();
     })

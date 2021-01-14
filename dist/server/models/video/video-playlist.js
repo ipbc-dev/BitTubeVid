@@ -3,18 +3,18 @@ var VideoPlaylistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoPlaylistModel = void 0;
 const tslib_1 = require("tslib");
+const path_1 = require("path");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const utils_1 = require("../utils");
-const video_playlists_1 = require("../../helpers/custom-validators/video-playlists");
+const activitypub_1 = require("../../helpers/activitypub");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
+const video_playlists_1 = require("../../helpers/custom-validators/video-playlists");
 const constants_1 = require("../../initializers/constants");
 const account_1 = require("../account/account");
-const video_channel_1 = require("./video-channel");
-const path_1 = require("path");
-const video_playlist_element_1 = require("./video-playlist-element");
-const activitypub_1 = require("../../helpers/activitypub");
+const utils_1 = require("../utils");
 const thumbnail_1 = require("./thumbnail");
-const sequelize_1 = require("sequelize");
+const video_channel_1 = require("./video-channel");
+const video_playlist_element_1 = require("./video-playlist-element");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["AVAILABLE_FOR_LIST"] = "AVAILABLE_FOR_LIST";
@@ -29,7 +29,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
         const query = {
             offset: options.start,
             limit: options.count,
-            order: utils_1.getSort(options.sort)
+            order: utils_1.getPlaylistSort(options.sort)
         };
         const scopes = [
             {
@@ -99,7 +99,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
     }
     static doesPlaylistExist(url) {
         const query = {
-            attributes: [],
+            attributes: ['id'],
             where: {
                 url
             }
@@ -442,14 +442,13 @@ VideoPlaylistModel = VideoPlaylistModel_1 = tslib_1.__decorate([
             const where = {
                 [sequelize_1.Op.and]: whereAnd
             };
-            const accountScope = {
-                method: [account_1.ScopeNames.SUMMARY, { whereActor }]
-            };
             return {
                 where,
                 include: [
                     {
-                        model: account_1.AccountModel.scope(accountScope),
+                        model: account_1.AccountModel.scope({
+                            method: [account_1.ScopeNames.SUMMARY, { whereActor }]
+                        }),
                         required: true
                     },
                     {

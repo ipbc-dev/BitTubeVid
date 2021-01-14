@@ -2,22 +2,22 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideosRedundancyScheduler = void 0;
 const tslib_1 = require("tslib");
-const abstract_scheduler_1 = require("./abstract-scheduler");
-const constants_1 = require("../../initializers/constants");
-const logger_1 = require("../../helpers/logger");
-const video_redundancy_1 = require("../../models/redundancy/video-redundancy");
-const webtorrent_1 = require("../../helpers/webtorrent");
-const path_1 = require("path");
 const fs_extra_1 = require("fs-extra");
+const path_1 = require("path");
+const application_1 = require("@server/models/application/application");
+const video_1 = require("@server/models/video/video");
+const logger_1 = require("../../helpers/logger");
+const webtorrent_1 = require("../../helpers/webtorrent");
+const config_1 = require("../../initializers/config");
+const constants_1 = require("../../initializers/constants");
+const video_redundancy_1 = require("../../models/redundancy/video-redundancy");
 const send_1 = require("../activitypub/send");
 const url_1 = require("../activitypub/url");
-const redundancy_1 = require("../redundancy");
 const videos_1 = require("../activitypub/videos");
 const hls_1 = require("../hls");
-const config_1 = require("../../initializers/config");
+const redundancy_1 = require("../redundancy");
 const video_paths_1 = require("../video-paths");
-const video_1 = require("@server/models/video/video");
-const application_1 = require("@server/models/application/application");
+const abstract_scheduler_1 = require("./abstract-scheduler");
 function isMVideoRedundancyFileVideo(o) {
     return !!o.VideoFile;
 }
@@ -179,7 +179,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             yield fs_extra_1.move(tmpPath, destPath, { overwrite: true });
             const createdModel = yield video_redundancy_1.VideoRedundancyModel.create({
                 expiresOn,
-                url: url_1.getVideoCacheFileActivityPubUrl(file),
+                url: url_1.getLocalVideoCacheFileActivityPubUrl(file),
                 fileUrl: video.getVideoRedundancyUrl(file, constants_1.WEBSERVER.URL),
                 strategy,
                 videoFileId: file.id,
@@ -206,7 +206,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             yield hls_1.downloadPlaylistSegments(playlist.playlistUrl, destDirectory, constants_1.VIDEO_IMPORT_TIMEOUT);
             const createdModel = yield video_redundancy_1.VideoRedundancyModel.create({
                 expiresOn,
-                url: url_1.getVideoCacheStreamingPlaylistActivityPubUrl(video, playlist),
+                url: url_1.getLocalVideoCacheStreamingPlaylistActivityPubUrl(video, playlist),
                 fileUrl: playlist.getVideoRedundancyUrl(constants_1.WEBSERVER.URL),
                 strategy,
                 videoStreamingPlaylistId: playlist.id,

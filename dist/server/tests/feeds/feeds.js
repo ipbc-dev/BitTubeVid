@@ -5,9 +5,11 @@ require("mocha");
 const chai = require("chai");
 const libxmljs = require("libxmljs");
 const blocklist_1 = require("@shared/extra-utils/users/blocklist");
+const user_subscriptions_1 = require("@shared/extra-utils/users/user-subscriptions");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const jobs_1 = require("../../../shared/extra-utils/server/jobs");
 const video_comments_1 = require("../../../shared/extra-utils/videos/video-comments");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 chai.use(require('chai-xml'));
 chai.use(require('chai-json-schema'));
 chai.config.includeStack = true;
@@ -20,6 +22,7 @@ describe('Test syndication feeds', () => {
     let rootChannelId;
     let userAccountId;
     let userChannelId;
+    let userFeedToken;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
@@ -47,6 +50,9 @@ describe('Test syndication feeds', () => {
                 const user = res.body;
                 userAccountId = user.account.id;
                 userChannelId = user.videoChannels[0].id;
+                const res2 = yield extra_utils_1.getUserScopedTokens(servers[0].url, userAccessToken);
+                const token = res2.body;
+                userFeedToken = token.feedToken;
             }
             {
                 yield extra_utils_1.uploadVideo(servers[0].url, userAccessToken, { name: 'user video' });
@@ -239,6 +245,96 @@ describe('Test syndication feeds', () => {
                     const jsonObj = JSON.parse(json.text);
                     expect(jsonObj.items.length).to.be.equal(2);
                 }
+            });
+        });
+    });
+    describe('Video feed from my subscriptions', function () {
+        let feeduserAccountId;
+        let feeduserFeedToken;
+        it('Should list no videos for a user with no videos and no subscriptions', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const attr = { username: 'feeduser', password: 'password' };
+                yield extra_utils_1.createUser({ url: servers[0].url, accessToken: servers[0].accessToken, username: attr.username, password: attr.password });
+                const feeduserAccessToken = yield extra_utils_1.userLogin(servers[0], attr);
+                {
+                    const res = yield extra_utils_1.getMyUserInformation(servers[0].url, feeduserAccessToken);
+                    const user = res.body;
+                    feeduserAccountId = user.account.id;
+                }
+                {
+                    const res = yield extra_utils_1.getUserScopedTokens(servers[0].url, feeduserAccessToken);
+                    const token = res.body;
+                    feeduserFeedToken = token.feedToken;
+                }
+                {
+                    const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, feeduserAccessToken);
+                    expect(res.body.total).to.equal(0);
+                    const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: feeduserAccountId, token: feeduserFeedToken });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(0);
+                }
+            });
+        });
+        it('Should fail with an invalid token', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: feeduserAccountId, token: 'toto' }, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+            });
+        });
+        it('Should fail with a token of another user', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: feeduserAccountId, token: userFeedToken }, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+            });
+        });
+        it('Should list no videos for a user with videos but no subscriptions', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, userAccessToken);
+                expect(res.body.total).to.equal(0);
+                const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: userAccountId, token: userFeedToken });
+                const jsonObj = JSON.parse(json.text);
+                expect(jsonObj.items.length).to.be.equal(0);
+            });
+        });
+        it('Should list self videos for a user with a subscription to themselves', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(30000);
+                yield user_subscriptions_1.addUserSubscription(servers[0].url, userAccessToken, 'john_channel@localhost:' + servers[0].port);
+                yield jobs_1.waitJobs(servers);
+                {
+                    const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, userAccessToken);
+                    expect(res.body.total).to.equal(1);
+                    expect(res.body.data[0].name).to.equal('user video');
+                    const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: userAccountId, token: userFeedToken, version: 1 });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(1);
+                }
+            });
+        });
+        it('Should list videos of a user\'s subscription', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(30000);
+                yield user_subscriptions_1.addUserSubscription(servers[0].url, userAccessToken, 'root_channel@localhost:' + servers[0].port);
+                yield jobs_1.waitJobs(servers);
+                {
+                    const res = yield user_subscriptions_1.listUserSubscriptionVideos(servers[0].url, userAccessToken);
+                    expect(res.body.total).to.equal(2, "there should be 2 videos part of the subscription");
+                    const json = yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: userAccountId, token: userFeedToken, version: 2 });
+                    const jsonObj = JSON.parse(json.text);
+                    expect(jsonObj.items.length).to.be.equal(2);
+                }
+            });
+        });
+        it('Should renew the token, and so have an invalid old token', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.renewUserScopedTokens(servers[0].url, userAccessToken);
+                yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: userAccountId, token: userFeedToken, version: 3 }, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
+            });
+        });
+        it('Should succeed with the new token', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const res2 = yield extra_utils_1.getUserScopedTokens(servers[0].url, userAccessToken);
+                const token = res2.body;
+                userFeedToken = token.feedToken;
+                yield extra_utils_1.getJSONfeed(servers[0].url, 'subscriptions', { accountId: userAccountId, token: userFeedToken, version: 4 });
             });
         });
     });

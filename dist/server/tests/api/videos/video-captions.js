@@ -13,7 +13,7 @@ describe('Test video captions', function () {
     let videoUUID;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(30000);
+            this.timeout(60000);
             servers = yield extra_utils_1.flushAndRunMultipleServers(2);
             yield index_1.setAccessTokensToServers(servers);
             yield extra_utils_1.doubleFollow(servers[0], servers[1]);

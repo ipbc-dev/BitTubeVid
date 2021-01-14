@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendContactForm = void 0;
 const request = require("supertest");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function sendContactForm(options) {
     const path = '/api/v1/server/contact';
     const body = {
@@ -13,6 +14,6 @@ function sendContactForm(options) {
     return request(options.url)
         .post(path)
         .send(body)
-        .expect(options.expectedStatus || 204);
+        .expect(options.expectedStatus || http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
 }
 exports.sendContactForm = sendContactForm;

@@ -15,6 +15,7 @@ const redundancy_1 = require("../../../lib/redundancy");
 const database_1 = require("../../../initializers/database");
 const follow_1 = require("../../../lib/activitypub/follow");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const serverFollowsRouter = express.Router();
 exports.serverFollowsRouter = serverFollowsRouter;
 serverFollowsRouter.get('/following', validators_1.listFollowsValidator, middlewares_1.paginationValidator, validators_1.followingSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listFollowing));
@@ -66,7 +67,7 @@ function followInstance(req, res) {
             };
             job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload });
         }
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function removeFollowing(req, res) {
@@ -82,15 +83,15 @@ function removeFollowing(req, res) {
                 .catch(err => logger_1.logger.error('Cannot remove redundancy of %s.', server.host, err));
             yield follow.destroy({ transaction: t });
         }));
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function removeOrRejectFollower(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const follow = res.locals.follow;
-        yield send_1.sendReject(follow.ActorFollower, follow.ActorFollowing);
+        yield send_1.sendReject(follow.url, follow.ActorFollower, follow.ActorFollowing);
         yield follow.destroy();
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function acceptFollower(req, res) {
@@ -100,6 +101,6 @@ function acceptFollower(req, res) {
         follow.state = 'accepted';
         yield follow.save();
         yield follow_1.autoFollowBackIfNeeded(follow);
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }

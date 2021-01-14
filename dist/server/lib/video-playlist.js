@@ -12,7 +12,7 @@ function createWatchLaterPlaylist(account, t) {
             type: 2,
             ownerAccountId: account.id
         });
-        videoPlaylist.url = url_1.getVideoPlaylistActivityPubUrl(videoPlaylist);
+        videoPlaylist.url = url_1.getLocalVideoPlaylistActivityPubUrl(videoPlaylist);
         yield videoPlaylist.save({ transaction: t });
         videoPlaylist.OwnerAccount = account;
         return videoPlaylist;

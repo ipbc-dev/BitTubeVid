@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isVideoFilterValid = exports.isVideoSupportValid = exports.isVideoImage = exports.isVideoFileSizeValid = exports.isVideoFileResolutionValid = exports.isVideoPrivacyValid = exports.isVideoTagValid = exports.isVideoDurationValid = exports.isVideoFileExtnameValid = exports.isVideoRatingTypeValid = exports.isVideoViewsValid = exports.isVideoStateValid = exports.isVideoMagnetUriValid = exports.isVideoFile = exports.isVideoOriginallyPublishedAtValid = exports.isScheduleVideoUpdatePrivacyValid = exports.isVideoFPSResolutionValid = exports.isVideoTagsValid = exports.isVideoNameValid = exports.isVideoFileInfoHashValid = exports.isVideoDescriptionValid = exports.isVideoTruncatedDescriptionValid = exports.isVideoLanguageValid = exports.isVideoLicenceValid = exports.isVideoCategoryValid = void 0;
+exports.isVideoFilterValid = exports.isVideoSupportValid = exports.isVideoImage = exports.isVideoFileSizeValid = exports.isVideoFileResolutionValid = exports.isVideoPrivacyValid = exports.isVideoTagValid = exports.isVideoDurationValid = exports.isVideoFileMimeTypeValid = exports.isVideoFileExtnameValid = exports.isVideoRatingTypeValid = exports.isVideoViewsValid = exports.isVideoStateValid = exports.isVideoMagnetUriValid = exports.isVideoOriginallyPublishedAtValid = exports.isScheduleVideoUpdatePrivacyValid = exports.isVideoFPSResolutionValid = exports.isVideoTagsValid = exports.isVideoNameValid = exports.isVideoFileInfoHashValid = exports.isVideoDescriptionValid = exports.isVideoTruncatedDescriptionValid = exports.isVideoLanguageValid = exports.isVideoLicenceValid = exports.isVideoCategoryValid = void 0;
 const lodash_1 = require("lodash");
 const validator_1 = require("validator");
 const constants_1 = require("../../initializers/constants");
@@ -8,7 +8,7 @@ const misc_1 = require("./misc");
 const magnetUtil = require("magnet-uri");
 const VIDEOS_CONSTRAINTS_FIELDS = constants_1.CONSTRAINTS_FIELDS.VIDEOS;
 function isVideoFilterValid(filter) {
-    return filter === 'local' || filter === 'all-local';
+    return filter === 'local' || filter === 'all-local' || filter === 'all';
 }
 exports.isVideoFilterValid = isVideoFilterValid;
 function isVideoCategoryValid(value) {
@@ -67,13 +67,13 @@ function isVideoRatingTypeValid(value) {
 }
 exports.isVideoRatingTypeValid = isVideoRatingTypeValid;
 function isVideoFileExtnameValid(value) {
-    return misc_1.exists(value) && constants_1.MIMETYPES.VIDEO.EXT_MIMETYPE[value] !== undefined;
+    return misc_1.exists(value) && (value === constants_1.VIDEO_LIVE.EXTENSION || constants_1.MIMETYPES.VIDEO.EXT_MIMETYPE[value] !== undefined);
 }
 exports.isVideoFileExtnameValid = isVideoFileExtnameValid;
-function isVideoFile(files) {
-    return misc_1.isFileValid(files, constants_1.MIMETYPES.VIDEO.MIMETYPES_REGEX, 'videofile', null);
+function isVideoFileMimeTypeValid(files) {
+    return misc_1.isFileMimeTypeValid(files, constants_1.MIMETYPES.VIDEO.MIMETYPES_REGEX, 'videofile');
 }
-exports.isVideoFile = isVideoFile;
+exports.isVideoFileMimeTypeValid = isVideoFileMimeTypeValid;
 const videoImageTypes = constants_1.CONSTRAINTS_FIELDS.VIDEOS.IMAGE.EXTNAME
     .map(v => v.replace('.', ''))
     .join('|');

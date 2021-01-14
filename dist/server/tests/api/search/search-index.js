@@ -92,7 +92,7 @@ describe('Test videos search', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             it('Should make a simple search and not have results', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const res = yield extra_utils_1.searchVideo(server.url, 'a'.repeat(500));
+                    const res = yield extra_utils_1.searchVideo(server.url, 'djidane'.repeat(50));
                     expect(res.body.total).to.equal(0);
                     expect(res.body.data).to.have.lengthOf(0);
                 });
@@ -188,7 +188,7 @@ describe('Test videos search', function () {
                     let nsfwUUID;
                     {
                         yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, { instance: { defaultNSFWPolicy: 'display' } });
-                        const res = yield extra_utils_1.searchVideo(server.url, 'NSFW search index');
+                        const res = yield extra_utils_1.searchVideo(server.url, 'NSFW search index', '-match');
                         const video = res.body.data[0];
                         expect(res.body.data).to.have.length.greaterThan(0);
                         expect(video.nsfw).to.be.true;
@@ -196,7 +196,7 @@ describe('Test videos search', function () {
                     }
                     {
                         yield extra_utils_1.updateCustomSubConfig(server.url, server.accessToken, { instance: { defaultNSFWPolicy: 'do_not_list' } });
-                        const res = yield extra_utils_1.searchVideo(server.url, 'NSFW search index');
+                        const res = yield extra_utils_1.searchVideo(server.url, 'NSFW search index', '-match');
                         try {
                             expect(res.body.data).to.have.lengthOf(0);
                         }

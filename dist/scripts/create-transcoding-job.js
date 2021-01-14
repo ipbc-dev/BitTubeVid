@@ -7,7 +7,7 @@ const program = require("commander");
 const video_1 = require("../server/models/video/video");
 const database_1 = require("../server/initializers/database");
 const job_queue_1 = require("../server/lib/job-queue");
-const ffmpeg_utils_1 = require("@server/helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("@server/helpers/ffprobe-utils");
 program
     .option('-v, --video [videoUUID]', 'Video UUID')
     .option('-r, --resolution [resolution]', 'Video resolution (integer)')
@@ -38,7 +38,7 @@ function run() {
         if (program.generateHls) {
             const resolutionsEnabled = program.resolution
                 ? [program.resolution]
-                : ffmpeg_utils_1.computeResolutionsToTranscode(videoFileResolution).concat([videoFileResolution]);
+                : ffprobe_utils_1.computeResolutionsToTranscode(videoFileResolution, 'vod').concat([videoFileResolution]);
             for (const resolution of resolutionsEnabled) {
                 dataInput.push({
                     type: 'hls',

@@ -1,9 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteVideoComment = exports.findCommentId = exports.addVideoCommentReply = exports.addVideoCommentThread = exports.getVideoThreadComments = exports.getVideoCommentThreads = void 0;
+exports.deleteVideoComment = exports.findCommentId = exports.addVideoCommentReply = exports.addVideoCommentThread = exports.getVideoThreadComments = exports.getAdminVideoComments = exports.getVideoCommentThreads = void 0;
 const tslib_1 = require("tslib");
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function getAdminVideoComments(options) {
+    const { url, token, start, count, sort, isLocal, search, searchAccount, searchVideo } = options;
+    const path = '/api/v1/videos/comments';
+    const query = {
+        start,
+        count,
+        sort: sort || '-createdAt'
+    };
+    if (isLocal !== undefined)
+        Object.assign(query, { isLocal });
+    if (search !== undefined)
+        Object.assign(query, { search });
+    if (searchAccount !== undefined)
+        Object.assign(query, { searchAccount });
+    if (searchVideo !== undefined)
+        Object.assign(query, { searchVideo });
+    return requests_1.makeGetRequest({
+        url,
+        path,
+        token,
+        query,
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
+    });
+}
+exports.getAdminVideoComments = getAdminVideoComments;
 function getVideoCommentThreads(url, videoId, start, count, sort, token) {
     const path = '/api/v1/videos/' + videoId + '/comment-threads';
     const req = request(url)
@@ -15,7 +41,7 @@ function getVideoCommentThreads(url, videoId, start, count, sort, token) {
     if (token)
         req.set('Authorization', 'Bearer ' + token);
     return req.set('Accept', 'application/json')
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoCommentThreads = getVideoCommentThreads;
@@ -26,11 +52,11 @@ function getVideoThreadComments(url, videoId, threadId, token) {
         .set('Accept', 'application/json');
     if (token)
         req.set('Authorization', 'Bearer ' + token);
-    return req.expect(200)
+    return req.expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoThreadComments = getVideoThreadComments;
-function addVideoCommentThread(url, token, videoId, text, expectedStatus = 200) {
+function addVideoCommentThread(url, token, videoId, text, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/videos/' + videoId + '/comment-threads';
     return request(url)
         .post(path)
@@ -40,7 +66,7 @@ function addVideoCommentThread(url, token, videoId, text, expectedStatus = 200) 
         .expect(expectedStatus);
 }
 exports.addVideoCommentThread = addVideoCommentThread;
-function addVideoCommentReply(url, token, videoId, inReplyToCommentId, text, expectedStatus = 200) {
+function addVideoCommentReply(url, token, videoId, inReplyToCommentId, text, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/videos/' + videoId + '/comments/' + inReplyToCommentId;
     return request(url)
         .post(path)
@@ -57,7 +83,7 @@ function findCommentId(url, videoId, text) {
     });
 }
 exports.findCommentId = findCommentId;
-function deleteVideoComment(url, token, videoId, commentId, statusCodeExpected = 204) {
+function deleteVideoComment(url, token, videoId, commentId, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/videos/' + videoId + '/comments/' + commentId;
     return requests_1.makeDeleteRequest({
         url,

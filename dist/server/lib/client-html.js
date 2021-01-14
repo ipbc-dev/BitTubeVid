@@ -1,20 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClientHtml = void 0;
+exports.serveIndexHTML = exports.sendHTML = exports.ClientHtml = void 0;
 const tslib_1 = require("tslib");
-const i18n_1 = require("../../shared/core-utils/i18n/i18n");
-const constants_1 = require("../initializers/constants");
-const path_1 = require("path");
-const core_utils_1 = require("../helpers/core-utils");
-const video_1 = require("../models/video/video");
-const video_playlist_1 = require("../models/video/video-playlist");
-const validator_1 = require("validator");
 const fs_extra_1 = require("fs-extra");
-const video_format_utils_1 = require("../models/video/video-format-utils");
-const account_1 = require("../models/account/account");
-const video_channel_1 = require("../models/video/video-channel");
-const config_1 = require("../initializers/config");
+const path_1 = require("path");
+const validator_1 = require("validator");
+const i18n_1 = require("../../shared/core-utils/i18n/i18n");
+const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
+const core_utils_1 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
+const config_1 = require("../initializers/config");
+const constants_1 = require("../initializers/constants");
+const account_1 = require("../models/account/account");
+const video_1 = require("../models/video/video");
+const video_channel_1 = require("../models/video/video-channel");
+const video_format_utils_1 = require("../models/video/video-format-utils");
+const video_playlist_1 = require("../models/video/video-playlist");
 class ClientHtml {
     static invalidCache() {
         logger_1.logger.info('Cleaning HTML cache.');
@@ -33,7 +34,7 @@ class ClientHtml {
     static getWatchHTMLPage(videoId, req, res) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!validator_1.default.isInt(videoId) && !validator_1.default.isUUID(videoId, 4)) {
-                res.status(404);
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 return ClientHtml.getIndexHTML(req, res);
             }
             const [html, video] = yield Promise.all([
@@ -41,12 +42,13 @@ class ClientHtml {
                 video_1.VideoModel.loadWithBlacklist(videoId)
             ]);
             if (!video || video.privacy === 3 || video.privacy === 4 || video.VideoBlacklist) {
-                res.status(404);
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 return html;
             }
             let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(video.name));
             customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(video.description));
             const url = constants_1.WEBSERVER.URL + video.getWatchStaticPath();
+            const originUrl = video.url;
             const title = core_utils_1.escapeHTML(video.name);
             const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
             const description = core_utils_1.escapeHTML(video.description);
@@ -62,14 +64,25 @@ class ClientHtml {
             const ogType = 'video';
             const twitterCard = config_1.CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary_large_image';
             const schemaType = 'VideoObject';
-            customHtml = ClientHtml.addTags(customHtml, { url, siteName, title, description, image, embed, ogType, twitterCard, schemaType });
+            customHtml = ClientHtml.addTags(customHtml, {
+                url,
+                originUrl,
+                siteName,
+                title,
+                description,
+                image,
+                embed,
+                ogType,
+                twitterCard,
+                schemaType
+            });
             return customHtml;
         });
     }
     static getWatchPlaylistHTMLPage(videoPlaylistId, req, res) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!validator_1.default.isInt(videoPlaylistId) && !validator_1.default.isUUID(videoPlaylistId, 4)) {
-                res.status(404);
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 return ClientHtml.getIndexHTML(req, res);
             }
             const [html, videoPlaylist] = yield Promise.all([
@@ -77,12 +90,13 @@ class ClientHtml {
                 video_playlist_1.VideoPlaylistModel.loadWithAccountAndChannel(videoPlaylistId, null)
             ]);
             if (!videoPlaylist || videoPlaylist.privacy === 3) {
-                res.status(404);
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 return html;
             }
             let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(videoPlaylist.name));
             customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(videoPlaylist.description));
             const url = videoPlaylist.getWatchUrl();
+            const originUrl = videoPlaylist.url;
             const title = core_utils_1.escapeHTML(videoPlaylist.name);
             const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
             const description = core_utils_1.escapeHTML(videoPlaylist.description);
@@ -99,7 +113,19 @@ class ClientHtml {
             const ogType = 'video';
             const twitterCard = config_1.CONFIG.SERVICES.TWITTER.WHITELISTED ? 'player' : 'summary';
             const schemaType = 'ItemList';
-            customHtml = ClientHtml.addTags(customHtml, { url, siteName, embed, title, description, image, list, ogType, twitterCard, schemaType });
+            customHtml = ClientHtml.addTags(customHtml, {
+                url,
+                originUrl,
+                siteName,
+                embed,
+                title,
+                description,
+                image,
+                list,
+                ogType,
+                twitterCard,
+                schemaType
+            });
             return customHtml;
         });
     }
@@ -116,11 +142,13 @@ class ClientHtml {
     static getEmbedHTML() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const path = ClientHtml.getEmbedPath();
-            if (ClientHtml.htmlCache[path])
+            if (!core_utils_1.isTestInstance() && ClientHtml.htmlCache[path])
                 return ClientHtml.htmlCache[path];
             const buffer = yield fs_extra_1.readFile(path);
             let html = buffer.toString();
             html = yield ClientHtml.addAsyncPluginCSS(html);
+            html = ClientHtml.addCustomCSS(html);
+            html = ClientHtml.addTitleTag(html);
             ClientHtml.htmlCache[path] = html;
             return html;
         });
@@ -132,12 +160,13 @@ class ClientHtml {
                 loader()
             ]);
             if (!entity) {
-                res.status(404);
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 return ClientHtml.getIndexHTML(req, res);
             }
             let customHtml = ClientHtml.addTitleTag(html, core_utils_1.escapeHTML(entity.getDisplayName()));
             customHtml = ClientHtml.addDescriptionTag(customHtml, core_utils_1.escapeHTML(entity.description));
-            const url = entity.Actor.url;
+            const url = entity.getLocalUrl();
+            const originUrl = entity.Actor.url;
             const siteName = core_utils_1.escapeHTML(config_1.CONFIG.INSTANCE.NAME);
             const title = core_utils_1.escapeHTML(entity.getDisplayName());
             const description = core_utils_1.escapeHTML(entity.description);
@@ -149,14 +178,24 @@ class ClientHtml {
             const ogType = 'website';
             const twitterCard = 'summary';
             const schemaType = 'ProfilePage';
-            customHtml = ClientHtml.addTags(customHtml, { url, title, siteName, description, image, ogType, twitterCard, schemaType });
+            customHtml = ClientHtml.addTags(customHtml, {
+                url,
+                originUrl,
+                title,
+                siteName,
+                description,
+                image,
+                ogType,
+                twitterCard,
+                schemaType
+            });
             return customHtml;
         });
     }
     static getIndexHTML(req, res, paramLang) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const path = ClientHtml.getIndexPath(req, res, paramLang);
-            if (ClientHtml.htmlCache[path])
+            if (!core_utils_1.isTestInstance() && ClientHtml.htmlCache[path])
                 return ClientHtml.htmlCache[path];
             const buffer = yield fs_extra_1.readFile(path);
             let html = buffer.toString();
@@ -308,7 +347,7 @@ class ClientHtml {
         const standardMetaTags = this.generateStandardMetaTags(tagsValues);
         const twitterCardMetaTags = this.generateTwitterCardMetaTags(tagsValues);
         const schemaTags = this.generateSchemaTags(tagsValues);
-        const { url, title, embed } = tagsValues;
+        const { url, title, embed, originUrl } = tagsValues;
         const oembedLinkTags = [];
         if (embed) {
             oembedLinkTags.push({
@@ -336,9 +375,37 @@ class ClientHtml {
         if (schemaTags) {
             tagsString += `<script type="application/ld+json">${JSON.stringify(schemaTags)}</script>`;
         }
-        tagsString += `<link rel="canonical" href="${url}" />`;
+        tagsString += `<link rel="canonical" href="${originUrl}" />`;
         return htmlStringPage.replace(constants_1.CUSTOM_HTML_TAG_COMMENTS.META_TAGS, tagsString);
     }
 }
 exports.ClientHtml = ClientHtml;
 ClientHtml.htmlCache = {};
+function sendHTML(html, res) {
+    res.set('Content-Type', 'text/html; charset=UTF-8');
+    return res.send(html);
+}
+exports.sendHTML = sendHTML;
+function serveIndexHTML(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        if (req.accepts(constants_1.ACCEPT_HEADERS) === 'html' ||
+            !req.headers.accept) {
+            try {
+                yield generateHTMLPage(req, res, req.params.language);
+                return;
+            }
+            catch (err) {
+                logger_1.logger.error('Cannot generate HTML page.', err);
+                return res.sendStatus(http_error_codes_1.HttpStatusCode.INTERNAL_SERVER_ERROR_500);
+            }
+        }
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_ACCEPTABLE_406);
+    });
+}
+exports.serveIndexHTML = serveIndexHTML;
+function generateHTMLPage(req, res, paramLang) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const html = yield ClientHtml.getDefaultHTMLPage(req, res, paramLang);
+        return sendHTML(html, res);
+    });
+}

@@ -8,7 +8,7 @@ const utils_1 = require("./utils");
 function sendAbuse(byActor, abuse, flaggedAccount, t) {
     if (!flaggedAccount.Actor.serverId)
         return;
-    const url = url_1.getAbuseActivityPubUrl(abuse);
+    const url = url_1.getLocalAbuseActivityPubUrl(abuse);
     logger_1.logger.info('Creating job to send abuse %s.', url);
     const audience = { to: [flaggedAccount.Actor.url], cc: [] };
     const flagActivity = buildFlagActivity(url, byActor, abuse, audience);

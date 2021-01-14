@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchAttribute = exports.createSafeIn = exports.buildDirectionAndField = exports.getFollowsSort = exports.parseAggregateResult = exports.isOutdated = exports.buildWhereIdOrUUID = exports.buildTrigramSearchIndex = exports.buildServerIdsFollowedBy = exports.throwIfNotValid = exports.createSimilarityAttribute = exports.getBlacklistSort = exports.getVideoSort = exports.getCommentSort = exports.getSort = exports.buildLocalAccountIdsIn = exports.buildLocalActorIdsIn = exports.buildBlockedAccountSQLOptimized = exports.buildBlockedAccountSQL = void 0;
+exports.searchAttribute = exports.createSafeIn = exports.buildDirectionAndField = exports.getFollowsSort = exports.parseAggregateResult = exports.isOutdated = exports.buildWhereIdOrUUID = exports.buildTrigramSearchIndex = exports.buildServerIdsFollowedBy = exports.throwIfNotValid = exports.createSimilarityAttribute = exports.getBlacklistSort = exports.getVideoSort = exports.getCommentSort = exports.getSort = exports.buildLocalAccountIdsIn = exports.getPlaylistSort = exports.buildLocalActorIdsIn = exports.buildBlockedAccountSQLOptimized = exports.buildBlockedAccountSQL = void 0;
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const validator_1 = require("validator");
-const sequelize_1 = require("sequelize");
 function getSort(value, lastSort = ['id', 'ASC']) {
     const { direction, field } = buildDirectionAndField(value);
     let finalField;
@@ -19,6 +19,14 @@ function getSort(value, lastSort = ['id', 'ASC']) {
     return [[finalField, direction], lastSort];
 }
 exports.getSort = getSort;
+function getPlaylistSort(value, lastSort = ['id', 'ASC']) {
+    const { direction, field } = buildDirectionAndField(value);
+    if (field.toLowerCase() === 'name') {
+        return [['displayName', direction], lastSort];
+    }
+    return getSort(value, lastSort);
+}
+exports.getPlaylistSort = getPlaylistSort;
 function getCommentSort(value, lastSort = ['id', 'ASC']) {
     const { direction, field } = buildDirectionAndField(value);
     if (field === 'totalReplies') {
@@ -88,7 +96,7 @@ exports.throwIfNotValid = throwIfNotValid;
 function buildTrigramSearchIndex(indexName, attribute) {
     return {
         name: indexName,
-        fields: [sequelize_typescript_1.Sequelize.literal('lower(immutable_unaccent(' + attribute + '))')],
+        fields: [sequelize_typescript_1.Sequelize.literal('lower(immutable_unaccent(' + attribute + ')) gin_trgm_ops')],
         using: 'gin',
         operator: 'gin_trgm_ops'
     };

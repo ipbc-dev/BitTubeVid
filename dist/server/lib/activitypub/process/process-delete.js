@@ -8,9 +8,9 @@ const database_1 = require("../../../initializers/database");
 const actor_1 = require("../../../models/activitypub/actor");
 const video_1 = require("../../../models/video/video");
 const video_comment_1 = require("../../../models/video/video-comment");
+const video_playlist_1 = require("../../../models/video/video-playlist");
 const video_comment_2 = require("../../video-comment");
 const utils_1 = require("../send/utils");
-const video_playlist_1 = require("../../../models/video/video-playlist");
 function processDeleteActivity(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
@@ -101,6 +101,8 @@ function processDeleteVideoChannel(videoChannelToRemove) {
     });
 }
 function processDeleteVideoComment(byActor, videoComment, activity) {
+    if (videoComment.isDeleted())
+        return;
     logger_1.logger.debug('Removing remote video comment "%s".', videoComment.url);
     return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (byActor.Account.id !== videoComment.Account.id && byActor.Account.id !== videoComment.Video.VideoChannel.accountId) {

@@ -2,9 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
-const io = require("socket.io-client");
+const socket_io_client_1 = require("socket.io-client");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test user notifications API validators', function () {
     let server;
     before(function () {
@@ -40,7 +41,7 @@ describe('Test user notifications API validators', function () {
                         unread: 'toto'
                     },
                     token: server.accessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -49,7 +50,7 @@ describe('Test user notifications API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -59,7 +60,7 @@ describe('Test user notifications API validators', function () {
                     url: server.url,
                     path,
                     token: server.accessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -75,7 +76,7 @@ describe('Test user notifications API validators', function () {
                         ids: ['hello']
                     },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -84,7 +85,7 @@ describe('Test user notifications API validators', function () {
                         ids: []
                     },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
@@ -93,7 +94,7 @@ describe('Test user notifications API validators', function () {
                         ids: 5
                     },
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -105,7 +106,7 @@ describe('Test user notifications API validators', function () {
                     fields: {
                         ids: [5]
                     },
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -118,7 +119,7 @@ describe('Test user notifications API validators', function () {
                         ids: [5]
                     },
                     token: server.accessToken,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -130,7 +131,7 @@ describe('Test user notifications API validators', function () {
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -140,7 +141,7 @@ describe('Test user notifications API validators', function () {
                     url: server.url,
                     path,
                     token: server.accessToken,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
@@ -170,7 +171,7 @@ describe('Test user notifications API validators', function () {
                     path,
                     token: server.accessToken,
                     fields: { newVideoFromSubscription: 1 },
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -183,7 +184,7 @@ describe('Test user notifications API validators', function () {
                         path,
                         token: server.accessToken,
                         fields,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
                 {
@@ -193,7 +194,7 @@ describe('Test user notifications API validators', function () {
                         path,
                         fields,
                         token: server.accessToken,
-                        statusCodeExpected: 400
+                        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                     });
                 }
             });
@@ -204,7 +205,7 @@ describe('Test user notifications API validators', function () {
                     url: server.url,
                     path,
                     fields: correctFields,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -215,16 +216,15 @@ describe('Test user notifications API validators', function () {
                     path,
                     token: server.accessToken,
                     fields: correctFields,
-                    statusCodeExpected: 204
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
                 });
             });
         });
     });
     describe('When connecting to my notification socket', function () {
         it('Should fail with no token', function (next) {
-            const socket = io(`http://localhost:${server.port}/user-notifications`, { reconnection: false });
-            socket.on('error', () => {
-                socket.removeListener('error', this);
+            const socket = socket_io_client_1.io(`http://localhost:${server.port}/user-notifications`, { reconnection: false });
+            socket.once('connect_error', function () {
                 socket.disconnect();
                 next();
             });
@@ -234,12 +234,11 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should fail with an invalid token', function (next) {
-            const socket = io(`http://localhost:${server.port}/user-notifications`, {
+            const socket = socket_io_client_1.io(`http://localhost:${server.port}/user-notifications`, {
                 query: { accessToken: 'bad_access_token' },
                 reconnection: false
             });
-            socket.on('error', () => {
-                socket.removeListener('error', this);
+            socket.once('connect_error', function () {
                 socket.disconnect();
                 next();
             });
@@ -249,15 +248,15 @@ describe('Test user notifications API validators', function () {
             });
         });
         it('Should success with the correct token', function (next) {
-            const socket = io(`http://localhost:${server.port}/user-notifications`, {
+            const socket = socket_io_client_1.io(`http://localhost:${server.port}/user-notifications`, {
                 query: { accessToken: server.accessToken },
                 reconnection: false
             });
-            const errorListener = socket.on('error', err => {
+            function errorListener(err) {
                 next(new Error('Error in connection: ' + err));
-            });
-            socket.on('connect', () => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                socket.removeListener('error', errorListener);
+            }
+            socket.on('connect_error', errorListener);
+            socket.once('connect', () => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 socket.disconnect();
                 yield extra_utils_1.wait(500);
                 next();

@@ -6,6 +6,7 @@ register_ts_paths_1.registerTSPaths();
 const program = require("commander");
 const cli_1 = require("./cli");
 const redundancy_1 = require("@shared/extra-utils/server/redundancy");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const validator_1 = require("validator");
 const CliTable3 = require("cli-table3");
 const url_1 = require("url");
@@ -101,10 +102,10 @@ function addRedundancyCLI(options) {
             process.exit(0);
         }
         catch (err) {
-            if (err.message.includes(409)) {
+            if (err.message.includes(http_error_codes_1.HttpStatusCode.CONFLICT_409)) {
                 console.error('This video is already duplicated by your instance.');
             }
-            else if (err.message.includes(404)) {
+            else if (err.message.includes(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)) {
                 console.error('This video id does not exist.');
             }
             else {

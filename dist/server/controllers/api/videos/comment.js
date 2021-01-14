@@ -13,6 +13,7 @@ const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
 const account_1 = require("../../../models/account/account");
 const video_comment_2 = require("../../../models/video/video-comment");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const auditLogger = audit_logger_1.auditLoggerFactory('comments');
 const videoCommentRouter = express.Router();
 exports.videoCommentRouter = videoCommentRouter;
@@ -21,6 +22,25 @@ videoCommentRouter.get('/:videoId/comment-threads/:threadId', middlewares_1.asyn
 videoCommentRouter.post('/:videoId/comment-threads', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.addVideoCommentThreadValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideoCommentThread));
 videoCommentRouter.post('/:videoId/comments/:commentId', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.addVideoCommentReplyValidator), middlewares_1.asyncRetryTransactionMiddleware(addVideoCommentReply));
 videoCommentRouter.delete('/:videoId/comments/:commentId', middlewares_1.authenticate, middlewares_1.asyncMiddleware(validators_1.removeVideoCommentValidator), middlewares_1.asyncRetryTransactionMiddleware(removeVideoComment));
+videoCommentRouter.get('/comments', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(20), middlewares_1.paginationValidator, validators_1.videoCommentsValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, validators_1.listVideoCommentsValidator, middlewares_1.asyncMiddleware(listComments));
+function listComments(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const options = {
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            isLocal: req.query.isLocal,
+            search: req.query.search,
+            searchAccount: req.query.searchAccount,
+            searchVideo: req.query.searchVideo
+        };
+        const resultList = yield video_comment_2.VideoCommentModel.listCommentsForApi(options);
+        return res.json({
+            total: resultList.total,
+            data: resultList.data.map(c => c.toFormattedAdminJSON())
+        });
+    });
+}
 function listVideoThreads(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyVideo;
@@ -66,6 +86,9 @@ function listVideoThreadComments(req, res) {
                 data: []
             };
         }
+        if (resultList.data.length === 0) {
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+        }
         return res.json(video_comment_1.buildFormattedCommentTree(resultList));
     });
 }
@@ -110,6 +133,8 @@ function removeVideoComment(req, res) {
         const videoCommentInstance = res.locals.videoCommentFull;
         yield video_comment_1.removeComment(videoCommentInstance);
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.CommentAuditView(videoCommentInstance.toFormattedJSON()));
-        return res.type('json').status(204).end();
+        return res.type('json')
+            .status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204)
+            .end();
     });
 }

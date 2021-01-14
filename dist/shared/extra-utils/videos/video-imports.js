@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getGoodVideoUrl = exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
 const requests_1 = require("../requests/requests");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getYoutubeVideoUrl() {
     return 'http://www.youtube.com/watch?v=msX3jv1XdvM';
 }
@@ -18,7 +19,7 @@ function getGoodVideoUrl() {
     return 'https://download.cpy.re/peertube/good_video.mp4';
 }
 exports.getGoodVideoUrl = getGoodVideoUrl;
-function importVideo(url, token, attributes, statusCodeExpected = 200) {
+function importVideo(url, token, attributes, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/videos/imports';
     let attaches = {};
     if (attributes.torrentfile)
@@ -43,7 +44,7 @@ function getMyVideoImports(url, token, sort) {
         query,
         path,
         token,
-        statusCodeExpected: 200
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }
 exports.getMyVideoImports = getMyVideoImports;

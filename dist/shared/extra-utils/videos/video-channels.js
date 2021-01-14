@@ -4,6 +4,7 @@ exports.setDefaultVideoChannel = exports.getVideoChannel = exports.deleteVideoCh
 const request = require("supertest");
 const requests_1 = require("../requests/requests");
 const users_1 = require("../users/users");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getVideoChannelsList(url, start, count, sort, withStats) {
     const path = '/api/v1/video-channels';
     const req = request(url)
@@ -15,12 +16,12 @@ function getVideoChannelsList(url, start, count, sort, withStats) {
     if (withStats)
         req.query({ withStats });
     return req.set('Accept', 'application/json')
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoChannelsList = getVideoChannelsList;
 function getAccountVideoChannelsList(parameters) {
-    const { url, accountName, start, count, sort = 'createdAt', specialStatus = 200, withStats = false, search } = parameters;
+    const { url, accountName, start, count, sort = 'createdAt', specialStatus = http_error_codes_1.HttpStatusCode.OK_200, withStats = false, search } = parameters;
     const path = '/api/v1/accounts/' + accountName + '/video-channels';
     return requests_1.makeGetRequest({
         url,
@@ -36,7 +37,7 @@ function getAccountVideoChannelsList(parameters) {
     });
 }
 exports.getAccountVideoChannelsList = getAccountVideoChannelsList;
-function addVideoChannel(url, token, videoChannelAttributesArg, expectedStatus = 200) {
+function addVideoChannel(url, token, videoChannelAttributesArg, expectedStatus = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/video-channels/';
     let attributes = {
         displayName: 'my super video channel',
@@ -52,7 +53,7 @@ function addVideoChannel(url, token, videoChannelAttributesArg, expectedStatus =
         .expect(expectedStatus);
 }
 exports.addVideoChannel = addVideoChannel;
-function updateVideoChannel(url, token, channelName, attributes, expectedStatus = 204) {
+function updateVideoChannel(url, token, channelName, attributes, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const body = {};
     const path = '/api/v1/video-channels/' + channelName;
     if (attributes.displayName)
@@ -71,7 +72,7 @@ function updateVideoChannel(url, token, channelName, attributes, expectedStatus 
         .expect(expectedStatus);
 }
 exports.updateVideoChannel = updateVideoChannel;
-function deleteVideoChannel(url, token, channelName, expectedStatus = 204) {
+function deleteVideoChannel(url, token, channelName, expectedStatus = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/video-channels/' + channelName;
     return request(url)
         .delete(path)
@@ -85,7 +86,7 @@ function getVideoChannel(url, channelName) {
     return request(url)
         .get(path)
         .set('Accept', 'application/json')
-        .expect(200)
+        .expect(http_error_codes_1.HttpStatusCode.OK_200)
         .expect('Content-Type', /json/);
 }
 exports.getVideoChannel = getVideoChannel;

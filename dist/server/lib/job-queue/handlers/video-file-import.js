@@ -2,15 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.processVideoFileImport = void 0;
 const tslib_1 = require("tslib");
-const logger_1 = require("../../../helpers/logger");
-const video_1 = require("../../../models/video/video");
-const video_transcoding_1 = require("./video-transcoding");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
 const fs_extra_1 = require("fs-extra");
-const video_file_1 = require("../../../models/video/video-file");
 const path_1 = require("path");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("@server/lib/video-paths");
+const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
+const logger_1 = require("../../../helpers/logger");
+const video_1 = require("../../../models/video/video");
+const video_file_1 = require("../../../models/video/video-file");
+const video_transcoding_1 = require("./video-transcoding");
 function processVideoFileImport(job) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
@@ -28,9 +28,9 @@ function processVideoFileImport(job) {
 exports.processVideoFileImport = processVideoFileImport;
 function updateVideoFile(video, inputFilePath) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { videoFileResolution } = yield ffmpeg_utils_1.getVideoFileResolution(inputFilePath);
+        const { videoFileResolution } = yield ffprobe_utils_1.getVideoFileResolution(inputFilePath);
         const { size } = yield fs_extra_1.stat(inputFilePath);
-        const fps = yield ffmpeg_utils_1.getVideoFileFPS(inputFilePath);
+        const fps = yield ffprobe_utils_1.getVideoFileFPS(inputFilePath);
         let updatedVideoFile = new video_file_1.VideoFileModel({
             resolution: videoFileResolution,
             extname: path_1.extname(inputFilePath),

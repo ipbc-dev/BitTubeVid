@@ -7,6 +7,7 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const login_1 = require("../../../../shared/extra-utils/users/login");
 const users_1 = require("../../../../shared/extra-utils/users/users");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test follow constraints', function () {
     let servers = [];
@@ -39,12 +40,12 @@ describe('Test follow constraints', function () {
         describe('With an unlogged user', function () {
             it('Should get the local video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideo(servers[0].url, video1UUID, 200);
+                    yield extra_utils_1.getVideo(servers[0].url, video1UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should get the remote video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideo(servers[0].url, video2UUID, 200);
+                    yield extra_utils_1.getVideo(servers[0].url, video2UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should list local account videos', function () {
@@ -81,12 +82,12 @@ describe('Test follow constraints', function () {
         describe('With a logged user', function () {
             it('Should get the local video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video1UUID, 200);
+                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video1UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should get the remote video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video2UUID, 200);
+                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video2UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should list local account videos', function () {
@@ -131,12 +132,12 @@ describe('Test follow constraints', function () {
         describe('With an unlogged user', function () {
             it('Should get the local video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideo(servers[0].url, video1UUID, 200);
+                    yield extra_utils_1.getVideo(servers[0].url, video1UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should not get the remote video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideo(servers[0].url, video2UUID, 403);
+                    yield extra_utils_1.getVideo(servers[0].url, video2UUID, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
                 });
             });
             it('Should list local account videos', function () {
@@ -173,12 +174,12 @@ describe('Test follow constraints', function () {
         describe('With a logged user', function () {
             it('Should get the local video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video1UUID, 200);
+                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video1UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should get the remote video', function () {
                 return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video2UUID, 200);
+                    yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken, video2UUID, http_error_codes_1.HttpStatusCode.OK_200);
                 });
             });
             it('Should list local account videos', function () {

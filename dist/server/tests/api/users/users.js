@@ -8,6 +8,7 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const follows_1 = require("../../../../shared/extra-utils/server/follows");
 const login_1 = require("../../../../shared/extra-utils/users/login");
 const videos_1 = require("../../../../shared/extra-utils/videos/videos");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 describe('Test users', function () {
     let server;
@@ -40,14 +41,14 @@ describe('Test users', function () {
         it('Should not login with an invalid client id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const client = { id: 'client', secret: server.client.secret };
-                const res = yield extra_utils_1.login(server.url, client, server.user, 400);
+                const res = yield extra_utils_1.login(server.url, client, server.user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
                 expect(res.body.error).to.contain('client is invalid');
             });
         });
         it('Should not login with an invalid client secret', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const client = { id: server.client.id, secret: 'coucou' };
-                const res = yield extra_utils_1.login(server.url, client, server.user, 400);
+                const res = yield extra_utils_1.login(server.url, client, server.user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
                 expect(res.body.error).to.contain('client is invalid');
             });
         });
@@ -56,14 +57,14 @@ describe('Test users', function () {
         it('Should not login with an invalid username', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: 'captain crochet', password: server.user.password };
-                const res = yield extra_utils_1.login(server.url, server.client, user, 400);
+                const res = yield extra_utils_1.login(server.url, server.client, user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
                 expect(res.body.error).to.contain('credentials are invalid');
             });
         });
         it('Should not login with an invalid password', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: server.user.username, password: 'mew_three' };
-                const res = yield extra_utils_1.login(server.url, server.client, user, 400);
+                const res = yield extra_utils_1.login(server.url, server.client, user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
                 expect(res.body.error).to.contain('credentials are invalid');
             });
         });
@@ -71,30 +72,30 @@ describe('Test users', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 accessToken = 'my_super_token';
                 const videoAttributes = {};
-                yield extra_utils_1.uploadVideo(server.url, accessToken, videoAttributes, 401);
+                yield extra_utils_1.uploadVideo(server.url, accessToken, videoAttributes, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should not be able to follow', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 accessToken = 'my_super_token';
-                yield follows_1.follow(server.url, ['http://example.com'], accessToken, 401);
+                yield follows_1.follow(server.url, ['http://example.com'], accessToken, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should not be able to unfollow');
         it('Should be able to login', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.login(server.url, server.client, server.user, 200);
+                const res = yield extra_utils_1.login(server.url, server.client, server.user, http_error_codes_1.HttpStatusCode.OK_200);
                 accessToken = res.body.access_token;
             });
         });
         it('Should be able to login with an insensitive username', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const user = { username: 'RoOt', password: server.user.password };
-                yield extra_utils_1.login(server.url, server.client, user, 200);
+                yield extra_utils_1.login(server.url, server.client, user, http_error_codes_1.HttpStatusCode.OK_200);
                 const user2 = { username: 'rOoT', password: server.user.password };
-                yield extra_utils_1.login(server.url, server.client, user2, 200);
+                yield extra_utils_1.login(server.url, server.client, user2, http_error_codes_1.HttpStatusCode.OK_200);
                 const user3 = { username: 'ROOt', password: server.user.password };
-                yield extra_utils_1.login(server.url, server.client, user3, 200);
+                yield extra_utils_1.login(server.url, server.client, user3, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
     });
@@ -129,7 +130,7 @@ describe('Test users', function () {
         it('Should retrieve ratings list', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.rateVideo(server.url, accessToken, videoId, 'like');
-                const res = yield extra_utils_1.getAccountRatings(server.url, server.user.username, server.accessToken, null, 200);
+                const res = yield extra_utils_1.getAccountRatings(server.url, server.user.username, server.accessToken, null, http_error_codes_1.HttpStatusCode.OK_200);
                 const ratings = res.body;
                 expect(ratings.total).to.equal(1);
                 expect(ratings.data[0].video.id).to.equal(videoId);
@@ -154,7 +155,7 @@ describe('Test users', function () {
     describe('Remove video', function () {
         it('Should not be able to remove the video with an incorrect token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideo(server.url, 'bad_token', videoId, 401);
+                yield extra_utils_1.removeVideo(server.url, 'bad_token', videoId, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should not be able to remove the video with the token of another account');
@@ -172,12 +173,12 @@ describe('Test users', function () {
         });
         it('Should not be able to get the user information', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserInformation(server.url, server.accessToken, 401);
+                yield extra_utils_1.getMyUserInformation(server.url, server.accessToken, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should not be able to upload a video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video' }, 401);
+                yield extra_utils_1.uploadVideo(server.url, server.accessToken, { name: 'video' }, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should not be able to rate a video', function () {
@@ -191,7 +192,7 @@ describe('Test users', function () {
                     path: path + videoId,
                     token: 'wrong token',
                     fields: data,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 };
                 yield extra_utils_1.makePutBodyRequest(options);
             });
@@ -457,7 +458,7 @@ describe('Test users', function () {
                     password: 'new password'
                 });
                 user.password = 'new password';
-                yield extra_utils_1.userLogin(server, user, 200);
+                yield extra_utils_1.userLogin(server, user, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
         it('Should be able to change the NSFW display attribute', function () {
@@ -521,9 +522,9 @@ describe('Test users', function () {
                 expect(user.account.description).to.be.null;
             });
         });
-        it('Should be able to update my avatar', function () {
+        it('Should be able to update my avatar with a gif', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const fixture = 'avatar.png';
+                const fixture = 'avatar.gif';
                 yield extra_utils_1.updateMyAvatar({
                     url: server.url,
                     accessToken: accessTokenUser,
@@ -531,7 +532,22 @@ describe('Test users', function () {
                 });
                 const res = yield extra_utils_1.getMyUserInformation(server.url, accessTokenUser);
                 const user = res.body;
-                yield extra_utils_1.testImage(server.url, 'avatar-resized', user.account.avatar.path, '.png');
+                yield extra_utils_1.testImage(server.url, 'avatar-resized', user.account.avatar.path, '.gif');
+            });
+        });
+        it('Should be able to update my avatar with a gif, and then a png', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                for (const extension of ['.png', '.gif']) {
+                    const fixture = 'avatar' + extension;
+                    yield extra_utils_1.updateMyAvatar({
+                        url: server.url,
+                        accessToken: accessTokenUser,
+                        fixture
+                    });
+                    const res = yield extra_utils_1.getMyUserInformation(server.url, accessTokenUser);
+                    const user = res.body;
+                    yield extra_utils_1.testImage(server.url, 'avatar-resized', user.account.avatar.path, extension);
+                }
             });
         });
         it('Should be able to update my display name', function () {
@@ -628,7 +644,7 @@ describe('Test users', function () {
         });
         it('Should have removed the user token', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser, 401);
+                yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
                 accessTokenUser = yield extra_utils_1.userLogin(server, user);
             });
         });
@@ -640,8 +656,8 @@ describe('Test users', function () {
                     accessToken,
                     password: 'password updated'
                 });
-                yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser, 401);
-                yield extra_utils_1.userLogin(server, user, 400);
+                yield extra_utils_1.getMyUserVideoQuotaUsed(server.url, accessTokenUser, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+                yield extra_utils_1.userLogin(server, user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
                 user.password = 'password updated';
                 accessTokenUser = yield extra_utils_1.userLogin(server, user);
             });
@@ -662,7 +678,7 @@ describe('Test users', function () {
         });
         it('Should not be able to login with this user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.userLogin(server, user, 400);
+                yield extra_utils_1.userLogin(server, user, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should not have videos of this user', function () {
@@ -743,10 +759,10 @@ describe('Test users', function () {
                 });
                 user16Id = resUser.body.user.id;
                 user16AccessToken = yield extra_utils_1.userLogin(server, user16);
-                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 200);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, http_error_codes_1.HttpStatusCode.OK_200);
                 yield extra_utils_1.blockUser(server.url, user16Id, server.accessToken);
-                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 401);
-                yield extra_utils_1.userLogin(server, user16, 400);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
+                yield extra_utils_1.userLogin(server, user16, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should search user by banned status', function () {
@@ -771,7 +787,7 @@ describe('Test users', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield extra_utils_1.unblockUser(server.url, user16Id, server.accessToken);
                 user16AccessToken = yield extra_utils_1.userLogin(server, user16);
-                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, 200);
+                yield extra_utils_1.getMyUserInformation(server.url, user16AccessToken, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
     });

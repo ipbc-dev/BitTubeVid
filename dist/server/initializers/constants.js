@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIDEO_VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.API_VERSION = exports.WEBSERVER = void 0;
-const path_1 = require("path");
+exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.VIDEO_TRANSCODING_ENCODERS = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.VIDEO_LIVE = exports.API_VERSION = exports.WEBSERVER = void 0;
+const miscs_1 = require("../../shared/core-utils/miscs/miscs");
 const crypto_1 = require("crypto");
-const core_utils_1 = require("../helpers/core-utils");
 const lodash_1 = require("lodash");
+const path_1 = require("path");
+const core_utils_1 = require("../helpers/core-utils");
 const config_1 = require("./config");
-const LAST_MIGRATION_VERSION = 530;
+const LAST_MIGRATION_VERSION = 570;
 exports.LAST_MIGRATION_VERSION = LAST_MIGRATION_VERSION;
 const API_VERSION = 'v1';
 exports.API_VERSION = API_VERSION;
@@ -32,7 +33,8 @@ const WEBSERVER = {
     SCHEME: '',
     WS: '',
     HOSTNAME: '',
-    PORT: 0
+    PORT: 0,
+    RTMP_URL: ''
 };
 exports.WEBSERVER = WEBSERVER;
 const SORTABLE_COLUMNS = {
@@ -43,6 +45,7 @@ const SORTABLE_COLUMNS = {
     VIDEO_CHANNELS: ['id', 'name', 'updatedAt', 'createdAt'],
     VIDEO_IMPORTS: ['createdAt'],
     VIDEO_COMMENT_THREADS: ['createdAt', 'totalReplies'],
+    VIDEO_COMMENTS: ['createdAt'],
     VIDEO_RATES: ['createdAt'],
     BLACKLISTS: ['id', 'name', 'duration', 'views', 'likes', 'dislikes', 'uuid', 'createdAt'],
     FOLLOWERS: ['createdAt', 'state', 'score'],
@@ -54,7 +57,7 @@ const SORTABLE_COLUMNS = {
     ACCOUNTS_BLOCKLIST: ['createdAt'],
     SERVERS_BLOCKLIST: ['createdAt'],
     USER_NOTIFICATIONS: ['createdAt', 'read'],
-    VIDEO_PLAYLISTS: ['displayName', 'createdAt', 'updatedAt'],
+    VIDEO_PLAYLISTS: ['name', 'displayName', 'createdAt', 'updatedAt'],
     PLUGINS: ['name', 'createdAt', 'updatedAt'],
     AVAILABLE_PLUGINS: ['npmName', 'popularity'],
     VIDEO_REDUNDANCIES: ['name']
@@ -107,7 +110,8 @@ const JOB_ATTEMPTS = {
     'videos-views': 1,
     'premium-storage-checker': 1,
     'activitypub-refresher': 1,
-    'video-redundancy': 1
+    'video-redundancy': 1,
+    'video-live-ending': 1
 };
 exports.JOB_ATTEMPTS = JOB_ATTEMPTS;
 const JOB_CONCURRENCY = {
@@ -122,7 +126,8 @@ const JOB_CONCURRENCY = {
     'videos-views': 1,
     'premium-storage-checker': 1,
     'activitypub-refresher': 1,
-    'video-redundancy': 1
+    'video-redundancy': 1,
+    'video-live-ending': 10
 };
 exports.JOB_CONCURRENCY = JOB_CONCURRENCY;
 const JOB_TTL = {
@@ -137,12 +142,13 @@ const JOB_TTL = {
     'videos-views': undefined,
     'premium-storage-checker': undefined,
     'activitypub-refresher': 60000 * 10,
-    'video-redundancy': 1000 * 3600 * 3
+    'video-redundancy': 1000 * 3600 * 3,
+    'video-live-ending': 1000 * 60 * 10
 };
 exports.JOB_TTL = JOB_TTL;
 const REPEAT_JOBS = {
     'videos-views': {
-        cron: '1 * * * *'
+        cron: miscs_1.randomInt(1, 20) + ' * * * *'
     },
     'premium-storage-checker': {
         cron: '0 0 * * *'
@@ -167,7 +173,8 @@ const SCHEDULER_INTERVALS_MS = {
     checkPlugins: config_1.CONFIG.PLUGINS.INDEX.CHECK_LATEST_VERSIONS_INTERVAL,
     autoFollowIndexInstances: 60000 * 60 * 24,
     removeOldViews: 60000 * 60 * 24,
-    removeOldHistory: 60000 * 60 * 24
+    removeOldHistory: 60000 * 60 * 24,
+    updateInboxStats: 1000 * 60
 };
 exports.SCHEDULER_INTERVALS_MS = SCHEDULER_INTERVALS_MS;
 const CONSTRAINTS_FIELDS = {
@@ -243,7 +250,7 @@ const CONSTRAINTS_FIELDS = {
         VIEWS: { min: 0 },
         LIKES: { min: 0 },
         DISLIKES: { min: 0 },
-        FILE_SIZE: { min: 10 },
+        FILE_SIZE: { min: -1 },
         URL: { min: 3, max: 2000 }
     },
     VIDEO_PLAYLISTS: {
@@ -262,7 +269,7 @@ const CONSTRAINTS_FIELDS = {
         PRIVATE_KEY: { min: 10, max: 5000 },
         URL: { min: 3, max: 2000 },
         AVATAR: {
-            EXTNAME: ['.png', '.jpeg', '.jpg'],
+            EXTNAME: ['.png', '.jpeg', '.jpg', '.gif'],
             FILE_SIZE: {
                 max: 2 * 1024 * 1024
             }
@@ -291,8 +298,11 @@ const CONSTRAINTS_FIELDS = {
     }
 };
 exports.CONSTRAINTS_FIELDS = CONSTRAINTS_FIELDS;
-let VIDEO_VIEW_LIFETIME = 60000 * 60;
-exports.VIDEO_VIEW_LIFETIME = VIDEO_VIEW_LIFETIME;
+const VIEW_LIFETIME = {
+    VIDEO: 60000 * 60,
+    LIVE: 60000 * 5
+};
+exports.VIEW_LIFETIME = VIEW_LIFETIME;
 let CONTACT_FORM_LIFETIME = 60000 * 60;
 exports.CONTACT_FORM_LIFETIME = CONTACT_FORM_LIFETIME;
 const VIDEO_TRANSCODING_FPS = {
@@ -304,6 +314,14 @@ const VIDEO_TRANSCODING_FPS = {
     KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720
 };
 exports.VIDEO_TRANSCODING_FPS = VIDEO_TRANSCODING_FPS;
+const VIDEO_TRANSCODING_ENCODERS = {
+    VIDEO: ['libx264'],
+    AUDIO: [
+        'libfdk_aac',
+        'aac'
+    ]
+};
+exports.VIDEO_TRANSCODING_ENCODERS = VIDEO_TRANSCODING_ENCODERS;
 const DEFAULT_AUDIO_RESOLUTION = 480;
 exports.DEFAULT_AUDIO_RESOLUTION = DEFAULT_AUDIO_RESOLUTION;
 const VIDEO_RATE_TYPES = {
@@ -359,7 +377,9 @@ exports.VIDEO_PRIVACIES = VIDEO_PRIVACIES;
 const VIDEO_STATES = {
     [1]: 'Published',
     [2]: 'To transcode',
-    [3]: 'To import'
+    [3]: 'To import',
+    [4]: 'Waiting for livestream',
+    [5]: 'Livestream ended'
 };
 exports.VIDEO_STATES = VIDEO_STATES;
 const VIDEO_IMPORT_STATES = {
@@ -477,6 +497,10 @@ const HTTP_SIGNATURE = {
     HEADER_NAME: 'signature',
     ALGORITHM: 'rsa-sha256',
     HEADERS_TO_SIGN: ['(request-target)', 'host', 'date', 'digest'],
+    REQUIRED_HEADERS: {
+        ALL: ['(request-target)', 'host', 'date'],
+        POST: ['(request-target)', 'host', 'date', 'digest']
+    },
     CLOCK_SKEW_SECONDS: 1800
 };
 exports.HTTP_SIGNATURE = HTTP_SIGNATURE;
@@ -572,9 +596,26 @@ const HLS_STREAMING_PLAYLIST_DIRECTORY = path_1.join(config_1.CONFIG.STORAGE.STR
 exports.HLS_STREAMING_PLAYLIST_DIRECTORY = HLS_STREAMING_PLAYLIST_DIRECTORY;
 const HLS_REDUNDANCY_DIRECTORY = path_1.join(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, 'hls');
 exports.HLS_REDUNDANCY_DIRECTORY = HLS_REDUNDANCY_DIRECTORY;
+const VIDEO_LIVE = {
+    EXTENSION: '.ts',
+    CLEANUP_DELAY: 1000 * 60 * 5,
+    SEGMENT_TIME_SECONDS: 4,
+    SEGMENTS_LIST_SIZE: 15,
+    REPLAY_DIRECTORY: 'replay',
+    EDGE_LIVE_DELAY_SEGMENTS_NOTIFICATION: 4,
+    RTMP: {
+        CHUNK_SIZE: 60000,
+        GOP_CACHE: true,
+        PING: 60,
+        PING_TIMEOUT: 30,
+        BASE_PATH: 'live'
+    }
+};
+exports.VIDEO_LIVE = VIDEO_LIVE;
 const MEMOIZE_TTL = {
     OVERVIEWS_SAMPLE: 1000 * 3600 * 4,
-    INFO_HASH_EXISTS: 1000 * 3600 * 12
+    INFO_HASH_EXISTS: 1000 * 3600 * 12,
+    LIVE_ABLE_TO_UPLOAD: 1000 * 60
 };
 exports.MEMOIZE_TTL = MEMOIZE_TTL;
 const MEMOIZE_LENGTH = {
@@ -594,7 +635,8 @@ exports.REDUNDANCY = REDUNDANCY;
 const ACCEPT_HEADERS = ['html', 'application/json'].concat(ACTIVITY_PUB.POTENTIAL_ACCEPT_HEADERS);
 exports.ACCEPT_HEADERS = ACCEPT_HEADERS;
 const ASSETS_PATH = {
-    DEFAULT_AUDIO_BACKGROUND: path_1.join(core_utils_1.root(), 'dist', 'server', 'assets', 'default-audio-background.jpg')
+    DEFAULT_AUDIO_BACKGROUND: path_1.join(core_utils_1.root(), 'dist', 'server', 'assets', 'default-audio-background.jpg'),
+    DEFAULT_LIVE_BACKGROUND: path_1.join(core_utils_1.root(), 'dist', 'server', 'assets', 'default-live-background.jpg')
 };
 exports.ASSETS_PATH = ASSETS_PATH;
 const CUSTOM_HTML_TAG_COMMENTS = {
@@ -618,7 +660,7 @@ const TRACKER_RATE_LIMITS = {
     INTERVAL: 60000 * 5,
     ANNOUNCES_PER_IP_PER_INFOHASH: 15,
     ANNOUNCES_PER_IP: 30,
-    BLOCK_IP_LIFETIME: 60000 * 10
+    BLOCK_IP_LIFETIME: 60000 * 3
 };
 exports.TRACKER_RATE_LIMITS = TRACKER_RATE_LIMITS;
 const P2P_MEDIA_LOADER_PEER_VERSION = 2;
@@ -657,16 +699,22 @@ if (core_utils_1.isTestInstance() === true) {
     SCHEDULER_INTERVALS_MS.removeOldViews = 5000;
     SCHEDULER_INTERVALS_MS.updateVideos = 5000;
     SCHEDULER_INTERVALS_MS.autoFollowIndexInstances = 5000;
+    SCHEDULER_INTERVALS_MS.updateInboxStats = 5000;
     REPEAT_JOBS['videos-views'] = { every: 5000 };
     REPEAT_JOBS['premium-storage-checker'] = { every: 600000 };
     REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1;
-    exports.VIDEO_VIEW_LIFETIME = VIDEO_VIEW_LIFETIME = 1000;
+    VIEW_LIFETIME.VIDEO = 1000;
+    VIEW_LIFETIME.LIVE = 1000 * 5;
     exports.CONTACT_FORM_LIFETIME = CONTACT_FORM_LIFETIME = 1000;
     JOB_ATTEMPTS['email'] = 1;
     FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE = 3000;
     MEMOIZE_TTL.OVERVIEWS_SAMPLE = 3000;
+    MEMOIZE_TTL.LIVE_ABLE_TO_UPLOAD = 3000;
     OVERVIEWS.VIDEOS.SAMPLE_THRESHOLD = 2;
     exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = 5000;
+    VIDEO_LIVE.CLEANUP_DELAY = 5000;
+    VIDEO_LIVE.SEGMENT_TIME_SECONDS = 2;
+    VIDEO_LIVE.EDGE_LIVE_DELAY_SEGMENTS_NOTIFICATION = 1;
 }
 updateWebserverUrls();
 updateWebserverConfig();
@@ -721,10 +769,11 @@ function buildVideoMimetypeExt() {
 function updateWebserverUrls() {
     WEBSERVER.URL = core_utils_1.sanitizeUrl(config_1.CONFIG.WEBSERVER.SCHEME + '://' + config_1.CONFIG.WEBSERVER.HOSTNAME + ':' + config_1.CONFIG.WEBSERVER.PORT);
     WEBSERVER.HOST = core_utils_1.sanitizeHost(config_1.CONFIG.WEBSERVER.HOSTNAME + ':' + config_1.CONFIG.WEBSERVER.PORT, REMOTE_SCHEME.HTTP);
-    WEBSERVER.SCHEME = config_1.CONFIG.WEBSERVER.SCHEME;
     WEBSERVER.WS = config_1.CONFIG.WEBSERVER.WS;
+    WEBSERVER.SCHEME = config_1.CONFIG.WEBSERVER.SCHEME;
     WEBSERVER.HOSTNAME = config_1.CONFIG.WEBSERVER.HOSTNAME;
     WEBSERVER.PORT = config_1.CONFIG.WEBSERVER.PORT;
+    WEBSERVER.RTMP_URL = 'rtmp://' + config_1.CONFIG.WEBSERVER.HOSTNAME + ':' + config_1.CONFIG.LIVE.RTMP.PORT + '/' + VIDEO_LIVE.RTMP.BASE_PATH;
 }
 function updateWebserverConfig() {
     MIMETYPES.VIDEO.MIMETYPE_EXT = buildVideoMimetypeExt();

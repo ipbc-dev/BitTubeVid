@@ -5,6 +5,7 @@ require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
 const chai_1 = require("chai");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test video blacklist API validators', function () {
     let servers;
     let notBlacklistedVideoId;
@@ -64,14 +65,20 @@ describe('Test video blacklist API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePostBodyRequest({ url: servers[0].url, path, token: 'hello', fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePostBodyRequest({ url: servers[0].url, path, token: 'hello', fields, statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePostBodyRequest({ url: servers[0].url, path, token: userAccessToken2, fields, statusCodeExpected: 403 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: userAccessToken2,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
+                });
             });
         });
         it('Should fail with an invalid reason', function () {
@@ -85,14 +92,26 @@ describe('Test video blacklist API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + remoteVideoUUID + '/blacklist';
                 const fields = { unfederate: true };
-                yield extra_utils_1.makePostBodyRequest({ url: servers[0].url, path, token: servers[0].accessToken, fields, statusCodeExpected: 409 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: servers[0].accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.CONFLICT_409
+                });
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video.uuid + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePostBodyRequest({ url: servers[0].url, path, token: servers[0].accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePostBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: servers[0].accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
@@ -109,21 +128,33 @@ describe('Test video blacklist API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = '/api/v1/videos/' + notBlacklistedVideoId + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePutBodyRequest({ url: servers[0].url, path, token: servers[0].accessToken, fields, statusCodeExpected: 404 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: servers[0].accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
+                });
             });
         });
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePutBodyRequest({ url: servers[0].url, path, token: 'hello', fields, statusCodeExpected: 401 });
+                yield extra_utils_1.makePutBodyRequest({ url: servers[0].url, path, token: 'hello', fields, statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video + '/blacklist';
                 const fields = {};
-                yield extra_utils_1.makePutBodyRequest({ url: servers[0].url, path, token: userAccessToken2, fields, statusCodeExpected: 403 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: userAccessToken2,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
+                });
             });
         });
         it('Should fail with an invalid reason', function () {
@@ -137,31 +168,37 @@ describe('Test video blacklist API validators', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const path = basePath + servers[0].video.uuid + '/blacklist';
                 const fields = { reason: 'hello' };
-                yield extra_utils_1.makePutBodyRequest({ url: servers[0].url, path, token: servers[0].accessToken, fields, statusCodeExpected: 204 });
+                yield extra_utils_1.makePutBodyRequest({
+                    url: servers[0].url,
+                    path,
+                    token: servers[0].accessToken,
+                    fields,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NO_CONTENT_204
+                });
             });
         });
     });
     describe('When getting blacklisted video', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideo(servers[0].url, servers[0].video.uuid, 401);
+                yield extra_utils_1.getVideo(servers[0].url, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken2, servers[0].video.uuid, 403);
+                yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken2, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should succeed with the owner authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken1, servers[0].video.uuid, 200);
+                const res = yield extra_utils_1.getVideoWithToken(servers[0].url, userAccessToken1, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.OK_200);
                 const video = res.body;
                 chai_1.expect(video.blacklisted).to.be.true;
             });
         });
         it('Should succeed with an admin', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const res = yield extra_utils_1.getVideoWithToken(servers[0].url, servers[0].accessToken, servers[0].video.uuid, 200);
+                const res = yield extra_utils_1.getVideoWithToken(servers[0].url, servers[0].accessToken, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.OK_200);
                 const video = res.body;
                 chai_1.expect(video.blacklisted).to.be.true;
             });
@@ -170,27 +207,27 @@ describe('Test video blacklist API validators', function () {
     describe('When removing a video in blacklist', function () {
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, 'fake token', servers[0].video.uuid, 401);
+                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, 'fake token', servers[0].video.uuid, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, userAccessToken2, servers[0].video.uuid, 403);
+                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, userAccessToken2, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with an incorrect id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, 'hello', 400);
+                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, 'hello', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with a not blacklisted video', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, notBlacklistedVideoId, 404);
+                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, notBlacklistedVideoId, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, servers[0].video.uuid, 204);
+                yield extra_utils_1.removeVideoFromBlacklist(servers[0].url, servers[0].accessToken, servers[0].video.uuid, http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
             });
         });
     });
@@ -198,12 +235,12 @@ describe('Test video blacklist API validators', function () {
         const basePath = '/api/v1/videos/blacklist/';
         it('Should fail with a non authenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: 'fake token', specialStatus: 401 });
+                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: 'fake token', specialStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
             });
         });
         it('Should fail with a non admin user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: userAccessToken2, specialStatus: 403 });
+                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: userAccessToken2, specialStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
             });
         });
         it('Should fail with a bad start pagination', function () {
@@ -223,7 +260,12 @@ describe('Test video blacklist API validators', function () {
         });
         it('Should fail with an invalid type', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getBlacklistedVideosList({ url: servers[0].url, token: servers[0].accessToken, type: 0, specialStatus: 400 });
+                yield extra_utils_1.getBlacklistedVideosList({
+                    url: servers[0].url,
+                    token: servers[0].accessToken,
+                    type: 0,
+                    specialStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
+                });
             });
         });
         it('Should succeed with the correct parameters', function () {

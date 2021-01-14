@@ -11,6 +11,7 @@ const servers_1 = require("../../helpers/custom-validators/servers");
 const server_1 = require("../../models/server/server");
 const middlewares_1 = require("../../helpers/middlewares");
 const video_redundancies_1 = require("@server/helpers/custom-validators/video-redundancies");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const videoFileRedundancyGetValidator = [
     express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid video id'),
     express_validator_1.param('resolution')
@@ -33,11 +34,11 @@ const videoFileRedundancyGetValidator = [
             return f.resolution === paramResolution && (!req.params.fps || paramFPS);
         });
         if (!videoFile)
-            return res.status(404).json({ error: 'Video file not found.' });
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).json({ error: 'Video file not found.' });
         res.locals.videoFile = videoFile;
         const videoRedundancy = yield video_redundancy_1.VideoRedundancyModel.loadLocalByFileId(videoFile.id);
         if (!videoRedundancy)
-            return res.status(404).json({ error: 'Video redundancy not found.' });
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).json({ error: 'Video redundancy not found.' });
         res.locals.videoRedundancy = videoRedundancy;
         return next();
     })
@@ -60,11 +61,11 @@ const videoPlaylistRedundancyGetValidator = [
         const paramPlaylistType = req.params.streamingPlaylistType;
         const videoStreamingPlaylist = video.VideoStreamingPlaylists.find(p => p.type === paramPlaylistType);
         if (!videoStreamingPlaylist)
-            return res.status(404).json({ error: 'Video playlist not found.' });
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).json({ error: 'Video playlist not found.' });
         res.locals.videoStreamingPlaylist = videoStreamingPlaylist;
         const videoRedundancy = yield video_redundancy_1.VideoRedundancyModel.loadLocalByStreamingPlaylistId(videoStreamingPlaylist.id);
         if (!videoRedundancy)
-            return res.status(404).json({ error: 'Video redundancy not found.' });
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).json({ error: 'Video redundancy not found.' });
         res.locals.videoRedundancy = videoRedundancy;
         return next();
     })
@@ -82,7 +83,7 @@ const updateServerRedundancyValidator = [
         const server = yield server_1.ServerModel.loadByHost(req.params.host);
         if (!server) {
             return res
-                .status(404)
+                .status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({
                 error: `Server ${req.params.host} not found.`
             })
@@ -115,13 +116,16 @@ const addVideoRedundancyValidator = [
         if (!(yield middlewares_1.doesVideoExist(req.body.videoId, res, 'only-video')))
             return;
         if (res.locals.onlyVideo.remote === false) {
-            return res.status(400)
-                .json({ error: 'Cannot create a redundancy on a local video' })
-                .end();
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+                .json({ error: 'Cannot create a redundancy on a local video' });
+        }
+        if (res.locals.onlyVideo.isLive) {
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+                .json({ error: 'Cannot create a redundancy of a live video' });
         }
         const alreadyExists = yield video_redundancy_1.VideoRedundancyModel.isLocalByVideoUUIDExists(res.locals.onlyVideo.uuid);
         if (alreadyExists) {
-            return res.status(409)
+            return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'This video is already duplicated by your instance.' });
         }
         return next();
@@ -138,7 +142,7 @@ const removeVideoRedundancyValidator = [
             return;
         const redundancy = yield video_redundancy_1.VideoRedundancyModel.loadByIdWithVideo(parseInt(req.params.redundancyId, 10));
         if (!redundancy) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .json({ error: 'Video redundancy not found' })
                 .end();
         }

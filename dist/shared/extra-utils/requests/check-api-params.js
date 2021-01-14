@@ -4,13 +4,14 @@ exports.checkBadSortPagination = exports.checkBadCountPagination = exports.check
 const tslib_1 = require("tslib");
 const requests_1 = require("./requests");
 const miscs_1 = require("../miscs/miscs");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function checkBadStartPagination(url, path, token, query = {}) {
     return requests_1.makeGetRequest({
         url,
         path,
         token,
         query: miscs_1.immutableAssign(query, { start: 'hello' }),
-        statusCodeExpected: 400
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
     });
 }
 exports.checkBadStartPagination = checkBadStartPagination;
@@ -21,14 +22,14 @@ function checkBadCountPagination(url, path, token, query = {}) {
             path,
             token,
             query: miscs_1.immutableAssign(query, { count: 'hello' }),
-            statusCodeExpected: 400
+            statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
         });
         yield requests_1.makeGetRequest({
             url,
             path,
             token,
             query: miscs_1.immutableAssign(query, { count: 2000 }),
-            statusCodeExpected: 400
+            statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
         });
     });
 }
@@ -39,7 +40,7 @@ function checkBadSortPagination(url, path, token, query = {}) {
         path,
         token,
         query: miscs_1.immutableAssign(query, { sort: 'hello' }),
-        statusCodeExpected: 400
+        statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
     });
 }
 exports.checkBadSortPagination = checkBadSortPagination;

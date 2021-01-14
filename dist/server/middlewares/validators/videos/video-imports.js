@@ -15,6 +15,7 @@ const config_1 = require("../../../initializers/config");
 const constants_1 = require("../../../initializers/constants");
 const utils_1 = require("../utils");
 const videos_2 = require("./videos");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
     express_validator_1.body('channelId')
         .customSanitizer(misc_1.toIntOrNull)
@@ -41,13 +42,13 @@ const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
             return express_utils_1.cleanUpReqFiles(req);
         if (req.body.targetUrl && config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED !== true) {
             express_utils_1.cleanUpReqFiles(req);
-            return res.status(409)
+            return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'HTTP import is not enabled on this instance.' })
                 .end();
         }
         if (config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED !== true && (req.body.magnetUri || torrentFile)) {
             express_utils_1.cleanUpReqFiles(req);
-            return res.status(409)
+            return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'Torrent/magnet URI import is not enabled on this instance.' })
                 .end();
         }
@@ -55,7 +56,7 @@ const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
             return express_utils_1.cleanUpReqFiles(req);
         if (!req.body.targetUrl && !req.body.magnetUri && !torrentFile) {
             express_utils_1.cleanUpReqFiles(req);
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Should have a magnetUri or a targetUrl or a torrent file.' })
                 .end();
         }
@@ -78,7 +79,7 @@ function isImportAccepted(req, res) {
         const acceptedResult = yield hooks_1.Hooks.wrapFun(moderation_1.isPreImportVideoAccepted, acceptParameters, hookName);
         if (!acceptedResult || acceptedResult.accepted !== true) {
             logger_1.logger.info('Refused to import video.', { acceptedResult, acceptParameters });
-            res.status(403)
+            res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: acceptedResult.errorMessage || 'Refused to import video' });
             return false;
         }

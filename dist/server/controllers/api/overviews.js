@@ -96,6 +96,7 @@ function getVideos(res, where) {
             sort: '-createdAt',
             includeLocalVideos: true,
             nsfw: express_utils_1.buildNSFWFilter(res),
+            user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
             withFiles: false,
             countVideos: false
         }, where);

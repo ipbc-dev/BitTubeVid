@@ -7,6 +7,7 @@ const bulk_1 = require("@server/helpers/custom-validators/bulk");
 const middlewares_1 = require("@server/helpers/middlewares");
 const logger_1 = require("../../helpers/logger");
 const utils_1 = require("./utils");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const bulkRemoveCommentsOfValidator = [
     express_validator_1.body('accountName').exists().withMessage('Should have an account name with host'),
     express_validator_1.body('scope')
@@ -20,7 +21,7 @@ const bulkRemoveCommentsOfValidator = [
         const user = res.locals.oauth.token.User;
         const body = req.body;
         if (body.scope === 'instance' && user.hasRight(15) !== true) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({
                 error: 'User cannot remove any comments of this instance.'
             });

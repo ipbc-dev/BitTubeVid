@@ -3,25 +3,26 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoPlaylistRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
-const utils_1 = require("../../helpers/utils");
-const middlewares_1 = require("../../middlewares");
-const validators_1 = require("../../middlewares/validators");
-const express_utils_1 = require("../../helpers/express-utils");
-const constants_1 = require("../../initializers/constants");
-const logger_1 = require("../../helpers/logger");
-const database_utils_1 = require("../../helpers/database-utils");
-const video_playlist_1 = require("../../models/video/video-playlist");
-const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
 const path_1 = require("path");
+const application_1 = require("@server/models/application/application");
+const database_utils_1 = require("../../helpers/database-utils");
+const express_utils_1 = require("../../helpers/express-utils");
+const logger_1 = require("../../helpers/logger");
+const utils_1 = require("../../helpers/utils");
+const config_1 = require("../../initializers/config");
+const constants_1 = require("../../initializers/constants");
+const database_1 = require("../../initializers/database");
 const send_1 = require("../../lib/activitypub/send");
 const url_1 = require("../../lib/activitypub/url");
-const video_playlist_element_1 = require("../../models/video/video-playlist-element");
-const account_1 = require("../../models/account/account");
 const job_queue_1 = require("../../lib/job-queue");
-const config_1 = require("../../initializers/config");
-const database_1 = require("../../initializers/database");
 const thumbnail_1 = require("../../lib/thumbnail");
-const application_1 = require("@server/models/application/application");
+const middlewares_1 = require("../../middlewares");
+const validators_1 = require("../../middlewares/validators");
+const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
+const account_1 = require("../../models/account/account");
+const video_playlist_1 = require("../../models/video/video-playlist");
+const video_playlist_element_1 = require("../../models/video/video-playlist-element");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const reqThumbnailFile = express_utils_1.createReqFiles(['thumbnailfile'], constants_1.MIMETYPES.IMAGE.MIMETYPE_EXT, { thumbnailfile: config_1.CONFIG.STORAGE.TMP_DIR });
 const videoPlaylistRouter = express.Router();
 exports.videoPlaylistRouter = videoPlaylistRouter;
@@ -69,7 +70,7 @@ function addVideoPlaylist(req, res) {
             privacy: videoPlaylistInfo.privacy || 3,
             ownerAccountId: user.Account.id
         });
-        videoPlaylist.url = url_1.getVideoPlaylistActivityPubUrl(videoPlaylist);
+        videoPlaylist.url = url_1.getLocalVideoPlaylistActivityPubUrl(videoPlaylist);
         if (videoPlaylistInfo.videoChannelId) {
             const videoChannel = res.locals.videoChannel;
             videoPlaylist.videoChannelId = videoChannel.id;
@@ -155,7 +156,7 @@ function updateVideoPlaylist(req, res) {
             database_utils_1.resetSequelizeInstance(videoPlaylistInstance, videoPlaylistFieldsSave);
             throw err;
         }
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function removeVideoPlaylist(req, res) {
@@ -166,7 +167,7 @@ function removeVideoPlaylist(req, res) {
             yield send_1.sendDeleteVideoPlaylist(videoPlaylistInstance, t);
             logger_1.logger.info('Video playlist %s deleted.', videoPlaylistInstance.uuid);
         }));
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function addVideoInPlaylist(req, res) {
@@ -183,7 +184,7 @@ function addVideoInPlaylist(req, res) {
                 videoPlaylistId: videoPlaylist.id,
                 videoId: video.id
             }, { transaction: t });
-            playlistElement.url = url_1.getVideoPlaylistElementActivityPubUrl(videoPlaylist, playlistElement);
+            playlistElement.url = url_1.getLocalVideoPlaylistElementActivityPubUrl(videoPlaylist, playlistElement);
             yield playlistElement.save({ transaction: t });
             videoPlaylist.changed('updatedAt', true);
             yield videoPlaylist.save({ transaction: t });
@@ -219,7 +220,7 @@ function updateVideoPlaylistElement(req, res) {
             return element;
         }));
         logger_1.logger.info('Element of position %d of playlist %s updated.', playlistElement.position, videoPlaylist.uuid);
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function removeVideoFromPlaylist(req, res) {
@@ -239,7 +240,7 @@ function removeVideoFromPlaylist(req, res) {
         }
         send_1.sendUpdateVideoPlaylist(videoPlaylist, undefined)
             .catch(err => logger_1.logger.error('Cannot send video playlist update.', { err }));
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function reorderVideosPlaylist(req, res) {
@@ -250,7 +251,7 @@ function reorderVideosPlaylist(req, res) {
         const insertAfter = body.insertAfterPosition;
         const reorderLength = body.reorderLength || 1;
         if (start === insertAfter) {
-            return res.status(204).end();
+            return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
         }
         yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const newPosition = insertAfter + 1;
@@ -269,7 +270,7 @@ function reorderVideosPlaylist(req, res) {
             yield regeneratePlaylistThumbnail(videoPlaylist);
         }
         logger_1.logger.info('Reordered playlist %s (inserted after position %d elements %d - %d).', videoPlaylist.uuid, insertAfter, start, start + reorderLength - 1);
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function getVideoPlaylistVideos(req, res) {

@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
+tslib_1.__exportStar(require("./abuse"), exports);
+tslib_1.__exportStar(require("./i18n"), exports);
 tslib_1.__exportStar(require("./logs"), exports);
 tslib_1.__exportStar(require("./miscs"), exports);
 tslib_1.__exportStar(require("./plugins"), exports);
+tslib_1.__exportStar(require("./renderer"), exports);
+tslib_1.__exportStar(require("./users"), exports);

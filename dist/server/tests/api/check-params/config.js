@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 const lodash_1 = require("lodash");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test config API validators', function () {
     const path = '/api/v1/config/custom';
     let server;
@@ -84,6 +85,25 @@ describe('Test config API validators', function () {
                 enabled: false
             }
         },
+        live: {
+            enabled: true,
+            allowReplay: false,
+            maxDuration: 30,
+            maxInstanceLives: -1,
+            maxUserLives: 50,
+            transcoding: {
+                enabled: true,
+                threads: 4,
+                resolutions: {
+                    '240p': true,
+                    '360p': true,
+                    '480p': true,
+                    '720p': true,
+                    '1080p': true,
+                    '2160p': true
+                }
+            }
+        },
         import: {
             videos: {
                 http: {
@@ -159,7 +179,7 @@ describe('Test config API validators', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -169,7 +189,7 @@ describe('Test config API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -181,7 +201,7 @@ describe('Test config API validators', function () {
                     url: server.url,
                     path,
                     fields: updateParams,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -192,7 +212,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: updateParams,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });
@@ -204,7 +224,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: newUpdateParams,
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -220,7 +240,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: newUpdateParams,
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -238,7 +258,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: newUpdateParams,
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -259,7 +279,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: newUpdateParams,
                     token: server.accessToken,
-                    statusCodeExpected: 400
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
                 });
             });
         });
@@ -270,7 +290,7 @@ describe('Test config API validators', function () {
                     path,
                     fields: updateParams,
                     token: server.accessToken,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -281,7 +301,7 @@ describe('Test config API validators', function () {
                 yield extra_utils_1.makeDeleteRequest({
                     url: server.url,
                     path,
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -291,7 +311,7 @@ describe('Test config API validators', function () {
                     url: server.url,
                     path,
                     token: userAccessToken,
-                    statusCodeExpected: 403
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
                 });
             });
         });

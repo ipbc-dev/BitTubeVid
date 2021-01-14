@@ -2,27 +2,40 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.publishNewResolutionIfNeeded = exports.processVideoTranscoding = void 0;
 const tslib_1 = require("tslib");
-const logger_1 = require("../../../helpers/logger");
-const video_1 = require("../../../models/video/video");
-const job_queue_1 = require("../job-queue");
-const videos_1 = require("../../activitypub/videos");
+const video_1 = require("@server/lib/video");
+const video_paths_1 = require("@server/lib/video-paths");
 const database_utils_1 = require("../../../helpers/database-utils");
-const database_1 = require("../../../initializers/database");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
-const video_transcoding_1 = require("../../video-transcoding");
-const notifier_1 = require("../../notifier");
+const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
+const logger_1 = require("../../../helpers/logger");
 const config_1 = require("../../../initializers/config");
+const database_1 = require("../../../initializers/database");
+const video_2 = require("../../../models/video/video");
+const videos_1 = require("../../activitypub/videos");
+const notifier_1 = require("../../notifier");
+const video_transcoding_1 = require("../../video-transcoding");
+const job_queue_1 = require("../job-queue");
 function processVideoTranscoding(job) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
         logger_1.logger.info('Processing video file in job %d.', job.id);
-        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(payload.videoUUID);
+        const video = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(payload.videoUUID);
         if (!video) {
             logger_1.logger.info('Do not process job %d, video does not exist.', job.id);
             return undefined;
         }
         if (payload.type === 'hls') {
-            yield video_transcoding_1.generateHlsPlaylist(video, payload.resolution, payload.copyCodecs, payload.isPortraitMode || false);
+            const videoFileInput = payload.copyCodecs
+                ? video.getWebTorrentFile(payload.resolution)
+                : video.getMaxQualityFile();
+            const videoOrStreamingPlaylist = videoFileInput.getVideoOrStreamingPlaylist();
+            const videoInputPath = video_paths_1.getVideoFilePath(videoOrStreamingPlaylist, videoFileInput);
+            yield video_transcoding_1.generateHlsPlaylist({
+                video,
+                videoInputPath,
+                resolution: payload.resolution,
+                copyCodecs: payload.copyCodecs,
+                isPortraitMode: payload.isPortraitMode || false
+            });
             yield database_utils_1.retryTransactionWrapper(onHlsPlaylistGenerationSuccess, video);
         }
         else if (payload.type === 'new-resolution') {
@@ -34,8 +47,8 @@ function processVideoTranscoding(job) {
             yield database_utils_1.retryTransactionWrapper(publishNewResolutionIfNeeded, video, payload);
         }
         else {
-            yield video_transcoding_1.optimizeOriginalVideofile(video);
-            yield database_utils_1.retryTransactionWrapper(onVideoFileOptimizerSuccess, video, payload);
+            const transcodeType = yield video_transcoding_1.optimizeOriginalVideofile(video);
+            yield database_utils_1.retryTransactionWrapper(onVideoFileOptimizerSuccess, video, payload, transcodeType);
         }
         return video;
     });
@@ -52,30 +65,34 @@ function onHlsPlaylistGenerationSuccess(video) {
             }
             video.VideoFiles = [];
         }
-        return publishAndFederateIfNeeded(video);
+        return video_1.publishAndFederateIfNeeded(video);
     });
 }
 function publishNewResolutionIfNeeded(video, payload) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        yield publishAndFederateIfNeeded(video);
-        yield createHlsJobIfEnabled(payload);
+        yield video_1.publishAndFederateIfNeeded(video);
+        createHlsJobIfEnabled(Object.assign({}, payload, { copyCodecs: true }));
     });
 }
 exports.publishNewResolutionIfNeeded = publishNewResolutionIfNeeded;
-function onVideoFileOptimizerSuccess(videoArg, payload) {
+function onVideoFileOptimizerSuccess(videoArg, payload, transcodeType) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         if (videoArg === undefined)
             return undefined;
         const { videoFileResolution, isPortraitMode } = yield videoArg.getMaxQualityResolution();
         const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
+            const videoDatabase = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(videoArg.uuid, t);
             if (!videoDatabase)
                 return undefined;
-            const resolutionsEnabled = ffmpeg_utils_1.computeResolutionsToTranscode(videoFileResolution);
+            const resolutionsEnabled = ffprobe_utils_1.computeResolutionsToTranscode(videoFileResolution, 'vod');
             logger_1.logger.info('Resolutions computed for video %s and origin file resolution of %d.', videoDatabase.uuid, videoFileResolution, { resolutions: resolutionsEnabled });
             let videoPublished = false;
-            const hlsPayload = Object.assign({}, payload, { resolution: videoDatabase.getMaxQualityFile().resolution });
-            yield createHlsJobIfEnabled(hlsPayload);
+            const originalFileHLSPayload = Object.assign({}, payload, {
+                isPortraitMode,
+                resolution: videoDatabase.getMaxQualityFile().resolution,
+                copyCodecs: transcodeType !== 'quick-transcode'
+            });
+            createHlsJobIfEnabled(originalFileHLSPayload);
             if (resolutionsEnabled.length !== 0) {
                 for (const resolution of resolutionsEnabled) {
                     let dataInput;
@@ -120,24 +137,8 @@ function createHlsJobIfEnabled(payload) {
             videoUUID: payload.videoUUID,
             resolution: payload.resolution,
             isPortraitMode: payload.isPortraitMode,
-            copyCodecs: true
+            copyCodecs: payload.copyCodecs
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'video-transcoding', payload: hlsTranscodingPayload });
     }
-}
-function publishAndFederateIfNeeded(video) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { videoDatabase, videoPublished } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const videoDatabase = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
-            if (!videoDatabase)
-                return undefined;
-            const videoPublished = yield videoDatabase.publishIfNeededAndSave(t);
-            yield videos_1.federateVideoIfNeeded(videoDatabase, videoPublished, t);
-            return { videoDatabase, videoPublished };
-        }));
-        if (videoPublished) {
-            notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoDatabase);
-            notifier_1.Notifier.Instance.notifyOnVideoPublishedAfterTranscoding(videoDatabase);
-        }
-    });
 }

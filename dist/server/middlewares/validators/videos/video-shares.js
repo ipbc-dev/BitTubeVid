@@ -8,6 +8,7 @@ const logger_1 = require("../../../helpers/logger");
 const video_share_1 = require("../../../models/video/video-share");
 const utils_1 = require("../utils");
 const middlewares_1 = require("../../../helpers/middlewares");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videosShareValidator = [
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.param('actorId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid actor id'),
@@ -20,7 +21,7 @@ const videosShareValidator = [
         const video = res.locals.videoAll;
         const share = yield video_share_1.VideoShareModel.load(req.params.actorId, video.id);
         if (!share) {
-            return res.status(404)
+            return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                 .end();
         }
         res.locals.videoShare = share;

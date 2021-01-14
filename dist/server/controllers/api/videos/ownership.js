@@ -12,6 +12,7 @@ const utils_1 = require("../../../helpers/utils");
 const share_1 = require("../../../lib/activitypub/share");
 const send_1 = require("../../../lib/activitypub/send");
 const video_1 = require("../../../models/video/video");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const ownershipVideoRouter = express.Router();
 exports.ownershipVideoRouter = ownershipVideoRouter;
 ownershipVideoRouter.post('/:videoId/give-ownership', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.videosChangeOwnershipValidator), middlewares_1.asyncRetryTransactionMiddleware(giveVideoOwnership));
@@ -41,7 +42,9 @@ function giveVideoOwnership(req, res) {
             });
         });
         logger_1.logger.info('Ownership change for video %s created.', videoInstance.name);
-        return res.type('json').status(204).end();
+        return res.type('json')
+            .status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204)
+            .end();
     });
 }
 function listVideoOwnership(req, res) {
@@ -67,7 +70,7 @@ function acceptOwnership(req, res) {
             }
             videoChangeOwnership.status = "ACCEPTED";
             yield videoChangeOwnership.save({ transaction: t });
-            return res.sendStatus(204);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
         }));
     });
 }
@@ -77,7 +80,7 @@ function refuseOwnership(req, res) {
             const videoChangeOwnership = res.locals.videoChangeOwnership;
             videoChangeOwnership.status = "REFUSED";
             yield videoChangeOwnership.save({ transaction: t });
-            return res.sendStatus(204);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
         }));
     });
 }

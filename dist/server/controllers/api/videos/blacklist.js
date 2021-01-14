@@ -9,6 +9,7 @@ const utils_1 = require("../../../helpers/utils");
 const database_1 = require("../../../initializers/database");
 const middlewares_1 = require("../../../middlewares");
 const video_blacklist_2 = require("../../../models/video/video-blacklist");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const blacklistRouter = express.Router();
 exports.blacklistRouter = blacklistRouter;
 blacklistRouter.post('/:videoId/blacklist', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(11), middlewares_1.asyncMiddleware(middlewares_1.videosBlacklistAddValidator), middlewares_1.asyncMiddleware(addVideoToBlacklistController));
@@ -21,7 +22,7 @@ function addVideoToBlacklistController(req, res) {
         const body = req.body;
         yield video_blacklist_1.blacklistVideo(videoInstance, body);
         logger_1.logger.info('Video %s blacklisted.', videoInstance.uuid);
-        return res.type('json').sendStatus(204);
+        return res.type('json').sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function updateVideoBlacklistController(req, res) {
@@ -32,7 +33,7 @@ function updateVideoBlacklistController(req, res) {
         yield database_1.sequelizeTypescript.transaction(t => {
             return videoBlacklist.save({ transaction: t });
         });
-        return res.type('json').sendStatus(204);
+        return res.type('json').sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
 function listBlacklist(req, res) {
@@ -53,6 +54,6 @@ function removeVideoFromBlacklistController(req, res) {
         const video = res.locals.videoAll;
         yield video_blacklist_1.unblacklistVideo(videoBlacklist, video);
         logger_1.logger.info('Video %s removed from blacklist.', video.uuid);
-        return res.type('json').sendStatus(204);
+        return res.type('json').sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }

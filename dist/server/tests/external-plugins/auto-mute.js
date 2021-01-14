@@ -6,6 +6,7 @@ const chai_1 = require("chai");
 const blocklist_1 = require("@shared/extra-utils/users/blocklist");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 describe('Official plugin auto-mute', function () {
     const autoMuteListPath = '/plugins/auto-mute/router/api/v1/mute-list';
     let servers;
@@ -140,7 +141,7 @@ describe('Official plugin auto-mute', function () {
             yield extra_utils_1.makeGetRequest({
                 url: servers[0].url,
                 path: '/plugins/auto-mute/router/api/v1/mute-list',
-                statusCodeExpected: 403
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.FORBIDDEN_403
             });
         });
     });
@@ -159,7 +160,7 @@ describe('Official plugin auto-mute', function () {
             yield extra_utils_1.makeGetRequest({
                 url: servers[0].url,
                 path: '/plugins/auto-mute/router/api/v1/mute-list',
-                statusCodeExpected: 200
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
             });
         });
     });
@@ -181,7 +182,7 @@ describe('Official plugin auto-mute', function () {
             const res = yield extra_utils_1.makeGetRequest({
                 url: servers[0].url,
                 path: '/plugins/auto-mute/router/api/v1/mute-list',
-                statusCodeExpected: 200
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
             });
             const data = res.body.data;
             chai_1.expect(data).to.have.lengthOf(1);

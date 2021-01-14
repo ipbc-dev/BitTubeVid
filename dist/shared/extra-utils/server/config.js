@@ -2,13 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateCustomSubConfig = exports.deleteCustomConfig = exports.getAbout = exports.updateCustomConfig = exports.getCustomConfig = exports.getConfig = void 0;
 const requests_1 = require("../requests/requests");
+const core_utils_1 = require("@shared/core-utils");
 const lodash_1 = require("lodash");
 function getConfig(url) {
     const path = '/api/v1/config';
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getConfig = getConfig;
@@ -17,11 +18,11 @@ function getAbout(url) {
     return requests_1.makeGetRequest({
         url,
         path,
-        statusCodeExpected: 200
+        statusCodeExpected: core_utils_1.HttpStatusCode.OK_200
     });
 }
 exports.getAbout = getAbout;
-function getCustomConfig(url, token, statusCodeExpected = 200) {
+function getCustomConfig(url, token, statusCodeExpected = core_utils_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/config/custom';
     return requests_1.makeGetRequest({
         url,
@@ -31,7 +32,7 @@ function getCustomConfig(url, token, statusCodeExpected = 200) {
     });
 }
 exports.getCustomConfig = getCustomConfig;
-function updateCustomConfig(url, token, newCustomConfig, statusCodeExpected = 200) {
+function updateCustomConfig(url, token, newCustomConfig, statusCodeExpected = core_utils_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/config/custom';
     return requests_1.makePutBodyRequest({
         url,
@@ -119,6 +120,25 @@ function updateCustomSubConfig(url, token, newConfig) {
                 enabled: false
             }
         },
+        live: {
+            enabled: true,
+            allowReplay: false,
+            maxDuration: -1,
+            maxInstanceLives: -1,
+            maxUserLives: 50,
+            transcoding: {
+                enabled: true,
+                threads: 4,
+                resolutions: {
+                    '240p': true,
+                    '360p': true,
+                    '480p': true,
+                    '720p': true,
+                    '1080p': true,
+                    '2160p': true
+                }
+            }
+        },
         import: {
             videos: {
                 http: {
@@ -179,7 +199,7 @@ function updateCustomSubConfig(url, token, newConfig) {
     return updateCustomConfig(url, token, updateParams);
 }
 exports.updateCustomSubConfig = updateCustomSubConfig;
-function deleteCustomConfig(url, token, statusCodeExpected = 200) {
+function deleteCustomConfig(url, token, statusCodeExpected = core_utils_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/config/custom';
     return requests_1.makeDeleteRequest({
         url,

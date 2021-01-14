@@ -1,13 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const overviews_1 = require("../../../../shared/extra-utils/overviews/overviews");
+const blocklist_1 = require("@shared/extra-utils/users/blocklist");
 const expect = chai.expect;
 describe('Test a videos overview', function () {
     let server = null;
+    function testOverviewCount(res, expected) {
+        const overview = res.body;
+        expect(overview.tags).to.have.lengthOf(expected);
+        expect(overview.categories).to.have.lengthOf(expected);
+        expect(overview.channels).to.have.lengthOf(expected);
+    }
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
@@ -18,10 +25,7 @@ describe('Test a videos overview', function () {
     it('Should send empty overview', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield overviews_1.getVideosOverview(server.url, 1);
-            const overview = res.body;
-            expect(overview.tags).to.have.lengthOf(0);
-            expect(overview.categories).to.have.lengthOf(0);
-            expect(overview.channels).to.have.lengthOf(0);
+            testOverviewCount(res, 0);
         });
     });
     it('Should upload 5 videos in a specific category, tag and channel but not include them in overview', function () {
@@ -34,10 +38,7 @@ describe('Test a videos overview', function () {
                 tags: ['coucou1', 'coucou2']
             });
             const res = yield overviews_1.getVideosOverview(server.url, 1);
-            const overview = res.body;
-            expect(overview.tags).to.have.lengthOf(0);
-            expect(overview.categories).to.have.lengthOf(0);
-            expect(overview.channels).to.have.lengthOf(0);
+            testOverviewCount(res, 0);
         });
     });
     it('Should upload another video and include all videos in the overview', function () {
@@ -53,10 +54,7 @@ describe('Test a videos overview', function () {
             yield extra_utils_1.wait(3000);
             {
                 const res = yield overviews_1.getVideosOverview(server.url, 1);
-                const overview = res.body;
-                expect(overview.tags).to.have.lengthOf(1);
-                expect(overview.categories).to.have.lengthOf(1);
-                expect(overview.channels).to.have.lengthOf(1);
+                testOverviewCount(res, 1);
             }
             {
                 const res = yield overviews_1.getVideosOverview(server.url, 2);
@@ -95,6 +93,20 @@ describe('Test a videos overview', function () {
             expect(tags.find(t => t === 'coucou2')).to.not.be.undefined;
             expect(overview1.categories[0].category.id).to.equal(3);
             expect(overview1.channels[0].channel.name).to.equal('root_channel');
+        });
+    });
+    it('Should hide muted accounts', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const token = yield extra_utils_1.generateUserAccessToken(server, 'choco');
+            yield blocklist_1.addAccountToAccountBlocklist(server.url, token, 'root@' + server.host);
+            {
+                const res = yield overviews_1.getVideosOverview(server.url, 1);
+                testOverviewCount(res, 1);
+            }
+            {
+                const res = yield overviews_1.getVideosOverviewWithToken(server.url, 1, token);
+                testOverviewCount(res, 0);
+            }
         });
     });
     after(function () {

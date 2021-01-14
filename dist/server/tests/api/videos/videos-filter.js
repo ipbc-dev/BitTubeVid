@@ -5,8 +5,9 @@ const chai = require("chai");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const users_1 = require("../../../../shared/models/users");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
-function getVideosNames(server, token, filter, statusCodeExpected = 200) {
+function getVideosNames(server, token, filter, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const paths = [
             '/api/v1/video-channels/root_channel/videos',
@@ -86,6 +87,19 @@ describe('Test videos filter validator', function () {
                             expect(names[1]).to.equal('unlisted ' + server.serverNumber);
                             expect(names[2]).to.equal('private ' + server.serverNumber);
                         }
+                    }
+                }
+            });
+        });
+        it('Should display all videos by the admin or the moderator', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                for (const server of servers) {
+                    for (const token of [server.accessToken, server['moderatorAccessToken']]) {
+                        const [channelVideos, accountVideos, videos, searchVideos] = yield getVideosNames(server, token, 'all');
+                        expect(channelVideos).to.have.lengthOf(3);
+                        expect(accountVideos).to.have.lengthOf(3);
+                        expect(videos).to.have.lengthOf(5);
+                        expect(searchVideos).to.have.lengthOf(5);
                     }
                 }
             });

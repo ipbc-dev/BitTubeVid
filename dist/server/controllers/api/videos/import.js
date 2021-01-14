@@ -3,29 +3,30 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoImportsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const fs_extra_1 = require("fs-extra");
 const magnetUtil = require("magnet-uri");
+const parseTorrent = require("parse-torrent");
+const path_1 = require("path");
+const video_1 = require("@server/lib/video");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const audit_logger_1 = require("../../../helpers/audit-logger");
-const middlewares_1 = require("../../../middlewares");
-const constants_1 = require("../../../initializers/constants");
-const youtube_dl_1 = require("../../../helpers/youtube-dl");
+const captions_utils_1 = require("../../../helpers/captions-utils");
+const misc_1 = require("../../../helpers/custom-validators/misc");
 const express_utils_1 = require("../../../helpers/express-utils");
 const logger_1 = require("../../../helpers/logger");
-const video_1 = require("../../../models/video/video");
-const video_caption_1 = require("../../../models/video/video-caption");
-const captions_utils_1 = require("../../../helpers/captions-utils");
-const url_1 = require("../../../lib/activitypub/url");
-const tag_1 = require("../../../models/video/tag");
-const video_import_1 = require("../../../models/video/video-import");
-const job_queue_1 = require("../../../lib/job-queue/job-queue");
-const path_1 = require("path");
-const misc_1 = require("../../../helpers/custom-validators/misc");
-const parseTorrent = require("parse-torrent");
 const utils_1 = require("../../../helpers/utils");
-const fs_extra_1 = require("fs-extra");
-const video_blacklist_1 = require("../../../lib/video-blacklist");
+const youtube_dl_1 = require("../../../helpers/youtube-dl");
 const config_1 = require("../../../initializers/config");
+const constants_1 = require("../../../initializers/constants");
 const database_1 = require("../../../initializers/database");
+const url_1 = require("../../../lib/activitypub/url");
+const job_queue_1 = require("../../../lib/job-queue/job-queue");
 const thumbnail_1 = require("../../../lib/thumbnail");
+const video_blacklist_1 = require("../../../lib/video-blacklist");
+const middlewares_1 = require("../../../middlewares");
+const video_2 = require("../../../models/video/video");
+const video_caption_1 = require("../../../models/video/video-caption");
+const video_import_1 = require("../../../models/video/video-import");
 const auditLogger = audit_logger_1.auditLoggerFactory('video-imports');
 const videoImportsRouter = express.Router();
 exports.videoImportsRouter = videoImportsRouter;
@@ -104,7 +105,7 @@ function addYoutubeDLImport(req, res) {
         }
         catch (err) {
             logger_1.logger.info('Cannot fetch information from import for URL %s.', targetUrl, { err });
-            return res.status(400).json({
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400).json({
                 error: 'Cannot fetch remote information of this URL.'
             }).end();
         }
@@ -185,8 +186,8 @@ function buildVideo(channelId, body, importData) {
         channelId: channelId,
         originallyPublishedAt: body.originallyPublishedAt || importData.originallyPublishedAt
     };
-    const video = new video_1.VideoModel(videoData);
-    video.url = url_1.getVideoActivityPubUrl(video);
+    const video = new video_2.VideoModel(videoData);
+    video.url = url_1.getLocalVideoActivityPubUrl(video);
     return video;
 }
 function processThumbnail(req, video) {
@@ -194,7 +195,12 @@ function processThumbnail(req, video) {
         const thumbnailField = req.files ? req.files['thumbnailfile'] : undefined;
         if (thumbnailField) {
             const thumbnailPhysicalFile = thumbnailField[0];
-            return thumbnail_1.createVideoMiniatureFromExisting(thumbnailPhysicalFile.path, video, 1, false);
+            return thumbnail_1.createVideoMiniatureFromExisting({
+                inputPath: thumbnailPhysicalFile.path,
+                video,
+                type: 1,
+                automaticallyGenerated: false
+            });
         }
         return undefined;
     });
@@ -204,7 +210,12 @@ function processPreview(req, video) {
         const previewField = req.files ? req.files['previewfile'] : undefined;
         if (previewField) {
             const previewPhysicalFile = previewField[0];
-            return thumbnail_1.createVideoMiniatureFromExisting(previewPhysicalFile.path, video, 2, false);
+            return thumbnail_1.createVideoMiniatureFromExisting({
+                inputPath: previewPhysicalFile.path,
+                video,
+                type: 2,
+                automaticallyGenerated: false
+            });
         }
         return undefined;
     });
@@ -249,14 +260,7 @@ function insertIntoDB(parameters) {
             isNew: true,
             transaction: t
         });
-        if (tags) {
-            const tagInstances = yield tag_1.TagModel.findOrCreateTags(tags, t);
-            yield videoCreated.$set('Tags', tagInstances, sequelizeOptions);
-            videoCreated.Tags = tagInstances;
-        }
-        else {
-            videoCreated.Tags = [];
-        }
+        yield video_1.setVideoTags({ video: videoCreated, tags, transaction: t });
         const videoImport = yield video_import_1.VideoImportModel.create(Object.assign({ videoId: videoCreated.id }, videoImportAttributes), sequelizeOptions);
         videoImport.Video = videoCreated;
         return videoImport;

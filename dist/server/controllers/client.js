@@ -7,14 +7,14 @@ const fs_1 = require("fs");
 const path_1 = require("path");
 const config_1 = require("@server/initializers/config");
 const i18n_1 = require("@shared/core-utils/i18n");
-const core_utils_1 = require("../helpers/core-utils");
-const logger_1 = require("../helpers/logger");
+const core_utils_1 = require("@shared/core-utils");
+const core_utils_2 = require("../helpers/core-utils");
 const constants_1 = require("../initializers/constants");
 const client_html_1 = require("../lib/client-html");
 const middlewares_1 = require("../middlewares");
 const clientsRouter = express.Router();
 exports.clientsRouter = clientsRouter;
-const distPath = path_1.join(core_utils_1.root(), 'client', 'dist');
+const distPath = path_1.join(core_utils_2.root(), 'client', 'dist');
 const testEmbedPath = path_1.join(distPath, 'standalone', 'videos', 'test-embed.html');
 clientsRouter.use('/videos/watch/playlist/:id', middlewares_1.asyncMiddleware(generateWatchPlaylistHtmlPage));
 clientsRouter.use('/videos/watch/:id', middlewares_1.asyncMiddleware(generateWatchHtmlPage));
@@ -41,7 +41,7 @@ const staticClientFiles = [
     'ngsw.json'
 ];
 for (const staticClientFile of staticClientFiles) {
-    const path = path_1.join(core_utils_1.root(), 'client', 'dist', staticClientFile);
+    const path = path_1.join(core_utils_2.root(), 'client', 'dist', staticClientFile);
     clientsRouter.get(`/${staticClientFile}`, (req, res) => {
         res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
     });
@@ -65,9 +65,9 @@ for (const staticClientOverride of staticClientOverrides) {
 clientsRouter.use('/client/locales/:locale/:file.json', serveServerTranslations);
 clientsRouter.use('/client', express.static(distPath, { maxAge: constants_1.STATIC_MAX_AGE.CLIENT }));
 clientsRouter.use('/client/*', (req, res) => {
-    res.sendStatus(404);
+    res.sendStatus(core_utils_1.HttpStatusCode.NOT_FOUND_404);
 });
-clientsRouter.use('/(:language)?', middlewares_1.asyncMiddleware(serveIndexHTML));
+clientsRouter.use('/(:language)?', middlewares_1.asyncMiddleware(client_html_1.serveIndexHTML));
 function serveServerTranslations(req, res) {
     const locale = req.params.locale;
     const file = req.params.file;
@@ -77,65 +77,41 @@ function serveServerTranslations(req, res) {
         const path = path_1.join(__dirname, `../../../client/dist/locale/${file}.${completeFileLocale}.json`);
         return res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
     }
-    return res.sendStatus(404);
-}
-function serveIndexHTML(req, res) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (req.accepts(constants_1.ACCEPT_HEADERS) === 'html') {
-            try {
-                yield generateHTMLPage(req, res, req.params.language);
-                return;
-            }
-            catch (err) {
-                logger_1.logger.error('Cannot generate HTML page.', err);
-            }
-        }
-        return res.status(404).end();
-    });
+    return res.sendStatus(core_utils_1.HttpStatusCode.NOT_FOUND_404);
 }
 function generateEmbedHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getEmbedHTML();
-        return sendHTML(html, res);
-    });
-}
-function generateHTMLPage(req, res, paramLang) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const html = yield client_html_1.ClientHtml.getDefaultHTMLPage(req, res, paramLang);
-        return sendHTML(html, res);
+        return client_html_1.sendHTML(html, res);
     });
 }
 function generateWatchHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getWatchHTMLPage(req.params.id + '', req, res);
-        return sendHTML(html, res);
+        return client_html_1.sendHTML(html, res);
     });
 }
 function generateWatchPlaylistHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getWatchPlaylistHTMLPage(req.params.id + '', req, res);
-        return sendHTML(html, res);
+        return client_html_1.sendHTML(html, res);
     });
 }
 function generateAccountHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getAccountHTMLPage(req.params.nameWithHost, req, res);
-        return sendHTML(html, res);
+        return client_html_1.sendHTML(html, res);
     });
 }
 function generateVideoChannelHtmlPage(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const html = yield client_html_1.ClientHtml.getVideoChannelHTMLPage(req.params.nameWithHost, req, res);
-        return sendHTML(html, res);
+        return client_html_1.sendHTML(html, res);
     });
-}
-function sendHTML(html, res) {
-    res.set('Content-Type', 'text/html; charset=UTF-8');
-    return res.send(html);
 }
 function generateManifest(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const manifestPhysicalPath = path_1.join(core_utils_1.root(), 'client', 'dist', 'manifest.webmanifest');
+        const manifestPhysicalPath = path_1.join(core_utils_2.root(), 'client', 'dist', 'manifest.webmanifest');
         const manifestJson = yield fs_1.promises.readFile(manifestPhysicalPath, 'utf8');
         const manifest = JSON.parse(manifestJson);
         manifest.name = config_1.CONFIG.INSTANCE.NAME;

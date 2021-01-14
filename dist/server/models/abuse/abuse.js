@@ -24,30 +24,6 @@ var ScopeNames;
     ScopeNames["FOR_API"] = "FOR_API";
 })(ScopeNames = exports.ScopeNames || (exports.ScopeNames = {}));
 let AbuseModel = AbuseModel_1 = class AbuseModel extends sequelize_typescript_1.Model {
-    static loadByIdAndVideoId(id, videoId, uuid) {
-        const videoWhere = {};
-        if (videoId)
-            videoWhere.videoId = videoId;
-        if (uuid)
-            videoWhere.deletedVideo = { uuid };
-        const query = {
-            include: [
-                {
-                    model: video_abuse_1.VideoAbuseModel,
-                    required: true,
-                    where: videoWhere
-                },
-                {
-                    model: account_1.AccountModel,
-                    as: 'ReporterAccount'
-                }
-            ],
-            where: {
-                id
-            }
-        };
-        return AbuseModel_1.findOne(query);
-    }
     static loadByIdWithReporter(id) {
         const query = {
             where: {
@@ -234,11 +210,7 @@ let AbuseModel = AbuseModel_1 = class AbuseModel extends sequelize_typescript_1.
                 ? this.ReporterAccount.toFormattedJSON()
                 : null,
             countReportsForReporter: (countReportsForReporter || 0),
-            countReportsForReportee: (countReportsForReportee || 0),
-            startAt: null,
-            endAt: null,
-            count: countReportsForVideo || 0,
-            nth: nthReportForVideo || 0
+            countReportsForReportee: (countReportsForReportee || 0)
         });
     }
     toFormattedUserJSON() {

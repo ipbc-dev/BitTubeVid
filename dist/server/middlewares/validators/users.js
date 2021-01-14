@@ -4,24 +4,26 @@ exports.ensureCanManageUser = exports.ensureAuthUserOwnsAccountValidator = expor
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const lodash_1 = require("lodash");
+const hooks_1 = require("@server/lib/plugins/hooks");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+const users_1 = require("../../../shared/models/users");
+const actor_1 = require("../../helpers/custom-validators/activitypub/actor");
 const misc_1 = require("../../helpers/custom-validators/misc");
-const users_1 = require("../../helpers/custom-validators/users");
+const plugins_1 = require("../../helpers/custom-validators/plugins");
+const users_2 = require("../../helpers/custom-validators/users");
+const video_channels_1 = require("../../helpers/custom-validators/video-channels");
 const logger_1 = require("../../helpers/logger");
+const middlewares_1 = require("../../helpers/middlewares");
 const signup_1 = require("../../helpers/signup");
+const theme_utils_1 = require("../../lib/plugins/theme-utils");
 const redis_1 = require("../../lib/redis");
 const user_1 = require("../../models/account/user");
+const actor_2 = require("../../models/activitypub/actor");
 const utils_1 = require("./utils");
-const actor_1 = require("../../models/activitypub/actor");
-const actor_2 = require("../../helpers/custom-validators/activitypub/actor");
-const video_channels_1 = require("../../helpers/custom-validators/video-channels");
-const plugins_1 = require("../../helpers/custom-validators/plugins");
-const theme_utils_1 = require("../../lib/plugins/theme-utils");
-const middlewares_1 = require("../../helpers/middlewares");
-const users_2 = require("../../../shared/models/users");
-const hooks_1 = require("@server/lib/plugins/hooks");
 const usersListValidator = [
     express_validator_1.query('blocked')
         .optional()
+        .customSanitizer(misc_1.toBooleanOrNull)
         .isBoolean().withMessage('Should be a valid boolean banned state'),
     (req, res, next) => {
         logger_1.logger.debug('Checking usersList parameters', { parameters: req.query });
@@ -32,16 +34,16 @@ const usersListValidator = [
 ];
 exports.usersListValidator = usersListValidator;
 const usersAddValidator = [
-    express_validator_1.body('username').custom(users_1.isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
-    express_validator_1.body('password').custom(users_1.isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
+    express_validator_1.body('username').custom(users_2.isUserUsernameValid).withMessage('Should have a valid username (lowercase alphanumeric characters)'),
+    express_validator_1.body('password').custom(users_2.isUserPasswordValidOrEmpty).withMessage('Should have a valid password'),
     express_validator_1.body('email').isEmail().withMessage('Should have a valid email'),
-    express_validator_1.body('channelName').optional().custom(actor_2.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
-    express_validator_1.body('videoQuota').custom(users_1.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
-    express_validator_1.body('videoQuotaDaily').custom(users_1.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
+    express_validator_1.body('channelName').optional().custom(actor_1.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
+    express_validator_1.body('videoQuota').custom(users_2.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
+    express_validator_1.body('videoQuotaDaily').custom(users_2.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
     express_validator_1.body('role')
         .customSanitizer(misc_1.toIntOrNull)
-        .custom(users_1.isUserRoleValid).withMessage('Should have a valid role'),
-    express_validator_1.body('adminFlags').optional().custom(users_1.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
+        .custom(users_2.isUserRoleValid).withMessage('Should have a valid role'),
+    express_validator_1.body('adminFlags').optional().custom(users_2.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersAdd parameters', { parameters: lodash_1.omit(req.body, 'password') });
         if (utils_1.areValidationErrors(req, res))
@@ -49,18 +51,21 @@ const usersAddValidator = [
         if (!(yield checkUserNameOrEmailDoesNotAlreadyExist(req.body.username, req.body.email, res)))
             return;
         const authUser = res.locals.oauth.token.User;
-        if (authUser.role !== users_2.UserRole.ADMINISTRATOR && req.body.role !== users_2.UserRole.USER) {
-            return res.status(403)
+        if (authUser.role !== users_1.UserRole.ADMINISTRATOR && req.body.role !== users_1.UserRole.USER) {
+            return res
+                .status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'You can only create users (and not administrators or moderators)' });
         }
         if (req.body.channelName) {
             if (req.body.channelName === req.body.username) {
-                return res.status(400)
+                return res
+                    .status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'Channel name cannot be the same as user username.' });
             }
-            const existing = yield actor_1.ActorModel.loadLocalByName(req.body.channelName);
+            const existing = yield actor_2.ActorModel.loadLocalByName(req.body.channelName);
             if (existing) {
-                return res.status(409)
+                return res
+                    .status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                     .json({ error: `Channel with name ${req.body.channelName} already exists.` });
             }
         }
@@ -69,15 +74,15 @@ const usersAddValidator = [
 ];
 exports.usersAddValidator = usersAddValidator;
 const usersRegisterValidator = [
-    express_validator_1.body('username').custom(users_1.isUserUsernameValid).withMessage('Should have a valid username'),
-    express_validator_1.body('password').custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
+    express_validator_1.body('username').custom(users_2.isUserUsernameValid).withMessage('Should have a valid username'),
+    express_validator_1.body('password').custom(users_2.isUserPasswordValid).withMessage('Should have a valid password'),
     express_validator_1.body('email').isEmail().withMessage('Should have a valid email'),
     express_validator_1.body('displayName')
         .optional()
-        .custom(users_1.isUserDisplayNameValid).withMessage('Should have a valid display name'),
+        .custom(users_2.isUserDisplayNameValid).withMessage('Should have a valid display name'),
     express_validator_1.body('channel.name')
         .optional()
-        .custom(actor_2.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
+        .custom(actor_1.isActorPreferredUsernameValid).withMessage('Should have a valid channel name'),
     express_validator_1.body('channel.displayName')
         .optional()
         .custom(video_channels_1.isVideoChannelNameValid).withMessage('Should have a valid display name'),
@@ -90,16 +95,17 @@ const usersRegisterValidator = [
         const body = req.body;
         if (body.channel) {
             if (!body.channel.name || !body.channel.displayName) {
-                return res.status(400)
+                return res
+                    .status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'Channel is optional but if you specify it, channel.name and channel.displayName are required.' });
             }
             if (body.channel.name === body.username) {
-                return res.status(400)
+                return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'Channel name cannot be the same as user username.' });
             }
-            const existing = yield actor_1.ActorModel.loadLocalByName(body.channel.name);
+            const existing = yield actor_2.ActorModel.loadLocalByName(body.channel.name);
             if (existing) {
-                return res.status(409)
+                return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                     .json({ error: `Channel with name ${body.channel.name} already exists.` });
             }
         }
@@ -117,7 +123,7 @@ const usersRemoveValidator = [
             return;
         const user = res.locals.user;
         if (user.username === 'root') {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Cannot remove the root user' });
         }
         return next();
@@ -126,7 +132,7 @@ const usersRemoveValidator = [
 exports.usersRemoveValidator = usersRemoveValidator;
 const usersBlockingValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
-    express_validator_1.body('reason').optional().custom(users_1.isUserBlockedReasonValid).withMessage('Should have a valid blocking reason'),
+    express_validator_1.body('reason').optional().custom(users_2.isUserBlockedReasonValid).withMessage('Should have a valid blocking reason'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersBlocking parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
@@ -135,7 +141,7 @@ const usersBlockingValidator = [
             return;
         const user = res.locals.user;
         if (user.username === 'root') {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Cannot block the root user' });
         }
         return next();
@@ -146,7 +152,7 @@ const deleteMeValidator = [
     (req, res, next) => {
         const user = res.locals.oauth.token.User;
         if (user.username === 'root') {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'You cannot delete your root account.' })
                 .end();
         }
@@ -156,16 +162,16 @@ const deleteMeValidator = [
 exports.deleteMeValidator = deleteMeValidator;
 const usersUpdateValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
-    express_validator_1.body('password').optional().custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
+    express_validator_1.body('password').optional().custom(users_2.isUserPasswordValid).withMessage('Should have a valid password'),
     express_validator_1.body('email').optional().isEmail().withMessage('Should have a valid email attribute'),
     express_validator_1.body('emailVerified').optional().isBoolean().withMessage('Should have a valid email verified attribute'),
-    express_validator_1.body('videoQuota').optional().custom(users_1.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
-    express_validator_1.body('videoQuotaDaily').optional().custom(users_1.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
+    express_validator_1.body('videoQuota').optional().custom(users_2.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
+    express_validator_1.body('videoQuotaDaily').optional().custom(users_2.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
     express_validator_1.body('role')
         .optional()
         .customSanitizer(misc_1.toIntOrNull)
-        .custom(users_1.isUserRoleValid).withMessage('Should have a valid role'),
-    express_validator_1.body('adminFlags').optional().custom(users_1.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
+        .custom(users_2.isUserRoleValid).withMessage('Should have a valid role'),
+    express_validator_1.body('adminFlags').optional().custom(users_2.isUserAdminFlagsValid).withMessage('Should have a valid admin flags'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersUpdate parameters', { parameters: req.body });
         if (utils_1.areValidationErrors(req, res))
@@ -174,7 +180,7 @@ const usersUpdateValidator = [
             return;
         const user = res.locals.user;
         if (user.username === 'root' && req.body.role !== undefined && user.role !== req.body.role) {
-            return res.status(400)
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Cannot change root role.' });
         }
         return next();
@@ -184,57 +190,57 @@ exports.usersUpdateValidator = usersUpdateValidator;
 const usersUpdateMeValidator = [
     express_validator_1.body('displayName')
         .optional()
-        .custom(users_1.isUserDisplayNameValid).withMessage('Should have a valid display name'),
+        .custom(users_2.isUserDisplayNameValid).withMessage('Should have a valid display name'),
     express_validator_1.body('description')
         .optional()
-        .custom(users_1.isUserDescriptionValid).withMessage('Should have a valid description'),
+        .custom(users_2.isUserDescriptionValid).withMessage('Should have a valid description'),
     express_validator_1.body('currentPassword')
         .optional()
-        .custom(users_1.isUserPasswordValid).withMessage('Should have a valid current password'),
+        .custom(users_2.isUserPasswordValid).withMessage('Should have a valid current password'),
     express_validator_1.body('password')
         .optional()
-        .custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
+        .custom(users_2.isUserPasswordValid).withMessage('Should have a valid password'),
     express_validator_1.body('email')
         .optional()
         .isEmail().withMessage('Should have a valid email attribute'),
     express_validator_1.body('nsfwPolicy')
         .optional()
-        .custom(users_1.isUserNSFWPolicyValid).withMessage('Should have a valid display Not Safe For Work policy'),
+        .custom(users_2.isUserNSFWPolicyValid).withMessage('Should have a valid display Not Safe For Work policy'),
     express_validator_1.body('autoPlayVideo')
         .optional()
-        .custom(users_1.isUserAutoPlayVideoValid).withMessage('Should have a valid automatically plays video attribute'),
+        .custom(users_2.isUserAutoPlayVideoValid).withMessage('Should have a valid automatically plays video attribute'),
     express_validator_1.body('videoLanguages')
         .optional()
-        .custom(users_1.isUserVideoLanguages).withMessage('Should have a valid video languages attribute'),
+        .custom(users_2.isUserVideoLanguages).withMessage('Should have a valid video languages attribute'),
     express_validator_1.body('videosHistoryEnabled')
         .optional()
-        .custom(users_1.isUserVideosHistoryEnabledValid).withMessage('Should have a valid videos history enabled attribute'),
+        .custom(users_2.isUserVideosHistoryEnabledValid).withMessage('Should have a valid videos history enabled attribute'),
     express_validator_1.body('theme')
         .optional()
         .custom(v => plugins_1.isThemeNameValid(v) && theme_utils_1.isThemeRegistered(v)).withMessage('Should have a valid theme'),
     express_validator_1.body('noInstanceConfigWarningModal')
         .optional()
-        .custom(v => users_1.isNoInstanceConfigWarningModal(v)).withMessage('Should have a valid noInstanceConfigWarningModal boolean'),
+        .custom(v => users_2.isNoInstanceConfigWarningModal(v)).withMessage('Should have a valid noInstanceConfigWarningModal boolean'),
     express_validator_1.body('noWelcomeModal')
         .optional()
-        .custom(v => users_1.isNoWelcomeModal(v)).withMessage('Should have a valid noWelcomeModal boolean'),
+        .custom(v => users_2.isNoWelcomeModal(v)).withMessage('Should have a valid noWelcomeModal boolean'),
     express_validator_1.body('autoPlayNextVideo')
         .optional()
-        .custom(v => users_1.isUserAutoPlayNextVideoValid(v)).withMessage('Should have a valid autoPlayNextVideo boolean'),
+        .custom(v => users_2.isUserAutoPlayNextVideoValid(v)).withMessage('Should have a valid autoPlayNextVideo boolean'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersUpdateMe parameters', { parameters: lodash_1.omit(req.body, 'password') });
         const user = res.locals.oauth.token.User;
         if (req.body.password || req.body.email) {
             if (user.pluginAuth !== null) {
-                return res.status(400)
+                return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'You cannot update your email or password that is associated with an external auth system.' });
             }
             if (!req.body.currentPassword) {
-                return res.status(400)
+                return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                     .json({ error: 'currentPassword parameter is missing.' });
             }
             if ((yield user.isPasswordMatch(req.body.currentPassword)) !== true) {
-                return res.status(401)
+                return res.status(http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401)
                     .json({ error: 'currentPassword is invalid.' });
             }
         }
@@ -277,7 +283,7 @@ const ensureUserRegistrationAllowed = [
         };
         const allowedResult = yield hooks_1.Hooks.wrapPromiseFun(signup_1.isSignupAllowed, allowedParams, 'filter:api.user.signup.allowed.result');
         if (allowedResult.allowed === false) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: allowedResult.errorMessage || 'User registration is not enabled or user limit is reached.' });
         }
         return next();
@@ -288,7 +294,7 @@ const ensureUserRegistrationAllowedForIP = [
     (req, res, next) => {
         const allowed = signup_1.isSignupAllowedForCurrentIP(req.ip);
         if (allowed === false) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'You are not on a network authorized for registration.' });
         }
         return next();
@@ -304,7 +310,7 @@ const usersAskResetPasswordValidator = [
         const exists = yield checkUserEmailExist(req.body.email, res, false);
         if (!exists) {
             logger_1.logger.debug('User with email %s does not exist (asking reset password).', req.body.email);
-            return res.status(204).end();
+            return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
         }
         return next();
     })
@@ -313,7 +319,7 @@ exports.usersAskResetPasswordValidator = usersAskResetPasswordValidator;
 const usersResetPasswordValidator = [
     express_validator_1.param('id').isInt().not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('verificationString').not().isEmpty().withMessage('Should have a valid verification string'),
-    express_validator_1.body('password').custom(users_1.isUserPasswordValid).withMessage('Should have a valid password'),
+    express_validator_1.body('password').custom(users_2.isUserPasswordValid).withMessage('Should have a valid password'),
     (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         logger_1.logger.debug('Checking usersResetPassword parameters', { parameters: req.params });
         if (utils_1.areValidationErrors(req, res))
@@ -324,7 +330,7 @@ const usersResetPasswordValidator = [
         const redisVerificationString = yield redis_1.Redis.Instance.getResetPasswordLink(user.id);
         if (redisVerificationString !== req.body.verificationString) {
             return res
-                .status(403)
+                .status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Invalid verification string.' });
         }
         return next();
@@ -340,7 +346,7 @@ const usersAskSendVerifyEmailValidator = [
         const exists = yield checkUserEmailExist(req.body.email, res, false);
         if (!exists) {
             logger_1.logger.debug('User with email %s does not exist (asking verify email).', req.body.email);
-            return res.status(204).end();
+            return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
         }
         return next();
     })
@@ -364,7 +370,7 @@ const usersVerifyEmailValidator = [
         const redisVerificationString = yield redis_1.Redis.Instance.getVerifyEmailLink(user.id);
         if (redisVerificationString !== req.body.verificationString) {
             return res
-                .status(403)
+                .status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Invalid verification string.' });
         }
         return next();
@@ -379,7 +385,7 @@ const ensureAuthUserOwnsAccountValidator = [
     (req, res, next) => {
         const user = res.locals.oauth.token.User;
         if (res.locals.account.id !== user.Account.id) {
-            return res.status(403)
+            return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Only owner can access ratings list.' });
         }
         return next();
@@ -390,18 +396,18 @@ const ensureCanManageUser = [
     (req, res, next) => {
         const authUser = res.locals.oauth.token.User;
         const onUser = res.locals.user;
-        if (authUser.role === users_2.UserRole.ADMINISTRATOR)
+        if (authUser.role === users_1.UserRole.ADMINISTRATOR)
             return next();
-        if (authUser.role === users_2.UserRole.MODERATOR && onUser.role === users_2.UserRole.USER)
+        if (authUser.role === users_1.UserRole.MODERATOR && onUser.role === users_1.UserRole.USER)
             return next();
-        return res.status(403)
+        return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({ error: 'A moderator can only manager users.' });
     }
 ];
 exports.ensureCanManageUser = ensureCanManageUser;
 function checkUserIdExist(idArg, res, withStats = false) {
     const id = parseInt(idArg + '', 10);
-    return checkUserExist(() => user_1.UserModel.loadById(id, withStats), res);
+    return checkUserExist(() => user_1.UserModel.loadByIdWithChannels(id, withStats), res);
 }
 function checkUserEmailExist(email, res, abortResponse = true) {
     return checkUserExist(() => user_1.UserModel.loadByEmail(email), res, abortResponse);
@@ -410,13 +416,13 @@ function checkUserNameOrEmailDoesNotAlreadyExist(username, email, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = yield user_1.UserModel.loadByUsernameOrEmail(username, email);
         if (user) {
-            res.status(409)
+            res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'User with this username or email already exists.' });
             return false;
         }
-        const actor = yield actor_1.ActorModel.loadLocalByName(username);
+        const actor = yield actor_2.ActorModel.loadLocalByName(username);
         if (actor) {
-            res.status(409)
+            res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'Another actor (account/channel) with this name on this instance already exists or has already existed.' });
             return false;
         }
@@ -428,7 +434,7 @@ function checkUserExist(finder, res, abortResponse = true) {
         const user = yield finder();
         if (!user) {
             if (abortResponse === true) {
-                res.status(404)
+                res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                     .json({ error: 'User not found' });
             }
             return false;

@@ -64,7 +64,7 @@ exports.addVideoShares = addVideoShares;
 function shareByServer(video, t) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const serverActor = yield application_1.getServerActor();
-        const serverShareUrl = url_1.getVideoAnnounceActivityPubUrl(serverActor, video);
+        const serverShareUrl = url_1.getLocalVideoAnnounceActivityPubUrl(serverActor, video);
         const [serverShare] = yield video_share_1.VideoShareModel.findOrCreate({
             defaults: {
                 actorId: serverActor.id,
@@ -81,7 +81,7 @@ function shareByServer(video, t) {
 }
 function shareByVideoChannel(video, t) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const videoChannelShareUrl = url_1.getVideoAnnounceActivityPubUrl(video.VideoChannel.Actor, video);
+        const videoChannelShareUrl = url_1.getLocalVideoAnnounceActivityPubUrl(video.VideoChannel.Actor, video);
         const [videoChannelShare] = yield video_share_1.VideoShareModel.findOrCreate({
             defaults: {
                 actorId: video.VideoChannel.actorId,

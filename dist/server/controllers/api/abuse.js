@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.reportAbuse = exports.deleteAbuse = exports.updateAbuse = exports.listAbusesForAdmins = exports.abuseRouter = void 0;
+exports.abuseRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
 const logger_1 = require("@server/helpers/logger");
@@ -10,6 +10,7 @@ const abuse_1 = require("@server/models/abuse/abuse");
 const abuse_message_1 = require("@server/models/abuse/abuse-message");
 const application_1 = require("@server/models/application/application");
 const abuse_2 = require("@shared/core-utils/abuse");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
 const utils_1 = require("../../helpers/utils");
 const database_1 = require("../../initializers/database");
 const middlewares_1 = require("../../middlewares");
@@ -50,7 +51,6 @@ function listAbusesForAdmins(req, res) {
         });
     });
 }
-exports.listAbusesForAdmins = listAbusesForAdmins;
 function updateAbuse(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const abuse = res.locals.abuse;
@@ -69,20 +69,18 @@ function updateAbuse(req, res) {
                 .then(abuseFull => notifier_1.Notifier.Instance.notifyOnAbuseStateChange(abuseFull))
                 .catch(err => logger_1.logger.error('Cannot notify on abuse state change', { err }));
         }
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
-exports.updateAbuse = updateAbuse;
 function deleteAbuse(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const abuse = res.locals.abuse;
         yield database_1.sequelizeTypescript.transaction(t => {
             return abuse.destroy({ transaction: t });
         });
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }
-exports.deleteAbuse = deleteAbuse;
 function reportAbuse(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoInstance = res.locals.videoAll;
@@ -127,7 +125,6 @@ function reportAbuse(req, res) {
         return res.json({ abuse: { id } });
     });
 }
-exports.reportAbuse = reportAbuse;
 function listAbuseMessages(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const abuse = res.locals.abuse;
@@ -161,6 +158,6 @@ function deleteAbuseMessage(req, res) {
         yield database_1.sequelizeTypescript.transaction(t => {
             return abuseMessage.destroy({ transaction: t });
         });
-        return res.sendStatus(204);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }

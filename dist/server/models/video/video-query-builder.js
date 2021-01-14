@@ -31,7 +31,7 @@ function buildListQuery(model, options) {
             '  AND "serverBlocklist"."targetServerId" = "accountActor"."serverId"' +
             ')');
     }
-    if (!options.filter || options.filter !== 'all-local') {
+    if (!options.filter || (options.filter !== 'all-local' && options.filter !== 'all')) {
         and.push(`("video"."state" = ${1} OR ` +
             `("video"."state" = ${2} AND "video"."waitTranscoding" IS false))`);
         if (options.user) {

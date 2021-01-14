@@ -97,10 +97,11 @@ let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_t
         return VideoFileModel_1.findAll(query);
     }
     static getStats() {
-        const query = {
+        const webtorrentFilesQuery = {
             include: [
                 {
                     attributes: [],
+                    required: true,
                     model: video_1.VideoModel.unscoped(),
                     where: {
                         remote: false
@@ -108,9 +109,30 @@ let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_t
                 }
             ]
         };
-        return VideoFileModel_1.aggregate('size', 'SUM', query)
-            .then(result => ({
-            totalLocalVideoFilesSize: utils_1.parseAggregateResult(result)
+        const hlsFilesQuery = {
+            include: [
+                {
+                    attributes: [],
+                    required: true,
+                    model: video_streaming_playlist_1.VideoStreamingPlaylistModel.unscoped(),
+                    include: [
+                        {
+                            attributes: [],
+                            model: video_1.VideoModel.unscoped(),
+                            required: true,
+                            where: {
+                                remote: false
+                            }
+                        }
+                    ]
+                }
+            ]
+        };
+        return Promise.all([
+            VideoFileModel_1.aggregate('size', 'SUM', webtorrentFilesQuery),
+            VideoFileModel_1.aggregate('size', 'SUM', hlsFilesQuery)
+        ]).then(([webtorrentResult, hlsResult]) => ({
+            totalLocalVideoFilesSize: utils_1.parseAggregateResult(webtorrentResult) + utils_1.parseAggregateResult(hlsResult)
         }));
     }
     static customUpsert(videoFile, mode, transaction) {
@@ -132,6 +154,12 @@ let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_t
             return element.save({ transaction });
         });
     }
+    static removeHLSFilesOfVideoId(videoStreamingPlaylistId) {
+        const options = {
+            where: { videoStreamingPlaylistId }
+        };
+        return VideoFileModel_1.destroy(options);
+    }
     getVideoOrStreamingPlaylist() {
         if (this.videoId)
             return this.Video;
@@ -139,6 +167,12 @@ let VideoFileModel = VideoFileModel_1 = class VideoFileModel extends sequelize_t
     }
     isAudio() {
         return !!constants_1.MIMETYPES.AUDIO.EXT_MIMETYPE[this.extname];
+    }
+    isLive() {
+        return this.size === -1;
+    }
+    isHLS() {
+        return !!this.videoStreamingPlaylistId;
     }
     hasSameUniqueKeysThan(other) {
         return this.fps === other.fps &&
@@ -179,8 +213,8 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:type", String)
 ], VideoFileModel.prototype, "extname", void 0);
 tslib_1.__decorate([
-    sequelize_typescript_1.AllowNull(false),
-    sequelize_typescript_1.Is('VideoFileInfohash', value => utils_1.throwIfNotValid(value, videos_1.isVideoFileInfoHashValid, 'info hash')),
+    sequelize_typescript_1.AllowNull(true),
+    sequelize_typescript_1.Is('VideoFileInfohash', value => utils_1.throwIfNotValid(value, videos_1.isVideoFileInfoHashValid, 'info hash', true)),
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], VideoFileModel.prototype, "infoHash", void 0);

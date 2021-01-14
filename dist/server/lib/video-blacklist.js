@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.unblacklistVideo = exports.blacklistVideo = exports.autoBlacklistVideoIfNeeded = void 0;
 const tslib_1 = require("tslib");
+const database_utils_1 = require("@server/helpers/database-utils");
 const database_1 = require("@server/initializers/database");
 const logger_1 = require("../helpers/logger");
 const config_1 = require("../initializers/config");
 const video_blacklist_1 = require("../models/video/video-blacklist");
 const send_1 = require("./activitypub/send");
 const videos_1 = require("./activitypub/videos");
+const live_manager_1 = require("./live-manager");
 const notifier_1 = require("./notifier");
 const hooks_1 = require("./plugins/hooks");
 function autoBlacklistVideoIfNeeded(parameters) {
@@ -31,8 +33,11 @@ function autoBlacklistVideoIfNeeded(parameters) {
         });
         video.VideoBlacklist = videoBlacklist;
         videoBlacklist.Video = video;
-        if (notify)
-            notifier_1.Notifier.Instance.notifyOnVideoAutoBlacklist(videoBlacklist);
+        if (notify) {
+            database_utils_1.afterCommitIfTransaction(transaction, () => {
+                notifier_1.Notifier.Instance.notifyOnVideoAutoBlacklist(videoBlacklist);
+            });
+        }
         logger_1.logger.info('Video %s auto-blacklisted.', video.uuid);
         return true;
     });
@@ -49,6 +54,9 @@ function blacklistVideo(videoInstance, options) {
         blacklist.Video = videoInstance;
         if (options.unfederate === true) {
             yield send_1.sendDeleteVideo(videoInstance, undefined);
+        }
+        if (videoInstance.isLive) {
+            live_manager_1.LiveManager.Instance.stopSessionOf(videoInstance.id);
         }
         notifier_1.Notifier.Instance.notifyOnVideoBlacklist(blacklist);
     });

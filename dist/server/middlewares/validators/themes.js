@@ -7,6 +7,7 @@ const utils_1 = require("./utils");
 const plugins_1 = require("../../helpers/custom-validators/plugins");
 const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const misc_1 = require("../../helpers/custom-validators/misc");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const serveThemeCSSValidator = [
     express_validator_1.param('themeName').custom(plugins_1.isPluginNameValid).withMessage('Should have a valid theme name'),
     express_validator_1.param('themeVersion').custom(plugins_1.isPluginVersionValid).withMessage('Should have a valid theme version'),
@@ -17,10 +18,10 @@ const serveThemeCSSValidator = [
             return;
         const theme = plugin_manager_1.PluginManager.Instance.getRegisteredThemeByShortName(req.params.themeName);
         if (!theme || theme.version !== req.params.themeVersion) {
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         }
         if (theme.css.includes(req.params.staticEndpoint) === false) {
-            return res.sendStatus(404);
+            return res.sendStatus(http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
         }
         res.locals.registeredPlugin = theme;
         return next();

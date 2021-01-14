@@ -2,7 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeUserSubscription = exports.listUserSubscriptionVideos = exports.getUserSubscription = exports.listUserSubscriptions = exports.addUserSubscription = exports.areSubscriptionsExist = void 0;
 const requests_1 = require("../requests/requests");
-function addUserSubscription(url, token, targetUri, statusCodeExpected = 204) {
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
+function addUserSubscription(url, token, targetUri, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me/subscriptions';
     return requests_1.makePostBodyRequest({
         url,
@@ -14,7 +15,7 @@ function addUserSubscription(url, token, targetUri, statusCodeExpected = 204) {
 }
 exports.addUserSubscription = addUserSubscription;
 function listUserSubscriptions(parameters) {
-    const { url, token, sort = '-createdAt', search, statusCodeExpected = 200 } = parameters;
+    const { url, token, sort = '-createdAt', search, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200 } = parameters;
     const path = '/api/v1/users/me/subscriptions';
     return requests_1.makeGetRequest({
         url,
@@ -28,7 +29,7 @@ function listUserSubscriptions(parameters) {
     });
 }
 exports.listUserSubscriptions = listUserSubscriptions;
-function listUserSubscriptionVideos(url, token, sort = '-createdAt', statusCodeExpected = 200) {
+function listUserSubscriptionVideos(url, token, sort = '-createdAt', statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me/subscriptions/videos';
     return requests_1.makeGetRequest({
         url,
@@ -39,7 +40,7 @@ function listUserSubscriptionVideos(url, token, sort = '-createdAt', statusCodeE
     });
 }
 exports.listUserSubscriptionVideos = listUserSubscriptionVideos;
-function getUserSubscription(url, token, uri, statusCodeExpected = 200) {
+function getUserSubscription(url, token, uri, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me/subscriptions/' + uri;
     return requests_1.makeGetRequest({
         url,
@@ -49,7 +50,7 @@ function getUserSubscription(url, token, uri, statusCodeExpected = 200) {
     });
 }
 exports.getUserSubscription = getUserSubscription;
-function removeUserSubscription(url, token, uri, statusCodeExpected = 204) {
+function removeUserSubscription(url, token, uri, statusCodeExpected = http_error_codes_1.HttpStatusCode.NO_CONTENT_204) {
     const path = '/api/v1/users/me/subscriptions/' + uri;
     return requests_1.makeDeleteRequest({
         url,
@@ -59,7 +60,7 @@ function removeUserSubscription(url, token, uri, statusCodeExpected = 204) {
     });
 }
 exports.removeUserSubscription = removeUserSubscription;
-function areSubscriptionsExist(url, token, uris, statusCodeExpected = 200) {
+function areSubscriptionsExist(url, token, uris, statusCodeExpected = http_error_codes_1.HttpStatusCode.OK_200) {
     const path = '/api/v1/users/me/subscriptions/exist';
     return requests_1.makeGetRequest({
         url,

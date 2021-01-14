@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1606752307341,
+  "timestamp": 1610615934570,
   "index": "/client/ru-RU/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/ru-RU/index.html": "4c3d3b205b05ab20034d42aca1bd9a9b97c4947d",
+    "/client/ru-RU/index.html": "0644751cca21829d44bd836682af36fd1e12f871",
     "/client/ru-RU/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
@@ -49,5 +49,6 @@
       "positive": false,
       "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }

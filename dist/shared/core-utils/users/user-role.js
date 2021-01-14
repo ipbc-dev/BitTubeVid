@@ -19,10 +19,11 @@ const userRoleRights = {
         14,
         15,
         16,
-        18,
+        19,
         9,
         10,
-        1
+        1,
+        20
     ],
     [users_1.UserRole.USER]: []
 };

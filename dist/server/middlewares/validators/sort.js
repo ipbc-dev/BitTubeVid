@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pluginsSortValidator = exports.videoRedundanciesSortValidator = exports.videoPlaylistsSortValidator = exports.userNotificationsSortValidator = exports.serversBlocklistSortValidator = exports.accountsBlocklistSortValidator = exports.videoChannelsSearchSortValidator = exports.availablePluginsSortValidator = exports.userSubscriptionsSortValidator = exports.videoRatesSortValidator = exports.videoCommentThreadsSortValidator = exports.jobsSortValidator = exports.followingSortValidator = exports.followersSortValidator = exports.accountsSortValidator = exports.blacklistSortValidator = exports.videosSortValidator = exports.videosSearchSortValidator = exports.videoImportsSortValidator = exports.videoChannelsSortValidator = exports.abusesSortValidator = exports.usersSortValidator = void 0;
+exports.pluginsSortValidator = exports.videoRedundanciesSortValidator = exports.videoPlaylistsSortValidator = exports.userNotificationsSortValidator = exports.serversBlocklistSortValidator = exports.accountsBlocklistSortValidator = exports.videoChannelsSearchSortValidator = exports.availablePluginsSortValidator = exports.userSubscriptionsSortValidator = exports.videoRatesSortValidator = exports.videoCommentThreadsSortValidator = exports.jobsSortValidator = exports.followingSortValidator = exports.followersSortValidator = exports.accountsSortValidator = exports.blacklistSortValidator = exports.videosSortValidator = exports.videosSearchSortValidator = exports.videoCommentsValidator = exports.videoImportsSortValidator = exports.videoChannelsSortValidator = exports.abusesSortValidator = exports.usersSortValidator = void 0;
 const constants_1 = require("../../initializers/constants");
 const utils_1 = require("./utils");
 const SORTABLE_USERS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.USERS);
@@ -11,6 +11,7 @@ const SORTABLE_VIDEOS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTAB
 const SORTABLE_VIDEOS_SEARCH_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEOS_SEARCH);
 const SORTABLE_VIDEO_CHANNELS_SEARCH_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEO_CHANNELS_SEARCH);
 const SORTABLE_VIDEO_IMPORTS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEO_IMPORTS);
+const SORTABLE_VIDEO_COMMENTS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEO_COMMENT_THREADS);
 const SORTABLE_VIDEO_COMMENT_THREADS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEO_COMMENT_THREADS);
 const SORTABLE_VIDEO_RATES_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.VIDEO_RATES);
 const SORTABLE_BLACKLISTS_COLUMNS = utils_1.createSortableColumns(constants_1.SORTABLE_COLUMNS.BLACKLISTS);
@@ -41,6 +42,8 @@ const videosSearchSortValidator = utils_1.checkSort(SORTABLE_VIDEOS_SEARCH_COLUM
 exports.videosSearchSortValidator = videosSearchSortValidator;
 const videoChannelsSearchSortValidator = utils_1.checkSort(SORTABLE_VIDEO_CHANNELS_SEARCH_COLUMNS);
 exports.videoChannelsSearchSortValidator = videoChannelsSearchSortValidator;
+const videoCommentsValidator = utils_1.checkSort(SORTABLE_VIDEO_COMMENTS_COLUMNS);
+exports.videoCommentsValidator = videoCommentsValidator;
 const videoCommentThreadsSortValidator = utils_1.checkSort(SORTABLE_VIDEO_COMMENT_THREADS_COLUMNS);
 exports.videoCommentThreadsSortValidator = videoCommentThreadsSortValidator;
 const videoRatesSortValidator = utils_1.checkSort(SORTABLE_VIDEO_RATES_COLUMNS);

@@ -5,11 +5,11 @@ exports.OAuthTokenModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const logger_1 = require("../../helpers/logger");
-const user_1 = require("../account/user");
-const oauth_client_1 = require("./oauth-client");
-const account_1 = require("../account/account");
-const actor_1 = require("../activitypub/actor");
 const oauth_model_1 = require("../../lib/oauth-model");
+const account_1 = require("../account/account");
+const user_1 = require("../account/user");
+const actor_1 = require("../activitypub/actor");
+const oauth_client_1 = require("./oauth-client");
 var ScopeNames;
 (function (ScopeNames) {
     ScopeNames["WITH_USER"] = "WITH_USER";

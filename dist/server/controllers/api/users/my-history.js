@@ -7,6 +7,7 @@ const middlewares_1 = require("../../../middlewares");
 const utils_1 = require("../../../helpers/utils");
 const user_video_history_1 = require("../../../models/account/user-video-history");
 const database_1 = require("../../../initializers/database");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const myVideosHistoryRouter = express.Router();
 exports.myVideosHistoryRouter = myVideosHistoryRouter;
 myVideosHistoryRouter.get('/me/history/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listMyVideosHistory));
@@ -25,6 +26,8 @@ function removeUserHistory(req, res) {
         yield database_1.sequelizeTypescript.transaction(t => {
             return user_video_history_1.UserVideoHistoryModel.removeUserHistoryBefore(user, beforeDate, t);
         });
-        return res.type('json').status(204).end();
+        return res.type('json')
+            .status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204)
+            .end();
     });
 }

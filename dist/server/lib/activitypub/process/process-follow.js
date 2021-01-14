@@ -16,12 +16,13 @@ const application_1 = require("@server/models/application/application");
 function processFollowActivity(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
-        const activityObject = activitypub_1.getAPId(activity.object);
-        return database_utils_1.retryTransactionWrapper(processFollow, byActor, activityObject);
+        const activityId = activity.id;
+        const objectId = activitypub_1.getAPId(activity.object);
+        return database_utils_1.retryTransactionWrapper(processFollow, byActor, activityId, objectId);
     });
 }
 exports.processFollowActivity = processFollowActivity;
-function processFollow(byActor, targetActorURL) {
+function processFollow(byActor, activityId, targetActorURL) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { actorFollow, created, isFollowingInstance, targetActor } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const targetActor = yield actor_1.ActorModel.loadByUrlAndPopulateAccountAndChannel(targetActorURL, t);
@@ -33,7 +34,7 @@ function processFollow(byActor, targetActorURL) {
             const isFollowingInstance = targetActor.id === serverActor.id;
             if (isFollowingInstance && config_1.CONFIG.FOLLOWERS.INSTANCE.ENABLED === false) {
                 logger_1.logger.info('Rejecting %s because instance followers are disabled.', targetActor.url);
-                yield send_1.sendReject(byActor, targetActor);
+                yield send_1.sendReject(activityId, byActor, targetActor);
                 return { actorFollow: undefined };
             }
             const [actorFollow, created] = yield actor_follow_1.ActorFollowModel.findOrCreate({
@@ -44,7 +45,10 @@ function processFollow(byActor, targetActorURL) {
                 defaults: {
                     actorId: byActor.id,
                     targetActorId: targetActor.id,
-                    state: config_1.CONFIG.FOLLOWERS.INSTANCE.MANUAL_APPROVAL ? 'pending' : 'accepted'
+                    url: activityId,
+                    state: config_1.CONFIG.FOLLOWERS.INSTANCE.MANUAL_APPROVAL
+                        ? 'pending'
+                        : 'accepted'
                 },
                 transaction: t
             });

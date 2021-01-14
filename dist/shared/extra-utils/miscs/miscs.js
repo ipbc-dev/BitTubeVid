@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateVideoWithFramerate = exports.generateHighBitrateVideo = exports.root = exports.buildAbsoluteFixturePath = exports.testImage = exports.immutableAssign = exports.webtorrentAdd = exports.buildServerDirectory = exports.areHttpImportTestsDisabled = exports.wait = exports.dateIsValid = void 0;
+exports.generateVideoWithFramerate = exports.generateHighBitrateVideo = exports.root = exports.buildAbsoluteFixturePath = exports.isGithubCI = exports.testImage = exports.immutableAssign = exports.getFileSize = exports.webtorrentAdd = exports.buildServerDirectory = exports.areHttpImportTestsDisabled = exports.wait = exports.dateIsValid = void 0;
 const tslib_1 = require("tslib");
 const chai = require("chai");
+const ffmpeg = require("fluent-ffmpeg");
+const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const request = require("supertest");
-const fs_extra_1 = require("fs-extra");
-const ffmpeg = require("fluent-ffmpeg");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 let webtorrent;
 function immutableAssign(target, source) {
@@ -39,15 +40,15 @@ function root() {
     return root;
 }
 exports.root = root;
-function buildServerDirectory(internalServerNumber, directory) {
-    return path_1.join(root(), 'test' + internalServerNumber, directory);
+function buildServerDirectory(server, directory) {
+    return path_1.join(root(), 'test' + server.internalServerNumber, directory);
 }
 exports.buildServerDirectory = buildServerDirectory;
 function testImage(url, imageName, imagePath, extension = '.jpg') {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield request(url)
             .get(imagePath)
-            .expect(200);
+            .expect(http_error_codes_1.HttpStatusCode.OK_200);
         const body = res.body;
         const data = yield fs_extra_1.readFile(path_1.join(root(), 'server', 'tests', 'fixtures', imageName + extension));
         const minLength = body.length - ((30 * body.length) / 100);
@@ -57,6 +58,10 @@ function testImage(url, imageName, imagePath, extension = '.jpg') {
     });
 }
 exports.testImage = testImage;
+function isGithubCI() {
+    return !!process.env.GITHUB_WORKSPACE;
+}
+exports.isGithubCI = isGithubCI;
 function buildAbsoluteFixturePath(path, customCIPath = false) {
     if (path_1.isAbsolute(path))
         return path;
@@ -79,6 +84,7 @@ function generateHighBitrateVideo() {
         yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
         const exists = yield fs_extra_1.pathExists(tempFixturePath);
         if (!exists) {
+            console.log('Generating high bitrate video.');
             return new Promise((res, rej) => {
                 ffmpeg()
                     .outputOptions(['-f rawvideo', '-video_size 1920x1080', '-i /dev/urandom'])
@@ -100,6 +106,7 @@ function generateVideoWithFramerate(fps = 60) {
         yield fs_extra_1.ensureDir(path_1.dirname(tempFixturePath));
         const exists = yield fs_extra_1.pathExists(tempFixturePath);
         if (!exists) {
+            console.log('Generating video with framerate %d.', fps);
             return new Promise((res, rej) => {
                 ffmpeg()
                     .outputOptions(['-f rawvideo', '-video_size 1280x720', '-i /dev/urandom'])
@@ -115,3 +122,10 @@ function generateVideoWithFramerate(fps = 60) {
     });
 }
 exports.generateVideoWithFramerate = generateVideoWithFramerate;
+function getFileSize(path) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const stats = yield fs_extra_1.stat(path);
+        return stats.size;
+    });
+}
+exports.getFileSize = getFileSize;

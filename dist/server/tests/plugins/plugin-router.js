@@ -5,6 +5,7 @@ require("mocha");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const chai_1 = require("chai");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 describe('Test plugin helpers', function () {
     let server;
     const basePaths = [
@@ -29,9 +30,28 @@ describe('Test plugin helpers', function () {
                 const res = yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path + 'ping',
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
                 chai_1.expect(res.body.message).to.equal('pong');
+            }
+        });
+    });
+    it('Should check if authenticated', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const path of basePaths) {
+                const res = yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: path + 'is-authenticated',
+                    token: server.accessToken,
+                    statusCodeExpected: 200
+                });
+                chai_1.expect(res.body.isAuthenticated).to.equal(true);
+                const secRes = yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: path + 'is-authenticated',
+                    statusCodeExpected: 200
+                });
+                chai_1.expect(secRes.body.isAuthenticated).to.equal(false);
             }
         });
     });
@@ -47,7 +67,7 @@ describe('Test plugin helpers', function () {
                     url: server.url,
                     path: path + 'form/post/mirror',
                     fields: body,
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
                 chai_1.expect(res.body).to.deep.equal(body);
             }
@@ -64,13 +84,13 @@ describe('Test plugin helpers', function () {
                 yield extra_utils_1.makeGetRequest({
                     url: server.url,
                     path: path + 'ping',
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
                 yield extra_utils_1.makePostBodyRequest({
                     url: server.url,
                     path: path + 'ping',
                     fields: {},
-                    statusCodeExpected: 404
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
                 });
             }
         });

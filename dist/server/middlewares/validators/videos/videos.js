@@ -3,13 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videosOverviewValidator = exports.commonVideosFiltersValidator = exports.getCommonVideoEditAttributes = exports.videosAcceptChangeOwnershipValidator = exports.videosTerminateChangeOwnershipValidator = exports.videosChangeOwnershipValidator = exports.videosRemoveValidator = exports.videosCustomGetValidator = exports.checkVideoFollowConstraints = exports.videosDownloadValidator = exports.videoFileMetadataGetValidator = exports.videosGetValidator = exports.videosUpdateValidator = exports.videosAddValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
+const user_1 = require("@server/lib/user");
 const application_1 = require("@server/models/application/application");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const search_1 = require("../../../helpers/custom-validators/search");
 const video_ownership_1 = require("../../../helpers/custom-validators/video-ownership");
 const videos_1 = require("../../../helpers/custom-validators/videos");
 const express_utils_1 = require("../../../helpers/express-utils");
-const ffmpeg_utils_1 = require("../../../helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
 const logger_1 = require("../../../helpers/logger");
 const middlewares_1 = require("../../../helpers/middlewares");
 const video_1 = require("../../../helpers/video");
@@ -21,11 +22,14 @@ const account_1 = require("../../../models/account/account");
 const video_2 = require("../../../models/video/video");
 const oauth_1 = require("../../oauth");
 const utils_1 = require("../utils");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videosAddValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.body('videofile')
-        .custom((value, { req }) => videos_1.isVideoFile(req.files)).withMessage('This file is not supported or too large. Please, make sure it is of the following type: ' +
-        constants_1.CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')),
-    express_validator_1.body('name').custom(videos_1.isVideoNameValid).withMessage('Should have a valid name'),
+        .custom((value, { req }) => misc_1.isFileFieldValid(req.files, 'videofile'))
+        .withMessage('Should have a file'),
+    express_validator_1.body('name')
+        .custom(videos_1.isVideoNameValid)
+        .withMessage('Should have a valid name'),
     express_validator_1.body('channelId')
         .customSanitizer(misc_1.toIntOrNull)
         .custom(misc_1.isIdValid).withMessage('Should have correct video channel id'),
@@ -39,19 +43,34 @@ const videosAddValidator = getCommonVideoEditAttributes().concat([
         const user = res.locals.oauth.token.User;
         if (!(yield middlewares_1.doesVideoChannelOfAccountExist(req.body.channelId, user, res)))
             return express_utils_1.cleanUpReqFiles(req);
-        if ((yield user.isAbleToUploadVideo(videoFile)) === false) {
-            res.status(403)
+        if (!videos_1.isVideoFileMimeTypeValid(req.files)) {
+            res.status(http_error_codes_1.HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415)
+                .json({
+                error: 'This file is not supported. Please, make sure it is of the following type: ' +
+                    constants_1.CONSTRAINTS_FIELDS.VIDEOS.EXTNAME.join(', ')
+            });
+            return express_utils_1.cleanUpReqFiles(req);
+        }
+        if (!videos_1.isVideoFileSizeValid(videoFile.size.toString())) {
+            res.status(http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413)
+                .json({
+                error: 'This file is too large.'
+            });
+            return express_utils_1.cleanUpReqFiles(req);
+        }
+        if ((yield user_1.isAbleToUploadVideo(user.id, videoFile.size)) === false) {
+            res.status(http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413)
                 .json({ error: 'The user video quota is exceeded with this video.' });
             return express_utils_1.cleanUpReqFiles(req);
         }
         let duration;
         try {
-            duration = yield ffmpeg_utils_1.getDurationFromVideoFile(videoFile.path);
+            duration = yield ffprobe_utils_1.getDurationFromVideoFile(videoFile.path);
         }
         catch (err) {
             logger_1.logger.error('Invalid input file in videosAddValidator.', { err });
-            res.status(400)
-                .json({ error: 'Invalid input file.' });
+            res.status(http_error_codes_1.HttpStatusCode.UNPROCESSABLE_ENTITY_422)
+                .json({ error: 'Video file unreadable.' });
             return express_utils_1.cleanUpReqFiles(req);
         }
         videoFile.duration = duration;
@@ -101,7 +120,7 @@ function checkVideoFollowConstraints(req, res, next) {
         const serverActor = yield application_1.getServerActor();
         if ((yield video_2.VideoModel.checkVideoHasInstanceFollow(video.id, serverActor.id)) === true)
             return next();
-        return res.status(403)
+        return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
             .json({
             errorCode: 1,
             error: 'Cannot get this video regarding follow constraints.',
@@ -127,7 +146,7 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
                 yield oauth_1.authenticatePromiseIfNeeded(req, res, authenticateInQuery);
                 const user = res.locals.oauth ? res.locals.oauth.token.User : null;
                 if (!user || !user.canGetVideo(videoAll)) {
-                    return res.status(403)
+                    return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                         .json({ error: 'Cannot get this private/internal or blacklisted video.' });
                 }
                 return next();
@@ -137,7 +156,7 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
             if (video.privacy === 2) {
                 if (misc_1.isUUIDValid(req.params.id))
                     return next();
-                return res.status(404).end();
+                return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
             }
         })
     ];
@@ -182,11 +201,11 @@ const videosChangeOwnershipValidator = [
             return;
         if (!(yield middlewares_1.doesVideoExist(req.params.videoId, res)))
             return;
-        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, 19, res))
+        if (!middlewares_1.checkUserCanManageVideo(res.locals.oauth.token.User, res.locals.videoAll, 21, res))
             return;
         const nextOwner = yield account_1.AccountModel.loadLocalByName(req.body.username);
         if (!nextOwner) {
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Changing video ownership to a remote account is not supported yet' });
             return;
         }
@@ -207,7 +226,7 @@ const videosTerminateChangeOwnershipValidator = [
             return;
         const videoChangeOwnership = res.locals.videoChangeOwnership;
         if (videoChangeOwnership.status !== "WAITING") {
-            res.status(403)
+            res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: 'Ownership already accepted or refused' });
             return;
         }
@@ -222,9 +241,9 @@ const videosAcceptChangeOwnershipValidator = [
             return;
         const user = res.locals.oauth.token.User;
         const videoChangeOwnership = res.locals.videoChangeOwnership;
-        const isAble = yield user.isAbleToUploadVideo(videoChangeOwnership.Video.getMaxQualityFile());
+        const isAble = yield user_1.isAbleToUploadVideo(user.id, videoChangeOwnership.Video.getMaxQualityFile().size);
         if (isAble === false) {
-            res.status(403)
+            res.status(http_error_codes_1.HttpStatusCode.PAYLOAD_TOO_LARGE_413)
                 .json({ error: 'The user video quota is exceeded with this video.' });
             return;
         }
@@ -349,8 +368,9 @@ const commonVideosFiltersValidator = [
         if (utils_1.areValidationErrors(req, res))
             return;
         const user = res.locals.oauth ? res.locals.oauth.token.User : undefined;
-        if (req.query.filter === 'all-local' && (!user || user.hasRight(18) === false)) {
-            res.status(401)
+        if ((req.query.filter === 'all-local' || req.query.filter === 'all') &&
+            (!user || user.hasRight(19) === false)) {
+            res.status(http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401)
                 .json({ error: 'You are not allowed to see all local videos.' });
             return;
         }
@@ -362,7 +382,7 @@ function areErrorsInScheduleUpdate(req, res) {
     if (req.body.scheduleUpdate) {
         if (!req.body.scheduleUpdate.updateAt) {
             logger_1.logger.warn('Invalid parameters: scheduleUpdate.updateAt is mandatory.');
-            res.status(400)
+            res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
                 .json({ error: 'Schedule update at is mandatory.' });
             return true;
         }
@@ -379,7 +399,7 @@ function isVideoAccepted(req, res, videoFile) {
         const acceptedResult = yield hooks_1.Hooks.wrapFun(moderation_1.isLocalVideoAccepted, acceptParameters, 'filter:api.video.upload.accept.result');
         if (!acceptedResult || acceptedResult.accepted !== true) {
             logger_1.logger.info('Refused local video.', { acceptedResult, acceptParameters });
-            res.status(403)
+            res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                 .json({ error: acceptedResult.errorMessage || 'Refused local video' });
             return false;
         }

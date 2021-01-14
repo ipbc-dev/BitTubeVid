@@ -13,6 +13,7 @@ const actor_follow_1 = require("../../../models/activitypub/actor-follow");
 const actor_2 = require("../../../models/activitypub/actor");
 const notifier_1 = require("../../notifier");
 const database_1 = require("../../../initializers/database");
+const url_1 = require("@server/lib/activitypub/url");
 function processActivityPubFollow(job) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
@@ -50,6 +51,7 @@ function follow(fromActor, targetActor, isAutoFollow = false) {
                 },
                 defaults: {
                     state,
+                    url: url_1.getLocalActorFollowActivityPubUrl(fromActor, targetActor),
                     actorId: fromActor.id,
                     targetActorId: targetActor.id
                 },

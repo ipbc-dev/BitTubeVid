@@ -14,6 +14,7 @@ const videos_1 = require("../../../lib/activitypub/videos");
 const captions_utils_1 = require("../../../helpers/captions-utils");
 const config_1 = require("../../../initializers/config");
 const database_1 = require("../../../initializers/database");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const reqVideoCaptionAdd = express_utils_1.createReqFiles(['captionfile'], constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT, {
     captionfile: config_1.CONFIG.STORAGE.CAPTIONS_DIR
 });
@@ -42,7 +43,7 @@ function addVideoCaption(req, res) {
             yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, req.params.captionLanguage, null, t);
             yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
-        return res.status(204).end();
+        return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }
 function deleteVideoCaption(req, res) {
@@ -54,6 +55,6 @@ function deleteVideoCaption(req, res) {
             yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
         logger_1.logger.info('Video caption %s of video %s deleted.', videoCaption.language, video.uuid);
-        return res.type('json').status(204).end();
+        return res.type('json').status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
     });
 }

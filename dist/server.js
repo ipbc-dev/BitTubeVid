@@ -17,7 +17,7 @@ const useragent = require("useragent");
 const anonymize = require("ip-anonymize");
 const cli = require("commander");
 process.title = 'peertube';
-const app = express();
+const app = express().disable("x-powered-by");
 const checker_before_init_1 = require("./server/initializers/checker-before-init");
 const config_1 = require("./server/initializers/config");
 const constants_1 = require("./server/initializers/constants");
@@ -81,6 +81,8 @@ const hls_1 = require("./server/lib/hls");
 const plugins_check_scheduler_1 = require("./server/lib/schedulers/plugins-check-scheduler");
 const hooks_1 = require("./server/lib/plugins/hooks");
 const plugin_manager_1 = require("./server/lib/plugins/plugin-manager");
+const live_manager_1 = require("./server/lib/live-manager");
+const http_error_codes_1 = require("./shared/core-utils/miscs/http-error-codes");
 cli
     .option('--no-client', 'Start PeerTube without client interface')
     .option('--no-plugins', 'Start PeerTube without plugins/themes enabled')
@@ -92,13 +94,13 @@ if (core_utils_1.isTestInstance()) {
         credentials: true
     }));
 }
-morgan.token('remote-addr', req => {
+morgan.token('remote-addr', (req) => {
     if (config_1.CONFIG.LOG.ANONYMIZE_IP === true || req.get('DNT') === '1') {
         return anonymize(req.ip, 16, 16);
     }
     return req.ip;
 });
-morgan.token('user-agent', req => {
+morgan.token('user-agent', (req) => {
     if (req.get('DNT') === '1') {
         return useragent.parse(req.get('user-agent')).family;
     }
@@ -122,6 +124,7 @@ app.use(dnt_1.advertiseDoNotTrack);
 const apiRoute = '/api/' + constants_1.API_VERSION;
 app.use(apiRoute, controllers_1.apiRouter);
 app.use('/services', controllers_1.servicesRouter);
+app.use('/live', controllers_1.liveRouter);
 app.use('/', controllers_1.pluginsRouter);
 app.use('/', controllers_1.activityPubRouter);
 app.use('/', controllers_1.feedsRouter);
@@ -134,7 +137,7 @@ if (cli.client)
     app.use('/', controllers_1.clientsRouter);
 app.use(function (req, res, next) {
     const err = new Error('Not Found');
-    err['status'] = 404;
+    err['status'] = http_error_codes_1.HttpStatusCode.NOT_FOUND_404;
     next(err);
 });
 app.use(function (err, req, res, next) {
@@ -144,7 +147,7 @@ app.use(function (err, req, res, next) {
     }
     const sql = err.parent ? err.parent.sql : undefined;
     logger_1.logger.error('Error in controller.', { err: error, sql });
-    return res.status(err.status || 500).end();
+    return res.status(err.status || http_error_codes_1.HttpStatusCode.INTERNAL_SERVER_ERROR_500).end();
 });
 const server = controllers_1.createWebsocketTrackerServer(app);
 function startApplication() {
@@ -159,7 +162,7 @@ function startApplication() {
         });
         emailer_1.Emailer.Instance.init();
         yield Promise.all([
-            emailer_1.Emailer.Instance.checkConnectionOrDie(),
+            emailer_1.Emailer.Instance.checkConnection(),
             job_queue_1.JobQueue.Instance.init()
         ]);
         files_cache_1.VideosPreviewCache.Instance.init(config_1.CONFIG.CACHE.PREVIEWS.SIZE, constants_1.FILES_CACHE.PREVIEWS.MAX_AGE);
@@ -179,8 +182,11 @@ function startApplication() {
             .catch(err => logger_1.logger.error('Cannot update streaming playlist infohashes.', { err }));
         if (cli.plugins)
             yield plugin_manager_1.PluginManager.Instance.registerPluginsAndThemes();
+        live_manager_1.LiveManager.Instance.init();
+        if (config_1.CONFIG.LIVE.ENABLED)
+            live_manager_1.LiveManager.Instance.run();
         server.listen(port, hostname, () => {
-            logger_1.logger.info('Server listening on %s:%d', hostname, port);
+            logger_1.logger.info('HTTP server listening on %s:%d', hostname, port);
             logger_1.logger.info('Web server: %s', constants_1.WEBSERVER.URL);
             hooks_1.Hooks.runAction('action:application.listening');
         });

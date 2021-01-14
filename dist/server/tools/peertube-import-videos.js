@@ -58,37 +58,39 @@ function run(url, user) {
             user.password = yield promptPassword();
         }
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-        const options = ['-j', '--flat-playlist', '--playlist-reverse', ...command.args];
-        youtubeDL.getInfo(program['targetUrl'], options, processOptions, (err, info) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (err) {
-                exitError(err.stderr + ' ' + err.message);
+        let info = yield getYoutubeDLInfo(youtubeDL, program['targetUrl'], command.args);
+        if (!Array.isArray(info))
+            info = [info];
+        const uploadsObject = info.find(i => !i.ie_key && !i.duration && i.title === 'Uploads');
+        if (uploadsObject) {
+            console.log('Fixing URL to %s.', uploadsObject.url);
+            info = yield getYoutubeDLInfo(youtubeDL, uploadsObject.url, command.args);
+        }
+        let infoArray;
+        infoArray = [].concat(info);
+        if (program['first']) {
+            infoArray = infoArray.slice(0, program['first']);
+        }
+        else if (program['last']) {
+            infoArray = infoArray.slice(-program['last']);
+        }
+        infoArray = infoArray.map(i => normalizeObject(i));
+        log.info('Will download and upload %d videos.\n', infoArray.length);
+        for (const info of infoArray) {
+            try {
+                yield processVideo({
+                    cwd: program['tmpdir'],
+                    url,
+                    user,
+                    youtubeInfo: info
+                });
             }
-            let infoArray;
-            infoArray = [].concat(info);
-            if (program['first']) {
-                infoArray = infoArray.slice(0, program['first']);
+            catch (err) {
+                console.error('Cannot process video.', { info, url });
             }
-            else if (program['last']) {
-                infoArray = infoArray.slice(-program['last']);
-            }
-            infoArray = infoArray.map(i => normalizeObject(i));
-            log.info('Will download and upload %d videos.\n', infoArray.length);
-            for (const info of infoArray) {
-                try {
-                    yield processVideo({
-                        cwd: program['tmpdir'],
-                        url,
-                        user,
-                        youtubeInfo: info
-                    });
-                }
-                catch (err) {
-                    console.error('Cannot process video.', { info, url });
-                }
-            }
-            log.info('Video/s for user %s imported: %s', user.username, program['targetUrl']);
-            process.exit(0);
-        }));
+        }
+        log.info('Video/s for user %s imported: %s', user.username, program['targetUrl']);
+        process.exit(0);
     });
 }
 function processVideo(parameters) {
@@ -97,17 +99,14 @@ function processVideo(parameters) {
         log.debug('Fetching object.', youtubeInfo);
         const videoInfo = yield fetchObject(youtubeInfo);
         log.debug('Fetched object.', videoInfo);
-        if (program['since']) {
-            if (youtube_dl_1.buildOriginallyPublishedAt(videoInfo).getTime() < program['since'].getTime()) {
-                log.info('Video "%s" has been published before "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['since']));
-                return res();
-            }
+        const originallyPublishedAt = youtube_dl_1.buildOriginallyPublishedAt(videoInfo);
+        if (program['since'] && originallyPublishedAt && originallyPublishedAt.getTime() < program['since'].getTime()) {
+            log.info('Video "%s" has been published before "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['since']));
+            return res();
         }
-        if (program['until']) {
-            if (youtube_dl_1.buildOriginallyPublishedAt(videoInfo).getTime() > program['until'].getTime()) {
-                log.info('Video "%s" has been published after "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['until']));
-                return res();
-            }
+        if (program['until'] && originallyPublishedAt && originallyPublishedAt.getTime() > program['until'].getTime()) {
+            log.info('Video "%s" has been published after "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['until']));
+            return res();
         }
         const result = yield index_1.searchVideoWithSort(url, videoInfo.title, '-match');
         log.info('############################################################\n');
@@ -327,4 +326,14 @@ function formatDate(date) {
 function exitError(message, ...meta) {
     console.error(message, ...meta);
     process.exit(-1);
+}
+function getYoutubeDLInfo(youtubeDL, url, args) {
+    return new Promise((res, rej) => {
+        const options = ['-j', '--flat-playlist', '--playlist-reverse', ...args];
+        youtubeDL.getInfo(url, options, processOptions, (err, info) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (err)
+                return rej(err);
+            return res(info);
+        }));
+    });
 }

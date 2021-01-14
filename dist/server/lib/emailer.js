@@ -7,11 +7,23 @@ const lodash_1 = require("lodash");
 const nodemailer_1 = require("nodemailer");
 const path_1 = require("path");
 const video_channel_1 = require("@server/models/video/video-channel");
-const core_utils_1 = require("../helpers/core-utils");
+const core_utils_1 = require("@shared/core-utils");
+const core_utils_2 = require("../helpers/core-utils");
 const logger_1 = require("../helpers/logger");
 const config_1 = require("../initializers/config");
 const constants_1 = require("../initializers/constants");
 const job_queue_1 = require("./job-queue");
+const sanitizeHtml = require('sanitize-html');
+const markdownItEmoji = require('markdown-it-emoji/light');
+const MarkdownItClass = require('markdown-it');
+const markdownIt = new MarkdownItClass('default', { linkify: true, breaks: true, html: true });
+markdownIt.enable(core_utils_1.TEXT_WITH_HTML_RULES);
+markdownIt.use(markdownItEmoji);
+const toSafeHtml = text => {
+    const textWithLineFeed = text.replace(/<br.?\/?>/g, '\r\n');
+    const html = markdownIt.render(textWithLineFeed);
+    return sanitizeHtml(html, core_utils_1.SANITIZE_OPTIONS);
+};
 const Email = require('email-templates');
 class Emailer {
     constructor() {
@@ -58,7 +70,7 @@ class Emailer {
             }
         }
         else {
-            if (!core_utils_1.isTestInstance()) {
+            if (!core_utils_2.isTestInstance()) {
                 logger_1.logger.error('Cannot use SMTP server because of lack of configuration. BitTube will not be able to send mails!');
             }
         }
@@ -74,7 +86,7 @@ class Emailer {
             return false;
         }
     }
-    checkConnectionOrDie() {
+    checkConnection() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (!this.transporter || config_1.CONFIG.SMTP.TRANSPORT !== 'smtp')
                 return;
@@ -82,11 +94,11 @@ class Emailer {
             try {
                 const success = yield this.transporter.verify();
                 if (success !== true)
-                    this.dieOnConnectionFailure();
+                    this.warnOnConnectionFailure();
                 logger_1.logger.info('Successfully connected to SMTP server.');
             }
             catch (err) {
-                this.dieOnConnectionFailure(err);
+                this.warnOnConnectionFailure(err);
             }
         });
     }
@@ -181,7 +193,7 @@ class Emailer {
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
     myVideoImportErrorNotification(to, videoImport) {
-        const importUrl = constants_1.WEBSERVER.URL + '/my-account/video-imports';
+        const importUrl = constants_1.WEBSERVER.URL + '/my-library/video-imports';
         const text = `Your video import "${videoImport.getTargetIdentifier()}" encountered an error.` +
             '\n\n' +
             `See your videos import dashboard for more information: <a href="${importUrl}">${importUrl}</a>.`;
@@ -203,6 +215,7 @@ class Emailer {
         const video = comment.Video;
         const videoUrl = constants_1.WEBSERVER.URL + comment.Video.getWatchStaticPath();
         const commentUrl = constants_1.WEBSERVER.URL + comment.getCommentStaticPath();
+        const commentHtml = toSafeHtml(comment.text);
         const emailPayload = {
             template: 'video-comment-new',
             to,
@@ -211,6 +224,7 @@ class Emailer {
                 accountName: comment.Account.getDisplayName(),
                 accountUrl: comment.Account.Actor.url,
                 comment,
+                commentHtml,
                 video,
                 videoUrl,
                 action: {
@@ -226,12 +240,14 @@ class Emailer {
         const video = comment.Video;
         const videoUrl = constants_1.WEBSERVER.URL + comment.Video.getWatchStaticPath();
         const commentUrl = constants_1.WEBSERVER.URL + comment.getCommentStaticPath();
+        const commentHtml = toSafeHtml(comment.text);
         const emailPayload = {
             template: 'video-comment-mention',
             to,
             subject: 'Mention on video ' + video.name,
             locals: {
                 comment,
+                commentHtml,
                 video,
                 videoUrl,
                 accountName,
@@ -380,7 +396,7 @@ class Emailer {
         const emailPayload = {
             template: 'user-registered',
             to,
-            subject: `a new user registered on ${constants_1.WEBSERVER.HOST}: ${user.username}`,
+            subject: `a new user registered on ${config_1.CONFIG.INSTANCE.NAME}: ${user.username}`,
             locals: {
                 user
             }
@@ -391,7 +407,7 @@ class Emailer {
         const videoName = videoBlacklist.Video.name;
         const videoUrl = constants_1.WEBSERVER.URL + videoBlacklist.Video.getWatchStaticPath();
         const reasonString = videoBlacklist.reason ? ` for the following reason: ${videoBlacklist.reason}` : '';
-        const blockedString = `Your video ${videoName} (${videoUrl} on ${constants_1.WEBSERVER.HOST} has been blacklisted${reasonString}.`;
+        const blockedString = `Your video ${videoName} (${videoUrl} on ${config_1.CONFIG.INSTANCE.NAME} has been blacklisted${reasonString}.`;
         const emailPayload = {
             to,
             subject: `Video ${videoName} blacklisted`,
@@ -407,7 +423,7 @@ class Emailer {
         const emailPayload = {
             to,
             subject: `Video ${video.name} unblacklisted`,
-            text: `Your video "${video.name}" (${videoUrl}) on ${constants_1.WEBSERVER.HOST} has been unblacklisted.`,
+            text: `Your video "${video.name}" (${videoUrl}) on ${config_1.CONFIG.INSTANCE.NAME} has been unblacklisted.`,
             locals: {
                 title: 'Your video was unblacklisted'
             }
@@ -442,7 +458,7 @@ class Emailer {
         const emailPayload = {
             template: 'verify-email',
             to: [to],
-            subject: `Verify your email on ${constants_1.WEBSERVER.HOST}`,
+            subject: `Verify your email on ${config_1.CONFIG.INSTANCE.NAME}`,
             locals: {
                 username,
                 verifyEmailUrl
@@ -457,7 +473,7 @@ class Emailer {
         const emailPayload = {
             to: [to],
             subject: 'Account ' + blockedWord,
-            text: `Your account ${user.username} on ${constants_1.WEBSERVER.HOST} has been ${blockedWord}${reasonString}.`
+            text: `Your account ${user.username} on ${config_1.CONFIG.INSTANCE.NAME} has been ${blockedWord}${reasonString}.`
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
     }
@@ -470,7 +486,8 @@ class Emailer {
             locals: {
                 fromName,
                 fromEmail,
-                body
+                body,
+                hideNotificationPreferences: true
             }
         };
         return job_queue_1.JobQueue.Instance.createJob({ type: 'email', payload: emailPayload });
@@ -517,7 +534,7 @@ class Emailer {
             }
             const fromDisplayName = options.from
                 ? options.from
-                : constants_1.WEBSERVER.HOST;
+                : config_1.CONFIG.INSTANCE.NAME;
             const email = new Email({
                 send: true,
                 message: {
@@ -525,7 +542,7 @@ class Emailer {
                 },
                 transport: this.transporter,
                 views: {
-                    root: path_1.join(core_utils_1.root(), 'dist', 'server', 'lib', 'emails')
+                    root: path_1.join(core_utils_2.root(), 'dist', 'server', 'lib', 'emails')
                 },
                 subjectPrefix: config_1.CONFIG.EMAIL.SUBJECT.PREFIX
             });
@@ -542,6 +559,7 @@ class Emailer {
                     locals: {
                         WEBSERVER: constants_1.WEBSERVER,
                         EMAIL: config_1.CONFIG.EMAIL,
+                        instanceName: config_1.CONFIG.INSTANCE.NAME,
                         text: options.text,
                         subject: options.subject
                     }
@@ -551,9 +569,8 @@ class Emailer {
             }
         });
     }
-    dieOnConnectionFailure(err) {
+    warnOnConnectionFailure(err) {
         logger_1.logger.error('Failed to connect to SMTP %s:%d.', config_1.CONFIG.SMTP.HOSTNAME, config_1.CONFIG.SMTP.PORT, { err });
-        process.exit(-1);
     }
     static get Instance() {
         return this.instance || (this.instance = new this());

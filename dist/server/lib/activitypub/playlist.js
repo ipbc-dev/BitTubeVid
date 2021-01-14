@@ -16,6 +16,7 @@ const playlist_1 = require("../../helpers/custom-validators/activitypub/playlist
 const video_playlist_element_1 = require("../../models/video/video-playlist-element");
 const database_1 = require("../../initializers/database");
 const thumbnail_1 = require("../thumbnail");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function playlistObjectToDBAttributes(playlistObject, byAccount, to) {
     const privacy = to.includes(constants_1.ACTIVITY_PUB.PUBLIC)
         ? 1
@@ -89,6 +90,7 @@ function createOrUpdateVideoPlaylist(playlistObject, byAccount, to) {
             accItems = accItems.concat(items);
             return Promise.resolve();
         });
+        logger_1.logger.info('toto', { playlist, id: playlist.id });
         const refreshedPlaylist = yield video_playlist_1.VideoPlaylistModel.loadWithAccountAndChannel(playlist.id, null);
         if (playlistObject.icon) {
             try {
@@ -113,7 +115,7 @@ function refreshVideoPlaylistIfNeeded(videoPlaylist) {
             return videoPlaylist;
         try {
             const { statusCode, playlistObject } = yield fetchRemoteVideoPlaylist(videoPlaylist.url);
-            if (statusCode === 404) {
+            if (statusCode === http_error_codes_1.HttpStatusCode.NOT_FOUND_404) {
                 logger_1.logger.info('Cannot refresh remote video playlist %s: it does not exist anymore. Deleting it.', videoPlaylist.url);
                 yield videoPlaylist.destroy();
                 return undefined;

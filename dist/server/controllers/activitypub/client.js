@@ -2,31 +2,30 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activityPubClientRouter = void 0;
 const tslib_1 = require("tslib");
-const express = require("express");
 const cors = require("cors");
+const express = require("express");
+const application_1 = require("@server/models/application/application");
 const activitypub_1 = require("../../helpers/activitypub");
 const constants_1 = require("../../initializers/constants");
-const send_1 = require("../../lib/activitypub/send");
 const audience_1 = require("../../lib/activitypub/audience");
+const send_1 = require("../../lib/activitypub/send");
 const send_create_1 = require("../../lib/activitypub/send/send-create");
+const send_dislike_1 = require("../../lib/activitypub/send/send-dislike");
+const url_1 = require("../../lib/activitypub/url");
 const middlewares_1 = require("../../middlewares");
+const cache_1 = require("../../middlewares/cache");
 const validators_1 = require("../../middlewares/validators");
+const redundancy_1 = require("../../middlewares/validators/redundancy");
+const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
 const account_1 = require("../../models/account/account");
+const account_video_rate_1 = require("../../models/account/account-video-rate");
 const actor_follow_1 = require("../../models/activitypub/actor-follow");
 const video_1 = require("../../models/video/video");
-const video_comment_1 = require("../../models/video/video-comment");
-const video_share_1 = require("../../models/video/video-share");
-const cache_1 = require("../../middlewares/cache");
-const utils_1 = require("./utils");
-const account_video_rate_1 = require("../../models/account/account-video-rate");
-const url_1 = require("../../lib/activitypub/url");
 const video_caption_1 = require("../../models/video/video-caption");
-const redundancy_1 = require("../../middlewares/validators/redundancy");
-const send_dislike_1 = require("../../lib/activitypub/send/send-dislike");
-const video_playlists_1 = require("../../middlewares/validators/videos/video-playlists");
+const video_comment_1 = require("../../models/video/video-comment");
 const video_playlist_1 = require("../../models/video/video-playlist");
-const application_1 = require("@server/models/application/application");
-const video_rates_1 = require("@server/lib/activitypub/video-rates");
+const video_share_1 = require("../../models/video/video-share");
+const utils_1 = require("./utils");
 const activityPubClientRouter = express.Router();
 exports.activityPubClientRouter = activityPubClientRouter;
 activityPubClientRouter.use(cors());
@@ -89,18 +88,17 @@ function getAccountVideoRateFactory(rateType) {
     return (req, res) => {
         const accountVideoRate = res.locals.accountVideoRate;
         const byActor = accountVideoRate.Account.Actor;
-        const url = video_rates_1.getRateUrl(rateType, byActor, accountVideoRate.Video);
         const APObject = rateType === 'like'
-            ? send_1.buildLikeActivity(url, byActor, accountVideoRate.Video)
-            : send_dislike_1.buildDislikeActivity(url, byActor, accountVideoRate.Video);
+            ? send_1.buildLikeActivity(accountVideoRate.url, byActor, accountVideoRate.Video)
+            : send_dislike_1.buildDislikeActivity(accountVideoRate.url, byActor, accountVideoRate.Video);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(APObject), res);
     };
 }
 function videoController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const video = yield video_1.VideoModel.loadForGetAPI({ id: res.locals.onlyVideoWithRights.id });
-        if (video.url.startsWith(constants_1.WEBSERVER.URL) === false)
-            return res.redirect(video.url);
+        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(res.locals.onlyVideoWithRights.id);
+        if (redirectIfNotOwned(video.url, res))
+            return;
         const captions = yield video_caption_1.VideoCaptionModel.listVideoCaptions(video.id);
         const videoWithCaptions = Object.assign(video, { VideoCaptions: captions });
         const audience = audience_1.getAudience(videoWithCaptions.VideoChannel.Account.Actor, videoWithCaptions.privacy === 1);
@@ -115,8 +113,8 @@ function videoController(req, res) {
 function videoAnnounceController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const share = res.locals.videoShare;
-        if (share.url.startsWith(constants_1.WEBSERVER.URL) === false)
-            return res.redirect(share.url);
+        if (redirectIfNotOwned(share.url, res))
+            return;
         const { activity } = yield send_1.buildAnnounceWithVideoAudience(share.Actor, share, res.locals.videoAll, undefined);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(activity, 'Announce'), res);
     });
@@ -124,6 +122,8 @@ function videoAnnounceController(req, res) {
 function videoAnnouncesController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
+        if (redirectIfNotOwned(video.url, res))
+            return;
         const handler = (start, count) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const result = yield video_share_1.VideoShareModel.listAndCountByVideoId(video.id, start, count);
             return {
@@ -131,27 +131,33 @@ function videoAnnouncesController(req, res) {
                 data: result.rows.map(r => r.url)
             };
         });
-        const json = yield activitypub_1.activityPubCollectionPagination(url_1.getVideoSharesActivityPubUrl(video), handler, req.query.page);
+        const json = yield activitypub_1.activityPubCollectionPagination(url_1.getLocalVideoSharesActivityPubUrl(video), handler, req.query.page);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
 function videoLikesController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
-        const json = yield videoRates(req, 'like', video, url_1.getVideoLikesActivityPubUrl(video));
+        if (redirectIfNotOwned(video.url, res))
+            return;
+        const json = yield videoRates(req, 'like', video, url_1.getLocalVideoLikesActivityPubUrl(video));
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
 function videoDislikesController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
-        const json = yield videoRates(req, 'dislike', video, url_1.getVideoDislikesActivityPubUrl(video));
+        if (redirectIfNotOwned(video.url, res))
+            return;
+        const json = yield videoRates(req, 'dislike', video, url_1.getLocalVideoDislikesActivityPubUrl(video));
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
 function videoCommentsController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = res.locals.onlyImmutableVideo;
+        if (redirectIfNotOwned(video.url, res))
+            return;
         const handler = (start, count) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const result = yield video_comment_1.VideoCommentModel.listAndCountByVideoForAP(video, start, count);
             return {
@@ -159,7 +165,7 @@ function videoCommentsController(req, res) {
                 data: result.rows.map(r => r.url)
             };
         });
-        const json = yield activitypub_1.activityPubCollectionPagination(url_1.getVideoCommentsActivityPubUrl(video), handler, req.query.page);
+        const json = yield activitypub_1.activityPubCollectionPagination(url_1.getLocalVideoCommentsActivityPubUrl(video), handler, req.query.page);
         return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
     });
 }
@@ -184,8 +190,8 @@ function videoChannelFollowingController(req, res) {
 function videoCommentController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoComment = res.locals.videoCommentFull;
-        if (videoComment.url.startsWith(constants_1.WEBSERVER.URL) === false)
-            return res.redirect(videoComment.url);
+        if (redirectIfNotOwned(videoComment.url, res))
+            return;
         const threadParentComments = yield video_comment_1.VideoCommentModel.listThreadParentComments(videoComment, undefined);
         const isPublic = true;
         let videoCommentObject = videoComment.toActivityPubObject(threadParentComments);
@@ -203,8 +209,8 @@ function videoCommentController(req, res) {
 function videoRedundancyController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoRedundancy = res.locals.videoRedundancy;
-        if (videoRedundancy.url.startsWith(constants_1.WEBSERVER.URL) === false)
-            return res.redirect(videoRedundancy.url);
+        if (redirectIfNotOwned(videoRedundancy.url, res))
+            return;
         const serverActor = yield application_1.getServerActor();
         const audience = audience_1.getAudience(serverActor);
         const object = audience_1.audiencify(videoRedundancy.toActivityPubObject(), audience);
@@ -218,6 +224,8 @@ function videoRedundancyController(req, res) {
 function videoPlaylistController(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const playlist = res.locals.videoPlaylistFull;
+        if (redirectIfNotOwned(playlist.url, res))
+            return;
         playlist.OwnerAccount = yield account_1.AccountModel.load(playlist.ownerAccountId);
         const json = yield playlist.toActivityPubObject(req.query.page, null);
         const audience = audience_1.getAudience(playlist.OwnerAccount.Actor, playlist.privacy === 1);
@@ -227,6 +235,8 @@ function videoPlaylistController(req, res) {
 }
 function videoPlaylistElementController(req, res) {
     const videoPlaylistElement = res.locals.videoPlaylistElementAP;
+    if (redirectIfNotOwned(videoPlaylistElement.url, res))
+        return;
     const json = videoPlaylistElement.toActivityPubObject();
     return utils_1.activityPubResponse(activitypub_1.activityPubContextify(json), res);
 }
@@ -263,4 +273,11 @@ function videoRates(req, rateType, video, url) {
         };
     });
     return activitypub_1.activityPubCollectionPagination(url, handler, req.query.page);
+}
+function redirectIfNotOwned(url, res) {
+    if (url.startsWith(constants_1.WEBSERVER.URL) === false) {
+        res.redirect(url);
+        return true;
+    }
+    return false;
 }

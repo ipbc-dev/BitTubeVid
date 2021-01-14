@@ -13,6 +13,8 @@ const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
 const video_1 = require("../../../models/video/video");
+const send_1 = require("@server/lib/activitypub/send");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const mySubscriptionsRouter = express.Router();
 exports.mySubscriptionsRouter = mySubscriptionsRouter;
 mySubscriptionsRouter.get('/me/subscriptions/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, validators_1.videosSortValidator, middlewares_1.setDefaultVideosSort, middlewares_1.setDefaultPagination, middlewares_1.commonVideosFiltersValidator, middlewares_1.asyncMiddleware(getUserSubscriptionVideos));
@@ -55,7 +57,7 @@ function addUserSubscription(req, res) {
         followerActorId: user.Account.Actor.id
     };
     job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-follow', payload });
-    return res.status(204).end();
+    return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();
 }
 function getUserSubscription(req, res) {
     const subscription = res.locals.subscription;
@@ -65,9 +67,13 @@ function deleteUserSubscription(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const subscription = res.locals.subscription;
         yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            if (subscription.state === 'accepted')
+                yield send_1.sendUndoFollow(subscription, t);
             return subscription.destroy({ transaction: t });
         }));
-        return res.type('json').status(204).end();
+        return res.type('json')
+            .status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204)
+            .end();
     });
 }
 function getUserSubscriptions(req, res) {

@@ -4,6 +4,7 @@ const tslib_1 = require("tslib");
 require("mocha");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const check_api_params_1 = require("../../../../shared/extra-utils/requests/check-api-params");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 describe('Test video playlists API validator', function () {
     let server;
     let userAccessToken;
@@ -84,20 +85,35 @@ describe('Test video playlists API validator', function () {
         it('Should fail with a bad account parameter', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const accountPath = '/api/v1/accounts/root2/video-playlists';
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: accountPath, statusCodeExpected: 404, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: accountPath,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404,
+                    token: server.accessToken
+                });
             });
         });
         it('Should fail with a bad video channel parameter', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const accountPath = '/api/v1/video-channels/bad_channel/video-playlists';
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: accountPath, statusCodeExpected: 404, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: accountPath,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404,
+                    token: server.accessToken
+                });
             });
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: globalPath, statusCodeExpected: 200, token: server.accessToken });
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: accountPath, statusCodeExpected: 200, token: server.accessToken });
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: videoChannelPath, statusCodeExpected: 200, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: globalPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: accountPath, statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200, token: server.accessToken });
+                yield extra_utils_1.makeGetRequest({
+                    url: server.url,
+                    path: videoChannelPath,
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200,
+                    token: server.accessToken
+                });
             });
         });
     });
@@ -115,19 +131,19 @@ describe('Test video playlists API validator', function () {
         });
         it('Should success with the correct parameters', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + playlistUUID + '/videos', statusCodeExpected: 200 });
+                yield extra_utils_1.makeGetRequest({ url: server.url, path: path + playlistUUID + '/videos', statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200 });
             });
         });
     });
     describe('When getting a video playlist', function () {
         it('Should fail with a bad id or uuid', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideoPlaylist(server.url, 'toto', 400);
+                yield extra_utils_1.getVideoPlaylist(server.url, 'toto', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should fail with an unknown playlist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideoPlaylist(server.url, 42, 404);
+                yield extra_utils_1.getVideoPlaylist(server.url, 42, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail to get an unlisted playlist with the number id', function () {
@@ -141,20 +157,20 @@ describe('Test video playlists API validator', function () {
                     }
                 });
                 const playlist = res.body.videoPlaylist;
-                yield extra_utils_1.getVideoPlaylist(server.url, playlist.id, 404);
-                yield extra_utils_1.getVideoPlaylist(server.url, playlist.uuid, 200);
+                yield extra_utils_1.getVideoPlaylist(server.url, playlist.id, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.getVideoPlaylist(server.url, playlist.uuid, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.getVideoPlaylist(server.url, playlistUUID, 200);
+                yield extra_utils_1.getVideoPlaylist(server.url, playlistUUID, http_error_codes_1.HttpStatusCode.OK_200);
             });
         });
     });
     describe('When creating/updating a video playlist', function () {
         const getBase = (playlistAttrs = {}, wrapper = {}) => {
             return Object.assign({
-                expectedStatus: 400,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
                 url: server.url,
                 token: server.accessToken,
                 playlistAttrs: Object.assign({
@@ -170,7 +186,7 @@ describe('Test video playlists API validator', function () {
         };
         it('Should fail with an unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: null, expectedStatus: 401 });
+                const params = getBase({}, { token: null, expectedStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
                 yield extra_utils_1.createVideoPlaylist(params);
                 yield extra_utils_1.updateVideoPlaylist(getUpdate(params, playlistUUID));
             });
@@ -204,7 +220,7 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail with an unknown video channel id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ videoChannelId: 42 }, { expectedStatus: 404 });
+                const params = getBase({ videoChannelId: 42 }, { expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 yield extra_utils_1.createVideoPlaylist(params);
                 yield extra_utils_1.updateVideoPlaylist(getUpdate(params, playlistUUID));
             });
@@ -230,27 +246,27 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail with an unknown playlist to update', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { expectedStatus: 404 }), 42));
+                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 }), 42));
             });
         });
         it('Should fail to update a playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { token: userAccessToken, expectedStatus: 403 }), playlistUUID));
+                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { token: userAccessToken, expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 }), playlistUUID));
             });
         });
         it('Should fail to update the watch later playlist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { expectedStatus: 400 }), watchLaterPlaylistId));
+                yield extra_utils_1.updateVideoPlaylist(getUpdate(getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400 }), watchLaterPlaylistId));
             });
         });
         it('Should succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 {
-                    const params = getBase({}, { expectedStatus: 200 });
+                    const params = getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.OK_200 });
                     yield extra_utils_1.createVideoPlaylist(params);
                 }
                 {
-                    const params = getBase({}, { expectedStatus: 204 });
+                    const params = getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 });
                     yield extra_utils_1.updateVideoPlaylist(getUpdate(params, playlistUUID));
                 }
             });
@@ -259,7 +275,7 @@ describe('Test video playlists API validator', function () {
     describe('When adding an element in a playlist', function () {
         const getBase = (elementAttrs = {}, wrapper = {}) => {
             return Object.assign({
-                expectedStatus: 400,
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400,
                 url: server.url,
                 token: server.accessToken,
                 playlistId: playlistUUID,
@@ -272,13 +288,13 @@ describe('Test video playlists API validator', function () {
         };
         it('Should fail with an unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: null, expectedStatus: 401 });
+                const params = getBase({}, { token: null, expectedStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
                 yield extra_utils_1.addVideoInPlaylist(params);
             });
         });
         it('Should fail with the playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: userAccessToken, expectedStatus: 403 });
+                const params = getBase({}, { token: userAccessToken, expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
                 yield extra_utils_1.addVideoInPlaylist(params);
             });
         });
@@ -289,14 +305,14 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.addVideoInPlaylist(params);
                 }
                 {
-                    const params = getBase({}, { playlistId: 42, expectedStatus: 404 });
+                    const params = getBase({}, { playlistId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.addVideoInPlaylist(params);
                 }
             });
         });
         it('Should fail with an unknown or incorrect video id', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ videoId: 42 }, { expectedStatus: 404 });
+                const params = getBase({ videoId: 42 }, { expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 yield extra_utils_1.addVideoInPlaylist(params);
             });
         });
@@ -314,7 +330,7 @@ describe('Test video playlists API validator', function () {
         });
         it('Succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { expectedStatus: 200 });
+                const params = getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.OK_200 });
                 const res = yield extra_utils_1.addVideoInPlaylist(params);
                 playlistElementId = res.body.videoPlaylistElement.id;
             });
@@ -331,18 +347,18 @@ describe('Test video playlists API validator', function () {
                 }, elementAttrs),
                 playlistElementId,
                 playlistId: playlistUUID,
-                expectedStatus: 400
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             }, wrapper);
         };
         it('Should fail with an unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: null, expectedStatus: 401 });
+                const params = getBase({}, { token: null, expectedStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
                 yield extra_utils_1.updateVideoPlaylistElement(params);
             });
         });
         it('Should fail with the playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: userAccessToken, expectedStatus: 403 });
+                const params = getBase({}, { token: userAccessToken, expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
                 yield extra_utils_1.updateVideoPlaylistElement(params);
             });
         });
@@ -353,7 +369,7 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.updateVideoPlaylistElement(params);
                 }
                 {
-                    const params = getBase({}, { playlistId: 42, expectedStatus: 404 });
+                    const params = getBase({}, { playlistId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.updateVideoPlaylistElement(params);
                 }
             });
@@ -365,7 +381,7 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.updateVideoPlaylistElement(params);
                 }
                 {
-                    const params = getBase({}, { playlistElementId: 42, expectedStatus: 404 });
+                    const params = getBase({}, { playlistElementId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.updateVideoPlaylistElement(params);
                 }
             });
@@ -384,13 +400,13 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail with an unknown element', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { playlistElementId: 888, expectedStatus: 404 });
+                const params = getBase({}, { playlistElementId: 888, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 yield extra_utils_1.updateVideoPlaylistElement(params);
             });
         });
         it('Succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { expectedStatus: 204 });
+                const params = getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 });
                 yield extra_utils_1.updateVideoPlaylistElement(params);
             });
         });
@@ -408,7 +424,7 @@ describe('Test video playlists API validator', function () {
                     insertAfterPosition: 2,
                     reorderLength: 3
                 }, elementAttrs),
-                expectedStatus: 400
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             }, wrapper);
         };
         before(function () {
@@ -427,13 +443,13 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail with an unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: null, expectedStatus: 401 });
+                const params = getBase({}, { token: null, expectedStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
                 yield extra_utils_1.reorderVideosPlaylist(params);
             });
         });
         it('Should fail with the playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { token: userAccessToken, expectedStatus: 403 });
+                const params = getBase({}, { token: userAccessToken, expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
                 yield extra_utils_1.reorderVideosPlaylist(params);
             });
         });
@@ -444,7 +460,7 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.reorderVideosPlaylist(params);
                 }
                 {
-                    const params = getBase({}, { playlistId: 42, expectedStatus: 404 });
+                    const params = getBase({}, { playlistId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.reorderVideosPlaylist(params);
                 }
             });
@@ -499,7 +515,7 @@ describe('Test video playlists API validator', function () {
         });
         it('Succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({}, { expectedStatus: 204 });
+                const params = getBase({}, { expectedStatus: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 });
                 yield extra_utils_1.reorderVideosPlaylist(params);
             });
         });
@@ -512,7 +528,7 @@ describe('Test video playlists API validator', function () {
                     url: server.url,
                     path,
                     query: { videoIds: [1, 2] },
-                    statusCodeExpected: 401
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401
                 });
             });
         });
@@ -545,7 +561,7 @@ describe('Test video playlists API validator', function () {
                     token: server.accessToken,
                     path,
                     query: { videoIds: [1, 2] },
-                    statusCodeExpected: 200
+                    statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
                 });
             });
         });
@@ -557,18 +573,18 @@ describe('Test video playlists API validator', function () {
                 token: server.accessToken,
                 playlistElementId,
                 playlistId: playlistUUID,
-                expectedStatus: 400
+                expectedStatus: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             }, wrapper);
         };
         it('Should fail with an unauthenticated user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ token: null, expectedStatus: 401 });
+                const params = getBase({ token: null, expectedStatus: http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401 });
                 yield extra_utils_1.removeVideoFromPlaylist(params);
             });
         });
         it('Should fail with the playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ token: userAccessToken, expectedStatus: 403 });
+                const params = getBase({ token: userAccessToken, expectedStatus: http_error_codes_1.HttpStatusCode.FORBIDDEN_403 });
                 yield extra_utils_1.removeVideoFromPlaylist(params);
             });
         });
@@ -579,7 +595,7 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.removeVideoFromPlaylist(params);
                 }
                 {
-                    const params = getBase({ playlistId: 42, expectedStatus: 404 });
+                    const params = getBase({ playlistId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.removeVideoFromPlaylist(params);
                 }
             });
@@ -591,20 +607,20 @@ describe('Test video playlists API validator', function () {
                     yield extra_utils_1.removeVideoFromPlaylist(params);
                 }
                 {
-                    const params = getBase({ playlistElementId: 42, expectedStatus: 404 });
+                    const params = getBase({ playlistElementId: 42, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                     yield extra_utils_1.removeVideoFromPlaylist(params);
                 }
             });
         });
         it('Should fail with an unknown element', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ playlistElementId: 888, expectedStatus: 404 });
+                const params = getBase({ playlistElementId: 888, expectedStatus: http_error_codes_1.HttpStatusCode.NOT_FOUND_404 });
                 yield extra_utils_1.removeVideoFromPlaylist(params);
             });
         });
         it('Succeed with the correct params', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ expectedStatus: 204 });
+                const params = getBase({ expectedStatus: http_error_codes_1.HttpStatusCode.NO_CONTENT_204 });
                 yield extra_utils_1.removeVideoFromPlaylist(params);
             });
         });
@@ -612,17 +628,17 @@ describe('Test video playlists API validator', function () {
     describe('When deleting a playlist', function () {
         it('Should fail with an unknown playlist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoPlaylist(server.url, server.accessToken, 42, 404);
+                yield extra_utils_1.deleteVideoPlaylist(server.url, server.accessToken, 42, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
             });
         });
         it('Should fail with a playlist of another user', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoPlaylist(server.url, userAccessToken, playlistUUID, 403);
+                yield extra_utils_1.deleteVideoPlaylist(server.url, userAccessToken, playlistUUID, http_error_codes_1.HttpStatusCode.FORBIDDEN_403);
             });
         });
         it('Should fail with the watch later playlist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                yield extra_utils_1.deleteVideoPlaylist(server.url, server.accessToken, watchLaterPlaylistId, 400);
+                yield extra_utils_1.deleteVideoPlaylist(server.url, server.accessToken, watchLaterPlaylistId, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             });
         });
         it('Should succeed with the correct params', function () {

@@ -4,7 +4,7 @@ const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../server/helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const constants_1 = require("../server/initializers/constants");
-const ffmpeg_utils_1 = require("../server/helpers/ffmpeg-utils");
+const ffprobe_utils_1 = require("../server/helpers/ffprobe-utils");
 const videos_1 = require("../shared/models/videos");
 const video_1 = require("../server/models/video/video");
 const video_transcoding_1 = require("../server/lib/video-transcoding");
@@ -38,9 +38,9 @@ function run() {
             for (const file of video.VideoFiles) {
                 currentFile = video_paths_1.getVideoFilePath(video, file);
                 const [videoBitrate, fps, resolution] = yield Promise.all([
-                    ffmpeg_utils_1.getVideoFileBitrate(currentFile),
-                    ffmpeg_utils_1.getVideoFileFPS(currentFile),
-                    ffmpeg_utils_1.getVideoFileResolution(currentFile)
+                    ffprobe_utils_1.getVideoFileBitrate(currentFile),
+                    ffprobe_utils_1.getVideoFileFPS(currentFile),
+                    ffprobe_utils_1.getVideoFileResolution(currentFile)
                 ]);
                 const maxBitrate = videos_1.getMaxBitrate(resolution.videoFileResolution, fps, constants_1.VIDEO_TRANSCODING_FPS);
                 const isMaxBitrateExceeded = videoBitrate > maxBitrate;
@@ -49,8 +49,8 @@ function run() {
                     const backupFile = `${currentFile}_backup`;
                     yield fs_extra_1.copy(currentFile, backupFile);
                     yield video_transcoding_1.optimizeOriginalVideofile(video, file);
-                    const originalDuration = yield ffmpeg_utils_1.getDurationFromVideoFile(backupFile);
-                    const newDuration = yield ffmpeg_utils_1.getDurationFromVideoFile(currentFile);
+                    const originalDuration = yield ffprobe_utils_1.getDurationFromVideoFile(backupFile);
+                    const newDuration = yield ffprobe_utils_1.getDurationFromVideoFile(currentFile);
                     if (originalDuration === newDuration) {
                         console.log('Finished optimizing %s', path_1.basename(currentFile));
                         yield fs_extra_1.remove(backupFile);

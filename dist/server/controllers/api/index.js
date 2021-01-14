@@ -4,6 +4,7 @@ exports.apiRouter = void 0;
 const cors = require("cors");
 const express = require("express");
 const RateLimit = require("express-rate-limit");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const express_utils_1 = require("../../helpers/express-utils");
 const config_1 = require("../../initializers/config");
 const abuse_1 = require("./abuse");
@@ -51,5 +52,5 @@ apiRouter.use('/plugins', plugins_1.pluginRouter);
 apiRouter.use('/ping', pong);
 apiRouter.use('/*', express_utils_1.badRequest);
 function pong(req, res) {
-    return res.send('pong').status(200).end();
+    return res.send('pong').status(http_error_codes_1.HttpStatusCode.OK_200).end();
 }

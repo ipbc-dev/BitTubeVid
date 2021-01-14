@@ -3,14 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.jobsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const misc_1 = require("../../helpers/custom-validators/misc");
 const job_queue_1 = require("../../lib/job-queue");
 const middlewares_1 = require("../../middlewares");
 const validators_1 = require("../../middlewares/validators");
 const jobs_1 = require("../../middlewares/validators/jobs");
-const misc_1 = require("../../helpers/custom-validators/misc");
 const jobsRouter = express.Router();
 exports.jobsRouter = jobsRouter;
-jobsRouter.get('/:state', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(7), validators_1.paginationValidator, middlewares_1.jobsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, jobs_1.listJobsValidator, middlewares_1.asyncMiddleware(listJobs));
+jobsRouter.get('/:state?', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(7), validators_1.paginationValidator, middlewares_1.jobsSortValidator, middlewares_1.setDefaultSort, middlewares_1.setDefaultPagination, jobs_1.listJobsValidator, middlewares_1.asyncMiddleware(listJobs));
 function listJobs(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const state = req.params.state;
@@ -23,16 +23,25 @@ function listJobs(req, res) {
             asc,
             jobType
         });
-        const total = yield job_queue_1.JobQueue.Instance.count(state);
+        const total = yield job_queue_1.JobQueue.Instance.count(state, jobType);
         const result = {
             total,
-            data: jobs.map(j => formatJob(j, state))
+            data: state
+                ? jobs.map(j => formatJob(j, state))
+                : yield Promise.all(jobs.map(j => formatJobWithUnknownState(j)))
         };
         return res.json(result);
     });
 }
+function formatJobWithUnknownState(job) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return formatJob(job, yield job.getState());
+    });
+}
 function formatJob(job, state) {
-    const error = misc_1.isArray(job.stacktrace) && job.stacktrace.length !== 0 ? job.stacktrace[0] : null;
+    const error = misc_1.isArray(job.stacktrace) && job.stacktrace.length !== 0
+        ? job.stacktrace[0]
+        : null;
     return {
         id: job.id,
         state: state,

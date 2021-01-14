@@ -6,6 +6,7 @@ const chai_1 = require("chai");
 const models_1 = require("@shared/models");
 const extra_utils_1 = require("../../../shared/extra-utils");
 const servers_1 = require("../../../shared/extra-utils/server/servers");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function loginExternal(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const res = yield extra_utils_1.getExternalAuth({
@@ -14,9 +15,9 @@ function loginExternal(options) {
             npmVersion: '0.0.1',
             authName: options.authName,
             query: options.query,
-            statusCodeExpected: options.statusCodeExpected || 302
+            statusCodeExpected: options.statusCodeExpected || http_error_codes_1.HttpStatusCode.FOUND_302
         });
-        if (res.status !== 302)
+        if (res.status !== http_error_codes_1.HttpStatusCode.FOUND_302)
             return;
         const location = res.header.location;
         const { externalAuthToken } = extra_utils_1.decodeQueryString(location);
@@ -36,7 +37,7 @@ describe('Test external auth plugins', function () {
             this.timeout(30000);
             server = yield servers_1.flushAndRunServer(1);
             yield extra_utils_1.setAccessTokensToServers([server]);
-            for (const suffix of ['one', 'two']) {
+            for (const suffix of ['one', 'two', 'three']) {
                 yield extra_utils_1.installPlugin({
                     url: server.url,
                     accessToken: server.accessToken,
@@ -50,7 +51,7 @@ describe('Test external auth plugins', function () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
-            chai_1.expect(auths).to.have.lengthOf(6);
+            chai_1.expect(auths).to.have.lengthOf(8);
             const auth2 = auths.find((a) => a.authName === 'external-auth-2');
             chai_1.expect(auth2).to.exist;
             chai_1.expect(auth2.authDisplayName).to.equal('External Auth 2');
@@ -67,7 +68,7 @@ describe('Test external auth plugins', function () {
                 query: {
                     username: 'cyan'
                 },
-                statusCodeExpected: 302
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.FOUND_302
             });
             const location = res.header.location;
             chai_1.expect(location.startsWith('/login?')).to.be.true;
@@ -79,21 +80,21 @@ describe('Test external auth plugins', function () {
     });
     it('Should reject auto external login with a missing or invalid token', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', '', 400);
-            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', 'blabla', 400);
+            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', '', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', 'blabla', http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         });
     });
     it('Should reject auto external login with a missing or invalid username', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, 400);
-            yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, 400);
+            yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+            yield extra_utils_1.loginUsingExternalToken(server, '', externalAuthToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         });
     });
     it('Should reject auto external login with an expired token', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(15000);
             yield extra_utils_1.wait(5000);
-            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', externalAuthToken, 400);
+            yield extra_utils_1.loginUsingExternalToken(server, 'cyan', externalAuthToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             yield servers_1.waitUntilLog(server, 'expired external auth token');
         });
     });
@@ -155,7 +156,7 @@ describe('Test external auth plugins', function () {
                 chai_1.expect(user.username).to.equal('cyan');
             }
             {
-                yield extra_utils_1.refreshToken(server, kefkaRefreshToken, 400);
+                yield extra_utils_1.refreshToken(server, kefkaRefreshToken, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             }
         });
     });
@@ -181,7 +182,7 @@ describe('Test external auth plugins', function () {
     it('Should have logged out Cyan', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.waitUntilLog(server, 'On logout cyan');
-            yield extra_utils_1.getMyUserInformation(server.url, cyanAccessToken, 401);
+            yield extra_utils_1.getMyUserInformation(server.url, cyanAccessToken, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
         });
     });
     it('Should login Cyan and keep the old existing profile', function () {
@@ -213,7 +214,7 @@ describe('Test external auth plugins', function () {
                 accessToken: cyanAccessToken,
                 email: 'toto@example.com',
                 currentPassword: 'toto',
-                statusCodeExpected: 400
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             });
         });
     });
@@ -221,7 +222,7 @@ describe('Test external auth plugins', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);
             yield extra_utils_1.wait(5000);
-            yield extra_utils_1.getMyUserInformation(server.url, kefkaAccessToken, 401);
+            yield extra_utils_1.getMyUserInformation(server.url, kefkaAccessToken, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
         });
     });
     it('Should unregister external-auth-2 and do not login existing Kefka', function () {
@@ -232,7 +233,7 @@ describe('Test external auth plugins', function () {
                 npmName: 'peertube-plugin-test-external-auth-one',
                 settings: { disableKefka: true }
             });
-            yield extra_utils_1.userLogin(server, { username: 'kefka', password: 'fake' }, 400);
+            yield extra_utils_1.userLogin(server, { username: 'kefka', password: 'fake' }, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
             yield loginExternal({
                 server,
                 npmName: 'test-external-auth-one',
@@ -241,7 +242,7 @@ describe('Test external auth plugins', function () {
                     username: 'kefka'
                 },
                 username: 'kefka',
-                statusCodeExpected: 404
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
             });
         });
     });
@@ -250,7 +251,7 @@ describe('Test external auth plugins', function () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
-            chai_1.expect(auths).to.have.lengthOf(5);
+            chai_1.expect(auths).to.have.lengthOf(7);
             const auth1 = auths.find(a => a.authName === 'external-auth-2');
             chai_1.expect(auth1).to.not.exist;
         });
@@ -270,11 +271,11 @@ describe('Test external auth plugins', function () {
                     username: 'cyan'
                 },
                 username: 'cyan',
-                statusCodeExpected: 404
+                statusCodeExpected: http_error_codes_1.HttpStatusCode.NOT_FOUND_404
             });
-            yield extra_utils_1.userLogin(server, { username: 'cyan', password: null }, 400);
-            yield extra_utils_1.userLogin(server, { username: 'cyan', password: '' }, 400);
-            yield extra_utils_1.userLogin(server, { username: 'cyan', password: 'fake' }, 400);
+            yield extra_utils_1.userLogin(server, { username: 'cyan', password: null }, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+            yield extra_utils_1.userLogin(server, { username: 'cyan', password: '' }, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
+            yield extra_utils_1.userLogin(server, { username: 'cyan', password: 'fake' }, http_error_codes_1.HttpStatusCode.BAD_REQUEST_400);
         });
     });
     it('Should not login kefka with another plugin', function () {
@@ -284,14 +285,14 @@ describe('Test external auth plugins', function () {
                 npmName: 'test-external-auth-two',
                 authName: 'external-auth-4',
                 username: 'kefka2',
-                statusCodeExpectedStep2: 400
+                statusCodeExpectedStep2: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             });
             yield loginExternal({
                 server,
                 npmName: 'test-external-auth-two',
                 authName: 'external-auth-4',
                 username: 'kefka',
-                statusCodeExpectedStep2: 400
+                statusCodeExpectedStep2: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             });
         });
     });
@@ -308,7 +309,7 @@ describe('Test external auth plugins', function () {
                 npmName: 'test-external-auth-two',
                 authName: 'external-auth-6',
                 username: 'existing_user',
-                statusCodeExpectedStep2: 400
+                statusCodeExpectedStep2: http_error_codes_1.HttpStatusCode.BAD_REQUEST_400
             });
         });
     });
@@ -317,7 +318,7 @@ describe('Test external auth plugins', function () {
             const res = yield extra_utils_1.getConfig(server.url);
             const config = res.body;
             const auths = config.plugin.registeredExternalAuths;
-            chai_1.expect(auths).to.have.lengthOf(4);
+            chai_1.expect(auths).to.have.lengthOf(6);
             const auth2 = auths.find((a) => a.authName === 'external-auth-2');
             chai_1.expect(auth2).to.not.exist;
         });
@@ -325,6 +326,30 @@ describe('Test external auth plugins', function () {
     after(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield servers_1.cleanupTests([server]);
+        });
+    });
+    it('Should forward the redirectUrl if the plugin returns one', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const resLogin = yield loginExternal({
+                server,
+                npmName: 'test-external-auth-three',
+                authName: 'external-auth-7',
+                username: 'cid'
+            });
+            const resLogout = yield extra_utils_1.logout(server.url, resLogin.access_token);
+            chai_1.expect(resLogout.body.redirectUrl).to.equal('https://example.com/redirectUrl');
+        });
+    });
+    it('Should call the plugin\'s onLogout method with the request', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const resLogin = yield loginExternal({
+                server,
+                npmName: 'test-external-auth-three',
+                authName: 'external-auth-8',
+                username: 'cid'
+            });
+            const resLogout = yield extra_utils_1.logout(server.url, resLogin.access_token);
+            chai_1.expect(resLogout.body.redirectUrl).to.equal('https://example.com/redirectUrl?access_token=' + resLogin.access_token);
         });
     });
 });

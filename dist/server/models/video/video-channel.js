@@ -3,17 +3,18 @@ var VideoChannelModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoChannelModel = exports.ScopeNames = void 0;
 const tslib_1 = require("tslib");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const video_channels_1 = require("../../helpers/custom-validators/video-channels");
+const constants_1 = require("../../initializers/constants");
 const send_1 = require("../../lib/activitypub/send");
 const account_1 = require("../account/account");
 const actor_1 = require("../activitypub/actor");
+const actor_follow_1 = require("../activitypub/actor-follow");
+const avatar_1 = require("../avatar/avatar");
+const server_1 = require("../server/server");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
-const constants_1 = require("../../initializers/constants");
-const server_1 = require("../server/server");
-const sequelize_1 = require("sequelize");
-const avatar_1 = require("../avatar/avatar");
 const video_playlist_1 = require("./video-playlist");
 var ScopeNames;
 (function (ScopeNames) {
@@ -30,6 +31,7 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             if (!instance.Actor) {
                 instance.Actor = yield instance.$get('Actor', { transaction: options.transaction });
             }
+            yield actor_follow_1.ActorFollowModel.removeFollowsOf(instance.Actor.id, options.transaction);
             if (instance.Actor.isOwned()) {
                 return send_1.sendDeleteActor(instance.Actor, options.transaction);
             }
@@ -51,11 +53,10 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             limit: parameters.count,
             order: utils_1.getSort(parameters.sort)
         };
-        const scopes = {
-            method: [ScopeNames.FOR_API, { actorId }]
-        };
         return VideoChannelModel_1
-            .scope(scopes)
+            .scope({
+            method: [ScopeNames.FOR_API, { actorId }]
+        })
             .findAndCountAll(query)
             .then(({ rows, count }) => {
             return { total: count, data: rows };
@@ -99,11 +100,10 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
                 ]
             }
         };
-        const scopes = {
-            method: [ScopeNames.FOR_API, { actorId: options.actorId }]
-        };
         return VideoChannelModel_1
-            .scope(scopes)
+            .scope({
+            method: [ScopeNames.FOR_API, { actorId: options.actorId }]
+        })
             .findAndCountAll(query)
             .then(({ rows, count }) => {
             return { total: count, data: rows };
@@ -296,6 +296,9 @@ let VideoChannelModel = VideoChannelModel_1 = class VideoChannelModel extends se
             ]
         });
     }
+    getLocalUrl() {
+        return constants_1.WEBSERVER.URL + `/video-channels/` + this.Actor.preferredUsername;
+    }
     getDisplayName() {
         return this.name;
     }
@@ -436,35 +439,36 @@ VideoChannelModel = VideoChannelModel_1 = tslib_1.__decorate([
         },
         [ScopeNames.SUMMARY]: (options = {}) => {
             var _a;
+            const include = [
+                {
+                    attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
+                    model: actor_1.ActorModel.unscoped(),
+                    required: (_a = options.actorRequired) !== null && _a !== void 0 ? _a : true,
+                    include: [
+                        {
+                            attributes: ['host'],
+                            model: server_1.ServerModel.unscoped(),
+                            required: false
+                        },
+                        {
+                            model: avatar_1.AvatarModel.unscoped(),
+                            required: false
+                        }
+                    ]
+                }
+            ];
             const base = {
-                attributes: ['id', 'name', 'description', 'actorId'],
-                include: [
-                    {
-                        attributes: ['id', 'preferredUsername', 'url', 'serverId', 'avatarId'],
-                        model: actor_1.ActorModel.unscoped(),
-                        required: (_a = options.actorRequired) !== null && _a !== void 0 ? _a : true,
-                        include: [
-                            {
-                                attributes: ['host'],
-                                model: server_1.ServerModel.unscoped(),
-                                required: false
-                            },
-                            {
-                                model: avatar_1.AvatarModel.unscoped(),
-                                required: false
-                            }
-                        ]
-                    }
-                ]
+                attributes: ['id', 'name', 'description', 'actorId']
             };
             if (options.withAccount === true) {
-                base.include.push({
+                include.push({
                     model: account_1.AccountModel.scope({
                         method: [account_1.ScopeNames.SUMMARY, { withAccountBlockerIds: options.withAccountBlockerIds }]
                     }),
                     required: true
                 });
             }
+            base.include = include;
             return base;
         },
         [ScopeNames.WITH_ACCOUNT]: {
