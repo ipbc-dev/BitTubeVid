@@ -392,18 +392,12 @@ async function buildx264VODCommand (command: ffmpeg.FfmpegCommand, options: Tran
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`
-    // command = command.size(size)
-    command = command.videoFilter(size)
+    const size = options.isPortraitMode === true
+      ? `${options.resolution}x?`
+      : `?x${options.resolution}`
+
+    command = command.size(size)
   }
-
-  // if (fps) {
-  //   // Hard FPS limits
-  //   if (fps > VIDEO_TRANSCODING_FPS.MAX) fps = getClosestFramerateStandard(fps, 'HD_STANDARD')
-  //   else if (fps < VIDEO_TRANSCODING_FPS.MIN) fps = VIDEO_TRANSCODING_FPS.MIN
-
-  //   command = command.size(size)
-  // }
 
   return command
 }
@@ -416,8 +410,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command.outputOption('-preset:v veryfast')
 
   command = command.input(options.audioPath)
-                   // tslint:disable-next-line: max-line-length
-                   .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuvj422p'`) // Avoid "height not divisible by 2" error
+                   .videoFilter('scale=trunc(iw/2)*2:trunc(ih/2)*2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
@@ -551,12 +544,6 @@ async function presetVideo (
 ) {
   let localCommand = command
     .format('mp4')
-    .videoCodec('h264_qsv')
-    // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
-    // .outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
-    // .outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
-    // .outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
-    .outputOption('-map_metadata -1') // strip all metadata
     .outputOption('-movflags faststart')
 
   addDefaultEncoderGlobalParams({ command })
