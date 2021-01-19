@@ -31,7 +31,7 @@ const trackerServer = new TrackerServer({
     let ip: string
 
     if (params.type === 'ws') {
-      ip = params.socket.ip
+      ip = params.ip
     } else {
       ip = params.httpReq.ip
     }
@@ -51,7 +51,7 @@ const trackerServer = new TrackerServer({
       const videoFileExists = await VideoFileModel.doesInfohashExistCached(infoHash)
       if (videoFileExists === true) return cb()
 
-      const playlistExists = await VideoStreamingPlaylistModel.doesInfohashExist(infoHash)
+      const playlistExists = await VideoStreamingPlaylistModel.doesInfohashExistCached(infoHash)
       if (playlistExists === true) return cb()
 
       cb(new Error(`Unknown infoHash ${infoHash} requested by ip ${ip}`))

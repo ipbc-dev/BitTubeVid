@@ -6,6 +6,7 @@ import { getOrCreateVideoAndAccountAndChannel } from '@server/lib/activitypub/vi
 import { AccountBlocklistModel } from '@server/models/account/account-blocklist'
 import { getServerActor } from '@server/models/application/application'
 import { ServerBlocklistModel } from '@server/models/server/server-blocklist'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
 import { ResultList, Video, VideoChannel } from '@shared/models'
 import { SearchTargetQuery } from '@shared/models/search/search-target-query.model'
 import { VideoChannelsSearchQuery, VideosSearchQuery } from '../../../shared/models/search'
@@ -84,8 +85,6 @@ function searchVideoChannels (req: express.Request, res: express.Response) {
 }
 
 async function searchVideoChannelsIndex (query: VideoChannelsSearchQuery, res: express.Response) {
-  logger.debug('Doing channels search on search index.')
-
   const result = await buildMutedForSearchIndex(res)
 
   const body = Object.assign(query, result)
@@ -93,13 +92,15 @@ async function searchVideoChannelsIndex (query: VideoChannelsSearchQuery, res: e
   const url = sanitizeUrl(CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/video-channels'
 
   try {
+    logger.debug('Doing video channels search index request on %s.', url, { body })
+
     const searchIndexResult = await doRequest<ResultList<VideoChannel>>({ uri: url, body, json: true })
 
     return res.json(searchIndexResult.body)
   } catch (err) {
     logger.warn('Cannot use search index to make video channels search.', { err })
 
-    return res.sendStatus(500)
+    return res.sendStatus(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
   }
 }
 
@@ -165,8 +166,6 @@ function searchVideos (req: express.Request, res: express.Response) {
 }
 
 async function searchVideosIndex (query: VideosSearchQuery, res: express.Response) {
-  logger.debug('Doing videos search on search index.')
-
   const result = await buildMutedForSearchIndex(res)
 
   const body: VideosSearchQuery = Object.assign(query, result)
@@ -185,13 +184,15 @@ async function searchVideosIndex (query: VideosSearchQuery, res: express.Respons
   const url = sanitizeUrl(CONFIG.SEARCH.SEARCH_INDEX.URL) + '/api/v1/search/videos'
 
   try {
+    logger.debug('Doing videos search index request on %s.', url, { body })
+
     const searchIndexResult = await doRequest<ResultList<Video>>({ uri: url, body, json: true })
 
     return res.json(searchIndexResult.body)
   } catch (err) {
     logger.warn('Cannot use search index to make video search.', { err })
 
-    return res.sendStatus(500)
+    return res.sendStatus(HttpStatusCode.INTERNAL_SERVER_ERROR_500)
   }
 }
 

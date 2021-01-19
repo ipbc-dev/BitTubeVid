@@ -6,10 +6,13 @@ import { ServerConfig } from '@shared/models'
 import {
   addVideoCommentReply,
   addVideoCommentThread,
+  createLive,
   doubleFollow,
+  getAccountVideos,
   getConfig,
   getPluginTestPath,
   getVideo,
+  getVideoChannelVideos,
   getVideoCommentThreads,
   getVideosList,
   getVideosListPagination,
@@ -19,6 +22,7 @@ import {
   registerUser,
   setAccessTokensToServers,
   setDefaultVideoChannel,
+  updateCustomSubConfig,
   updateVideo,
   uploadVideo,
   waitJobs
@@ -27,6 +31,7 @@ import { cleanupTests, flushAndRunMultipleServers, ServerInfo } from '../../../s
 import { getGoodVideoUrl, getMyVideoImports, importVideo } from '../../../shared/extra-utils/videos/video-imports'
 import { VideoDetails, VideoImport, VideoImportState, VideoPrivacy } from '../../../shared/models/videos'
 import { VideoCommentThreadTree } from '../../../shared/models/videos/video-comment.model'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const expect = chai.expect
 
@@ -61,6 +66,17 @@ describe('Test plugin filter hooks', function () {
 
     const res = await getVideosList(servers[0].url)
     videoUUID = res.body.data[0].uuid
+
+    await updateCustomSubConfig(servers[0].url, servers[0].accessToken, {
+      live: { enabled: true },
+      signup: { enabled: true },
+      import: {
+        videos: {
+          http: { enabled: true },
+          torrent: { enabled: true }
+        }
+      }
+    })
   })
 
   it('Should run filter:api.videos.list.params', async function () {
@@ -77,6 +93,34 @@ describe('Test plugin filter hooks', function () {
     expect(res.body.total).to.equal(11)
   })
 
+  it('Should run filter:api.accounts.videos.list.params', async function () {
+    const res = await getAccountVideos(servers[0].url, servers[0].accessToken, 'root', 0, 2)
+
+    // 1 plugin do +1 to the count parameter
+    expect(res.body.data).to.have.lengthOf(3)
+  })
+
+  it('Should run filter:api.accounts.videos.list.result', async function () {
+    const res = await getAccountVideos(servers[0].url, servers[0].accessToken, 'root', 0, 2)
+
+    // Plugin do +2 to the total result
+    expect(res.body.total).to.equal(12)
+  })
+
+  it('Should run filter:api.video-channels.videos.list.params', async function () {
+    const res = await getVideoChannelVideos(servers[0].url, servers[0].accessToken, 'root_channel', 0, 2)
+
+    // 1 plugin do +3 to the count parameter
+    expect(res.body.data).to.have.lengthOf(5)
+  })
+
+  it('Should run filter:api.video-channels.videos.list.result', async function () {
+    const res = await getVideoChannelVideos(servers[0].url, servers[0].accessToken, 'root_channel', 0, 2)
+
+    // Plugin do +3 to the total result
+    expect(res.body.total).to.equal(13)
+  })
+
   it('Should run filter:api.video.get.result', async function () {
     const res = await getVideo(servers[0].url, videoUUID)
 
@@ -84,7 +128,17 @@ describe('Test plugin filter hooks', function () {
   })
 
   it('Should run filter:api.video.upload.accept.result', async function () {
-    await uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video with bad word' }, 403)
+    await uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video with bad word' }, HttpStatusCode.FORBIDDEN_403)
+  })
+
+  it('Should run filter:api.live-video.create.accept.result', async function () {
+    const attributes = {
+      name: 'video with bad word',
+      privacy: VideoPrivacy.PUBLIC,
+      channelId: servers[0].videoChannel.id
+    }
+
+    await createLive(servers[0].url, servers[0].accessToken, attributes, HttpStatusCode.FORBIDDEN_403)
   })
 
   it('Should run filter:api.video.pre-import-url.accept.result', async function () {
@@ -94,7 +148,7 @@ describe('Test plugin filter hooks', function () {
       channelId: servers[0].videoChannel.id,
       targetUrl: getGoodVideoUrl() + 'bad'
     }
-    await importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403)
+    await importVideo(servers[0].url, servers[0].accessToken, baseAttributes, HttpStatusCode.FORBIDDEN_403)
   })
 
   it('Should run filter:api.video.pre-import-torrent.accept.result', async function () {
@@ -104,7 +158,7 @@ describe('Test plugin filter hooks', function () {
       channelId: servers[0].videoChannel.id,
       torrentfile: 'video-720p.torrent' as any
     }
-    await importVideo(servers[0].url, servers[0].accessToken, baseAttributes, 403)
+    await importVideo(servers[0].url, servers[0].accessToken, baseAttributes, HttpStatusCode.FORBIDDEN_403)
   })
 
   it('Should run filter:api.video.post-import-url.accept.result', async function () {
@@ -166,15 +220,22 @@ describe('Test plugin filter hooks', function () {
   })
 
   it('Should run filter:api.video-thread.create.accept.result', async function () {
-    await addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'comment with bad word', 403)
+    await addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'comment with bad word', HttpStatusCode.FORBIDDEN_403)
   })
 
   it('Should run filter:api.video-comment-reply.create.accept.result', async function () {
     const res = await addVideoCommentThread(servers[0].url, servers[0].accessToken, videoUUID, 'thread')
     threadId = res.body.comment.id
 
-    await addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with bad word', 403)
-    await addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with good word', 200)
+    await addVideoCommentReply(
+      servers[0].url,
+      servers[0].accessToken,
+      videoUUID,
+      threadId,
+      'comment with bad word',
+      HttpStatusCode.FORBIDDEN_403
+    )
+    await addVideoCommentReply(servers[0].url, servers[0].accessToken, videoUUID, threadId, 'comment with good word', HttpStatusCode.OK_200)
   })
 
   it('Should run filter:api.video-threads.list.params', async function () {
@@ -273,7 +334,7 @@ describe('Test plugin filter hooks', function () {
     })
 
     it('Should not allow a signup', async function () {
-      const res = await registerUser(servers[0].url, 'jma', 'password', 403)
+      const res = await registerUser(servers[0].url, 'jma', 'password', HttpStatusCode.FORBIDDEN_403)
 
       expect(res.body.error).to.equal('No jma')
     })

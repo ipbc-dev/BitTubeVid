@@ -18,8 +18,20 @@ input[type=text] {
 }
 
 input[type=number] {
-  @include peertube-input-text(315px);
+  @include peertube-input-text($form-base-input-width);
+
   display: block;
+}
+
+.number-with-unit {
+  position: relative;
+  width: min-content;
+
+  input[type=number] + span {
+    position: absolute;
+    top: 5px;
+    right: 2.5rem;
+  }
 }
 
 input[type=checkbox] {
@@ -30,8 +42,11 @@ input[type=checkbox] {
   @include peertube-select-container($form-base-input-width);
 }
 
+ng-select,
 my-select-checkbox {
-  @include ng-select($form-base-input-width);
+  @include responsive-width($form-base-input-width);
+
+  display: block;
 }
 
 input[type=submit] {
@@ -84,6 +99,193 @@ ngb-tabset:not(.previews) ::ng-deep {
   }
 }
 
+.label-with-help{
+  display: block !important;
+}
+.storage-label, .storage-numeric-input{
+  display: inline-block !important;
+}
+.storage-label{
+  margin-left: 15px;
+  margin-bottom: 0;
+}
+
+:host .pTableSimpleCheckbox{
+  opacity: 1;
+  position: relative;
+  transform: scale(2);
+  margin: 6px;
+}
+/************************************/
+/* Add plan modal styles           */
+/**********************************/
+:host ::ng-deep .add-plan-modal{
+  .ui-dialog {
+    .ui-dialog-titlebar{
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--menuBackgroundColor) !important;
+    }
+    .ui-dialog-content{
+      min-width: 415px;
+      color: var(--mainForegroundColor) !important;
+      background-color: var(--mainBackgroundColor) !important;
+      border-bottom: none;
+    }
+    .ui-dialog-footer{
+      background-color: var(--mainBackgroundColor);
+    }
+  }
+  input {
+    width: 300px !important;
+    padding-right: 2px;
+  }
+}
+/*********************************/
+/* Premium storage table styles */
+/*******************************/
+:host ::ng-deep .ui-table{
+  input[type="number"]{
+    width: 175px;
+    padding-left: 10px;
+    padding-right: 2px;
+  }
+}
+
+.row-edit-button{
+  margin-right: 0.5em;
+}
+
+.add-plan-button{
+  float: right;
+}
+
+:host ::ng-deep .row-save-button{
+  margin-right: 0.5em;
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}
+
+:host ::ng-deep .action-button-edit, :host ::ng-deep .row-save-button{
+  border: 1px solid !important;
+  border-color: var(--mainBackgroundColor) !important;
+  height: 33px !important;
+  border-radius: 3px;
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}
+
+:host ::ng-deep .row-cancel-button{
+  span{
+    background-color: #d9534f !important;
+    color: #ffffff !important;
+  }
+}
+/* Hovers */
+:host ::ng-deep .row-save-button:hover, :host ::ng-deep .row-cancel-button:hover{
+  span{
+    background-color: #e5e5e5 !important;
+    color: var(--greyForegroundColor) !important;
+  }
+}
+:host ::ng-deep .row-save-button:hover{
+  svg g g[stroke="#000000"] {
+    stroke: var(--mainForegroundColor) !important;
+  }
+}  
+:host ::ng-deep .row-edit-button, :host ::ng-deep .row-delete-button, :host ::ng-deep .row-save-button, :host ::ng-deep .row-cancel-button{
+  .action-button-edit:hover , .action-button-delete:hover, .grey-button:hover {
+    color: var(--greyForegroundColor) !important;
+    svg g g[stroke="#000000"] g{
+      stroke: var(--greyForegroundColor) !important;
+    }
+    path[stroke="#000000"]{
+      stroke: var(--greyForegroundColor) !important;
+    }
+    path[fill="#000000"]{
+      fill: var(--greyForegroundColor) !important;
+    }
+    rect[fill="#000000"]{
+      fill: var(--greyForegroundColor) !important;
+    }
+  }
+}
+:host ::ng-deep .action-button-edit, :host ::ng-deep .action-button-delete{
+  padding: 0px 15px !important;
+}
 .submit-error {
   margin-bottom: 20px;
+}
+/* Premium Storage Overview */
+.overview {
+  h3 {
+    font-size: 1.25rem;
+  }
+  
+  .stat {
+    text-align: center;
+    margin-bottom: 1em;
+    overflow: hidden;
+  
+    .stat-value {
+      font-size: 2.25em;
+      line-height: 1em;
+      margin: 0;
+    }
+  
+    .stat-label {
+      font-size: 1.15em;
+      margin: 0;
+    }
+  
+    .glyphicon {
+      opacity: 0.12;
+      position: absolute;
+      left: 16px;
+      top: -24px;
+  
+      &.icon-bottom {
+        top: 4px;
+      }
+  
+      &::before {
+        font-size: 8em;
+      }
+    }
+  
+    .card-body {
+      z-index: 2;
+    }
+  }
+
+  .glyphicon{
+    font-size: 80%;
+    top: 4px !important;
+  }
+  
+}
+.alert-signup {
+  width: fit-content;
+  margin-top: 10px;
+}
+
+.callout-container {
+  position: absolute;
+  display: flex;
+  height: 0;
+  width: 100%;
+  justify-content: right;
+
+  .callout-link {
+    @include peertube-button-link;
+
+    position: relative;
+    right: 3.3em;
+    top: .3em;
+    font-size: 90%;
+    color: pvar(--mainColor);
+    background-color: pvar(--mainBackgroundColor);
+    padding: 0 .3em;
+  }
 }

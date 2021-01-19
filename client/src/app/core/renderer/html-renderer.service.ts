@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { LinkifierService } from './linkifier.service'
+import { SANITIZE_OPTIONS } from '@shared/core-utils/renderer/html'
 
 @Injectable()
 export class HtmlRendererService {
@@ -20,32 +21,14 @@ export class HtmlRendererService {
   }
 
   async toSafeHtml (text: string) {
-    await this.loadSanitizeHtml()
+    const [ html ] = await Promise.all([
+      // Convert possible markdown to html
+      this.linkifier.linkify(text),
 
-    // Convert possible markdown to html
-    const html = this.linkifier.linkify(text)
+      this.loadSanitizeHtml()
+    ])
 
-    return this.sanitizeHtml(html, {
-      allowedTags: [ 'a', 'p', 'span', 'br', 'strong', 'em', 'ul', 'ol', 'li' ],
-      allowedSchemes: [ 'http', 'https' ],
-      allowedAttributes: {
-        'a': [ 'href', 'class', 'target', 'rel' ]
-      },
-      transformTags: {
-        a: (tagName, attribs) => {
-          let rel = 'noopener noreferrer'
-          if (attribs.rel === 'me') rel += ' me'
-
-          return {
-            tagName,
-            attribs: Object.assign(attribs, {
-              target: '_blank',
-              rel
-            })
-          }
-        }
-      }
-    })
+    return this.sanitizeHtml(html, SANITIZE_OPTIONS)
   }
 
   private async loadSanitizeHtml () {

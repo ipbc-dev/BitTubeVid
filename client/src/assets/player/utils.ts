@@ -68,7 +68,7 @@ function buildVideoLink (options: {
 
   const params = generateParams(window.location.search)
 
-  if (options.startTime) {
+  if (options.startTime !== undefined && options.startTime !== null) {
     const startTimeInt = Math.floor(options.startTime)
     params.set('start', secondsToTime(startTimeInt))
   }
@@ -146,6 +146,8 @@ function timeToInt (time: number | string) {
 function secondsToTime (seconds: number, full = false, symbol?: string) {
   let time = ''
 
+  if (seconds === 0 && !full) return '0s'
+
   const hourSymbol = (symbol || 'h')
   const minuteSymbol = (symbol || 'm')
   const secondsSymbol = full ? '' : 's'
@@ -174,18 +176,6 @@ function buildVideoOrPlaylistEmbed (embedUrl: string) {
     'src="' + embedUrl + '" ' +
     'frameborder="0" allowfullscreen>' +
     '</iframe>'
-}
-
-function copyToClipboard (text: string) {
-  const el = document.createElement('textarea')
-  el.value = text
-  el.setAttribute('readonly', '')
-  el.style.position = 'absolute'
-  el.style.left = '-9999px'
-  document.body.appendChild(el)
-  el.select()
-  document.execCommand('copy')
-  document.body.removeChild(el)
 }
 
 function videoFileMaxByResolution (files: VideoFile[]) {
@@ -236,7 +226,6 @@ export {
   buildVideoOrPlaylistEmbed,
   videoFileMaxByResolution,
   videoFileMinByResolution,
-  copyToClipboard,
   isMobile,
   bytes,
   isIOS,

@@ -8,18 +8,18 @@ import { getBytes } from '@root-helpers/bytes'
 import { UserLocalStorageKeys } from '@root-helpers/users'
 import {
   Avatar,
-  NSFWPolicyType,
   ResultList,
   User as UserServerModel,
   UserCreate,
-  UserRegister,
   UserRole,
   UserUpdate,
   UserUpdateMe,
   UserVideoQuota
 } from '@shared/models'
+import { NSFWPolicyType } from '@shared/models/videos/nsfw-policy.type'
 import { environment } from '../../../environments/environment'
 import { RestExtractor, RestPagination, RestService } from '../rest'
+import { UserRegister } from '@shared/models/users/user-register.model'
 import { getFirebaseToken } from '../../core/firebase'
 import { LocalStorageService, SessionStorageService } from '../wrappers/storage.service'
 import { User } from './user.model'

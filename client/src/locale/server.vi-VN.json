@@ -31,6 +31,8 @@
     "Published": "Đã xuất bản",
     "To transcode": "Để chuyển mã",
     "To import": "Để nhập",
+    "Waiting for livestream": "Waiting for livestream",
+    "Livestream ended": "Livestream ended",
     "Pending": "Đang chờ",
     "Success": "Thành công",
     "Failed": "Thất bại",
@@ -240,5 +242,7 @@
     "Yoruba": "",
     "Zhuang": "",
     "Chinese": "",
-    "Zulu": ""
+    "Zulu": "",
+    "Normal mode": "Normal mode",
+    "Theater mode": "Theater mode"
 }

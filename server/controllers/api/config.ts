@@ -17,6 +17,7 @@ import { PluginManager } from '../../lib/plugins/plugin-manager'
 import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
 import { asyncMiddleware, authenticate, ensureUserHasRight } from '../../middlewares'
 import { customConfigUpdateValidator } from '../../middlewares/validators/config'
+import { logger } from '@server/helpers/logger'
 
 const configRouter = express.Router()
 
@@ -113,7 +114,24 @@ async function getConfig (req: express.Request, res: express.Response) {
       webtorrent: {
         enabled: CONFIG.TRANSCODING.WEBTORRENT.ENABLED
       },
-      enabledResolutions: getEnabledResolutions()
+      enabledResolutions: getEnabledResolutions('vod')
+    },
+    live: {
+      enabled: CONFIG.LIVE.ENABLED,
+
+      allowReplay: CONFIG.LIVE.ALLOW_REPLAY,
+      maxDuration: CONFIG.LIVE.MAX_DURATION,
+      maxInstanceLives: CONFIG.LIVE.MAX_INSTANCE_LIVES,
+      maxUserLives: CONFIG.LIVE.MAX_USER_LIVES,
+
+      transcoding: {
+        enabled: CONFIG.LIVE.TRANSCODING.ENABLED,
+        enabledResolutions: getEnabledResolutions('live')
+      },
+
+      rtmp: {
+        port: CONFIG.LIVE.RTMP.PORT
+      }
     },
     import: {
       videos: {
@@ -180,6 +198,9 @@ async function getConfig (req: express.Request, res: express.Response) {
       }
     },
 
+    premium_storage: {
+      enabled: CONFIG.PREMIUM_STORAGE.ENABLED
+    },
     broadcastMessage: {
       enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,
       message: CONFIG.BROADCAST_MESSAGE.MESSAGE,
@@ -232,7 +253,7 @@ async function deleteCustomConfig (req: express.Request, res: express.Response) 
 
   const data = customConfig()
 
-  return res.json(data).end()
+  return res.json(data)
 }
 
 async function updateCustomConfig (req: express.Request, res: express.Response) {
@@ -240,6 +261,9 @@ async function updateCustomConfig (req: express.Request, res: express.Response) 
 
   // camelCase to snake_case key + Force number conversion
   const toUpdateJSON = convertCustomConfigBody(req.body)
+
+  // logger.debug('ICEICE CONFIG.CUSTOM_FILE is: ', CONFIG.CUSTOM_FILE)
+  // logger.debug('ICEICE toUpdateJSON is: ', toUpdateJSON)
 
   await writeJSON(CONFIG.CUSTOM_FILE, toUpdateJSON, { spaces: 2 })
 
@@ -254,7 +278,7 @@ async function updateCustomConfig (req: express.Request, res: express.Response) 
     oldCustomConfigAuditKeys
   )
 
-  return res.json(data).end()
+  return res.json(data)
 }
 
 function getRegisteredThemes () {
@@ -268,9 +292,13 @@ function getRegisteredThemes () {
                       }))
 }
 
-function getEnabledResolutions () {
-  return Object.keys(CONFIG.TRANSCODING.RESOLUTIONS)
-               .filter(key => CONFIG.TRANSCODING.ENABLED && CONFIG.TRANSCODING.RESOLUTIONS[key] === true)
+function getEnabledResolutions (type: 'vod' | 'live') {
+  const transcoding = type === 'vod'
+    ? CONFIG.TRANSCODING
+    : CONFIG.LIVE.TRANSCODING
+
+  return Object.keys(transcoding.RESOLUTIONS)
+               .filter(key => transcoding.ENABLED && transcoding.RESOLUTIONS[key] === true)
                .map(r => parseInt(r, 10))
 }
 
@@ -411,6 +439,25 @@ function customConfig (): CustomConfig {
         enabled: CONFIG.TRANSCODING.HLS.ENABLED
       }
     },
+    live: {
+      enabled: CONFIG.LIVE.ENABLED,
+      allowReplay: CONFIG.LIVE.ALLOW_REPLAY,
+      maxDuration: CONFIG.LIVE.MAX_DURATION,
+      maxInstanceLives: CONFIG.LIVE.MAX_INSTANCE_LIVES,
+      maxUserLives: CONFIG.LIVE.MAX_USER_LIVES,
+      transcoding: {
+        enabled: CONFIG.LIVE.TRANSCODING.ENABLED,
+        threads: CONFIG.LIVE.TRANSCODING.THREADS,
+        resolutions: {
+          '240p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['240p'],
+          '360p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['360p'],
+          '480p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['480p'],
+          '720p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['720p'],
+          '1080p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['1080p'],
+          '2160p': CONFIG.LIVE.TRANSCODING.RESOLUTIONS['2160p']
+        }
+      }
+    },
     import: {
       videos: {
         http: {
@@ -445,6 +492,9 @@ function customConfig (): CustomConfig {
           indexUrl: CONFIG.FOLLOWINGS.INSTANCE.AUTO_FOLLOW_INDEX.INDEX_URL
         }
       }
+    },
+    premium_storage: {
+      enabled: CONFIG.PREMIUM_STORAGE.ENABLED
     },
     broadcastMessage: {
       enabled: CONFIG.BROADCAST_MESSAGE.ENABLED,

@@ -4,6 +4,7 @@
 .about-instance-title {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 20px;
 
   .title {
     font-size: 20px;
@@ -43,12 +44,12 @@
 .middle-title {
   @include in-content-small-title;
 
-  margin-top: 45px;
+  margin-top: 0;
   margin-bottom: 25px;
 }
 
 .block {
-  margin-bottom: 30px;
+  margin-bottom: 75px;
   font-size: 15px;
 }
 
@@ -75,6 +76,6 @@
   }
 
   .section-title {
-    color: initial;
+    color: var(--mainForegroundColor);
   }
 }

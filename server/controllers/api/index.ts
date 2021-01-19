@@ -1,6 +1,7 @@
 import * as cors from 'cors'
 import * as express from 'express'
 import * as RateLimit from 'express-rate-limit'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 import { badRequest } from '../../helpers/express-utils'
 import { CONFIG } from '../../initializers/config'
 import { abuseRouter } from './abuse'
@@ -9,6 +10,7 @@ import { bulkRouter } from './bulk'
 import { configRouter } from './config'
 import { jobsRouter } from './jobs'
 import { oauthClientsRouter } from './oauth-clients'
+import { premiumStorageRouter } from './premium-storage'
 import { overviewsRouter } from './overviews'
 import { pluginRouter } from './plugins'
 import { searchRouter } from './search'
@@ -43,6 +45,7 @@ apiRouter.use('/video-channels', videoChannelRouter)
 apiRouter.use('/video-playlists', videoPlaylistRouter)
 apiRouter.use('/videos', videosRouter)
 apiRouter.use('/jobs', jobsRouter)
+apiRouter.use('/premium-storage', premiumStorageRouter)
 apiRouter.use('/search', searchRouter)
 apiRouter.use('/overviews', overviewsRouter)
 apiRouter.use('/plugins', pluginRouter)
@@ -56,5 +59,5 @@ export { apiRouter }
 // ---------------------------------------------------------------------------
 
 function pong (req: express.Request, res: express.Response) {
-  return res.send('pong').status(200).end()
+  return res.send('pong').status(HttpStatusCode.OK_200).end()
 }

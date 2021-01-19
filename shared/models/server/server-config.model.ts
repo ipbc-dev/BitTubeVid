@@ -98,6 +98,25 @@ export interface ServerConfig {
     enabledResolutions: number[]
   }
 
+  live: {
+    enabled: boolean
+
+    maxDuration: number
+    maxInstanceLives: number
+    maxUserLives: number
+    allowReplay: boolean
+
+    transcoding: {
+      enabled: boolean
+
+      enabledResolutions: number[]
+    }
+
+    rtmp: {
+      port: number
+    }
+  }
+
   import: {
     videos: {
       http: {
@@ -170,6 +189,9 @@ export interface ServerConfig {
     }
   }
 
+  premium_storage: {
+    enabled: boolean
+  }
   broadcastMessage: {
     enabled: boolean
     message: string

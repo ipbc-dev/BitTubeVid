@@ -1,17 +1,17 @@
-import { basename, dirname, join } from 'path'
-import { HLS_STREAMING_PLAYLIST_DIRECTORY, P2P_MEDIA_LOADER_PEER_VERSION } from '../initializers/constants'
 import { close, ensureDir, move, open, outputJSON, pathExists, read, readFile, remove, writeFile } from 'fs-extra'
-import { getVideoStreamSize, getAudioStreamCodec, getVideoStreamCodec } from '../helpers/ffmpeg-utils'
+import { flatten, uniq } from 'lodash'
+import { basename, dirname, join } from 'path'
+import { MVideoWithFile } from '@server/types/models'
 import { sha256 } from '../helpers/core-utils'
-import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
+import { getAudioStreamCodec, getVideoStreamCodec, getVideoStreamSize } from '../helpers/ffprobe-utils'
 import { logger } from '../helpers/logger'
 import { doRequest, doRequestAndSaveToFile } from '../helpers/requests'
 import { generateRandomString } from '../helpers/utils'
-import { flatten, uniq } from 'lodash'
-import { VideoFileModel } from '../models/video/video-file'
 import { CONFIG } from '../initializers/config'
+import { HLS_STREAMING_PLAYLIST_DIRECTORY, P2P_MEDIA_LOADER_PEER_VERSION } from '../initializers/constants'
 import { sequelizeTypescript } from '../initializers/database'
-import { MVideoWithFile } from '@server/types/models'
+import { VideoFileModel } from '../models/video/video-file'
+import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
 import { getVideoFilename, getVideoFilePath } from './video-paths'
 
 async function updateStreamingPlaylistsInfohashesIfNeeded () {
@@ -65,7 +65,7 @@ async function updateMasterHLSPlaylist (video: MVideoWithFile) {
   await writeFile(masterPlaylistPath, masterPlaylists.join('\n') + '\n')
 }
 
-async function updateSha256Segments (video: MVideoWithFile) {
+async function updateSha256VODSegments (video: MVideoWithFile) {
   const json: { [filename: string]: { [range: string]: string } } = {}
 
   const playlistDirectory = join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid)
@@ -101,20 +101,9 @@ async function updateSha256Segments (video: MVideoWithFile) {
   await outputJSON(outputPath, json)
 }
 
-function getRangesFromPlaylist (playlistContent: string) {
-  const ranges: { offset: number, length: number }[] = []
-  const lines = playlistContent.split('\n')
-  const regex = /^#EXT-X-BYTERANGE:(\d+)@(\d+)$/
-
-  for (const line of lines) {
-    const captured = regex.exec(line)
-
-    if (captured) {
-      ranges.push({ length: parseInt(captured[1], 10), offset: parseInt(captured[2], 10) })
-    }
-  }
-
-  return ranges
+async function buildSha256Segment (segmentPath: string) {
+  const buf = await readFile(segmentPath)
+  return sha256(buf)
 }
 
 function downloadPlaylistSegments (playlistUrl: string, destinationDir: string, timeout: number) {
@@ -187,9 +176,26 @@ function downloadPlaylistSegments (playlistUrl: string, destinationDir: string, 
 
 export {
   updateMasterHLSPlaylist,
-  updateSha256Segments,
+  updateSha256VODSegments,
+  buildSha256Segment,
   downloadPlaylistSegments,
   updateStreamingPlaylistsInfohashesIfNeeded
 }
 
 // ---------------------------------------------------------------------------
+
+function getRangesFromPlaylist (playlistContent: string) {
+  const ranges: { offset: number, length: number }[] = []
+  const lines = playlistContent.split('\n')
+  const regex = /^#EXT-X-BYTERANGE:(\d+)@(\d+)$/
+
+  for (const line of lines) {
+    const captured = regex.exec(line)
+
+    if (captured) {
+      ranges.push({ length: parseInt(captured[1], 10), offset: parseInt(captured[2], 10) })
+    }
+  }
+
+  return ranges
+}

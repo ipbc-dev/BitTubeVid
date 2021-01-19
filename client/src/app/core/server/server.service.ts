@@ -74,6 +74,20 @@ export class ServerService {
         enabled: true
       }
     },
+    live: {
+      enabled: false,
+      allowReplay: true,
+      maxDuration: null,
+      maxInstanceLives: -1,
+      maxUserLives: -1,
+      transcoding: {
+        enabled: false,
+        enabledResolutions: []
+      },
+      rtmp: {
+        port: 1935
+      }
+    },
     avatar: {
       file: {
         size: { max: 0 },
@@ -130,6 +144,9 @@ export class ServerService {
           indexUrl: 'https://instances.joinpeertube.org'
         }
       }
+    },
+    premium_storage: {
+      enabled: false
     },
     broadcastMessage: {
       enabled: false,

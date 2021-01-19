@@ -58,33 +58,46 @@ $ VERSION=$(curl -s https://api.github.com/repos/chocobozzz/peertube/releases/la
 
 Open the peertube directory, create a few required directories
 ```
-$ cd /var/www/peertube && sudo -u peertube mkdir config storage versions && cd versions
+$ cd /var/www/peertube
+$ sudo -u peertube mkdir config storage versions
 ```
 
 Download the latest version of the Peertube client, unzip it and remove the zip
 ```
+$ cd /var/www/peertube/versions
 $ sudo -u peertube wget -q "https://github.com/Chocobozzz/PeerTube/releases/download/${VERSION}/peertube-${VERSION}.zip"
 $ sudo -u peertube unzip peertube-${VERSION}.zip && sudo -u peertube rm peertube-${VERSION}.zip
 ```
 
 Install Peertube:
 ```
-$ cd ../ && sudo -u peertube ln -s versions/peertube-${VERSION} ./peertube-latest
+$ cd /var/www/peertube
+$ sudo -u peertube ln -s versions/peertube-${VERSION} ./peertube-latest
 $ cd ./peertube-latest && sudo -H -u peertube yarn install --production --pure-lockfile
 ```
 
 ### PeerTube configuration
 
-Copy example configuration:
+Copy the default configuration file that contains the default configuration provided by PeerTube.
+You **must not** update this file.
 
 ```
-$ cd /var/www/peertube && sudo -u peertube cp peertube-latest/config/production.yaml.example config/production.yaml
+$ cd /var/www/peertube
+$ sudo -u peertube cp peertube-latest/config/default.yaml config/default.yaml
+```
+
+Now copy the production example configuration:
+
+```
+$ cd /var/www/peertube
+$ sudo -u peertube cp peertube-latest/config/production.yaml.example config/production.yaml
 ```
 
 Then edit the `config/production.yaml` file according to your webserver
-configuration.
+and database configuration (`webserver`, `database`, `redis`, `smtp` and `admin.email` sections in particular).
+Keys defined in `config/production.yaml` will override keys defined in `config/default.yaml`.
 
-**PeerTube does not support webserver host change**. Keep in mind your domain name is definitive after your first PeerTube start.
+**PeerTube does not support webserver host change**. Even though [PeerTube CLI can help you to switch hostname](https://docs.joinpeertube.org/maintain-tools?id=update-hostjs) there's no official support for that since it is a risky operation that might result in unforeseen errors.
 
 ### Webserver
 
@@ -100,7 +113,8 @@ Then set the domain for the webserver configuration file.
 Replace `[peertube-domain]` with the domain for the peertube server.
 
 ```
-$ sudo sed -i 's/peertube.example.com/[peertube-domain]/g' /etc/nginx/sites-available/peertube
+$ sudo sed -i 's/${WEBSERVER_HOST}/[peertube-domain]/g' /etc/nginx/sites-available/peertube
+$ sudo sed -i 's/${PEERTUBE_HOST}/127.0.0.1:9000/g' /etc/nginx/sites-available/peertube
 ```
 
 Then modify the webserver configuration file. Please pay attention to the `alias` keys of the static locations.
@@ -124,12 +138,18 @@ $ sudo certbot certonly --standalone --post-hook "systemctl start nginx"
 $ sudo systemctl reload nginx
 ```
 
-Remember your certificate will expire in 90 days, and thus needs renewal.
-
 Now you have the certificates you can reload nginx:
 
 ```
 $ sudo systemctl reload nginx
+```
+
+Certbot should have installed a cron to automatically renew your certificate.
+Since our nginx template supports webroot renewal, we suggest you to update the renewal config file to use the `webroot` authenticator:
+
+```
+$ # Replace authenticator = standalone by authenticator = webroot
+$ sudo vim /etc/letsencrypt/renewal/your-domain.com.conf
 ```
 
 **FreeBSD**
@@ -140,6 +160,8 @@ $ sudo pkg install dehydrated
 ```
 
 ### TCP/IP Tuning
+
+A lot of your instance's raw performance is dependent on a properly tuned machine and more specifically, reverse-proxy. We provide support for Nginx and spent a lot of time putting sane defaults in it, but we strongly advise you to follow up with instructions in https://github.com/denji/nginx-tuning as needed.
 
 **On Linux**
 
@@ -223,8 +245,8 @@ $ tail -f /var/log/peertube/peertube.log
 
 ### Administrator
 
-The administrator password is automatically generated and can be found in the
-logs. You can set another password with:
+The administrator password is automatically generated and can be found in the PeerTube
+logs (path defined in `production.yaml`). You can also set another password with:
 
 ```
 $ cd /var/www/peertube/peertube-latest && NODE_CONFIG_DIR=/var/www/peertube/config NODE_ENV=production npm run reset-password -- -u root
@@ -237,8 +259,7 @@ to your own administrator password, although it must be 6 characters or more.
 
 Now your instance is up you can:
 
- * Subscribe to the mailing list for PeerTube administrators: https://framalistes.org/sympa/subscribe/peertube-admin
- * Add you instance to the public PeerTube instances index if you want to: https://instances.peertu.be/
+ * Add your instance to the public PeerTube instances index if you want to: https://instances.joinpeertube.org/
  * Check [available CLI tools](/support/doc/tools.md)
 
 ## Upgrade
@@ -247,7 +268,7 @@ Now your instance is up you can:
 
 **Check the changelog (in particular BREAKING CHANGES!):** https://github.com/Chocobozzz/PeerTube/blob/develop/CHANGELOG.md
 
-#### Auto (minor versions only)
+#### Auto
 
 The password it asks is PeerTube's database user password.
 

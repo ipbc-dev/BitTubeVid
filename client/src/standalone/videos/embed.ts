@@ -13,6 +13,7 @@ import {
   PluginType,
   ClientHookName
 } from '../../../../shared/models'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 import { P2PMediaLoaderOptions, PeertubePlayerManagerOptions, PlayerMode } from '../../assets/player/peertube-player-manager'
 import { VideoJSCaption } from '../../assets/player/peertube-videojs-typings'
 import { TranslationsManager } from '../../assets/player/translations-manager'
@@ -85,7 +86,7 @@ export class PeerTubeEmbed {
   refreshFetch (url: string, options?: RequestInit) {
     return fetch(url, options)
       .then((res: Response) => {
-        if (res.status !== 401) return res
+        if (res.status !== HttpStatusCode.UNAUTHORIZED_401) return res
 
         const refreshingTokenPromise = new Promise((resolve, reject) => {
           const clientId: string = peertubeLocalStorage.getItem(this.LOCAL_STORAGE_OAUTH_CLIENT_KEYS.CLIENT_ID)
@@ -107,7 +108,7 @@ export class PeerTubeEmbed {
             method: 'POST',
             body: objectToUrlEncoded(data)
           }).then(res => {
-            if (res.status === 401) return undefined
+            if (res.status === HttpStatusCode.UNAUTHORIZED_401) return undefined
 
             return res.json()
           }).then((obj: UserRefreshToken & { code: 'invalid_grant'}) => {
@@ -125,10 +126,9 @@ export class PeerTubeEmbed {
             this.setHeadersFromTokens()
 
             resolve()
+          }).catch((refreshTokenError: any) => {
+            reject(refreshTokenError)
           })
-            .catch((refreshTokenError: any) => {
-              reject(refreshTokenError)
-            })
         })
 
         return refreshingTokenPromise
@@ -339,7 +339,7 @@ export class PeerTubeEmbed {
 
     try {
       playlistResponse = await playlistPromise
-      isResponseOk = true
+      isResponseOk = playlistResponse.status === HttpStatusCode.OK_200
     } catch (err) {
       console.error(err)
       isResponseOk = false
@@ -348,7 +348,7 @@ export class PeerTubeEmbed {
     if (!isResponseOk) {
       const serverTranslations = await this.translationsPromise
 
-      if (playlistResponse?.status === 404) {
+      if (playlistResponse?.status === HttpStatusCode.NOT_FOUND_404) {
         this.playlistNotFound(serverTranslations)
         return undefined
       }
@@ -368,7 +368,7 @@ export class PeerTubeEmbed {
 
     try {
       videoResponse = await videoPromise
-      isResponseOk = true
+      isResponseOk = videoResponse.status === HttpStatusCode.OK_200
     } catch (err) {
       console.error(err)
 
@@ -378,7 +378,7 @@ export class PeerTubeEmbed {
     if (!isResponseOk) {
       const serverTranslations = await this.translationsPromise
 
-      if (videoResponse?.status === 404) {
+      if (videoResponse?.status === HttpStatusCode.NOT_FOUND_404) {
         this.videoNotFound(serverTranslations)
         return undefined
       }
@@ -532,6 +532,8 @@ export class PeerTubeEmbed {
         inactivityTimeout: 2500,
         videoViewUrl: this.getVideoUrl(videoInfo.uuid) + '/views',
 
+        isLive: videoInfo.isLive,
+
         playerElement: this.playerElement,
         onPlayerElementChange: (element: HTMLVideoElement) => this.playerElement = element,
 
@@ -661,10 +663,12 @@ export class PeerTubeEmbed {
       ? '<span class="text">' + peertubeTranslate('Watching this video may reveal your IP address to others.') + '</span>'
       : undefined
 
-    this.player.dock({
-      title,
-      description
-    })
+    if (title || description) {
+      this.player.dock({
+        title,
+        description
+      })
+    }
   }
 
   private buildCSS () {

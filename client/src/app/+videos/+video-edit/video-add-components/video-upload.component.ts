@@ -1,14 +1,16 @@
 import { Subscription } from 'rxjs'
-import { HttpEventType, HttpResponse } from '@angular/common/http'
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, AfterViewInit } from '@angular/core'
 import { Router } from '@angular/router'
 import { AuthService, CanComponentDeactivate, Notifier, ServerService, UserService } from '@app/core'
-import { scrollToTop } from '@app/helpers'
+import { HttpErrorResponse, HttpEventType, HttpResponse } from '@angular/common/http'
+import { scrollToTop, uploadErrorHandler } from '@app/helpers'
 import { FormValidatorService } from '@app/shared/shared-forms'
+import { PremiumStorageModalComponent } from '@app/modal/premium-storage-modal.component'
 import { BytesPipe, VideoCaptionService, VideoEdit, VideoService } from '@app/shared/shared-main'
 import { LoadingBarService } from '@ngx-loading-bar/core'
 import { VideoPrivacy } from '@shared/models'
 import { VideoSend } from './video-send'
+import { HttpStatusCode } from '@shared/core-utils/miscs/http-error-codes'
 
 @Component({
   selector: 'my-video-upload',
@@ -19,10 +21,11 @@ import { VideoSend } from './video-send'
     './video-send.scss'
   ]
 })
-export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy, CanComponentDeactivate {
+export class VideoUploadComponent extends VideoSend implements OnInit, AfterViewInit, OnDestroy, CanComponentDeactivate {
   @Output() firstStepDone = new EventEmitter<string>()
   @Output() firstStepError = new EventEmitter<void>()
   @ViewChild('videofileInput') videofileInput: ElementRef<HTMLInputElement>
+  @ViewChild('premiumStorageModal') premiumStorageModal: PremiumStorageModalComponent
 
   // So that it can be accessed in the template
   readonly SPECIAL_SCHEDULED_PRIVACY = VideoEdit.SPECIAL_SCHEDULED_PRIVACY
@@ -41,11 +44,14 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
     id: 0,
     uuid: ''
   }
+  formData: FormData
 
   waitTranscodingEnabled = true
   previewfileUpload: File
+  isPremiumStorageEnabled: boolean = null
 
   error: string
+  enableRetryAfterError: boolean
 
   protected readonly DEFAULT_VIDEO_PRIVACY = VideoPrivacy.PUBLIC
 
@@ -75,17 +81,27 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
           this.userVideoQuotaUsed = data.videoQuotaUsed
           this.userVideoQuotaUsedDaily = data.videoQuotaUsedDaily
         })
+    this.isPremiumStorageEnabled = this.serverConfig.premium_storage.enabled
+    console.log('ICEICE value for isPremiumStorageEnabled is: ', this.isPremiumStorageEnabled)
+  }
+
+  ngAfterViewInit () {
+    // Do nothing?
   }
 
   ngOnDestroy () {
     if (this.videoUploadObservable) this.videoUploadObservable.unsubscribe()
   }
 
+  showPremiumStorageModal () {
+    if (this.isPremiumStorageEnabled) this.premiumStorageModal.show()
+  }
+
   canDeactivate () {
     let text = ''
 
     if (this.videoUploaded === true) {
-      // FIXME: cannot concatenate strings inside i18n service :/
+      // FIXME: cannot concatenate strings using $localize
       text = $localize`Your video was uploaded to your account and is private.` + ' ' +
         $localize`But associated data (tags, description...) will be lost, are you sure you want to leave this page?`
     } else {
@@ -118,18 +134,26 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
     this.uploadFirstStep()
   }
 
+  retryUpload () {
+    this.enableRetryAfterError = false
+    this.error = ''
+    this.uploadVideo()
+  }
+
   cancelUpload () {
     if (this.videoUploadObservable !== null) {
       this.videoUploadObservable.unsubscribe()
-
-      this.isUploadingVideo = false
-      this.videoUploadPercents = 0
-      this.videoUploadObservable = null
-
-      this.firstStepError.emit()
-
-      this.notifier.info($localize`Upload cancelled`)
     }
+
+    this.isUploadingVideo = false
+    this.videoUploadPercents = 0
+    this.videoUploadObservable = null
+
+    this.firstStepError.emit()
+    this.enableRetryAfterError = false
+    this.error = ''
+
+    this.notifier.info($localize`Upload cancelled`)
   }
 
   uploadFirstStep (clickedOnButton = false) {
@@ -157,27 +181,26 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
       this.waitTranscodingEnabled = false
     }
 
-    const privacy = this.firstStepPrivacyId.toString()
     const nsfw = this.serverConfig.instance.isNSFW
     const waitTranscoding = true
     const commentsEnabled = true
     const downloadEnabled = true
     const channelId = this.firstStepChannelId.toString()
 
-    const formData = new FormData()
-    formData.append('name', name)
+    this.formData = new FormData()
+    this.formData.append('name', name)
     // Put the video "private" -> we are waiting the user validation of the second step
-    formData.append('privacy', VideoPrivacy.PRIVATE.toString())
-    formData.append('nsfw', '' + nsfw)
-    formData.append('commentsEnabled', '' + commentsEnabled)
-    formData.append('downloadEnabled', '' + downloadEnabled)
-    formData.append('waitTranscoding', '' + waitTranscoding)
-    formData.append('channelId', '' + channelId)
-    formData.append('videofile', videofile)
+    this.formData.append('privacy', VideoPrivacy.PRIVATE.toString())
+    this.formData.append('nsfw', '' + nsfw)
+    this.formData.append('commentsEnabled', '' + commentsEnabled)
+    this.formData.append('downloadEnabled', '' + downloadEnabled)
+    this.formData.append('waitTranscoding', '' + waitTranscoding)
+    this.formData.append('channelId', '' + channelId)
+    this.formData.append('videofile', videofile)
 
     if (this.previewfileUpload) {
-      formData.append('previewfile', this.previewfileUpload)
-      formData.append('thumbnailfile', this.previewfileUpload)
+      this.formData.append('previewfile', this.previewfileUpload)
+      this.formData.append('thumbnailfile', this.previewfileUpload)
     }
 
     this.isUploadingVideo = true
@@ -191,7 +214,11 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
       previewfile: this.previewfileUpload
     })
 
-    this.videoUploadObservable = this.videoService.uploadVideo(formData).subscribe(
+    this.uploadVideo()
+  }
+
+  uploadVideo () {
+    this.videoUploadObservable = this.videoService.uploadVideo(this.formData).subscribe(
       event => {
         if (event.type === HttpEventType.UploadProgress) {
           this.videoUploadPercents = Math.round(100 * event.loaded / event.total)
@@ -204,13 +231,23 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
         }
       },
 
-      err => {
-        // Reset progress
-        this.isUploadingVideo = false
+      (err: HttpErrorResponse) => {
+        // Reset progress (but keep isUploadingVideo true)
         this.videoUploadPercents = 0
         this.videoUploadObservable = null
-        this.firstStepError.emit()
-        this.notifier.error(err.message)
+        this.enableRetryAfterError = true
+
+        this.error = uploadErrorHandler({
+          err,
+          name: $localize`video`,
+          notifier: this.notifier,
+          sticky: false
+        })
+
+        if (err.status === HttpStatusCode.PAYLOAD_TOO_LARGE_413 ||
+            err.status === HttpStatusCode.UNSUPPORTED_MEDIA_TYPE_415) {
+          this.cancelUpload()
+        }
       }
     )
   }
@@ -265,6 +302,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, OnDestroy
       const msg = $localize`Your video quota is exceeded with this video (
 video size: ${videoSizeBytes}, used: ${videoQuotaUsedBytes}, quota: ${videoQuotaBytes})`
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }
@@ -285,6 +323,7 @@ video size: ${videoSizeBytes}, used: ${videoQuotaUsedBytes}, quota: ${videoQuota
       const msg = $localize`Your daily video quota is exceeded with this video (
 video size: ${videoSizeBytes}, used: ${quotaUsedDailyBytes}, quota: ${quotaDailyBytes})`
       this.notifier.error(msg)
+      this.showPremiumStorageModal()
 
       return false
     }

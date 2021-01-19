@@ -24,6 +24,10 @@ storage:
   plugins: 'test2/plugins/'
   client_overrides: 'test2/client-overrides/'
 
+# Premium options
+premium_storage:
+    enabled: true
+    
 admin:
   email: 'admin2@example.com'
 

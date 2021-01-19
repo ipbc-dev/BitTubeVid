@@ -5,7 +5,7 @@ import { buildVideoLink, buildVideoOrPlaylistEmbed } from 'src/assets/player/uti
 import { environment } from 'src/environments/environment'
 import { AfterViewInit, Component, Input, OnInit, ViewChild } from '@angular/core'
 import { DomSanitizer } from '@angular/platform-browser'
-import { ActivatedRoute, Params, Router } from '@angular/router'
+import { ActivatedRoute, Router } from '@angular/router'
 import { ConfirmService, MarkdownService, Notifier, RestPagination, RestTable } from '@app/core'
 import { Account, Actor, DropdownAction, Video, VideoService } from '@app/shared/shared-main'
 import { AbuseService, BlocklistService, VideoBlockService } from '@app/shared/shared-moderation'
@@ -37,6 +37,8 @@ export class AbuseListTableComponent extends RestTable implements OnInit, AfterV
   abuseActions: DropdownAction<ProcessedAbuse>[][] = []
 
   constructor (
+    protected route: ActivatedRoute,
+    protected router: Router,
     private notifier: Notifier,
     private abuseService: AbuseService,
     private blocklistService: BlocklistService,
@@ -45,9 +47,7 @@ export class AbuseListTableComponent extends RestTable implements OnInit, AfterV
     private videoBlocklistService: VideoBlockService,
     private confirmService: ConfirmService,
     private markdownRenderer: MarkdownService,
-    private sanitizer: DomSanitizer,
-    private route: ActivatedRoute,
-    private router: Router
+    private sanitizer: DomSanitizer
   ) {
     super()
   }
@@ -66,20 +66,11 @@ export class AbuseListTableComponent extends RestTable implements OnInit, AfterV
     ]
 
     this.initialize()
-
-    this.route.queryParams
-      .subscribe(params => {
-        this.search = params.search || ''
-
-        logger('On URL change (search: %s).', this.search)
-
-        this.setTableFilter(this.search)
-        this.loadData()
-      })
+    this.listenToSearchChange()
   }
 
   ngAfterViewInit () {
-    if (this.search) this.setTableFilter(this.search)
+    if (this.search) this.setTableFilter(this.search, false)
   }
 
   isAdminView () {
@@ -97,26 +88,6 @@ export class AbuseListTableComponent extends RestTable implements OnInit, AfterV
   onModerationCommentUpdated () {
     this.loadData()
   }
-
-  /* Table filter functions */
-  onAbuseSearch (event: Event) {
-    this.onSearch(event)
-    this.setQueryParams((event.target as HTMLInputElement).value)
-  }
-
-  setQueryParams (search: string) {
-    const queryParams: Params = {}
-    if (search) Object.assign(queryParams, { search })
-
-    this.router.navigate([ this.baseRoute ], { queryParams })
-  }
-
-  resetTableFilter () {
-    this.setTableFilter('')
-    this.setQueryParams('')
-    this.resetSearch()
-  }
-  /* END Table filter functions */
 
   isAbuseAccepted (abuse: AdminAbuse) {
     return abuse.state.id === AbuseState.ACCEPTED
@@ -141,17 +112,17 @@ export class AbuseListTableComponent extends RestTable implements OnInit, AfterV
   getVideoEmbed (abuse: AdminAbuse) {
     return buildVideoOrPlaylistEmbed(
       buildVideoLink({
-        baseUrl: `${environment.embedUrl}/videos/embed/${abuse.video.uuid}`,
+        baseUrl: `${environment.originServerUrl}/videos/embed/${abuse.video.uuid}`,
         title: false,
         warningTitle: false,
-        startTime: abuse.startAt,
-        stopTime: abuse.endAt
+        startTime: abuse.video.startAt,
+        stopTime: abuse.video.endAt
       })
     )
   }
 
   switchToDefaultAvatar ($event: Event) {
-    ($event.target as HTMLImageElement).src = Actor.GET_DEFAULT_AVATAR_URL()
+    ($event.target as HTMLImageElement).src = Account.GET_DEFAULT_AVATAR_URL()
   }
 
   async removeAbuse (abuse: AdminAbuse) {

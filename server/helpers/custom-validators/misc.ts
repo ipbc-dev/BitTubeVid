@@ -45,6 +45,10 @@ function isBooleanValid (value: any) {
   return typeof value === 'boolean' || (typeof value === 'string' && validator.isBoolean(value))
 }
 
+function isIntOrNull (value: any) {
+  return value === null || validator.isInt('' + value)
+}
+
 function toIntOrNull (value: string) {
   const v = toValueOrNull(value)
 
@@ -82,6 +86,50 @@ function toIntArray (value: any) {
   return value.map(v => validator.toInt(v))
 }
 
+function isFileFieldValid (
+  files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[],
+  field: string,
+  optional = false
+) {
+  // Should have files
+  if (!files) return optional
+  if (isArray(files)) return optional
+
+  // Should have a file
+  const fileArray = files[field]
+  if (!fileArray || fileArray.length === 0) {
+    return optional
+  }
+
+  // The file should exist
+  const file = fileArray[0]
+  if (!file || !file.originalname) return false
+  return file
+}
+
+function isFileMimeTypeValid (
+  files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[],
+  mimeTypeRegex: string,
+  field: string,
+  optional = false
+) {
+  // Should have files
+  if (!files) return optional
+  if (isArray(files)) return optional
+
+  // Should have a file
+  const fileArray = files[field]
+  if (!fileArray || fileArray.length === 0) {
+    return optional
+  }
+
+  // The file should exist
+  const file = fileArray[0]
+  if (!file || !file.originalname) return false
+
+  return new RegExp(`^${mimeTypeRegex}$`, 'i').test(file.mimetype)
+}
+
 function isFileValid (
   files: { [ fieldname: string ]: Express.Multer.File[] } | Express.Multer.File[],
   mimeTypeRegex: string,
@@ -116,6 +164,7 @@ export {
   isArrayOf,
   isNotEmptyIntArray,
   isArray,
+  isIntOrNull,
   isIdValid,
   isSafePath,
   isUUIDValid,
@@ -127,5 +176,7 @@ export {
   toIntOrNull,
   toArray,
   toIntArray,
+  isFileFieldValid,
+  isFileMimeTypeValid,
   isFileValid
 }

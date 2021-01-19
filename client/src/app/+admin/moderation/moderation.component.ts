@@ -16,4 +16,9 @@ export class ModerationComponent implements OnInit {
     this.serverService.getConfig()
       .subscribe(config => this.autoBlockVideosEnabled = config.autoBlacklist.videos.ofUsers.enabled)
   }
+
+  hasServerPremiumStorage () {
+    /* TO-DO */
+    return true
+  }
 }

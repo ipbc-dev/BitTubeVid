@@ -1,18 +1,17 @@
 import 'focus-visible'
 import { APP_BASE_HREF, registerLocaleData } from '@angular/common'
-import { LOCALE_ID, NgModule, TRANSLATIONS, TRANSLATIONS_FORMAT } from '@angular/core'
+import { NgModule } from '@angular/core'
 import { BrowserModule } from '@angular/platform-browser'
 import { ServerService } from '@app/core'
 import localeOc from '@app/helpers/locales/oc'
 import { MetaLoader, MetaModule, MetaStaticLoader, PageTitlePositioning } from '@ngx-meta/core'
-import { buildFileLocale, getCompleteLocale, isDefaultLocale } from '@shared/core-utils/i18n'
 import { AppRoutingModule } from './app-routing.module'
 import { AppComponent } from './app.component'
 import { CoreModule } from './core'
 import { EmptyComponent } from './empty.component'
 import { HeaderComponent, SearchTypeaheadComponent, SuggestionComponent } from './header'
 import { HighlightPipe } from './header/highlight.pipe'
-import { AvatarNotificationComponent, LanguageChooserComponent, MenuComponent } from './menu'
+import { NotificationComponent, LanguageChooserComponent, MenuComponent } from './menu'
 import { ConfirmComponent } from './modal/confirm.component'
 import { CustomModalComponent } from './modal/custom-modal.component'
 import { InstanceConfigWarningModalComponent } from './modal/instance-config-warning-modal.component'
@@ -36,7 +35,7 @@ registerLocaleData(localeOc, 'oc')
     MenuComponent,
     LanguageChooserComponent,
     QuickSettingsModalComponent,
-    AvatarNotificationComponent,
+    NotificationComponent,
     HeaderComponent,
     SearchTypeaheadComponent,
     SuggestionComponent,

@@ -1,10 +1,8 @@
-import { enableProdMode } from '@angular/core'
+import { ApplicationRef, enableProdMode } from '@angular/core'
+import { enableDebugTools } from '@angular/platform-browser'
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic'
-
 import { AppModule } from './app/app.module'
 import { environment } from './environments/environment'
-
-import { hmrBootstrap } from './hmr'
 
 if (environment.production) {
   enableProdMode()
@@ -29,6 +27,14 @@ const bootstrap = () => platformBrowserDynamic()
                })
     }
 
+    if (!environment.production) {
+      const applicationRef = bootstrapModule.injector.get(ApplicationRef)
+      const componentRef = applicationRef.components[0]
+
+      // allows to run `ng.profiler.timeChangeDetection();`
+      enableDebugTools(componentRef)
+    }
+
     return bootstrapModule
   })
   .catch(err => {
@@ -36,13 +42,4 @@ const bootstrap = () => platformBrowserDynamic()
     return null
   })
 
-if (environment.hmr) {
-  if (module[ 'hot' ]) {
-    hmrBootstrap(module, bootstrap)
-  } else {
-    console.error('HMR is not enabled for webpack-dev-server!')
-    console.log('Are you using the --hmr flag for ng serve?')
-  }
-} else {
-  bootstrap()
-}
+bootstrap()

@@ -5,6 +5,7 @@ import { join } from 'path'
 import { VideoChannelModel } from '@server/models/video/video-channel'
 import { MVideoBlacklistLightVideo, MVideoBlacklistVideo } from '@server/types/models/video/video-blacklist'
 import { MVideoImport, MVideoImportVideo } from '@server/types/models/video/video-import'
+import { SANITIZE_OPTIONS, TEXT_WITH_HTML_RULES } from '@shared/core-utils'
 import { AbuseState, EmailPayload, UserAbuse } from '@shared/models'
 import { SendEmailOptions } from '../../shared/models/server/emailer.model'
 import { isTestInstance, root } from '../helpers/core-utils'
@@ -14,6 +15,26 @@ import { WEBSERVER } from '../initializers/constants'
 import { MAbuseFull, MAbuseMessage, MAccountDefault, MActorFollowActors, MActorFollowFull, MUser } from '../types/models'
 import { MCommentOwnerVideo, MVideo, MVideoAccountLight } from '../types/models/video'
 import { JobQueue } from './job-queue'
+
+const sanitizeHtml = require('sanitize-html')
+const markdownItEmoji = require('markdown-it-emoji/light')
+const MarkdownItClass = require('markdown-it')
+const markdownIt = new MarkdownItClass('default', { linkify: true, breaks: true, html: true })
+
+markdownIt.enable(TEXT_WITH_HTML_RULES)
+
+markdownIt.use(markdownItEmoji)
+
+const toSafeHtml = text => {
+  // Restore line feed
+  const textWithLineFeed = text.replace(/<br.?\/?>/g, '\r\n')
+
+  // Convert possible markdown (emojis, emphasis and lists) to html
+  const html = markdownIt.render(textWithLineFeed)
+
+  // Convert to safe Html
+  return sanitizeHtml(html, SANITIZE_OPTIONS)
+}
 
 const Email = require('email-templates')
 
@@ -86,18 +107,18 @@ class Emailer {
     }
   }
 
-  async checkConnectionOrDie () {
+  async checkConnection () {
     if (!this.transporter || CONFIG.SMTP.TRANSPORT !== 'smtp') return
 
     logger.info('Testing SMTP server...')
 
     try {
       const success = await this.transporter.verify()
-      if (success !== true) this.dieOnConnectionFailure()
+      if (success !== true) this.warnOnConnectionFailure()
 
       logger.info('Successfully connected to SMTP server.')
     } catch (err) {
-      this.dieOnConnectionFailure(err)
+      this.warnOnConnectionFailure(err)
     }
   }
 
@@ -209,7 +230,7 @@ class Emailer {
   }
 
   myVideoImportErrorNotification (to: string[], videoImport: MVideoImport) {
-    const importUrl = WEBSERVER.URL + '/my-account/video-imports'
+    const importUrl = WEBSERVER.URL + '/my-library/video-imports'
 
     const text =
       `Your video import "${videoImport.getTargetIdentifier()}" encountered an error.` +
@@ -236,6 +257,7 @@ class Emailer {
     const video = comment.Video
     const videoUrl = WEBSERVER.URL + comment.Video.getWatchStaticPath()
     const commentUrl = WEBSERVER.URL + comment.getCommentStaticPath()
+    const commentHtml = toSafeHtml(comment.text)
 
     const emailPayload: EmailPayload = {
       template: 'video-comment-new',
@@ -245,6 +267,7 @@ class Emailer {
         accountName: comment.Account.getDisplayName(),
         accountUrl: comment.Account.Actor.url,
         comment,
+        commentHtml,
         video,
         videoUrl,
         action: {
@@ -262,6 +285,7 @@ class Emailer {
     const video = comment.Video
     const videoUrl = WEBSERVER.URL + comment.Video.getWatchStaticPath()
     const commentUrl = WEBSERVER.URL + comment.getCommentStaticPath()
+    const commentHtml = toSafeHtml(comment.text)
 
     const emailPayload: EmailPayload = {
       template: 'video-comment-mention',
@@ -269,6 +293,7 @@ class Emailer {
       subject: 'Mention on video ' + video.name,
       locals: {
         comment,
+        commentHtml,
         video,
         videoUrl,
         accountName,
@@ -447,7 +472,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       template: 'user-registered',
       to,
-      subject: `a new user registered on ${WEBSERVER.HOST}: ${user.username}`,
+      subject: `a new user registered on ${CONFIG.INSTANCE.NAME}: ${user.username}`,
       locals: {
         user
       }
@@ -461,7 +486,7 @@ class Emailer {
     const videoUrl = WEBSERVER.URL + videoBlacklist.Video.getWatchStaticPath()
 
     const reasonString = videoBlacklist.reason ? ` for the following reason: ${videoBlacklist.reason}` : ''
-    const blockedString = `Your video ${videoName} (${videoUrl} on ${WEBSERVER.HOST} has been blacklisted${reasonString}.`
+    const blockedString = `Your video ${videoName} (${videoUrl} on ${CONFIG.INSTANCE.NAME} has been blacklisted${reasonString}.`
 
     const emailPayload: EmailPayload = {
       to,
@@ -481,7 +506,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       to,
       subject: `Video ${video.name} unblacklisted`,
-      text: `Your video "${video.name}" (${videoUrl}) on ${WEBSERVER.HOST} has been unblacklisted.`,
+      text: `Your video "${video.name}" (${videoUrl}) on ${CONFIG.INSTANCE.NAME} has been unblacklisted.`,
       locals: {
         title: 'Your video was unblacklisted'
       }
@@ -522,7 +547,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       template: 'verify-email',
       to: [ to ],
-      subject: `Verify your email on ${WEBSERVER.HOST}`,
+      subject: `Verify your email on ${CONFIG.INSTANCE.NAME}`,
       locals: {
         username,
         verifyEmailUrl
@@ -540,7 +565,7 @@ class Emailer {
     const emailPayload: EmailPayload = {
       to: [ to ],
       subject: 'Account ' + blockedWord,
-      text: `Your account ${user.username} on ${WEBSERVER.HOST} has been ${blockedWord}${reasonString}.`
+      text: `Your account ${user.username} on ${CONFIG.INSTANCE.NAME} has been ${blockedWord}${reasonString}.`
     }
 
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
@@ -555,11 +580,50 @@ class Emailer {
       locals: {
         fromName,
         fromEmail,
-        body
+        body,
+
+        // There are not notification preferences for the contact form
+        hideNotificationPreferences: true
       }
     }
 
     return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageAboutToExpireJob (username: string, to: string, instanceName: string, daysToExpire: number) {
+    const days = Math.round(daysToExpire / 86400000)
+    const emailPayload: EmailPayload = {
+      to: [ to ],
+      subject: 'Premium storage is about to expire',
+      text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is about to expire in ${days} days. Once this happen, we will start to delete some videos per day in your account.
+      Please, extend or upgrade your Premium Storage at your account settings`
+    }
+    logger.info('addPremiumStorageAboutToExpireJob going to send email with payload: ', emailPayload)
+    return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+  }
+
+  addPremiumStorageExpiredJob (username: string, to: string, instanceName: string, videosToDelete, userVideos) {
+    try {
+      let removedVideosList = ''
+      for (const videoName of userVideos) {
+        removedVideosList += `
+      - ` + videoName
+      }
+      const emailPayload: EmailPayload = {
+        to: [ to ],
+        subject: 'Premium storage is expired',
+        text: `Hi ${username}!
+      Your Premium storage at ${instanceName} is expired. We are going to delete ${videosToDelete} videos from your account: 
+      ` + removedVideosList + `
+      This will be repeated every day until you don't upgrade your storage.
+      Please, extend or upgrade your Premium Storage at your account settings`
+      }
+      logger.info('addPremiumStorageExpiredJob going to send email with payload: ', emailPayload)
+      return JobQueue.Instance.createJob({ type: 'email', payload: emailPayload })
+    } catch (err) {
+      console.error('Something went wrong with addPremiumStorageExpiredJob: ', err)
+    }
   }
 
   async sendMail (options: EmailPayload) {
@@ -569,7 +633,7 @@ class Emailer {
 
     const fromDisplayName = options.from
       ? options.from
-      : WEBSERVER.HOST
+      : CONFIG.INSTANCE.NAME
 
     const email = new Email({
       send: true,
@@ -597,6 +661,7 @@ class Emailer {
             locals: { // default variables available in all templates
               WEBSERVER,
               EMAIL: CONFIG.EMAIL,
+              instanceName: CONFIG.INSTANCE.NAME,
               text: options.text,
               subject: options.subject
             }
@@ -608,9 +673,8 @@ class Emailer {
     }
   }
 
-  private dieOnConnectionFailure (err?: Error) {
+  private warnOnConnectionFailure (err?: Error) {
     logger.error('Failed to connect to SMTP %s:%d.', CONFIG.SMTP.HOSTNAME, CONFIG.SMTP.PORT, { err })
-    process.exit(-1)
   }
 
   static get Instance () {

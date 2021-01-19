@@ -1,4 +1,3 @@
-import * as Bluebird from 'bluebird'
 import { Response } from 'express'
 import { CONFIG } from '@server/initializers/config'
 import { DEFAULT_AUDIO_RESOLUTION } from '@server/initializers/constants'
@@ -15,26 +14,26 @@ import {
   MVideoThumbnail,
   MVideoWithRights
 } from '@server/types/models'
-import { VideoPrivacy, VideoTranscodingPayload } from '@shared/models'
+import { VideoPrivacy, VideoState, VideoTranscodingPayload } from '@shared/models'
 import { VideoModel } from '../models/video/video'
 
 type VideoFetchType = 'all' | 'only-video' | 'only-video-with-rights' | 'id' | 'none' | 'only-immutable-attributes'
 
-function fetchVideo (id: number | string, fetchType: 'all', userId?: number): Bluebird<MVideoFullLight>
-function fetchVideo (id: number | string, fetchType: 'only-immutable-attributes'): Bluebird<MVideoImmutable>
-function fetchVideo (id: number | string, fetchType: 'only-video', userId?: number): Bluebird<MVideoThumbnail>
-function fetchVideo (id: number | string, fetchType: 'only-video-with-rights', userId?: number): Bluebird<MVideoWithRights>
-function fetchVideo (id: number | string, fetchType: 'id' | 'none', userId?: number): Bluebird<MVideoIdThumbnail>
+function fetchVideo (id: number | string, fetchType: 'all', userId?: number): Promise<MVideoFullLight>
+function fetchVideo (id: number | string, fetchType: 'only-immutable-attributes'): Promise<MVideoImmutable>
+function fetchVideo (id: number | string, fetchType: 'only-video', userId?: number): Promise<MVideoThumbnail>
+function fetchVideo (id: number | string, fetchType: 'only-video-with-rights', userId?: number): Promise<MVideoWithRights>
+function fetchVideo (id: number | string, fetchType: 'id' | 'none', userId?: number): Promise<MVideoIdThumbnail>
 function fetchVideo (
   id: number | string,
   fetchType: VideoFetchType,
   userId?: number
-): Bluebird<MVideoFullLight | MVideoThumbnail | MVideoWithRights | MVideoIdThumbnail | MVideoImmutable>
+): Promise<MVideoFullLight | MVideoThumbnail | MVideoWithRights | MVideoIdThumbnail | MVideoImmutable>
 function fetchVideo (
   id: number | string,
   fetchType: VideoFetchType,
   userId?: number
-): Bluebird<MVideoFullLight | MVideoThumbnail | MVideoWithRights | MVideoIdThumbnail | MVideoImmutable> {
+): Promise<MVideoFullLight | MVideoThumbnail | MVideoWithRights | MVideoIdThumbnail | MVideoImmutable> {
   if (fetchType === 'all') return VideoModel.loadAndPopulateAccountAndServerAndTags(id, undefined, userId)
 
   if (fetchType === 'only-immutable-attributes') return VideoModel.loadImmutableAttributes(id)
@@ -48,17 +47,17 @@ function fetchVideo (
 
 type VideoFetchByUrlType = 'all' | 'only-video' | 'only-immutable-attributes'
 
-function fetchVideoByUrl (url: string, fetchType: 'all'): Bluebird<MVideoAccountLightBlacklistAllFiles>
-function fetchVideoByUrl (url: string, fetchType: 'only-immutable-attributes'): Bluebird<MVideoImmutable>
-function fetchVideoByUrl (url: string, fetchType: 'only-video'): Bluebird<MVideoThumbnail>
+function fetchVideoByUrl (url: string, fetchType: 'all'): Promise<MVideoAccountLightBlacklistAllFiles>
+function fetchVideoByUrl (url: string, fetchType: 'only-immutable-attributes'): Promise<MVideoImmutable>
+function fetchVideoByUrl (url: string, fetchType: 'only-video'): Promise<MVideoThumbnail>
 function fetchVideoByUrl (
   url: string,
   fetchType: VideoFetchByUrlType
-): Bluebird<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail | MVideoImmutable>
+): Promise<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail | MVideoImmutable>
 function fetchVideoByUrl (
   url: string,
   fetchType: VideoFetchByUrlType
-): Bluebird<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail | MVideoImmutable> {
+): Promise<MVideoAccountLightBlacklistAllFiles | MVideoThumbnail | MVideoImmutable> {
   if (fetchType === 'all') return VideoModel.loadByUrlAndPopulateAccount(url)
 
   if (fetchType === 'only-immutable-attributes') return VideoModel.loadByUrlImmutableAttributes(url)
@@ -104,6 +103,13 @@ function isPrivacyForFederation (privacy: VideoPrivacy) {
     (CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true && castedPrivacy === VideoPrivacy.UNLISTED)
 }
 
+function isStateForFederation (state: VideoState) {
+  const castedState = parseInt(state + '', 10)
+
+  return castedState === VideoState.PUBLISHED || castedState === VideoState.WAITING_FOR_LIVE || castedState === VideoState.LIVE_ENDED
+
+}
+
 function getPrivaciesForFederation () {
   return (CONFIG.FEDERATION.VIDEOS.FEDERATE_UNLISTED === true)
     ? [ { privacy: VideoPrivacy.PUBLIC }, { privacy: VideoPrivacy.UNLISTED } ]
@@ -127,6 +133,7 @@ export {
   addOptimizeOrMergeAudioJob,
   extractVideo,
   getExtFromMimetype,
+  isStateForFederation,
   isPrivacyForFederation,
   getPrivaciesForFederation
 }

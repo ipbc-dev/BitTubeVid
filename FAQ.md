@@ -22,7 +22,7 @@
 - [Are you going to support advertisements?](#are-you-going-to-support-advertisements)
 - [What is "creation dynamic" and why not modify it?](#what-is-creation-dynamic-and-why-not-modify-it)
 - [I have found a security vulnerability in PeerTube. Where and how should I report it?](#i-have-found-a-security-vulnerability-in-peertube-where-and-how-should-i-report-it)
-- [Does PeerTube ensures federation compatibility with previous version?](#does-peertube-ensures-federation-compatibility-with-previous-version)
+- [Does PeerTube ensure federation compatibility with previous version?](#does-peertube-ensure-federation-compatibility-with-previous-version)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -37,10 +37,10 @@ acceptable answer to technical issues (bandwidth, transcoding expenses, etc.)
 and social answers (need for a particular moderation policy, preserving
 content, etc.).
 
-While a paragraph is not enough to answer all these problems, BitTube has
-very early prouded itself for using a contributory design, both for creating
+While a paragraph is not enough to answer all these problems, PeerTube has
+very early prided itself on using a contributory design, both for creating
 communities as federated nodes (as [Mastodon](https://joinmastodon.org/) for
-example), and for seeding videos (instances can seed each other's videos). But it's not
+example), and for seeding videos (instances can seed each other's videos). But that's not
 enough because one video could become popular and overload the server. That is
 why we need to use a P2P protocol to limit the server load. Thanks to
 [WebTorrent](https://github.com/feross/webtorrent), we can use BitTorrent
@@ -60,7 +60,7 @@ is named "BitTube".
 
 Yes, the origin server always seeds videos uploaded on it thanks to
 [Webseed](http://www.bittorrent.org/beps/bep_0019.html).
-It can also be helped by other servers using [redundancy](https://docs.joinpeertube.org/#/contribute-architecture?id=redundancy-between-instances).
+It can also be helped by other servers using [redundancy](https://docs.joinpeertube.org/contribute-architecture?id=redundancy-between-instances).
 
 
 ## What is WebSeed?
@@ -72,15 +72,13 @@ with a `Content-Range` HTTP header.
 
 ## If a client requests each chunk of a video through HTTP, will the server be overloaded?
 
-Not really. Reverse proxies like Nginx handle very well requests of static
-files. In my tests, it can send chunks at 10MB/s without consuming more than 5%
-of CPU on a very small VPS.
+Not really. Reverse proxies like Nginx handle static file requests very well. In my tests, it can send chunks at 10MB/s without consuming more than 5% CPU on a very small VPS.
 
 
 ## Will an index of all the videos of servers you follow be too large for small servers?
 
-In our benchmarks, 1,000,000 videos takes around 2GB of storage on PostgreSQL.
-We think it is acceptable for a video platform.
+In our benchmarks, 1,000,000 videos consume around 2GB of PostgreSQL storage.
+We think that is acceptable for a video platform.
 
 
 ## Which container formats can I use for the videos I want to upload?
@@ -92,7 +90,7 @@ and FLV formats when transcoding is enabled on their instance.
 
 ## I want to change my domain name, how can I do that?
 
-It's not officially supported, but you can try the `update-host` script: https://docs.joinpeertube.org/#/maintain-tools?id=update-hostjs
+It's not officially supported, but you can try the `update-host` script: https://docs.joinpeertube.org/maintain-tools?id=update-hostjs
 
 
 ## Why do we have to put our Twitter username in BitTube configuration?
@@ -101,7 +99,7 @@ You don't have to: we set a default value if you don't have a Twitter account.
 We need this information because Twitter requires an account for links share/videos embed on their platform.
 
 
-## How video views are calculated?
+## How are video views counted?
 
 Your web browser sends a view to the server after 30 seconds of playback. If a video is less than 30 seconds in length, a view is sent after 75% of the video. After giving a view, that IP address cannot add another view in the next hour.
 Views are buffered, so don't panic if the view counter stays the same after you watched a video.
@@ -111,9 +109,7 @@ Views are buffered, so don't panic if the view counter stays the same after you 
 
 ## Should I have a big server to run BitTube?
 
-Not really. For instance, the demonstration server [https://peertube.cpy.re](https://peertube.cpy.re) has 2 vCore and 2GB of RAM and consumes on average:
- * **CPU** -> nginx ~ 20%, peertube ~ 10%,   postgres ~ 1%, redis ~ 3%
- * **RAM** -> nginx ~ 6MB, peertube ~ 120MB, postgres ~ 10MB, redis ~ 5MB
+PeerTube should run happily on a virtual machine with 2 threads/vCPUs, at least 1 Gb of RAM and enough storage for videos. In terms of bandwidth, a lot will depend on which PeerTube instances you federate with and what your relation with them is (more about that below).
 
 
 
@@ -121,13 +117,46 @@ So you would need:
  * **CPU** 1 core if you don't enable transcoding, 2 at least if you enable it (works with 1 but this is really slow)
  * **RAM** 1GB
  * **Storage** Completely depends on how many videos your users will upload
+As a real life example, the PeerTube demonstration server [https://peertube.cpy.re](https://peertube.cpy.re) runs on 2 vCores and 2GB of RAM. Average consumption is:
+ * **CPU**: nginx ~ 20%, peertube ~ 10%,   postgres ~ 1%, redis ~ 3%
+ * **RAM**: nginx ~ 6MB, peertube ~ 120MB, postgres ~ 10MB, redis ~ 5MB
 
+### CPU
+
+Except for video transcoding, a PeerTube instance is not CPU bound. Neither Nginx, PeerTube itself, PostgreSQL nor Redis require a lot of computing power. If it were only for those, one could easily get by with just one thread/vCPU.
+
+You will hugely benefit from at least a second thread though, because of transcoding. Transcoding _is_ very cpu intensive. It serves two purposes on a PeerTube instance: it ensures all videos can be played optimally in the web interface, and it generates different resolutions for the same video. PeerTube support for offloading transcoding to other machines is being discussed, but not yet implemented. See https://github.com/Chocobozzz/PeerTube/issues/947 .
+
+### RAM
+
+1 Gb of RAM should be plenty for a basic PeerTube instance, which usually takes at most 150 Mb in RAM. The only reason you might want more would be if you colocate your Redis or PostgreSQL services on a non-SSD system.
+
+### Storage
+
+There are two important angles to storage: disk space usage and sustained read speed.
+
+To make a rough estimate of your disk space usage requirements, you want to know the answer to three questions:
+- What is the total size of the videos you wish to stream?
+- Do you want to enable transcoding? If so, do you want to provide multiple resolutions per video? Try this out with a few videos and you will get an idea of how much extra space is required per video and estimate a multiplication factor for future space allocation.
+- Which sharing mechanisms do you want to enable? Just WebTorrent, or also HLS with p2p? If you want both, this will double your storage needs.
+
+In terms of read speed, you want to make sure that you can saturate your network uplink serving PeerTube videos. This should not be a problem with SSD disks, whereas traditional HDD should be accounted for: typical sustained read rates for [a well tuned system](support/doc/production.md#tcpip-tuning) with a 7200rpm hard disk should hover around 120 MB/s or 960 Mbit/s. The latter should be enough for a typical 1 Gbit/s network uplink.
+
+### Network
+
+A rough estimate of a traditional server's video streaming network capacity is usually quite straightforward. You simply divide your server's available bandwidth by the average bandwidth per stream, and you have an upper bound.
+
+Take a server for example with a 1 Gbit/s uplink for example pushing out 1080p60 streams at 5 Mbit/s per stream. That means the absolute theoretical upper capacity bound is 200 simultaneous viewers if your server's disk i/o can keep up. Expect a bit less in practice.
+
+But what if you need to serve more users? That's where PeerTube's federation feature shines. If other PeerTube instances following yours, chances are they have decided to mirror part of your instance! The feature is called "server redundancy" and caches your most popular videos to help serve additional viewers. While viewers themselves contribute a little additional bandwidth while watching the video in their browsers (mostly during surges), mirroring servers have a much greater uplink and will help your instance with sustained higher concurrent streaming.
+
+If all your preparations and friends' bandwidth is not enough, you might prefer serving files from a CDN ; see our [remote storage guide](https://docs.joinpeertube.org/admin-remote-storage).
 
 ## Can I seed videos with my classic BitTorrent client (Transmission, rTorrent...)?
 
 Yes you can, but you won't be able to send data to users that watch the video in their web browser.
 The reason is they connect to peers through WebRTC whereas your BitTorrent client uses classic TCP/UDP.
-To check if your BitTorrent client supports WebTorrent you can see this issue: https://github.com/webtorrent/webtorrent/issues/369
+You can check if your BitTorrent client supports WebTorrent in this issue: https://github.com/webtorrent/webtorrent/issues/369
 
 
 ## Why host on GitHub?
@@ -170,7 +199,7 @@ We are always open to discussion about potential PRs bringing in features, even 
 
 We have a policy for contributions related to security. Please refer to [SECURITY.md](./SECURITY.md)
 
-## Does PeerTube ensures federation compatibility with previous version?
+## Does PeerTube ensure federation compatibility with previous version?
 
 We **try** to keep compatibility with the latest minor version (2.3.1 with 2.2 for example).
 We don't have resources to keep compatibility with other versions.

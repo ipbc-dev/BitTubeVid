@@ -4,7 +4,8 @@ listen:
 
 webserver:
   https: false
-
+  hostname: 'ice.tunnel.bittube.app'
+  port: 80
 rates_limit:
   signup:
     window: 10 minutes
@@ -82,6 +83,24 @@ transcoding:
   hls:
     enabled: true
 
+live:
+  enabled: false
+
+  rtmp:
+    port: 1935
+
+  transcoding:
+    enabled: false
+    threads: 2
+
+    resolutions:
+      240p: false
+      360p: false
+      480p: false
+      720p: false
+      1080p: false
+      2160p: false
+
 import:
   videos:
     http:
@@ -120,3 +139,12 @@ search:
     disable_local_search: false
     # If you did not disable local search, you can decide to use the search index by default
     is_default_search: true
+
+federation:
+  videos:
+    federate_unlisted: true
+
+views:
+  videos:
+    remote:
+      max_age: -1

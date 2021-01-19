@@ -7,8 +7,10 @@ import { SharedFormModule } from '@app/shared/shared-forms'
 import { SharedGlobalIconModule } from '@app/shared/shared-icons'
 import { SharedMainModule } from '@app/shared/shared-main'
 import { SharedModerationModule } from '@app/shared/shared-moderation'
+import { SharedVideoCommentModule } from '@app/shared/shared-video-comment'
 import { AdminRoutingModule } from './admin-routing.module'
 import { AdminComponent } from './admin.component'
+import { DialogModule } from 'primeng/dialog'
 import { ConfigComponent, EditCustomConfigComponent } from './config'
 import { ConfigService } from './config/shared/config.service'
 import { FollowersListComponent, FollowsComponent, VideoRedundanciesListComponent } from './follows'
@@ -18,6 +20,7 @@ import { VideoRedundancyInformationComponent } from './follows/video-redundancie
 import { AbuseListComponent, VideoBlockListComponent } from './moderation'
 import { InstanceAccountBlocklistComponent, InstanceServerBlocklistComponent } from './moderation/instance-blocklist'
 import { ModerationComponent } from './moderation/moderation.component'
+import { VideoCommentListComponent } from './moderation/video-comment-list'
 import { PluginListInstalledComponent } from './plugins/plugin-list-installed/plugin-list-installed.component'
 import { PluginSearchComponent } from './plugins/plugin-search/plugin-search.component'
 import { PluginShowInstalledComponent } from './plugins/plugin-show-installed/plugin-show-installed.component'
@@ -37,8 +40,10 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     SharedModerationModule,
     SharedGlobalIconModule,
     SharedAbuseListModule,
+    SharedVideoCommentModule,
 
     TableModule,
+    DialogModule,
     SelectButtonModule,
     ChartModule
   ],
@@ -62,6 +67,7 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     ModerationComponent,
     VideoBlockListComponent,
     AbuseListComponent,
+    VideoCommentListComponent,
 
     InstanceServerBlocklistComponent,
     InstanceAccountBlocklistComponent,

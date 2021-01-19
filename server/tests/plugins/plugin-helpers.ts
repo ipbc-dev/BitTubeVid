@@ -16,6 +16,7 @@ import {
 } from '../../../shared/extra-utils'
 import { cleanupTests, flushAndRunMultipleServers, ServerInfo, waitUntilLog } from '../../../shared/extra-utils/server/servers'
 import { expect } from 'chai'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 function postCommand (server: ServerInfo, command: string, bodyArg?: object) {
   const body = { command }
@@ -25,7 +26,7 @@ function postCommand (server: ServerInfo, command: string, bodyArg?: object) {
     url: server.url,
     path: '/plugins/test-four/router/commander',
     fields: body,
-    statusCodeExpected: 204
+    statusCodeExpected: HttpStatusCode.NO_CONTENT_204
   })
 }
 
@@ -80,7 +81,7 @@ describe('Test plugin helpers', function () {
     let videoUUIDServer1: string
 
     before(async function () {
-      this.timeout(15000)
+      this.timeout(30000)
 
       {
         const res = await uploadVideoAndGetId({ server: servers[0], videoName: 'video server 1' })
@@ -179,7 +180,7 @@ describe('Test plugin helpers', function () {
     })
 
     it('Should remove a video after a view', async function () {
-      this.timeout(20000)
+      this.timeout(40000)
 
       // Should not throw -> video exists
       await getVideo(servers[0].url, videoUUID)

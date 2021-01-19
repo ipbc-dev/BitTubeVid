@@ -30,7 +30,7 @@
           </div>
           <input
             type="text" name="table-filter" id="table-filter" i18n-placeholder placeholder="Filter..."
-            (keyup)="onUserSearch($event)"
+            (keyup)="onSearch($event)"
           >
           <a class="glyphicon glyphicon-remove-sign form-control-feedback form-control-clear" (click)="resetTableFilter()"></a>
           <span class="sr-only" i18n>Clear filters</span>
@@ -47,7 +47,7 @@
   <ng-template pTemplate="header">
     <tr>
       <th style="width: 40px">
-        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+        <p-tableHeaderCheckbox ariaLabel="Select all rows" i18n-ariaLabel></p-tableHeaderCheckbox>
       </th>
       <th style="width: 40px"></th>
       <th style="width: 60px;">
@@ -86,8 +86,8 @@
   <ng-template pTemplate="body" let-expanded="expanded" let-user>
 
     <tr [pSelectableRow]="user" [ngClass]="{ banned: highlightBannedUsers && user.blocked }">
-      <td>
-        <p-tableCheckbox [value]="user"></p-tableCheckbox>
+      <td class="checkbox-cell">
+        <p-tableCheckbox [value]="user" ariaLabel="Select this row" i18n-ariaLabel></p-tableCheckbox>
       </td>
 
       <td class="expand-cell">

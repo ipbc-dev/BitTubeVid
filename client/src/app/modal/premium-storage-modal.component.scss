@@ -1,0 +1,66 @@
+@import '_mixins';
+@import '_variables';
+
+.modal-body {
+  width: 800px;
+  height: 265px;
+  font-size: 15px;
+  background-image: url('../../assets/images/video/premium-modal-background.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.modal-image {
+  background-image: url('../../assets/images/video/premium-modal-image.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 250px;
+  height: 265px;
+  float: left;
+}
+
+.modal-body-text {
+  padding-left: 35%;
+  padding-top: 25px;
+  font-size: 25px;
+  font-weight: 100;
+}
+
+.modal-body-text-blue {
+  color: var(--mainColor);
+}
+
+.modal-body-text-blue-2 {
+  font-size: 45px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+li {
+  margin-bottom: 10px;
+}
+
+.close-modal-button{
+  position: absolute;
+  height: 15px;
+  right: 6px;
+  top: 3px;
+  z-index: 99;
+  cursor: pointer;
+}
+
+.action-button-cancel {
+  @include peertube-button;
+  @include grey-button;
+}
+
+.action-button-confirm {
+  @include peertube-button;
+  @include orange-button;
+  font-size: 21px;
+  padding: 0 15px;
+  margin-top: 10px;
+}
