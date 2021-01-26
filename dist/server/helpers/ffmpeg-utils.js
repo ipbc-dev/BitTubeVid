@@ -189,7 +189,7 @@ function buildx264VODCommand(command, options) {
         fps = ffprobe_utils_1.computeFPS(fps, options.resolution);
         command = yield presetVideo(command, options.inputPath, options, fps);
         if (options.resolution !== undefined) {
-            const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`;
+            const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuv420p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuv420p`;
             command = command.videoFilter(size);
         }
         return command;
