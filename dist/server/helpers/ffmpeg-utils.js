@@ -176,7 +176,7 @@ function addDefaultEncoderParams(options) {
 }
 function addQSVEncoderParams(options) {
     const { command, encoder, fps, streamNum } = options;
-    command.inputOption('-hwaccel qsv');
+    command.inputOption(['-hwaccel qsv']);
     if (encoder === 'h264_qsv') {
         command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
         if (fps) {
@@ -335,10 +335,10 @@ function presetVideo(command, input, transcodeOptions, fps) {
             }
             command.addOutputOptions(builderResult.result.outputOptions);
             if (input.includes('.mp4')) {
-                addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
+                addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
             }
             else {
-                addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
+                addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
             }
         }
         return localCommand;
