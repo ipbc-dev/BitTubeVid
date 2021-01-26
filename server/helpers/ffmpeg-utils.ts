@@ -46,7 +46,7 @@ export interface EncoderProfile <T> {
 
 export type AvailableEncoders = {
   [ id in 'live' | 'vod' ]: {
-    [ encoder in 'libx264' | 'h264_qsv' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
+    [ encoder in 'libx264' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
   }
 }
 
@@ -375,7 +375,7 @@ function addQSVEncoderParams (options: {
   fps?: number
 }) {
   const { command, encoder, fps, streamNum } = options
-  command.inputOption('-hwaccel qsv') /* Adding QSV hardware acceleration */
+  command.inputOption([ '-hwaccel qsv' ]) /* Adding QSV hardware acceleration */
 
   if (encoder === 'h264_qsv') {
     // 3.1 is the minimal resource allocation for our highest supported resolution
@@ -619,9 +619,9 @@ async function presetVideo (
 
     command.addOutputOptions(builderResult.result.outputOptions)
     if (input.includes('.mp4')) {
-      addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
-    } else {
       addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
+    } else {
+      addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
     }
   }
 
