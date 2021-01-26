@@ -375,6 +375,7 @@ function addQSVEncoderParams (options: {
   fps?: number
 }) {
   const { command, encoder, fps, streamNum } = options
+  command.inputOption('-hwaccel qsv') /* Adding QSV hardware acceleration */
 
   if (encoder === 'h264_qsv') {
     // 3.1 is the minimal resource allocation for our highest supported resolution
