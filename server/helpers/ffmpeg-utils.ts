@@ -551,7 +551,6 @@ async function presetVideo (
 ) {
   let localCommand = command
     .format('mp4')
-    .videoCodec('h264_qsv')
     // .outputOption('-level 3.1') // 3.1 is the minimal resource allocation for our highest supported resolution
     // .outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
     // .outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16

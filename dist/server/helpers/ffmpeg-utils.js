@@ -292,7 +292,6 @@ function presetVideo(command, input, transcodeOptions, fps) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         let localCommand = command
             .format('mp4')
-            .videoCodec('h264_qsv')
             .outputOption('-movflags faststart');
         addDefaultEncoderGlobalParams({ command });
         const parsedAudio = yield ffprobe_utils_1.getAudioStream(input);
