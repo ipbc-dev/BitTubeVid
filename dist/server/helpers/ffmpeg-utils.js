@@ -200,7 +200,7 @@ function buildAudioMergeCommand(command, options) {
         command = yield presetVideo(command, options.audioPath, options);
         command.outputOption('-preset:v veryfast');
         command = command.input(options.audioPath)
-            .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuvj422p'`)
+            .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2'`)
             .outputOption('-tune stillimage')
             .outputOption('-shortest');
         return command;
