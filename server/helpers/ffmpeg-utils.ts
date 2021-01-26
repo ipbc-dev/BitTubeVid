@@ -46,7 +46,7 @@ export interface EncoderProfile <T> {
 
 export type AvailableEncoders = {
   [ id in 'live' | 'vod' ]: {
-    [ encoder in 'libx264' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
+    [ encoder in 'libx264' | 'h264_qsv' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
   }
 }
 
@@ -368,6 +368,26 @@ function addDefaultEncoderParams (options: {
     }
   }
 }
+function addQSVEncoderParams (options: {
+  command: ffmpeg.FfmpegCommand
+  encoder: 'h264_qsv' | string
+  streamNum?: number
+  fps?: number
+}) {
+  const { command, encoder, fps, streamNum } = options
+
+  if (encoder === 'h264_qsv') {
+    // 3.1 is the minimal resource allocation for our highest supported resolution
+    command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1')
+
+    if (fps) {
+      // Keyframe interval of 2 seconds for faster seeking and resolution switching.
+      // https://streaminglearningcenter.com/blogs/whats-the-right-keyframe-interval.html
+      // https://superuser.com/a/908325
+      command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2))
+    }
+  }
+}
 
 function addDefaultLiveHLSParams (command: ffmpeg.FfmpegCommand, outPath: string) {
   command.outputOption('-hls_time ' + VIDEO_LIVE.SEGMENT_TIME_SECONDS)
@@ -556,7 +576,7 @@ async function presetVideo (
     // .outputOption('-b_strategy 1') // NOTE: b-strategy 1 - heuristic algorithm, 16 is optimal B-frames for it
     // .outputOption('-bf 16') // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
     // .outputOption('-pix_fmt yuv420p') // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
-    .outputOption('-map_metadata -1') // strip all metadata
+    // .outputOption('-map_metadata -1') // strip all metadata
     .outputOption('-movflags faststart')
 
   addDefaultEncoderGlobalParams({ command })
@@ -597,7 +617,11 @@ async function presetVideo (
     }
 
     command.addOutputOptions(builderResult.result.outputOptions)
-    addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
+    if (input.includes('.mp4')) {
+      addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
+    } else {
+      addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
+    }
   }
 
   return localCommand
