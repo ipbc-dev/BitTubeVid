@@ -414,6 +414,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetVideo(command, options.audioPath, options)
 
   command.outputOption('-preset:v veryfast')
+  command.outputOption('-pix_fmt yuv420p')
 
   command = command.input(options.audioPath)
                    // tslint:disable-next-line: max-line-length
