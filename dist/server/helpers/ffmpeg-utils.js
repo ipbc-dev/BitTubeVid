@@ -167,17 +167,7 @@ function addDefaultEncoderGlobalParams(options) {
 }
 function addDefaultEncoderParams(options) {
     const { command, encoder, fps, streamNum } = options;
-    if (encoder === 'libx264') {
-        command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
-        if (fps) {
-            command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2));
-        }
-    }
-}
-function addQSVEncoderParams(options) {
-    const { command, encoder, fps, streamNum } = options;
-    command.inputOption(['-hwaccel qsv']);
-    if (encoder === 'h264_qsv') {
+    if (encoder === 'libx264' || encoder === 'h264_qsv') {
         command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
         if (fps) {
             command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2));
@@ -328,18 +318,19 @@ function presetVideo(command, input, transcodeOptions, fps) {
             }
             logger_1.logger.debug('Apply ffmpeg params from %s.', builderResult.encoder, builderResult);
             if (streamType === 'VIDEO') {
-                localCommand.videoCodec(builderResult.encoder);
+                if (input.includes('.mp4')) {
+                    command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
+                    localCommand.videoCodec('h264_qsv');
+                }
+                else {
+                    localCommand.videoCodec(builderResult.encoder);
+                }
             }
             else if (streamType === 'AUDIO') {
                 localCommand.audioCodec(builderResult.encoder);
             }
             command.addOutputOptions(builderResult.result.outputOptions);
-            if (input.includes('.mp4')) {
-                addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
-            }
-            else {
-                addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
-            }
+            addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
         }
         return localCommand;
     });

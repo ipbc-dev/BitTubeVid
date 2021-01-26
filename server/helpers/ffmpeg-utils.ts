@@ -46,7 +46,7 @@ export interface EncoderProfile <T> {
 
 export type AvailableEncoders = {
   [ id in 'live' | 'vod' ]: {
-    [ encoder in 'libx264' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
+    [ encoder in 'libx264' | 'h264_qsv' | 'aac' | 'libfdk_aac' ]?: EncoderProfile<EncoderOptionsBuilder>
   }
 }
 
@@ -356,28 +356,7 @@ function addDefaultEncoderParams (options: {
 }) {
   const { command, encoder, fps, streamNum } = options
 
-  if (encoder === 'libx264') {
-    // 3.1 is the minimal resource allocation for our highest supported resolution
-    command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1')
-
-    if (fps) {
-      // Keyframe interval of 2 seconds for faster seeking and resolution switching.
-      // https://streaminglearningcenter.com/blogs/whats-the-right-keyframe-interval.html
-      // https://superuser.com/a/908325
-      command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2))
-    }
-  }
-}
-function addQSVEncoderParams (options: {
-  command: ffmpeg.FfmpegCommand
-  encoder: 'h264_qsv' | string
-  streamNum?: number
-  fps?: number
-}) {
-  const { command, encoder, fps, streamNum } = options
-  command.inputOption([ '-hwaccel qsv' ]) /* Adding QSV hardware acceleration */
-
-  if (encoder === 'h264_qsv') {
+  if (encoder === 'libx264' || encoder === 'h264_qsv') {
     // 3.1 is the minimal resource allocation for our highest supported resolution
     command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1')
 
@@ -612,17 +591,19 @@ async function presetVideo (
     logger.debug('Apply ffmpeg params from %s.', builderResult.encoder, builderResult)
 
     if (streamType === 'VIDEO') {
-      localCommand.videoCodec(builderResult.encoder)
+      // localCommand.videoCodec(builderResult.encoder)
+      if (input.includes('.mp4')) {
+        command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) /* Adding QSV hardware acceleration */
+        localCommand.videoCodec('h264_qsv')
+      } else {
+        localCommand.videoCodec(builderResult.encoder)
+      }
     } else if (streamType === 'AUDIO') {
       localCommand.audioCodec(builderResult.encoder)
     }
 
     command.addOutputOptions(builderResult.result.outputOptions)
-    if (input.includes('.mp4')) {
-      addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
-    } else {
-      addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
-    }
+    addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps })
   }
 
   return localCommand
