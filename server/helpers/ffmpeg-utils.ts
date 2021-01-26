@@ -392,7 +392,7 @@ async function buildx264VODCommand (command: ffmpeg.FfmpegCommand, options: Tran
 
   if (options.resolution !== undefined) {
     // '?x720' or '720x?' for example
-    const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuvj422p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuvj422p`
+    const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw,format=yuv420p` : `vpp_qsv=w=h*cw/ch:h=${options.resolution},format=yuv420p`
     // command = command.size(size)
     command = command.videoFilter(size)
   }
