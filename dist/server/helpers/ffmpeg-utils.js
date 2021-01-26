@@ -176,6 +176,7 @@ function addDefaultEncoderParams(options) {
 }
 function addQSVEncoderParams(options) {
     const { command, encoder, fps, streamNum } = options;
+    command.inputOption('-hwaccel qsv');
     if (encoder === 'h264_qsv') {
         command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
         if (fps) {
