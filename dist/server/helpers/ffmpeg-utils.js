@@ -162,8 +162,7 @@ function addDefaultEncoderGlobalParams(options) {
     command.outputOption('-max_muxing_queue_size 1024')
         .outputOption('-map_metadata -1')
         .outputOption('-b_strategy 1')
-        .outputOption('-bf 16')
-        .outputOption('-pix_fmt yuv420p');
+        .outputOption('-bf 16');
 }
 function addDefaultEncoderParams(options) {
     const { command, encoder, fps, streamNum } = options;

@@ -345,7 +345,7 @@ function addDefaultEncoderGlobalParams (options: {
          // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
          .outputOption('-bf 16')
          // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
-         .outputOption('-pix_fmt yuv420p')
+        //  .outputOption('-pix_fmt yuv420p')
 }
 
 function addDefaultEncoderParams (options: {
