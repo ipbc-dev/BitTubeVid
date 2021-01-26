@@ -174,6 +174,15 @@ function addDefaultEncoderParams(options) {
         }
     }
 }
+function addQSVEncoderParams(options) {
+    const { command, encoder, fps, streamNum } = options;
+    if (encoder === 'h264_qsv') {
+        command.outputOption(buildStreamSuffix('-level:v', streamNum) + ' 3.1');
+        if (fps) {
+            command.outputOption(buildStreamSuffix('-g:v', streamNum) + ' ' + (fps * 2));
+        }
+    }
+}
 function addDefaultLiveHLSParams(command, outPath) {
     command.outputOption('-hls_time ' + constants_1.VIDEO_LIVE.SEGMENT_TIME_SECONDS);
     command.outputOption('-hls_list_size ' + constants_1.VIDEO_LIVE.SEGMENTS_LIST_SIZE);
@@ -294,7 +303,6 @@ function presetVideo(command, input, transcodeOptions, fps) {
         let localCommand = command
             .format('mp4')
             .videoCodec('h264_qsv')
-            .outputOption('-map_metadata -1')
             .outputOption('-movflags faststart');
         addDefaultEncoderGlobalParams({ command });
         const parsedAudio = yield ffprobe_utils_1.getAudioStream(input);
@@ -325,7 +333,12 @@ function presetVideo(command, input, transcodeOptions, fps) {
                 localCommand.audioCodec(builderResult.encoder);
             }
             command.addOutputOptions(builderResult.result.outputOptions);
-            addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
+            if (input.includes('.mp4')) {
+                addDefaultEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
+            }
+            else {
+                addQSVEncoderParams({ command: localCommand, encoder: builderResult.encoder, fps });
+            }
         }
         return localCommand;
     });
