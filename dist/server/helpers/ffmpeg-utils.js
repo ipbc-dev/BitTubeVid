@@ -199,7 +199,6 @@ function buildAudioMergeCommand(command, options) {
         command = command.loop(undefined);
         command = yield presetVideo(command, options.audioPath, options);
         command.outputOption('-preset:v veryfast');
-        command.outputOption('-pix_fmt yuv420p');
         command = command.input(options.audioPath)
             .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2'`)
             .outputOption('-tune stillimage')
@@ -319,6 +318,9 @@ function presetVideo(command, input, transcodeOptions, fps) {
             if (streamType === 'VIDEO') {
                 if (input.includes('.mp4')) {
                     command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
+                    localCommand.videoCodec('h264_qsv');
+                }
+                else if (input.includes('.avi')) {
                     localCommand.videoCodec('h264_qsv');
                 }
                 else {
