@@ -414,7 +414,6 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
   command = await presetVideo(command, options.audioPath, options)
 
   command.outputOption('-preset:v veryfast')
-  command.outputOption('-pix_fmt yuv420p')
 
   command = command.input(options.audioPath)
                    // tslint:disable-next-line: max-line-length
@@ -594,6 +593,8 @@ async function presetVideo (
       // localCommand.videoCodec(builderResult.encoder)
       if (input.includes('.mp4')) {
         command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) /* Adding QSV hardware acceleration */
+        localCommand.videoCodec('h264_qsv')
+      } else if (input.includes('.avi')) {
         localCommand.videoCodec('h264_qsv')
       } else {
         localCommand.videoCodec(builderResult.encoder)
