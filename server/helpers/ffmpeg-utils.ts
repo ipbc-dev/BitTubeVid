@@ -345,7 +345,7 @@ function addDefaultEncoderGlobalParams (options: {
          // NOTE: Why 16: https://github.com/Chocobozzz/PeerTube/pull/774. b-strategy 2 -> B-frames<16
          .outputOption('-bf 16')
          // allows import of source material with incompatible pixel formats (e.g. MJPEG video)
-        //  .outputOption('-pix_fmt yuv420p')
+  //  .outputOption('-pix_fmt yuv420p')
 }
 
 function addDefaultEncoderParams (options: {
@@ -390,11 +390,18 @@ async function buildx264VODCommand (command: ffmpeg.FfmpegCommand, options: Tran
 
   command = await presetVideo(command, options.inputPath, options, fps)
 
-  if (options.resolution !== undefined) {
-    // '?x720' or '720x?' for example
+  if (options.resolution !== undefined && options.inputPath.includes('.mp4')) {
+    // '?x
     const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw` : `vpp_qsv=w=h*cw/ch:h=${options.resolution}`
     // command = command.size(size)
     command = command.videoFilter(size)
+  } else if (options.resolution !== undefined) {
+    // '?x720' or '720x?' for example
+    const size = options.isPortraitMode === true
+      ? `${options.resolution}x?`
+      : `?x${options.resolution}`
+
+    command = command.size(size)
   }
 
   // if (fps) {
@@ -593,9 +600,6 @@ async function presetVideo (
       // localCommand.videoCodec(builderResult.encoder)
       if (input.includes('.mp4')) {
         command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) /* Adding QSV hardware acceleration */
-        localCommand.videoCodec('h264_qsv')
-      } else if (input.includes('.avi')) {
-        command.inputOption([ '-c:v h264_qsv' ])
         localCommand.videoCodec('h264_qsv')
       } else {
         localCommand.videoCodec(builderResult.encoder)

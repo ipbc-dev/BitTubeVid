@@ -187,9 +187,15 @@ function buildx264VODCommand(command, options) {
         let fps = yield ffprobe_utils_1.getVideoFileFPS(options.inputPath);
         fps = ffprobe_utils_1.computeFPS(fps, options.resolution);
         command = yield presetVideo(command, options.inputPath, options, fps);
-        if (options.resolution !== undefined) {
+        if (options.resolution !== undefined && options.inputPath.includes('.mp4')) {
             const size = options.isPortraitMode === true ? `vpp_qsv=w=${options.resolution}:h=w*ch/cw` : `vpp_qsv=w=h*cw/ch:h=${options.resolution}`;
             command = command.videoFilter(size);
+        }
+        else if (options.resolution !== undefined) {
+            const size = options.isPortraitMode === true
+                ? `${options.resolution}x?`
+                : `?x${options.resolution}`;
+            command = command.size(size);
         }
         return command;
     });
@@ -318,10 +324,6 @@ function presetVideo(command, input, transcodeOptions, fps) {
             if (streamType === 'VIDEO') {
                 if (input.includes('.mp4')) {
                     command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
-                    localCommand.videoCodec('h264_qsv');
-                }
-                else if (input.includes('.avi')) {
-                    command.inputOption(['-c:v h264_qsv']);
                     localCommand.videoCodec('h264_qsv');
                 }
                 else {
