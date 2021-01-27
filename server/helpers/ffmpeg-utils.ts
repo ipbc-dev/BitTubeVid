@@ -595,6 +595,7 @@ async function presetVideo (
         command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) /* Adding QSV hardware acceleration */
         localCommand.videoCodec('h264_qsv')
       } else if (input.includes('.avi')) {
+        command.inputOption([ '-c:v h264_qsv' ])
         localCommand.videoCodec('h264_qsv')
       } else {
         localCommand.videoCodec(builderResult.encoder)

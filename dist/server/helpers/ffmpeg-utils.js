@@ -321,6 +321,7 @@ function presetVideo(command, input, transcodeOptions, fps) {
                     localCommand.videoCodec('h264_qsv');
                 }
                 else if (input.includes('.avi')) {
+                    command.inputOption(['-c:v h264_qsv']);
                     localCommand.videoCodec('h264_qsv');
                 }
                 else {
