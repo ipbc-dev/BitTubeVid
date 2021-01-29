@@ -344,7 +344,7 @@ const VIDEO_TRANSCODING_FPS: VideoTranscodingFPS = {
 }
 
 const VIDEO_TRANSCODING_ENCODERS = {
-  VIDEO: [ 'libx264' ],
+  VIDEO: [ 'libx264', 'h264_qsv' ],
 
   // Try the first one, if not available try the second one etc
   AUDIO: [

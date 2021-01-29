@@ -274,9 +274,13 @@ function getEncoderBuilderResult(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { availableEncoders, input, profile, resolution, streamType, fps, streamNum, videoType } = options;
         const encodersToTry = constants_1.VIDEO_TRANSCODING_ENCODERS[streamType];
-        for (const encoder of encodersToTry) {
+        for (let encoder of encodersToTry) {
             if (!(yield checker_before_init_1.checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder])
                 continue;
+            logger_1.logger.error('ICEICE hardcoded encoder here!');
+            if (videoType === "live") {
+                encoder = 'h264_qsv';
+            }
             const builderProfiles = availableEncoders[videoType][encoder];
             let builder = builderProfiles[profile];
             if (!builder) {
@@ -284,12 +288,6 @@ function getEncoderBuilderResult(options) {
                 builder = builderProfiles.default;
             }
             const result = yield builder({ input, resolution: resolution, fps, streamNum });
-            if (videoType === "live") {
-                return {
-                    result,
-                    encoder: 'h264_qsv'
-                };
-            }
             return {
                 result,
                 encoder: result.copy === true

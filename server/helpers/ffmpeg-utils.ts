@@ -524,9 +524,12 @@ async function getEncoderBuilderResult (options: {
 
   const encodersToTry: string[] = VIDEO_TRANSCODING_ENCODERS[streamType]
 
-  for (const encoder of encodersToTry) {
+  for (let encoder of encodersToTry) {
     if (!(await checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder]) continue
-
+    logger.error('ICEICE hardcoded encoder here!')
+    if (videoType === "live") {
+      encoder = 'h264_qsv'
+    }
     const builderProfiles: EncoderProfile<EncoderOptionsBuilder> = availableEncoders[videoType][encoder]
     let builder = builderProfiles[profile]
 
@@ -537,12 +540,6 @@ async function getEncoderBuilderResult (options: {
 
     const result = await builder({ input, resolution: resolution, fps, streamNum })
 
-    if (videoType === "live") {
-      return {
-        result,
-        encoder: 'h264_qsv'
-      }
-    }
     return {
       result,
 

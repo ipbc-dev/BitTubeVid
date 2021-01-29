@@ -315,7 +315,7 @@ const VIDEO_TRANSCODING_FPS = {
 };
 exports.VIDEO_TRANSCODING_FPS = VIDEO_TRANSCODING_FPS;
 const VIDEO_TRANSCODING_ENCODERS = {
-    VIDEO: ['libx264'],
+    VIDEO: ['libx264', 'h264_qsv'],
     AUDIO: [
         'libfdk_aac',
         'aac'
