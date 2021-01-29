@@ -110,6 +110,7 @@ async function checkFFmpegEncoders (): Promise<Map<string, boolean>> {
   const Ffmpeg = require('fluent-ffmpeg')
   const getAvailableEncodersPromise = promisify0(Ffmpeg.getAvailableEncoders)
   const availableEncoders = await getAvailableEncodersPromise()
+  logger.error('ICEICE available encoders are -> ', availableEncoders)
 
   const searchEncoders = [
     'aac',

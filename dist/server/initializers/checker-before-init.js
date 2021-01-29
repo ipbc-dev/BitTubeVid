@@ -99,6 +99,7 @@ function checkFFmpegEncoders() {
         const Ffmpeg = require('fluent-ffmpeg');
         const getAvailableEncodersPromise = core_utils_1.promisify0(Ffmpeg.getAvailableEncoders);
         const availableEncoders = yield getAvailableEncodersPromise();
+        logger_1.logger.error('ICEICE available encoders are -> ', availableEncoders);
         const searchEncoders = [
             'aac',
             'libfdk_aac',
