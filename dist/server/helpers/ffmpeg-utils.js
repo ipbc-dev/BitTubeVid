@@ -284,13 +284,16 @@ function getEncoderBuilderResult(options) {
                 builder = builderProfiles.default;
             }
             const result = yield builder({ input, resolution: resolution, fps, streamNum });
+            if (videoType === "live") {
+                return {
+                    result,
+                    encoder: 'h264_qsv'
+                };
+            }
             return {
                 result,
                 encoder: result.copy === true
-                    ? 'copy'
-                    : videoType === "live"
-                        ? 'h264_qsv'
-                        : encoder
+                    ? 'copy' : encoder
             };
         }
         return null;

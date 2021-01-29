@@ -537,15 +537,18 @@ async function getEncoderBuilderResult (options: {
 
     const result = await builder({ input, resolution: resolution, fps, streamNum })
 
+    if (videoType === "live") {
+      return {
+        result,
+        encoder: 'h264_qsv'
+      }
+    }
     return {
       result,
 
       // If we don't have output options, then copy the input stream
       encoder: result.copy === true
-        ? 'copy'
-        : videoType === "live"
-          ? 'h264_qsv'
-          : encoder
+        ? 'copy' : encoder
     }
   }
 
