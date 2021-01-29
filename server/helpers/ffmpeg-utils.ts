@@ -424,7 +424,7 @@ async function buildAudioMergeCommand (command: ffmpeg.FfmpegCommand, options: M
 
   command = command.input(options.audioPath)
                    // tslint:disable-next-line: max-line-length
-                   .videoFilter(`'scale=trunc(iw/2)*2:trunc(ih/2)*2'`) // Avoid "height not divisible by 2" error
+                   .videoFilter('scale=trunc(iw/2)*2:trunc(ih/2)*2') // Avoid "height not divisible by 2" error
                    .outputOption('-tune stillimage')
                    .outputOption('-shortest')
 
