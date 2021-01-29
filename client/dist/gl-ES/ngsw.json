@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1611921220863,
+  "timestamp": 1611925403200,
   "index": "/client/gl-ES/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/gl-ES/index.html": "f04dd10bed4ca6e8e7d3f0e85abb09f2ef5f17f0",
+    "/client/gl-ES/index.html": "0dd9e6ee61b790d50305b79d945615d89b167a08",
     "/client/gl-ES/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [

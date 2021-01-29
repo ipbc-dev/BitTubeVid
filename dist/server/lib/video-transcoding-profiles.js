@@ -61,7 +61,7 @@ const availableEncoders = {
         }
     },
     live: {
-        libx264: {
+        h264_qsv: {
             default: defaultX264LiveOptionsBuilder
         },
         aac: {
