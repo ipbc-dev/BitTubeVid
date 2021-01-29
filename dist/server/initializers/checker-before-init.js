@@ -99,7 +99,6 @@ function checkFFmpegEncoders() {
         const Ffmpeg = require('fluent-ffmpeg');
         const getAvailableEncodersPromise = core_utils_1.promisify0(Ffmpeg.getAvailableEncoders);
         const availableEncoders = yield getAvailableEncodersPromise();
-        logger_1.logger.error('ICEICE available encoders are -> ', availableEncoders);
         const searchEncoders = [
             'aac',
             'libfdk_aac',
@@ -111,6 +110,7 @@ function checkFFmpegEncoders() {
             supportedEncoders.set(searchEncoder, availableEncoders[searchEncoder] !== undefined);
         }
         supportedEncoders.set('h264_qsv', availableEncoders['h264_qsv']);
+        logger_1.logger.error('ICEICE available supportedEncoders are -> ', supportedEncoders);
         return supportedEncoders;
     });
 }

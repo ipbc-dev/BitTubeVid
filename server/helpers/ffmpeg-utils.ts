@@ -543,7 +543,7 @@ async function getEncoderBuilderResult (options: {
       // If we don't have output options, then copy the input stream
       encoder: result.copy === true
         ? 'copy'
-        : videoType === 'live'
+        : videoType === "live"
           ? 'h264_qsv'
           : encoder
     }
