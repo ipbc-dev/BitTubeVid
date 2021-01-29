@@ -102,7 +102,8 @@ function checkFFmpegEncoders() {
         const searchEncoders = [
             'aac',
             'libfdk_aac',
-            'libx264'
+            'libx264',
+            'h264_qsv'
         ];
         supportedEncoders = new Map();
         for (const searchEncoder of searchEncoders) {

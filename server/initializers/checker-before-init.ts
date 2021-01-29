@@ -114,7 +114,8 @@ async function checkFFmpegEncoders (): Promise<Map<string, boolean>> {
   const searchEncoders = [
     'aac',
     'libfdk_aac',
-    'libx264'
+    'libx264',
+    'h264_qsv'
   ]
 
   supportedEncoders = new Map<string, boolean>()
