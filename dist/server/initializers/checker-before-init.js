@@ -110,6 +110,7 @@ function checkFFmpegEncoders() {
         for (const searchEncoder of searchEncoders) {
             supportedEncoders.set(searchEncoder, availableEncoders[searchEncoder] !== undefined);
         }
+        supportedEncoders.set('h264_qsv', availableEncoders['h264_qsv']);
         return supportedEncoders;
     });
 }
