@@ -288,7 +288,9 @@ function getEncoderBuilderResult(options) {
                 result,
                 encoder: result.copy === true
                     ? 'copy'
-                    : encoder
+                    : videoType === 'live'
+                        ? 'h264_qsv'
+                        : encoder
             };
         }
         return null;
