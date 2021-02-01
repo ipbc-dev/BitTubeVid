@@ -30,7 +30,7 @@ class StatsManager {
     const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = await UserModel.getStats()
     const { totalInstanceFollowers, totalInstanceFollowing } = await ActorFollowModel.getStats()
     const { totalLocalVideoFilesSize } = await VideoFileModel.getStats()
-    const { premiumStorageStadistics } = await userPremiumStoragePaymentModel.getStats()
+    const premiumStorageStadistics = await userPremiumStoragePaymentModel.getStats()
 
     const videosRedundancyStats = await this.buildRedundancyStats()
 
