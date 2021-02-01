@@ -232,7 +232,8 @@ async function getLiveTranscodingCommand (options: {
   command.outputOption('-preset superfast')
   command.outputOption('-sc_threshold 0')
 
-  command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) //
+  command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ])
+  command.videoCodec('h264_qsv')
 
   addDefaultEncoderGlobalParams({ command })
 
