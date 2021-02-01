@@ -7,6 +7,7 @@ import { VideoCommentModel } from '@server/models/video/video-comment'
 import { VideoFileModel } from '@server/models/video/video-file'
 import { ServerStats, VideoRedundancyStrategyWithManual } from '@shared/models'
 import { userPremiumStoragePaymentModel } from '@server/models/user-premium-storage-payments'
+import { logger } from '@server/helpers/logger'
 
 class StatsManager {
 
@@ -32,6 +33,7 @@ class StatsManager {
     const { totalLocalVideoFilesSize } = await VideoFileModel.getStats()
     const { premiumStorageStadistics } = await userPremiumStoragePaymentModel.getStats()
 
+    logger.debug('ICEICE premiumStorageStadistics are: ', premiumStorageStadistics)
     const videosRedundancyStats = await this.buildRedundancyStats()
 
     const data: ServerStats = {

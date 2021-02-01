@@ -389,6 +389,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
       this.getPlans(),
       this.serverService.getConfig()
     ]).subscribe(([ plans, config ]) => {
+      console.log('ICEICE subscribeConfigAndPlans getting plans: ', plans)
       if (plans['success']) {
         this.storagePlans = plans['plans']
         this.storagePlans.forEach(plan => {
