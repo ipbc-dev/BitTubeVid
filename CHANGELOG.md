@@ -1,4 +1,10 @@
 # Changelog
+
+## v0.3.1 (BitTube)
+  * Based on Peertube V3.0.1
+  * Please, check Peertube V3.0.0 release important notes below before installing this package
+  * Adding LiveStreams
+  * Fixing minor bugs
 ## v0.3.0 (BitTube)
   * Based on Peertube V3.0.1
   * Please, check Peertube V3.0.0 release important notes below before installing this package
