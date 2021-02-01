@@ -10,7 +10,6 @@ const video_1 = require("@server/models/video/video");
 const video_comment_1 = require("@server/models/video/video-comment");
 const video_file_1 = require("@server/models/video/video-file");
 const user_premium_storage_payments_1 = require("@server/models/user-premium-storage-payments");
-const logger_1 = require("@server/helpers/logger");
 class StatsManager {
     constructor() {
         this.instanceStartDate = new Date();
@@ -28,8 +27,7 @@ class StatsManager {
             const { totalUsers, totalDailyActiveUsers, totalWeeklyActiveUsers, totalMonthlyActiveUsers } = yield user_1.UserModel.getStats();
             const { totalInstanceFollowers, totalInstanceFollowing } = yield actor_follow_1.ActorFollowModel.getStats();
             const { totalLocalVideoFilesSize } = yield video_file_1.VideoFileModel.getStats();
-            const { premiumStorageStadistics } = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.getStats();
-            logger_1.logger.debug('ICEICE premiumStorageStadistics are: ', premiumStorageStadistics);
+            const premiumStorageStadistics = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.getStats();
             const videosRedundancyStats = yield this.buildRedundancyStats();
             const data = {
                 totalLocalVideos,

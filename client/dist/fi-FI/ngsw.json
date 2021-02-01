@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1612179292361,
+  "timestamp": 1612181886619,
   "index": "/client/fi-FI/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/fi-FI/index.html": "6264bc77bcb59d8639a77c766ae8bd981b4314ac",
+    "/client/fi-FI/index.html": "7f89b4bc802a5d7343f769c74604cb5cdc0f0c42",
     "/client/fi-FI/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
