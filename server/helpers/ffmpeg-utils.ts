@@ -223,7 +223,7 @@ async function getLiveTranscodingCommand (options: {
 
     ...resolutions.map(r => ({
       inputs: `vtemp${r}`,
-      filter: 'vpp_qsv',
+      filter: 'scale',
       options: `w=-2:h=${r}`,
       outputs: `vout${r}`
     }))
