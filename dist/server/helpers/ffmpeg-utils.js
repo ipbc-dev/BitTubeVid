@@ -97,8 +97,6 @@ function getLiveTranscodingCommand(options) {
         ]);
         command.outputOption('-preset superfast');
         command.outputOption('-sc_threshold 0');
-        command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
-        command.videoCodec('h264_qsv');
         addDefaultEncoderGlobalParams({ command });
         for (let i = 0; i < resolutions.length; i++) {
             const resolution = resolutions[i];
