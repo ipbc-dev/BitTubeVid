@@ -97,7 +97,7 @@ function getLiveTranscodingCommand(options) {
         ]);
         command.outputOption('-preset superfast');
         command.outputOption('-sc_threshold 0');
-        command.inputOption(['-hwaccel qsv']);
+        command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
         addDefaultEncoderGlobalParams({ command });
         for (let i = 0; i < resolutions.length; i++) {
             const resolution = resolutions[i];
@@ -275,13 +275,9 @@ function getEncoderBuilderResult(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { availableEncoders, input, profile, resolution, streamType, fps, streamNum, videoType } = options;
         const encodersToTry = constants_1.VIDEO_TRANSCODING_ENCODERS[streamType];
-        for (let encoder of encodersToTry) {
+        for (const encoder of encodersToTry) {
             if (!(yield checker_before_init_1.checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder])
                 continue;
-            logger_1.logger.error('ICEICE hardcoded encoder here!');
-            if (videoType === "live") {
-                encoder = 'h264_qsv';
-            }
             const builderProfiles = availableEncoders[videoType][encoder];
             let builder = builderProfiles[profile];
             if (!builder) {
@@ -289,11 +285,11 @@ function getEncoderBuilderResult(options) {
                 builder = builderProfiles.default;
             }
             const result = yield builder({ input, resolution: resolution, fps, streamNum });
-            logger_1.logger.error('ICEICE result for getEncoderBuilderResult is: ', result);
             return {
                 result,
                 encoder: result.copy === true
-                    ? 'copy' : encoder
+                    ? 'copy'
+                    : encoder
             };
         }
         return null;

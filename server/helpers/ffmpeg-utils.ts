@@ -232,7 +232,7 @@ async function getLiveTranscodingCommand (options: {
   command.outputOption('-preset superfast')
   command.outputOption('-sc_threshold 0')
 
-  command.inputOption([ '-hwaccel qsv' ]) //, '-c:v h264_qsv'
+  command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ]) //
 
   addDefaultEncoderGlobalParams({ command })
 
@@ -526,12 +526,9 @@ async function getEncoderBuilderResult (options: {
 
   const encodersToTry: string[] = VIDEO_TRANSCODING_ENCODERS[streamType]
 
-  for (let encoder of encodersToTry) {
+  for (const encoder of encodersToTry) {
     if (!(await checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder]) continue
-    logger.error('ICEICE hardcoded encoder here!')
-    if (videoType === "live") {
-      encoder = 'h264_qsv'
-    }
+
     const builderProfiles: EncoderProfile<EncoderOptionsBuilder> = availableEncoders[videoType][encoder]
     let builder = builderProfiles[profile]
 
@@ -541,13 +538,14 @@ async function getEncoderBuilderResult (options: {
     }
 
     const result = await builder({ input, resolution: resolution, fps, streamNum })
-    logger.error('ICEICE result for getEncoderBuilderResult is: ', result)
+
     return {
       result,
 
       // If we don't have output options, then copy the input stream
       encoder: result.copy === true
-        ? 'copy' : encoder
+        ? 'copy'
+        : encoder
     }
   }
 
