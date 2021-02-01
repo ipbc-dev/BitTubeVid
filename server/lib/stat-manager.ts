@@ -33,7 +33,6 @@ class StatsManager {
     const { totalLocalVideoFilesSize } = await VideoFileModel.getStats()
     const premiumStorageStadistics = await userPremiumStoragePaymentModel.getStats()
 
-    logger.debug('ICEICE premiumStorageStadistics are: ', premiumStorageStadistics)
     const videosRedundancyStats = await this.buildRedundancyStats()
 
     const data: ServerStats = {
