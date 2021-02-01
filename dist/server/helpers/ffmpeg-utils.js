@@ -97,6 +97,7 @@ function getLiveTranscodingCommand(options) {
         ]);
         command.outputOption('-preset superfast');
         command.outputOption('-sc_threshold 0');
+        command.inputOption(['-hwaccel qsv']);
         addDefaultEncoderGlobalParams({ command });
         for (let i = 0; i < resolutions.length; i++) {
             const resolution = resolutions[i];
@@ -117,7 +118,7 @@ function getLiveTranscodingCommand(options) {
                 }
                 command.outputOption(`-map [vout${resolution}]`);
                 addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
-                logger_1.logger.debug('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult);
+                logger_1.logger.error('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult);
                 command.outputOption(`${buildStreamSuffix('-c:v', i)} ${builderResult.encoder}`);
                 command.addOutputOptions(builderResult.result.outputOptions);
             }
@@ -128,7 +129,7 @@ function getLiveTranscodingCommand(options) {
                 }
                 command.outputOption('-map a:0');
                 addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
-                logger_1.logger.debug('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult);
+                logger_1.logger.error('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult);
                 command.outputOption(`${buildStreamSuffix('-c:a', i)} ${builderResult.encoder}`);
                 command.addOutputOptions(builderResult.result.outputOptions);
             }
@@ -288,6 +289,7 @@ function getEncoderBuilderResult(options) {
                 builder = builderProfiles.default;
             }
             const result = yield builder({ input, resolution: resolution, fps, streamNum });
+            logger_1.logger.error('ICEICE result for getEncoderBuilderResult is: ', result);
             return {
                 result,
                 encoder: result.copy === true

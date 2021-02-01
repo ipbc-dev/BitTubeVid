@@ -232,6 +232,8 @@ async function getLiveTranscodingCommand (options: {
   command.outputOption('-preset superfast')
   command.outputOption('-sc_threshold 0')
 
+  command.inputOption([ '-hwaccel qsv' ]) //, '-c:v h264_qsv'
+
   addDefaultEncoderGlobalParams({ command })
 
   for (let i = 0; i < resolutions.length; i++) {
@@ -258,7 +260,7 @@ async function getLiveTranscodingCommand (options: {
 
       addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i })
 
-      logger.debug('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult)
+      logger.error('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult)
 
       command.outputOption(`${buildStreamSuffix('-c:v', i)} ${builderResult.encoder}`)
       command.addOutputOptions(builderResult.result.outputOptions)
@@ -274,7 +276,7 @@ async function getLiveTranscodingCommand (options: {
 
       addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i })
 
-      logger.debug('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult)
+      logger.error('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult)
 
       command.outputOption(`${buildStreamSuffix('-c:a', i)} ${builderResult.encoder}`)
       command.addOutputOptions(builderResult.result.outputOptions)
@@ -539,7 +541,7 @@ async function getEncoderBuilderResult (options: {
     }
 
     const result = await builder({ input, resolution: resolution, fps, streamNum })
-
+    logger.error('ICEICE result for getEncoderBuilderResult is: ', result)
     return {
       result,
 
