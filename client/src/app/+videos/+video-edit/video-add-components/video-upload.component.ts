@@ -82,7 +82,7 @@ export class VideoUploadComponent extends VideoSend implements OnInit, AfterView
           this.userVideoQuotaUsedDaily = data.videoQuotaUsedDaily
         })
     this.isPremiumStorageEnabled = this.serverConfig.premium_storage.enabled
-    console.log('ICEICE value for isPremiumStorageEnabled is: ', this.isPremiumStorageEnabled)
+    // console.log('ICEICE value for isPremiumStorageEnabled is: ', this.isPremiumStorageEnabled)
   }
 
   ngAfterViewInit () {
