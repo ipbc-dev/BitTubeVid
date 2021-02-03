@@ -14,7 +14,7 @@ import { PremiumStoragePlanModel } from '../../models/premium-storage-plan'
 import { userPremiumStoragePaymentModel } from '../../models/user-premium-storage-payments'
 const fetch = require('node-fetch')
 const Headers = fetch.Headers
-const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension.cloudfunctions.net/'
+const firebaseApiUrl = 'https://us-central1-bittube-airtime-extension-dev.cloudfunctions.net/'
 const premiumStorageRouter = express.Router()
 
 premiumStorageRouter.get('/plans',
