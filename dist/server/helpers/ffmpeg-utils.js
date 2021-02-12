@@ -90,13 +90,14 @@ function getLiveTranscodingCommand(options) {
             },
             ...resolutions.map(r => ({
                 inputs: `vtemp${r}`,
-                filter: 'scale',
-                options: `w=-2:h=${r}`,
+                filter: 'vpp_qsv',
+                options: `w=-1:h=${r}`,
                 outputs: `vout${r}`
             }))
         ]);
         command.outputOption('-preset superfast');
         command.outputOption('-sc_threshold 0');
+        command.videoCodec('h264_qsv');
         addDefaultEncoderGlobalParams({ command });
         for (let i = 0; i < resolutions.length; i++) {
             const resolution = resolutions[i];
