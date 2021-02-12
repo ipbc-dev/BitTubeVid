@@ -43,12 +43,19 @@
 
           <input type="submit" i18n-value value="Login" [disabled]="!form.valid">
 
+          
           <div class="additionnal-links">
             <a class="forgot-password-button" (click)="openForgotPasswordModal()" i18n-title title="Click here to reset your password">I forgot my password</a>
             <div *ngIf="signupAllowed" class="signup-link">
               <span>·</span>
               <a i18n routerLink="/signup" class="create-an-account">Create an account</a>
             </div>
+          </div>
+
+          <div class="additionnal-links">
+            <a href='#' (click)="social_login($event, 'facebook')">Login with Facebook</a>&nbsp;
+            <a href='#' (click)="social_login($event, 'google')">Login with Google</a>&nbsp;
+            <a href='#' (click)="social_login($event, 'twitter')">Login with Twitter</a>
           </div>
 
           <div class="looking-for-account alert alert-info"  role="alert">
@@ -78,10 +85,6 @@
           </div>
         </div>
       </div>
-
-    <a href='#' (click)="social_login($event, 'facebook')">Login with Facebook</a>&nbsp;
-    <a href='#' (click)="social_login($event, 'google')">Login with Google</a>&nbsp;
-    <a href='#' (click)="social_login($event, 'twitter')">Login with Twitter</a>
     
       <div #instanceInformation class="instance-information">
         <my-instance-about-accordion (init)="onInstanceAboutAccordionInit($event)" [panels]="instanceInformationPanels"></my-instance-about-accordion>
