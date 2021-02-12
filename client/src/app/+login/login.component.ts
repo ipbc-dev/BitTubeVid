@@ -150,18 +150,23 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
 
     const { username, password } = this.form.value
 
-    this.authService.login(username, password)
+    const firebasePromise = username.indexOf('@') !== -1
+      ? firebaseAuth.signInWithEmailAndPassword(username, password).catch(error => console.error(error))
+      : Promise.resolve();
+
+    firebasePromise.then(async (firebaseResult) => {
+      let token = '';
+      if (firebaseResult) token = await getFirebaseToken(); 
+
+      this.authService.login(username, token || password)
       .subscribe(
         () => {
-          if (username.indexOf('@') !== -1) {
-            firebaseAuth.signInWithEmailAndPassword(username, password).catch(error => console.error(error))
-          }
-
           return this.redirectService.redirectToPreviousRoute()
         },
 
         err => this.handleError(err)
       )
+    })
   }
 
   askResetPassword () {
