@@ -223,8 +223,8 @@ async function getLiveTranscodingCommand (options: {
 
     ...resolutions.map(r => ({
       inputs: `vtemp${r}`,
-      filter: 'scale',
-      options: `w=-2:h=${r}`,
+      filter: 'vpp_qsv',
+      options: `w=-1:h=${r}`,
       outputs: `vout${r}`
     }))
   ])
@@ -233,7 +233,7 @@ async function getLiveTranscodingCommand (options: {
   command.outputOption('-sc_threshold 0')
 
   // command.inputOption([ '-hwaccel qsv', '-c:v h264_qsv' ])
-  // command.videoCodec('h264_qsv')
+  command.videoCodec('h264_qsv')
 
   addDefaultEncoderGlobalParams({ command })
 
