@@ -2,6 +2,11 @@ import { ChangeDetectionStrategy, Component, ElementRef, Input, OnInit } from '@
 import { HooksService } from '@app/core/plugins/hooks.service'
 
 const icons = {
+  // social login icons
+  'facebook': require ('!!raw-loader?!../../../assets/images/facebook-login.svg').default,
+  'google': require ('!!raw-loader?!../../../assets/images/google-login.svg').default,
+  'twitter': require ('!!raw-loader?!../../../assets/images/twitter-login.svg').default,
+
   // misc icons
   'npm': require('!!raw-loader?!../../../assets/images/misc/npm.svg').default,
   'markdown': require('!!raw-loader?!../../../assets/images/misc/markdown.svg').default,
