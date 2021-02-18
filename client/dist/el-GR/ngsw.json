@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1613656442871,
+  "timestamp": 1613665603823,
   "index": "/client/el-GR/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/el-GR/index.html": "21932ba38b4c1e24b9d6c16f83c50be62593606b",
+    "/client/el-GR/index.html": "970e74b6b86961928f6c67c86984604b08991941",
     "/client/el-GR/manifest.webmanifest": "13cd9f71d14bd4a2f155b83a81aee82e173d2f96"
   },
   "navigationUrls": [
