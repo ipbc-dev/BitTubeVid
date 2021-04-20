@@ -462,11 +462,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
 
 
   showFormSubmitButton () {
-    if (this.nav !== undefined && this.nav.activeId !== undefined) {
-      return this.nav.activeId !== 'premium-storage-config'
-    } else {
-      return false
-    }
+    console.log(this.activeNav);
+    return false;
+    // if (this.nav !== undefined && this.nav.activeId !== undefined) {
+    //   return this.nav.activeId !== 'premium-storage-config'
+    // } else {
+    //   return false
+    // }
   }
 
   isTranscodingEnabled () {
