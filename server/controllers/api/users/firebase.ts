@@ -2,7 +2,7 @@ import { CONFIG } from '../../../initializers/config'
 import { PEERTUBE_VERSION, WEBSERVER } from '../../../initializers/constants'
 import { AccountModel } from '../../../models/account/account'
 import { UserModel } from '../../../models/account/user'
-import { updateActorAvatarFile } from '../../../lib/avatar'
+import { updateLocalActorAvatarFile } from '../../../lib/avatar'
 import * as downloader from 'image-downloader'
 import * as express from 'express'
 import * as JWT from 'jsonwebtoken'
@@ -31,7 +31,7 @@ firebaseRouter.post('/firebase/avatar/sync', async (req, res) => {
     if (!userAccount) throw new Error('User account not found.')
     const { filename } = await downloader.image({ url: photoURL, dest: CONFIG.STORAGE.TMP_DIR })
     const multerFile = { filename: filename.split('/').pop(), path: filename } as any
-    await updateActorAvatarFile(multerFile, userAccount)
+    await updateLocalActorAvatarFile(userAccount, multerFile)
     return res.send({ success: true, mssg: 'Avatar changed.' })
   } catch (error) {
     return res.send({ success: false, error: error.message })

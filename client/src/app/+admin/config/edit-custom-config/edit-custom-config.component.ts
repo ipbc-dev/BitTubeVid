@@ -42,6 +42,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
   // FIXME: use built-in router
   static GET_PREMIUM_STORAGE_API_URL = environment.apiUrl + '/api/v1/premium-storage/'
   @ViewChild('nav') nav: NgbNav
+  // @ViewChild('nav') nav: NgbNav
+  activeNav: string
 
   initDone = false
   customConfig: CustomConfig
@@ -346,6 +348,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
         }
       }
     }
+    // Subcribe to serveStats
+    this.serverService.getServerStats()
+      .subscribe(res => {
+        this.serverStats = res
+      })
 
     for (const resolution of this.resolutions) {
       defaultValues.transcoding.resolutions[resolution.id] = 'false'
@@ -547,11 +554,13 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit, A
 
 
   showFormSubmitButton () {
-    if (this.nav !== undefined && this.nav.activeId !== undefined) {
-      return this.nav.activeId !== 'premium-storage-config'
-    } else {
-      return false
-    }
+    console.log(this.activeNav);
+    return false;
+    // if (this.nav !== undefined && this.nav.activeId !== undefined) {
+    //   return this.nav.activeId !== 'premium-storage-config'
+    // } else {
+    //   return false
+    // }
   }
 
   isTranscodingEnabled () {
