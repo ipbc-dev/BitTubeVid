@@ -22,19 +22,24 @@ export class JobsComponent extends RestTable implements OnInit {
   jobType: JobTypeClient = 'all'
   jobTypes: JobTypeClient[] = [
     'all',
+
     'activitypub-follow',
     'activitypub-http-broadcast',
     'activitypub-http-fetcher',
     'activitypub-http-unicast',
+    'activitypub-refresher',
+    'activitypub-cleaner',
+    'actor-keys',
     'email',
-    'video-transcoding',
     'video-file-import',
     'video-import',
     'videos-views',
     'premium-storage-checker',
     'activitypub-refresher',
+    'video-live-ending',
     'video-redundancy',
-    'video-live-ending'
+    'video-transcoding',
+    'videos-views'
   ]
 
   jobs: Job[] = []
@@ -45,7 +50,7 @@ export class JobsComponent extends RestTable implements OnInit {
   constructor (
     private notifier: Notifier,
     private jobsService: JobService
-    ) {
+  ) {
     super()
   }
 
@@ -74,7 +79,11 @@ export class JobsComponent extends RestTable implements OnInit {
   }
 
   getColspan () {
-    return this.jobState === 'all' ? 5 : 4
+    if (this.jobState === 'all' && this.hasProgress()) return 7
+
+    if (this.jobState === 'all' || this.hasProgress()) return 6
+
+    return 5
   }
 
   onJobStateOrTypeChanged () {
@@ -82,6 +91,23 @@ export class JobsComponent extends RestTable implements OnInit {
 
     this.loadData()
     this.saveJobStateAndType()
+  }
+
+  hasProgress () {
+    return this.jobType === 'all' || this.jobType === 'video-transcoding'
+  }
+
+  getProgress (job: Job) {
+    if (job.state === 'active') return job.progress + '%'
+
+    return ''
+  }
+
+  refresh () {
+    this.jobs = []
+    this.totalRecords = 0
+
+    this.loadData()
   }
 
   protected loadData () {

@@ -103,7 +103,8 @@ import {
   webfingerRouter,
   trackerRouter,
   createWebsocketTrackerServer,
-  botsRouter
+  botsRouter,
+  downloadRouter
 } from './server/controllers'
 import { advertiseDoNotTrack } from './server/middlewares/dnt'
 import { Redis } from './server/lib/redis'
@@ -123,6 +124,7 @@ import { Hooks } from './server/lib/plugins/hooks'
 import { PluginManager } from './server/lib/plugins/plugin-manager'
 import { LiveManager } from './server/lib/live-manager'
 import { HttpStatusCode } from './shared/core-utils/miscs/http-error-codes'
+import { VideosTorrentCache } from '@server/lib/files-cache/videos-torrent-cache'
 
 // ----------- Command line -----------
 
@@ -158,7 +160,8 @@ morgan.token('user-agent', (req: express.Request) => {
   return req.get('user-agent')
 })
 app.use(morgan('combined', {
-  stream: { write: logger.info.bind(logger) }
+  stream: { write: logger.info.bind(logger) },
+  skip: req => CONFIG.LOG.LOG_PING_REQUESTS === false && req.originalUrl === '/api/v1/ping'
 }))
 
 // For body requests
@@ -201,10 +204,12 @@ app.use('/', botsRouter)
 
 // Static files
 app.use('/', staticRouter)
+app.use('/', downloadRouter)
 app.use('/', lazyStaticRouter)
 
 // Client files, last valid routes!
-if (cli.client) app.use('/', clientsRouter)
+const cliOptions = cli.opts()
+if (cliOptions.client) app.use('/', clientsRouter)
 
 // ----------- Errors -----------
 
@@ -256,6 +261,7 @@ async function startApplication () {
   // Caches initializations
   VideosPreviewCache.Instance.init(CONFIG.CACHE.PREVIEWS.SIZE, FILES_CACHE.PREVIEWS.MAX_AGE)
   VideosCaptionCache.Instance.init(CONFIG.CACHE.VIDEO_CAPTIONS.SIZE, FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE)
+  VideosTorrentCache.Instance.init(CONFIG.CACHE.TORRENTS.SIZE, FILES_CACHE.TORRENTS.MAX_AGE)
 
   // Enable Schedulers
   ActorFollowScheduler.Instance.enable()
@@ -276,7 +282,7 @@ async function startApplication () {
   updateStreamingPlaylistsInfohashesIfNeeded()
     .catch(err => logger.error('Cannot update streaming playlist infohashes.', { err }))
 
-  if (cli.plugins) await PluginManager.Instance.registerPluginsAndThemes()
+  if (cliOptions.plugins) await PluginManager.Instance.registerPluginsAndThemes()
 
   LiveManager.Instance.init()
   if (CONFIG.LIVE.ENABLED) LiveManager.Instance.run()

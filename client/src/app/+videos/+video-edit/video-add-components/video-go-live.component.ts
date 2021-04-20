@@ -55,8 +55,10 @@ export class VideoGoLiveComponent extends VideoSend implements OnInit, CanCompon
   }
 
   goLive () {
+    const name = 'Live'
+
     const video: LiveVideoCreate = {
-      name: 'Live',
+      name,
       privacy: VideoPrivacy.PRIVATE,
       nsfw: this.serverConfig.instance.isNSFW,
       waitTranscoding: true,
@@ -133,6 +135,10 @@ export class VideoGoLiveComponent extends VideoSend implements OnInit, CanCompon
 
   getMaxLiveDuration () {
     return this.serverConfig.live.maxDuration / 1000
+  }
+
+  isWaitTranscodingEnabled () {
+    return this.form.value['saveReplay'] === true
   }
 
   private fetchVideoLive () {

@@ -3,6 +3,7 @@ import { Hooks } from '@server/lib/plugins/hooks'
 import { getServerActor } from '@server/models/application/application'
 import { MChannelAccountDefault } from '@server/types/models'
 import { VideoChannelCreate, VideoChannelUpdate } from '../../../shared'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 import { auditLoggerFactory, getAuditIdFromRes, VideoChannelAuditView } from '../../helpers/audit-logger'
 import { resetSequelizeInstance } from '../../helpers/database-utils'
 import { buildNSFWFilter, createReqFiles, getCountVideos, isUserAbleToSearchRemoteURI } from '../../helpers/express-utils'
@@ -11,9 +12,8 @@ import { getFormattedObjects } from '../../helpers/utils'
 import { CONFIG } from '../../initializers/config'
 import { MIMETYPES } from '../../initializers/constants'
 import { sequelizeTypescript } from '../../initializers/database'
-import { setAsyncActorKeys } from '../../lib/activitypub/actor'
 import { sendUpdateActor } from '../../lib/activitypub/send'
-import { updateActorAvatarFile } from '../../lib/avatar'
+import { deleteLocalActorAvatarFile, updateLocalActorAvatarFile } from '../../lib/avatar'
 import { JobQueue } from '../../lib/job-queue'
 import { createLocalVideoChannel, federateAllVideosOfChannel } from '../../lib/video-channel'
 import {
@@ -39,7 +39,6 @@ import { AccountModel } from '../../models/account/account'
 import { VideoModel } from '../../models/video/video'
 import { VideoChannelModel } from '../../models/video/video-channel'
 import { VideoPlaylistModel } from '../../models/video/video-playlist'
-import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 const auditLogger = auditLoggerFactory('channels')
 const reqAvatarFile = createReqFiles([ 'avatarfile' ], MIMETYPES.IMAGE.MIMETYPE_EXT, { avatarfile: CONFIG.STORAGE.TMP_DIR })
@@ -68,6 +67,13 @@ videoChannelRouter.post('/:nameWithHost/avatar/pick',
   asyncMiddleware(videoChannelsUpdateValidator),
   updateAvatarValidator,
   asyncMiddleware(updateVideoChannelAvatar)
+)
+
+videoChannelRouter.delete('/:nameWithHost/avatar',
+  authenticate,
+  // Check the rights
+  asyncMiddleware(videoChannelsUpdateValidator),
+  asyncMiddleware(deleteVideoChannelAvatar)
 )
 
 videoChannelRouter.put('/:nameWithHost',
@@ -133,7 +139,7 @@ async function updateVideoChannelAvatar (req: express.Request, res: express.Resp
   const videoChannel = res.locals.videoChannel
   const oldVideoChannelAuditKeys = new VideoChannelAuditView(videoChannel.toFormattedJSON())
 
-  const avatar = await updateActorAvatarFile(avatarPhysicalFile, videoChannel)
+  const avatar = await updateLocalActorAvatarFile(videoChannel, avatarPhysicalFile)
 
   auditLogger.update(getAuditIdFromRes(res), new VideoChannelAuditView(videoChannel.toFormattedJSON()), oldVideoChannelAuditKeys)
 
@@ -142,6 +148,14 @@ async function updateVideoChannelAvatar (req: express.Request, res: express.Resp
       avatar: avatar.toFormattedJSON()
     })
     .end()
+}
+
+async function deleteVideoChannelAvatar (req: express.Request, res: express.Response) {
+  const videoChannel = res.locals.videoChannel
+
+  await deleteLocalActorAvatarFile(videoChannel)
+
+  return res.sendStatus(HttpStatusCode.NO_CONTENT_204)
 }
 
 async function addVideoChannel (req: express.Request, res: express.Response) {
@@ -153,8 +167,8 @@ async function addVideoChannel (req: express.Request, res: express.Response) {
     return createLocalVideoChannel(videoChannelInfo, account, t)
   })
 
-  setAsyncActorKeys(videoChannelCreated.Actor)
-    .catch(err => logger.error('Cannot set async actor keys for account %s.', videoChannelCreated.Actor.url, { err }))
+  const payload = { actorId: videoChannelCreated.actorId }
+  await JobQueue.Instance.createJobWithPromise({ type: 'actor-keys', payload })
 
   auditLogger.create(getAuditIdFromRes(res), new VideoChannelAuditView(videoChannelCreated.toFormattedJSON()))
   logger.info('Video channel %s created.', videoChannelCreated.Actor.url)

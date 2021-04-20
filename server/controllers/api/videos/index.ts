@@ -2,19 +2,19 @@ import * as express from 'express'
 import { move } from 'fs-extra'
 import { extname } from 'path'
 import toInt from 'validator/lib/toInt'
-import { addOptimizeOrMergeAudioJob } from '@server/helpers/video'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
 import { changeVideoChannelShare } from '@server/lib/activitypub/share'
 import { getLocalVideoActivityPubUrl } from '@server/lib/activitypub/url'
 import { LiveManager } from '@server/lib/live-manager'
-import { buildLocalVideoFromReq, buildVideoThumbnailsFromReq, setVideoTags } from '@server/lib/video'
-import { getVideoFilePath } from '@server/lib/video-paths'
+import { addOptimizeOrMergeAudioJob, buildLocalVideoFromReq, buildVideoThumbnailsFromReq, setVideoTags } from '@server/lib/video'
+import { generateVideoFilename, getVideoFilePath } from '@server/lib/video-paths'
 import { getServerActor } from '@server/models/application/application'
-import { MVideoFullLight } from '@server/types/models'
+import { MVideo, MVideoFile, MVideoFullLight } from '@server/types/models'
 import { VideoCreate, VideoState, VideoUpdate } from '../../../../shared'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 import { VideoFilter } from '../../../../shared/models/videos/video-query.type'
 import { auditLoggerFactory, getAuditIdFromRes, VideoAuditView } from '../../../helpers/audit-logger'
-import { resetSequelizeInstance } from '../../../helpers/database-utils'
+import { resetSequelizeInstance, retryTransactionWrapper } from '../../../helpers/database-utils'
 import { buildNSFWFilter, createReqFiles, getCountVideos } from '../../../helpers/express-utils'
 import { getMetadataFromFile, getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffprobe-utils'
 import { logger } from '../../../helpers/logger'
@@ -66,7 +66,6 @@ import { liveRouter } from './live'
 import { ownershipVideoRouter } from './ownership'
 import { rateVideoRouter } from './rate'
 import { watchingRouter } from './watching'
-import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const auditLogger = auditLoggerFactory('videos')
 const videosRouter = express.Router()
@@ -190,6 +189,7 @@ async function addVideo (req: express.Request, res: express.Response) {
   videoData.duration = videoPhysicalFile['duration'] // duration was added by a previous middleware
 
   const video = new VideoModel(videoData) as MVideoFullLight
+  video.VideoChannel = res.locals.videoChannel
   video.url = getLocalVideoActivityPubUrl(video) // We use the UUID, so set the URL after building the object
 
   const videoFile = new VideoFileModel({
@@ -206,6 +206,8 @@ async function addVideo (req: express.Request, res: express.Response) {
     videoFile.resolution = (await getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution
   }
 
+  videoFile.filename = generateVideoFilename(video, false, videoFile.resolution, videoFile.extname)
+
   // Move physical file
   const destination = getVideoFilePath(video, videoFile)
   await move(videoPhysicalFile.path, destination)
@@ -216,11 +218,8 @@ async function addVideo (req: express.Request, res: express.Response) {
   const [ thumbnailModel, previewModel ] = await buildVideoThumbnailsFromReq({
     video,
     files: req.files,
-    fallback: type => generateVideoMiniature(video, videoFile, type)
+    fallback: type => generateVideoMiniature({ video, videoFile, type })
   })
-
-  // Create the torrent file
-  await createTorrentAndSetInfoHash(video, videoFile)
 
   const { videoCreated } = await sequelizeTypescript.transaction(async t => {
     const sequelizeOptions = { transaction: t }
@@ -256,7 +255,6 @@ async function addVideo (req: express.Request, res: express.Response) {
       isNew: true,
       transaction: t
     })
-    await federateVideoIfNeeded(video, true, t)
 
     auditLogger.create(getAuditIdFromRes(res), new VideoAuditView(videoCreated.toFormattedDetailsJSON()))
     logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid)
@@ -264,10 +262,24 @@ async function addVideo (req: express.Request, res: express.Response) {
     return { videoCreated }
   })
 
-  Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated)
+  // Create the torrent file in async way because it could be long
+  createTorrentAndSetInfoHashAsync(video, videoFile)
+    .catch(err => logger.error('Cannot create torrent file for video %s', video.url, { err }))
+    .then(() => VideoModel.loadAndPopulateAccountAndServerAndTags(video.id))
+    .then(refreshedVideo => {
+      if (!refreshedVideo) return
+
+      // Only federate and notify after the torrent creation
+      Notifier.Instance.notifyOnNewVideoIfNeeded(refreshedVideo)
+
+      return retryTransactionWrapper(() => {
+        return sequelizeTypescript.transaction(t => federateVideoIfNeeded(refreshedVideo, true, t))
+      })
+    })
+    .catch(err => logger.error('Cannot federate or notify video creation %s', video.url, { err }))
 
   if (video.state === VideoState.TO_TRANSCODE) {
-    await addOptimizeOrMergeAudioJob(videoCreated, videoFile)
+    await addOptimizeOrMergeAudioJob(videoCreated, videoFile, res.locals.oauth.token.User)
   }
 
   Hooks.runAction('action:api.video.uploaded', { video: videoCreated })
@@ -335,12 +347,13 @@ async function updateVideo (req: express.Request, res: express.Response) {
       if (previewModel) await videoInstanceUpdated.addAndSaveThumbnail(previewModel, t)
 
       // Video tags update?
-      await setVideoTags({
-        video: videoInstanceUpdated,
-        tags: videoInfoToUpdate.tags,
-        transaction: t,
-        defaultValue: videoInstanceUpdated.Tags
-      })
+      if (videoInfoToUpdate.tags !== undefined) {
+        await setVideoTags({
+          video: videoInstanceUpdated,
+          tags: videoInfoToUpdate.tags,
+          transaction: t
+        })
+      }
 
       // Video channel update?
       if (res.locals.videoChannel && videoInstanceUpdated.channelId !== res.locals.videoChannel.id) {
@@ -523,4 +536,18 @@ async function removeVideo (req: express.Request, res: express.Response) {
   return res.type('json')
             .status(HttpStatusCode.NO_CONTENT_204)
             .end()
+}
+
+async function createTorrentAndSetInfoHashAsync (video: MVideo, fileArg: MVideoFile) {
+  await createTorrentAndSetInfoHash(video, fileArg)
+
+  // Refresh videoFile because the createTorrentAndSetInfoHash could be long
+  const refreshedFile = await VideoFileModel.loadWithVideo(fileArg.id)
+  // File does not exist anymore, remove the generated torrent
+  if (!refreshedFile) return fileArg.removeTorrent()
+
+  refreshedFile.infoHash = fileArg.infoHash
+  refreshedFile.torrentFilename = fileArg.torrentFilename
+
+  return refreshedFile.save()
 }

@@ -52,7 +52,7 @@ Be part of a network of multiple small federated, interoperable video hosting pr
     <img alt="test suite status" src="https://github.com/Chocobozzz/PeerTube/workflows/Test%20Suite/badge.svg" />
   </a>
 
-  <a href="http://standardjs.com/">
+  <a href="https://standardjs.com/">
     <img src="https://img.shields.io/badge/code%20style-standard-brightgreen.svg" alt="JavaScript Style Guide" />
   </a>
 </p>
@@ -85,6 +85,9 @@ To learn more, see:
 <h3 align="left">Video streaming</h3>
 <p align="left">
 Just upload your videos, and be sure they will stream anywhere. Add a description, some tags and your video will be discoverable by the entire video fediverse, not just your instance. You can even embed a player on your favorite website!
+</p>
+<p align="left">
+You are used to hosting live events? We got you covered too! Start livestreaming from your favorite client, and even host permanent streams!
 </p>
 
 ---
@@ -127,7 +130,7 @@ Content creators can get help from their viewers in the simplest way possible: a
 :raised_hands: Contributing
 ----------------------------------------------------------------
 
-You don't need to be a coder to help!
+You don't need to be a programmer to help!
 
 You can give us your feedback, report bugs, help us translate BitTube, write documentation, and more. Check out the [contributing
 guide](https://github.com/ipbc-dev/BitTubeVid/blob/tube/.github/CONTRIBUTING.md) to know how, it takes less than 2 minutes to get started. :wink:
@@ -204,7 +207,7 @@ See our [ActivityPub documentation](https://docs.joinpeertube.org/api-activitypu
 ## License
 
 Copyright (C) 2021 BitTube Contributors
-Copyright (C) 2015-2020 PeerTube Contributors (see [CREDITS.md](CREDITS.md))
+Copyright (C) 2015-2021 PeerTube Contributors (see [CREDITS.md](CREDITS.md))
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -217,4 +220,4 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program.  If not, see <https://www.gnu.org/licenses/>.

@@ -1,7 +1,8 @@
+import { Job } from 'bull'
 import { copyFile, ensureDir, move, remove, stat } from 'fs-extra'
 import { basename, extname as extnameUtil, join } from 'path'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
-import { MStreamingPlaylistFilesVideo, MVideoFile, MVideoWithAllFiles, MVideoWithFile } from '@server/types/models'
+import { MStreamingPlaylistFilesVideo, MVideoFile, MVideoFullLight } from '@server/types/models'
 import { VideoResolution } from '../../shared/models/videos'
 import { VideoStreamingPlaylistType } from '../../shared/models/videos/video-streaming-playlist.type'
 import { transcode, TranscodeOptions, TranscodeOptionsType } from '../helpers/ffmpeg-utils'
@@ -12,8 +13,8 @@ import { HLS_STREAMING_PLAYLIST_DIRECTORY, P2P_MEDIA_LOADER_PEER_VERSION, WEBSER
 import { VideoFileModel } from '../models/video/video-file'
 import { VideoStreamingPlaylistModel } from '../models/video/video-streaming-playlist'
 import { updateMasterHLSPlaylist, updateSha256VODSegments } from './hls'
-import { generateVideoStreamingPlaylistName, getVideoFilename, getVideoFilePath } from './video-paths'
-import { availableEncoders } from './video-transcoding-profiles'
+import { generateVideoFilename, generateVideoStreamingPlaylistName, getVideoFilePath } from './video-paths'
+import { VideoTranscodingProfilesManager } from './video-transcoding-profiles'
 
 /**
  *
@@ -23,11 +24,10 @@ import { availableEncoders } from './video-transcoding-profiles'
  */
 
 // Optimize the original video file and replace it. The resolution is not changed.
-async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileArg?: MVideoFile) {
+async function optimizeOriginalVideofile (video: MVideoFullLight, inputVideoFile: MVideoFile, job?: Job) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const newExtname = '.mp4'
 
-  const inputVideoFile = inputVideoFileArg || video.getMaxQualityFile()
   const videoInputPath = getVideoFilePath(video, inputVideoFile)
   const videoTranscodedPath = join(transcodeDirectory, video.id + '-transcoded' + newExtname)
 
@@ -41,10 +41,12 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
     inputPath: videoInputPath,
     outputPath: videoTranscodedPath,
 
-    availableEncoders,
-    profile: 'default',
+    availableEncoders: VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+    profile: CONFIG.TRANSCODING.PROFILE,
 
-    resolution: inputVideoFile.resolution
+    resolution: inputVideoFile.resolution,
+
+    job
   }
 
   // Could be very long!
@@ -53,12 +55,13 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
   try {
     await remove(videoInputPath)
 
-    // Important to do this before getVideoFilename() to take in account the new file extension
+    // Important to do this before getVideoFilename() to take in account the new filename
     inputVideoFile.extname = newExtname
+    inputVideoFile.filename = generateVideoFilename(video, false, inputVideoFile.resolution, newExtname)
 
     const videoOutputPath = getVideoFilePath(video, inputVideoFile)
 
-    await onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
+    await onWebTorrentVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
 
     return transcodeType
   } catch (err) {
@@ -70,7 +73,7 @@ async function optimizeOriginalVideofile (video: MVideoWithFile, inputVideoFileA
 }
 
 // Transcode the original video file to a lower resolution.
-async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoResolution, isPortrait: boolean) {
+async function transcodeNewWebTorrentResolution (video: MVideoFullLight, resolution: VideoResolution, isPortrait: boolean, job: Job) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const extname = '.mp4'
 
@@ -80,11 +83,13 @@ async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoR
   const newVideoFile = new VideoFileModel({
     resolution,
     extname,
+    filename: generateVideoFilename(video, false, resolution, extname),
     size: 0,
     videoId: video.id
   })
+
   const videoOutputPath = getVideoFilePath(video, newVideoFile)
-  const videoTranscodedPath = join(transcodeDirectory, getVideoFilename(video, newVideoFile))
+  const videoTranscodedPath = join(transcodeDirectory, newVideoFile.filename)
 
   const transcodeOptions = resolution === VideoResolution.H_NOVIDEO
     ? {
@@ -93,30 +98,34 @@ async function transcodeNewResolution (video: MVideoWithFile, resolution: VideoR
       inputPath: videoInputPath,
       outputPath: videoTranscodedPath,
 
-      availableEncoders,
-      profile: 'default',
+      availableEncoders: VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+      profile: CONFIG.TRANSCODING.PROFILE,
 
-      resolution
+      resolution,
+
+      job
     }
     : {
       type: 'video' as 'video',
       inputPath: videoInputPath,
       outputPath: videoTranscodedPath,
 
-      availableEncoders,
-      profile: 'default',
+      availableEncoders: VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+      profile: CONFIG.TRANSCODING.PROFILE,
 
       resolution,
-      isPortraitMode: isPortrait
+      isPortraitMode: isPortrait,
+
+      job
     }
 
   await transcode(transcodeOptions)
 
-  return onVideoFileTranscoding(video, newVideoFile, videoTranscodedPath, videoOutputPath)
+  return onWebTorrentVideoFileTranscoding(video, newVideoFile, videoTranscodedPath, videoOutputPath)
 }
 
 // Merge an image with an audio file to create a video
-async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: VideoResolution) {
+async function mergeAudioVideofile (video: MVideoFullLight, resolution: VideoResolution, job: Job) {
   const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
   const newExtname = '.mp4'
 
@@ -136,11 +145,13 @@ async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: Video
     inputPath: tmpPreviewPath,
     outputPath: videoTranscodedPath,
 
-    availableEncoders,
-    profile: 'default',
+    availableEncoders: VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+    profile: CONFIG.TRANSCODING.PROFILE,
 
     audioPath: audioInputPath,
-    resolution
+    resolution,
+
+    job
   }
 
   try {
@@ -155,6 +166,7 @@ async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: Video
 
   // Important to do this before getVideoFilename() to take in account the new file extension
   inputVideoFile.extname = newExtname
+  inputVideoFile.filename = generateVideoFilename(video, false, inputVideoFile.resolution, newExtname)
 
   const videoOutputPath = getVideoFilePath(video, inputVideoFile)
   // ffmpeg generated a new video file, so update the video duration
@@ -162,12 +174,12 @@ async function mergeAudioVideofile (video: MVideoWithAllFiles, resolution: Video
   video.duration = await getDurationFromVideoFile(videoTranscodedPath)
   await video.save()
 
-  return onVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
+  return onWebTorrentVideoFileTranscoding(video, inputVideoFile, videoTranscodedPath, videoOutputPath)
 }
 
 // Concat TS segments from a live video to a fragmented mp4 HLS playlist
-async function generateHlsPlaylistFromTS (options: {
-  video: MVideoWithFile
+async function generateHlsPlaylistResolutionFromTS (options: {
+  video: MVideoFullLight
   concatenatedTsFilePath: string
   resolution: VideoResolution
   isPortraitMode: boolean
@@ -184,12 +196,13 @@ async function generateHlsPlaylistFromTS (options: {
 }
 
 // Generate an HLS playlist from an input file, and update the master playlist
-function generateHlsPlaylist (options: {
-  video: MVideoWithFile
+function generateHlsPlaylistResolution (options: {
+  video: MVideoFullLight
   videoInputPath: string
   resolution: VideoResolution
   copyCodecs: boolean
   isPortraitMode: boolean
+  job?: Job
 }) {
   return generateHlsPlaylistCommon({
     video: options.video,
@@ -197,23 +210,40 @@ function generateHlsPlaylist (options: {
     copyCodecs: options.copyCodecs,
     isPortraitMode: options.isPortraitMode,
     inputPath: options.videoInputPath,
-    type: 'hls' as 'hls'
+    type: 'hls' as 'hls',
+    job: options.job
   })
+}
+
+function getEnabledResolutions (type: 'vod' | 'live') {
+  const transcoding = type === 'vod'
+    ? CONFIG.TRANSCODING
+    : CONFIG.LIVE.TRANSCODING
+
+  return Object.keys(transcoding.RESOLUTIONS)
+               .filter(key => transcoding.ENABLED && transcoding.RESOLUTIONS[key] === true)
+               .map(r => parseInt(r, 10))
 }
 
 // ---------------------------------------------------------------------------
 
 export {
-  generateHlsPlaylist,
-  generateHlsPlaylistFromTS,
+  generateHlsPlaylistResolution,
+  generateHlsPlaylistResolutionFromTS,
   optimizeOriginalVideofile,
-  transcodeNewResolution,
-  mergeAudioVideofile
+  transcodeNewWebTorrentResolution,
+  mergeAudioVideofile,
+  getEnabledResolutions
 }
 
 // ---------------------------------------------------------------------------
 
-async function onVideoFileTranscoding (video: MVideoWithFile, videoFile: MVideoFile, transcodingPath: string, outputPath: string) {
+async function onWebTorrentVideoFileTranscoding (
+  video: MVideoFullLight,
+  videoFile: MVideoFile,
+  transcodingPath: string,
+  outputPath: string
+) {
   const stats = await stat(transcodingPath)
   const fps = await getVideoFileFPS(transcodingPath)
   const metadata = await getMetadataFromFile(transcodingPath)
@@ -234,29 +264,33 @@ async function onVideoFileTranscoding (video: MVideoWithFile, videoFile: MVideoF
 
 async function generateHlsPlaylistCommon (options: {
   type: 'hls' | 'hls-from-ts'
-  video: MVideoWithFile
+  video: MVideoFullLight
   inputPath: string
   resolution: VideoResolution
   copyCodecs?: boolean
   isAAC?: boolean
   isPortraitMode: boolean
+
+  job?: Job
 }) {
-  const { type, video, inputPath, resolution, copyCodecs, isPortraitMode, isAAC } = options
+  const { type, video, inputPath, resolution, copyCodecs, isPortraitMode, isAAC, job } = options
+  const transcodeDirectory = CONFIG.STORAGE.TMP_DIR
 
-  const baseHlsDirectory = join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid)
-  await ensureDir(join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid))
+  const videoTranscodedBasePath = join(transcodeDirectory, type)
+  await ensureDir(videoTranscodedBasePath)
 
-  const outputPath = join(baseHlsDirectory, VideoStreamingPlaylistModel.getHlsPlaylistFilename(resolution))
   const videoFilename = generateVideoStreamingPlaylistName(video.uuid, resolution)
+  const playlistFilename = VideoStreamingPlaylistModel.getHlsPlaylistFilename(resolution)
+  const playlistFileTranscodePath = join(videoTranscodedBasePath, playlistFilename)
 
   const transcodeOptions = {
     type,
 
     inputPath,
-    outputPath,
+    outputPath: playlistFileTranscodePath,
 
-    availableEncoders,
-    profile: 'default',
+    availableEncoders: VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+    profile: CONFIG.TRANSCODING.PROFILE,
 
     resolution,
     copyCodecs,
@@ -266,13 +300,16 @@ async function generateHlsPlaylistCommon (options: {
 
     hlsPlaylist: {
       videoFilename
-    }
+    },
+
+    job
   }
 
   await transcode(transcodeOptions)
 
   const playlistUrl = WEBSERVER.URL + VideoStreamingPlaylistModel.getHlsMasterPlaylistStaticPath(video.uuid)
 
+  // Create or update the playlist
   const [ videoStreamingPlaylist ] = await VideoStreamingPlaylistModel.upsert({
     videoId: video.id,
     playlistUrl,
@@ -284,15 +321,29 @@ async function generateHlsPlaylistCommon (options: {
   }, { returning: true }) as [ MStreamingPlaylistFilesVideo, boolean ]
   videoStreamingPlaylist.Video = video
 
+  // Build the new playlist file
+  const extname = extnameUtil(videoFilename)
   const newVideoFile = new VideoFileModel({
     resolution,
-    extname: extnameUtil(videoFilename),
+    extname,
     size: 0,
+    filename: generateVideoFilename(video, true, resolution, extname),
     fps: -1,
     videoStreamingPlaylistId: videoStreamingPlaylist.id
   })
 
   const videoFilePath = getVideoFilePath(videoStreamingPlaylist, newVideoFile)
+
+  // Move files from tmp transcoded directory to the appropriate place
+  const baseHlsDirectory = join(HLS_STREAMING_PLAYLIST_DIRECTORY, video.uuid)
+  await ensureDir(baseHlsDirectory)
+
+  // Move playlist file
+  const playlistPath = join(baseHlsDirectory, playlistFilename)
+  await move(playlistFileTranscodePath, playlistPath, { overwrite: true })
+  // Move video file
+  await move(join(videoTranscodedBasePath, videoFilename), videoFilePath, { overwrite: true })
+
   const stats = await stat(videoFilePath)
 
   newVideoFile.size = stats.size
@@ -314,5 +365,5 @@ async function generateHlsPlaylistCommon (options: {
   await updateMasterHLSPlaylist(video)
   await updateSha256VODSegments(video)
 
-  return outputPath
+  return playlistPath
 }
