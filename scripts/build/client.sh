@@ -34,6 +34,7 @@ languages=(
     ["eo"]="eo"
     ["de"]="de-DE"
     ["it"]="it-IT"
+    ["sq"]="sq"
     ["kab"]="kab"
 )
 
@@ -43,7 +44,12 @@ rm -rf ./dist ./compiled
 
 # Don't build other languages if --light arg is provided
 if [ -z ${1+x} ] || ([ "$1" != "--light" ] && [ "$1" != "--analyze-bundle" ]); then
-    npm run ng build -- --prod --output-path "dist/build"
+    additionalParams=""
+    if [ ! -z ${1+x} ] && [ "$1" == "--source-map" ]; then
+        additionalParams="--sourceMap=true"
+    fi
+
+    npm run ng build -- --prod --output-path "dist/build" $additionalParams
 
     for key in "${!languages[@]}"; do
         lang=${languages[$key]}
@@ -57,7 +63,6 @@ if [ -z ${1+x} ] || ([ "$1" != "--light" ] && [ "$1" != "--analyze-bundle" ]); t
     done
 
     mv "./dist/$defaultLanguage/assets" "./dist"
-    mv "./dist/$defaultLanguage/manifest.webmanifest" "./dist/manifest.webmanifest"
 
     rmdir "dist/build"
 else
@@ -69,6 +74,8 @@ else
 
     npm run ng build -- --localize=false --output-path "dist/$defaultLanguage/" --deploy-url "/client/$defaultLanguage/" --prod --stats-json $additionalParams
 fi
+
+cp "./dist/$defaultLanguage/manifest.webmanifest" "./dist/manifest.webmanifest"
 
 cd ../ && npm run build:embed && cd client/
 

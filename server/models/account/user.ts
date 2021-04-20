@@ -28,7 +28,7 @@ import {
   MUserFormattable,
   MUserNotifSettingChannelDefault,
   MUserWithNotificationSetting,
-  MVideoFullLight
+  MVideoWithRights
 } from '@server/types/models'
 import { hasUserRight, USER_ROLE_LABELS } from '../../../shared/core-utils/users'
 import { AbuseState, MyUser, UserRight, VideoPlaylistType, VideoPrivacy } from '../../../shared/models'
@@ -819,7 +819,7 @@ export class UserModel extends Model {
                     .then(u => u.map(u => u.username))
   }
 
-  canGetVideo (video: MVideoFullLight) {
+  canGetVideo (video: MVideoWithRights) {
     const videoUserId = video.VideoChannel.Account.userId
 
     if (video.isBlacklisted()) {

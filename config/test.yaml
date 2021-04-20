@@ -62,6 +62,8 @@ cache:
     size: 1
   captions:
     size: 1
+  torrents:
+    size: 1
 
 signup:
   enabled: true
@@ -72,6 +74,7 @@ transcoding:
   allow_additional_extensions: false
   allow_audio_files: false
   threads: 2
+  concurrency: 2
   resolutions:
     0p: false
     240p: true
@@ -79,12 +82,15 @@ transcoding:
     480p: true
     720p: true
     1080p: true
+    1440p: true
     2160p: true
   hls:
     enabled: true
 
 live:
   enabled: false
+
+  allow_replay: false
 
   rtmp:
     port: 1935
@@ -99,10 +105,12 @@ live:
       480p: false
       720p: false
       1080p: false
+      1440p: false
       2160p: false
 
 import:
   videos:
+    concurrency: 2
     http:
       enabled: true
       proxy:

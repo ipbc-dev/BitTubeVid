@@ -1,7 +1,7 @@
 import 'multer'
 import { sendUpdateActor } from './activitypub/send'
 import { AVATARS_SIZE, LRU_CACHE, QUEUE_CONCURRENCY } from '../initializers/constants'
-import { updateActorAvatarInstance } from './activitypub/actor'
+import { updateActorAvatarInstance, deleteActorAvatarInstance } from './activitypub/actor'
 import { processImage } from '../helpers/image-utils'
 import { extname, join } from 'path'
 import { retryTransactionWrapper } from '../helpers/database-utils'
@@ -13,11 +13,12 @@ import { queue } from 'async'
 import { downloadImage } from '../helpers/requests'
 import { MAccountDefault, MChannelDefault } from '../types/models'
 
-async function updateActorAvatarFile (
-  avatarPhysicalFile: Express.Multer.File,
-  accountOrChannel: MAccountDefault | MChannelDefault
+async function updateLocalActorAvatarFile (
+  accountOrChannel: MAccountDefault | MChannelDefault,
+  avatarPhysicalFile: Express.Multer.File
 ) {
   const extension = extname(avatarPhysicalFile.filename)
+
   const avatarName = uuidv4() + extension
   const destination = join(CONFIG.STORAGE.AVATARS_DIR, avatarName)
   await processImage(avatarPhysicalFile.path, destination, AVATARS_SIZE)
@@ -40,6 +41,21 @@ async function updateActorAvatarFile (
   })
 }
 
+async function deleteLocalActorAvatarFile (
+  accountOrChannel: MAccountDefault | MChannelDefault
+) {
+  return retryTransactionWrapper(() => {
+    return sequelizeTypescript.transaction(async t => {
+      const updatedActor = await deleteActorAvatarInstance(accountOrChannel.Actor, t)
+      await updatedActor.save({ transaction: t })
+
+      await sendUpdateActor(accountOrChannel, t)
+
+      return updatedActor.Avatar
+    })
+  })
+}
+
 type DownloadImageQueueTask = { fileUrl: string, filename: string }
 
 const downloadImageQueue = queue<DownloadImageQueueTask, Error>((task, cb) => {
@@ -49,7 +65,7 @@ const downloadImageQueue = queue<DownloadImageQueueTask, Error>((task, cb) => {
 }, QUEUE_CONCURRENCY.AVATAR_PROCESS_IMAGE)
 
 function pushAvatarProcessInQueue (task: DownloadImageQueueTask) {
-  return new Promise((res, rej) => {
+  return new Promise<void>((res, rej) => {
     downloadImageQueue.push(task, err => {
       if (err) return rej(err)
 
@@ -63,6 +79,7 @@ const avatarPathUnsafeCache = new LRUCache<string, string>({ max: LRU_CACHE.AVAT
 
 export {
   avatarPathUnsafeCache,
-  updateActorAvatarFile,
+  updateLocalActorAvatarFile,
+  deleteLocalActorAvatarFile,
   pushAvatarProcessInQueue
 }

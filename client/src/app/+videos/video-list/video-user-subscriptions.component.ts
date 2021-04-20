@@ -1,5 +1,6 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core'
+import { switchMap } from 'rxjs/operators'
+import { Component, ComponentFactoryResolver, OnDestroy, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { AuthService, LocalStorageService, Notifier, ScopedTokensService, ScreenService, ServerService, UserService } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
@@ -32,6 +33,7 @@ export class VideoUserSubscriptionsComponent extends AbstractVideoList implement
     protected screenService: ScreenService,
     protected storageService: LocalStorageService,
     private userSubscription: UserSubscriptionService,
+    protected cfr: ComponentFactoryResolver,
     private hooks: HooksService,
     private videoService: VideoService,
     private scopedTokensService: ScopedTokensService
@@ -53,26 +55,30 @@ export class VideoUserSubscriptionsComponent extends AbstractVideoList implement
     const user = this.authService.getUser()
     let feedUrl = environment.originServerUrl
 
-    this.scopedTokensService.getScopedTokens().subscribe(
-      tokens => {
-        const feeds = this.videoService.getVideoSubscriptionFeedUrls(user.account.id, tokens.feedToken)
-        feedUrl = feedUrl + feeds.find(f => f.format === FeedFormat.RSS).url
-      },
+    this.authService.userInformationLoaded
+      .pipe(switchMap(() => this.scopedTokensService.getScopedTokens()))
+      .subscribe(
+        tokens => {
+          const feeds = this.videoService.getVideoSubscriptionFeedUrls(user.account.id, tokens.feedToken)
+          feedUrl = feedUrl + feeds.find(f => f.format === FeedFormat.RSS).url
 
-      err => {
-        this.notifier.error(err.message)
-      }
-    )
+          this.actions.unshift({
+            label: $localize`Copy feed URL`,
+            iconName: 'syndication',
+            justIcon: true,
+            href: feedUrl,
+            click: e => {
+              e.preventDefault()
+              copyToClipboard(feedUrl)
+              this.activateCopiedMessage()
+            }
+          })
+        },
 
-    this.actions.unshift({
-      label: $localize`Feed`,
-      iconName: 'syndication',
-      justIcon: true,
-      click: () => {
-        copyToClipboard(feedUrl)
-        this.activateCopiedMessage()
-      }
-    })
+        err => {
+          this.notifier.error(err.message)
+        }
+      )
   }
 
   ngOnDestroy () {
@@ -97,7 +103,8 @@ export class VideoUserSubscriptionsComponent extends AbstractVideoList implement
   }
 
   generateSyndicationList () {
-    // not implemented yet
+    /* method disabled: the view provides its own */
+    throw new Error('Method not implemented.')
   }
 
   activateCopiedMessage () {

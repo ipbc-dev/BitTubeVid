@@ -39,17 +39,13 @@ import { getServerActor } from '@server/models/application/application'
 import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
 // Set account keys, this could be long so process after the account creation and do not block the client
-function setAsyncActorKeys <T extends MActor> (actor: T) {
-  return createPrivateAndPublicKeys()
-    .then(({ publicKey, privateKey }) => {
-      actor.publicKey = publicKey
-      actor.privateKey = privateKey
-      return actor.save()
-    })
-    .catch(err => {
-      logger.error('Cannot set public/private keys of actor %d.', actor.url, { err })
-      return actor
-    })
+async function generateAndSaveActorKeys <T extends MActor> (actor: T) {
+  const { publicKey, privateKey } = await createPrivateAndPublicKeys()
+
+  actor.publicKey = publicKey
+  actor.privateKey = privateKey
+
+  return actor.save()
 }
 
 function getOrCreateActorAndServerAndModel (
@@ -104,7 +100,7 @@ async function getOrCreateActorAndServerAndModel (
         const recurseIfNeeded = false
         ownerActor = await getOrCreateActorAndServerAndModel(accountAttributedTo.id, 'all', recurseIfNeeded)
       } catch (err) {
-        logger.error('Cannot get or create account attributed to video channel ' + actor.url)
+        logger.error('Cannot get or create account attributed to video channel ' + actorUrl)
         throw new Error(err)
       }
     }
@@ -195,6 +191,19 @@ async function updateActorAvatarInstance (actor: MActorDefault, info: AvatarInfo
 
   actor.avatarId = avatar.id
   actor.Avatar = avatar
+
+  return actor
+}
+
+async function deleteActorAvatarInstance (actor: MActorDefault, t: Transaction) {
+  try {
+    await actor.Avatar.destroy({ transaction: t })
+  } catch (err) {
+    logger.error('Cannot remove old avatar of actor %s.', actor.url, { err })
+  }
+
+  actor.avatarId = null
+  actor.Avatar = null
 
   return actor
 }
@@ -333,10 +342,11 @@ async function refreshActorIfNeeded <T extends MActorFull | MActorAccountChannel
 export {
   getOrCreateActorAndServerAndModel,
   buildActorInstance,
-  setAsyncActorKeys,
+  generateAndSaveActorKeys,
   fetchActorTotalItems,
   getAvatarInfoIfExists,
   updateActorInstance,
+  deleteActorAvatarInstance,
   refreshActorIfNeeded,
   updateActorAvatarInstance,
   addFetchOutboxJob

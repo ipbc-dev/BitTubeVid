@@ -1,10 +1,12 @@
 import * as Bluebird from 'bluebird'
 import { maxBy, minBy } from 'lodash'
 import * as magnetUtil from 'magnet-uri'
-import { join } from 'path'
+import { basename, join } from 'path'
 import * as request from 'request'
-import * as sequelize from 'sequelize'
+import { Transaction } from 'sequelize/types'
+import { TrackerModel } from '@server/models/server/tracker'
 import { VideoLiveModel } from '@server/models/video/video-live'
+import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 import {
   ActivityHashTagObject,
   ActivityMagnetUrlObject,
@@ -15,12 +17,16 @@ import {
   ActivityUrlObject,
   ActivityVideoUrlObject
 } from '../../../shared/index'
-import { VideoObject } from '../../../shared/models/activitypub/objects'
+import { ActivityIconObject, ActivityTrackerUrlObject, VideoObject } from '../../../shared/models/activitypub/objects'
 import { VideoPrivacy } from '../../../shared/models/videos'
 import { ThumbnailType } from '../../../shared/models/videos/thumbnail.type'
 import { VideoStreamingPlaylistType } from '../../../shared/models/videos/video-streaming-playlist.type'
 import { buildRemoteVideoBaseUrl, checkUrlsSameHost, getAPId } from '../../helpers/activitypub'
-import { isAPVideoFileMetadataObject, sanitizeAndCheckVideoTorrentObject } from '../../helpers/custom-validators/activitypub/videos'
+import {
+  isAPVideoFileUrlMetadataObject,
+  isAPVideoTrackerUrlObject,
+  sanitizeAndCheckVideoTorrentObject
+} from '../../helpers/custom-validators/activitypub/videos'
 import { isArray } from '../../helpers/custom-validators/misc'
 import { isVideoFileInfoHashValid } from '../../helpers/custom-validators/videos'
 import { deleteNonExistingModels, resetSequelizeInstance, retryTransactionWrapper } from '../../helpers/database-utils'
@@ -29,11 +35,11 @@ import { doRequest } from '../../helpers/requests'
 import { fetchVideoByUrl, getExtFromMimetype, VideoFetchByUrlType } from '../../helpers/video'
 import {
   ACTIVITY_PUB,
+  LAZY_STATIC_PATHS,
   MIMETYPES,
   P2P_MEDIA_LOADER_PEER_VERSION,
   PREVIEWS_SIZE,
   REMOTE_SCHEME,
-  STATIC_PATHS,
   THUMBNAILS_SIZE
 } from '../../initializers/constants'
 import { sequelizeTypescript } from '../../initializers/database'
@@ -50,16 +56,20 @@ import {
   MChannelDefault,
   MChannelId,
   MStreamingPlaylist,
+  MStreamingPlaylistFilesVideo,
+  MStreamingPlaylistVideo,
   MVideo,
   MVideoAccountLight,
   MVideoAccountLightBlacklistAllFiles,
   MVideoAP,
   MVideoAPWithoutCaption,
+  MVideoCaption,
   MVideoFile,
   MVideoFullLight,
   MVideoId,
   MVideoImmutable,
-  MVideoThumbnail
+  MVideoThumbnail,
+  MVideoWithHost
 } from '../../types/models'
 import { MThumbnail } from '../../types/models/video/thumbnail'
 import { FilteredModelAttributes } from '../../types/sequelize'
@@ -70,15 +80,15 @@ import { PeerTubeSocket } from '../peertube-socket'
 import { createPlaceholderThumbnail, createVideoMiniatureFromUrl } from '../thumbnail'
 import { setVideoTags } from '../video'
 import { autoBlacklistVideoIfNeeded } from '../video-blacklist'
+import { generateTorrentFileName } from '../video-paths'
 import { getOrCreateActorAndServerAndModel } from './actor'
 import { crawlCollectionPage } from './crawl'
 import { sendCreateVideo, sendUpdateVideo } from './send'
 import { addVideoShares, shareVideoByServerAndChannel } from './share'
 import { addVideoComments } from './video-comments'
 import { createRates } from './video-rates'
-import { HttpStatusCode } from '../../../shared/core-utils/miscs/http-error-codes'
 
-async function federateVideoIfNeeded (videoArg: MVideoAPWithoutCaption, isNewVideo: boolean, transaction?: sequelize.Transaction) {
+async function federateVideoIfNeeded (videoArg: MVideoAPWithoutCaption, isNewVideo: boolean, transaction?: Transaction) {
   const video = videoArg as MVideoAP
 
   if (
@@ -90,7 +100,7 @@ async function federateVideoIfNeeded (videoArg: MVideoAPWithoutCaption, isNewVid
     // Fetch more attributes that we will need to serialize in AP object
     if (isArray(video.VideoCaptions) === false) {
       video.VideoCaptions = await video.$get('VideoCaptions', {
-        attributes: [ 'language' ],
+        attributes: [ 'filename', 'language' ],
         transaction
       })
     }
@@ -312,7 +322,11 @@ async function updateVideoFromAP (options: {
     let thumbnailModel: MThumbnail
 
     try {
-      thumbnailModel = await createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, ThumbnailType.MINIATURE)
+      thumbnailModel = await createVideoMiniatureFromUrl({
+        downloadUrl: getThumbnailFromIcons(videoObject).url,
+        video,
+        type: ThumbnailType.MINIATURE
+      })
     } catch (err) {
       logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err })
     }
@@ -322,10 +336,15 @@ async function updateVideoFromAP (options: {
 
       videoFieldsSave = video.toJSON()
 
-      // Check actor has the right to update the video
-      const videoChannel = video.VideoChannel
-      if (videoChannel.Account.id !== account.id) {
-        throw new Error('Account ' + account.Actor.url + ' does not own video channel ' + videoChannel.Actor.url)
+      // Check we can update the channel: we trust the remote server
+      const oldVideoChannel = video.VideoChannel
+
+      if (!oldVideoChannel.Actor.serverId || !channel.Actor.serverId) {
+        throw new Error('Cannot check old channel/new channel validity because `serverId` is null')
+      }
+
+      if (oldVideoChannel.Actor.serverId !== channel.Actor.serverId) {
+        throw new Error('New channel ' + channel.Actor.url + ' is not on the same server than new channel ' + oldVideoChannel.Actor.url)
       }
 
       const to = overrideTo || videoObject.to
@@ -360,8 +379,13 @@ async function updateVideoFromAP (options: {
       if (thumbnailModel) await videoUpdated.addAndSaveThumbnail(thumbnailModel, t)
 
       if (videoUpdated.getPreview()) {
-        const previewUrl = videoUpdated.getPreview().getFileUrl(videoUpdated)
-        const previewModel = createPlaceholderThumbnail(previewUrl, video, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
+        const previewUrl = getPreviewUrl(getPreviewFromIcons(videoObject), video)
+        const previewModel = createPlaceholderThumbnail({
+          fileUrl: previewUrl,
+          video,
+          type: ThumbnailType.PREVIEW,
+          size: PREVIEWS_SIZE
+        })
         await videoUpdated.addAndSaveThumbnail(previewModel, t)
       }
 
@@ -395,7 +419,8 @@ async function updateVideoFromAP (options: {
 
         for (const playlistAttributes of streamingPlaylistAttributes) {
           const streamingPlaylistModel = await VideoStreamingPlaylistModel.upsert(playlistAttributes, { returning: true, transaction: t })
-                                     .then(([ streamingPlaylist ]) => streamingPlaylist)
+                                     .then(([ streamingPlaylist ]) => streamingPlaylist as MStreamingPlaylistFilesVideo)
+          streamingPlaylistModel.Video = videoUpdated
 
           const newVideoFiles: MVideoFile[] = videoFileActivityUrlToDBAttributes(streamingPlaylistModel, playlistAttributes.tagAPObject)
             .map(a => new VideoFileModel(a))
@@ -415,7 +440,13 @@ async function updateVideoFromAP (options: {
         const tags = videoObject.tag
                                 .filter(isAPHashTagObject)
                                 .map(tag => tag.name)
-        await setVideoTags({ video: videoUpdated, tags, transaction: t, defaultValue: videoUpdated.Tags })
+        await setVideoTags({ video: videoUpdated, tags, transaction: t })
+      }
+
+      // Update trackers
+      {
+        const trackers = getTrackerUrls(videoObject, videoUpdated)
+        await setVideoTrackers({ video: videoUpdated, trackers, transaction: t })
       }
 
       {
@@ -423,7 +454,14 @@ async function updateVideoFromAP (options: {
         await VideoCaptionModel.deleteAllCaptionsOfRemoteVideo(videoUpdated.id, t)
 
         const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-          return VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, c.url, t)
+          const caption = new VideoCaptionModel({
+            videoId: videoUpdated.id,
+            filename: VideoCaptionModel.generateCaptionName(c.identifier),
+            language: c.identifier,
+            fileUrl: c.url
+          }) as MVideoCaption
+
+          return VideoCaptionModel.insertOrReplaceLanguage(caption, t)
         })
         await Promise.all(videoCaptionsPromises)
       }
@@ -555,7 +593,7 @@ function isAPVideoUrlObject (url: any): url is ActivityVideoUrlObject {
   return MIMETYPES.VIDEO.MIMETYPE_EXT[urlMediaType] && urlMediaType.startsWith('video/')
 }
 
-function isAPStreamingPlaylistUrlObject (url: ActivityUrlObject): url is ActivityPlaylistUrlObject {
+function isAPStreamingPlaylistUrlObject (url: any): url is ActivityPlaylistUrlObject {
   return url && url.mediaType === 'application/x-mpegURL'
 }
 
@@ -577,11 +615,14 @@ async function createVideo (videoObject: VideoObject, channel: MChannelAccountLi
   const videoData = await videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to)
   const video = VideoModel.build(videoData) as MVideoThumbnail
 
-  const promiseThumbnail = createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, ThumbnailType.MINIATURE)
-    .catch(err => {
-      logger.error('Cannot create miniature from url.', { err })
-      return undefined
-    })
+  const promiseThumbnail = createVideoMiniatureFromUrl({
+    downloadUrl: getThumbnailFromIcons(videoObject).url,
+    video,
+    type: ThumbnailType.MINIATURE
+  }).catch(err => {
+    logger.error('Cannot create miniature from url.', { err })
+    return undefined
+  })
 
   let thumbnailModel: MThumbnail
   if (waitThumbnail === true) {
@@ -589,76 +630,100 @@ async function createVideo (videoObject: VideoObject, channel: MChannelAccountLi
   }
 
   const { autoBlacklisted, videoCreated } = await sequelizeTypescript.transaction(async t => {
-    const sequelizeOptions = { transaction: t }
+    try {
+      const sequelizeOptions = { transaction: t }
 
-    const videoCreated = await video.save(sequelizeOptions) as MVideoFullLight
-    videoCreated.VideoChannel = channel
+      const videoCreated = await video.save(sequelizeOptions) as MVideoFullLight
+      videoCreated.VideoChannel = channel
 
-    if (thumbnailModel) await videoCreated.addAndSaveThumbnail(thumbnailModel, t)
+      if (thumbnailModel) await videoCreated.addAndSaveThumbnail(thumbnailModel, t)
 
-    const previewIcon = getPreviewFromIcons(videoObject)
-    const previewUrl = previewIcon
-      ? previewIcon.url
-      : buildRemoteVideoBaseUrl(videoCreated, join(STATIC_PATHS.PREVIEWS, video.generatePreviewName()))
-    const previewModel = createPlaceholderThumbnail(previewUrl, videoCreated, ThumbnailType.PREVIEW, PREVIEWS_SIZE)
-
-    if (thumbnailModel) await videoCreated.addAndSaveThumbnail(previewModel, t)
-
-    // Process files
-    const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url)
-
-    const videoFilePromises = videoFileAttributes.map(f => VideoFileModel.create(f, { transaction: t }))
-    const videoFiles = await Promise.all(videoFilePromises)
-
-    const streamingPlaylistsAttributes = streamingPlaylistActivityUrlToDBAttributes(videoCreated, videoObject, videoFiles)
-    videoCreated.VideoStreamingPlaylists = []
-
-    for (const playlistAttributes of streamingPlaylistsAttributes) {
-      const playlistModel = await VideoStreamingPlaylistModel.create(playlistAttributes, { transaction: t })
-
-      const playlistFiles = videoFileActivityUrlToDBAttributes(playlistModel, playlistAttributes.tagAPObject)
-      const videoFilePromises = playlistFiles.map(f => VideoFileModel.create(f, { transaction: t }))
-      playlistModel.VideoFiles = await Promise.all(videoFilePromises)
-
-      videoCreated.VideoStreamingPlaylists.push(playlistModel)
-    }
-
-    // Process tags
-    const tags = videoObject.tag
-                            .filter(isAPHashTagObject)
-                            .map(t => t.name)
-    await setVideoTags({ video: videoCreated, tags, transaction: t })
-
-    // Process captions
-    const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-      return VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, c.url, t)
-    })
-    await Promise.all(videoCaptionsPromises)
-
-    videoCreated.VideoFiles = videoFiles
-
-    if (videoCreated.isLive) {
-      const videoLive = new VideoLiveModel({
-        streamKey: null,
-        saveReplay: videoObject.liveSaveReplay,
-        permanentLive: videoObject.permanentLive,
-        videoId: videoCreated.id
+      const previewUrl = getPreviewUrl(getPreviewFromIcons(videoObject), videoCreated)
+      const previewModel = createPlaceholderThumbnail({
+        fileUrl: previewUrl,
+        video: videoCreated,
+        type: ThumbnailType.PREVIEW,
+        size: PREVIEWS_SIZE
       })
 
-      videoCreated.VideoLive = await videoLive.save({ transaction: t })
+      if (thumbnailModel) await videoCreated.addAndSaveThumbnail(previewModel, t)
+
+      // Process files
+      const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url)
+
+      const videoFilePromises = videoFileAttributes.map(f => VideoFileModel.create(f, { transaction: t }))
+      const videoFiles = await Promise.all(videoFilePromises)
+
+      const streamingPlaylistsAttributes = streamingPlaylistActivityUrlToDBAttributes(videoCreated, videoObject, videoFiles)
+      videoCreated.VideoStreamingPlaylists = []
+
+      for (const playlistAttributes of streamingPlaylistsAttributes) {
+        const playlist = await VideoStreamingPlaylistModel.create(playlistAttributes, { transaction: t }) as MStreamingPlaylistFilesVideo
+        playlist.Video = videoCreated
+
+        const playlistFiles = videoFileActivityUrlToDBAttributes(playlist, playlistAttributes.tagAPObject)
+        const videoFilePromises = playlistFiles.map(f => VideoFileModel.create(f, { transaction: t }))
+        playlist.VideoFiles = await Promise.all(videoFilePromises)
+
+        videoCreated.VideoStreamingPlaylists.push(playlist)
+      }
+
+      // Process tags
+      const tags = videoObject.tag
+                              .filter(isAPHashTagObject)
+                              .map(t => t.name)
+      await setVideoTags({ video: videoCreated, tags, transaction: t })
+
+      // Process captions
+      const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
+        const caption = new VideoCaptionModel({
+          videoId: videoCreated.id,
+          filename: VideoCaptionModel.generateCaptionName(c.identifier),
+          language: c.identifier,
+          fileUrl: c.url
+        }) as MVideoCaption
+
+        return VideoCaptionModel.insertOrReplaceLanguage(caption, t)
+      })
+      await Promise.all(videoCaptionsPromises)
+
+      // Process trackers
+      {
+        const trackers = getTrackerUrls(videoObject, videoCreated)
+        await setVideoTrackers({ video: videoCreated, trackers, transaction: t })
+      }
+
+      videoCreated.VideoFiles = videoFiles
+
+      if (videoCreated.isLive) {
+        const videoLive = new VideoLiveModel({
+          streamKey: null,
+          saveReplay: videoObject.liveSaveReplay,
+          permanentLive: videoObject.permanentLive,
+          videoId: videoCreated.id
+        })
+
+        videoCreated.VideoLive = await videoLive.save({ transaction: t })
+      }
+
+      const autoBlacklisted = await autoBlacklistVideoIfNeeded({
+        video: videoCreated,
+        user: undefined,
+        isRemote: true,
+        isNew: true,
+        transaction: t
+      })
+
+      logger.info('Remote video with uuid %s inserted.', videoObject.uuid)
+
+      return { autoBlacklisted, videoCreated }
+    } catch (err) {
+      // FIXME: Use rollback hook when https://github.com/sequelize/sequelize/pull/13038 is released
+      // Remove thumbnail
+      if (thumbnailModel) await thumbnailModel.removeThumbnail()
+
+      throw err
     }
-
-    const autoBlacklisted = await autoBlacklistVideoIfNeeded({
-      video: videoCreated,
-      user: undefined,
-      isRemote: true,
-      isNew: true,
-      transaction: t
-    })
-
-    logger.info('Remote video with uuid %s inserted.', videoObject.uuid)
-
-    return { autoBlacklisted, videoCreated }
   })
 
   if (waitThumbnail === false) {
@@ -729,7 +794,7 @@ function videoActivityObjectToDBAttributes (videoChannel: MChannelId, videoObjec
 }
 
 function videoFileActivityUrlToDBAttributes (
-  videoOrPlaylist: MVideo | MStreamingPlaylist,
+  videoOrPlaylist: MVideo | MStreamingPlaylistVideo,
   urls: (ActivityTagObject | ActivityUrlObject)[]
 ) {
   const fileUrls = urls.filter(u => isAPVideoUrlObject(u)) as ActivityVideoUrlObject[]
@@ -749,26 +814,42 @@ function videoFileActivityUrlToDBAttributes (
       throw new Error('Cannot parse magnet URI ' + magnet.href)
     }
 
+    const torrentUrl = Array.isArray(parsed.xs)
+      ? parsed.xs[0]
+      : parsed.xs
+
     // Fetch associated metadata url, if any
-    const metadata = urls.filter(isAPVideoFileMetadataObject)
+    const metadata = urls.filter(isAPVideoFileUrlMetadataObject)
                          .find(u => {
                            return u.height === fileUrl.height &&
                              u.fps === fileUrl.fps &&
                              u.rel.includes(fileUrl.mediaType)
                          })
 
-    const mediaType = fileUrl.mediaType
+    const extname = getExtFromMimetype(MIMETYPES.VIDEO.MIMETYPE_EXT, fileUrl.mediaType)
+    const resolution = fileUrl.height
+    const videoId = (videoOrPlaylist as MStreamingPlaylist).playlistUrl ? null : videoOrPlaylist.id
+    const videoStreamingPlaylistId = (videoOrPlaylist as MStreamingPlaylist).playlistUrl ? videoOrPlaylist.id : null
+
     const attribute = {
-      extname: getExtFromMimetype(MIMETYPES.VIDEO.MIMETYPE_EXT, mediaType),
+      extname,
       infoHash: parsed.infoHash,
-      resolution: fileUrl.height,
+      resolution,
       size: fileUrl.size,
       fps: fileUrl.fps || -1,
       metadataUrl: metadata?.href,
 
+      // Use the name of the remote file because we don't proxify video file requests
+      filename: basename(fileUrl.href),
+      fileUrl: fileUrl.href,
+
+      torrentUrl,
+      // Use our own torrent name since we proxify torrent requests
+      torrentFilename: generateTorrentFileName(videoOrPlaylist, resolution),
+
       // This is a video file owned by a video or by a streaming playlist
-      videoId: (videoOrPlaylist as MStreamingPlaylist).playlistUrl ? null : videoOrPlaylist.id,
-      videoStreamingPlaylistId: (videoOrPlaylist as MStreamingPlaylist).playlistUrl ? videoOrPlaylist.id : null
+      videoId,
+      videoStreamingPlaylistId
     }
 
     attributes.push(attribute)
@@ -822,7 +903,41 @@ function getThumbnailFromIcons (videoObject: VideoObject) {
 function getPreviewFromIcons (videoObject: VideoObject) {
   const validIcons = videoObject.icon.filter(i => i.width > PREVIEWS_SIZE.minWidth)
 
-  // FIXME: don't put a fallback here for compatibility with PeerTube <2.2
-
   return maxBy(validIcons, 'width')
+}
+
+function getPreviewUrl (previewIcon: ActivityIconObject, video: MVideoWithHost) {
+  return previewIcon
+    ? previewIcon.url
+    : buildRemoteVideoBaseUrl(video, join(LAZY_STATIC_PATHS.PREVIEWS, video.generatePreviewName()))
+}
+
+function getTrackerUrls (object: VideoObject, video: MVideoWithHost) {
+  let wsFound = false
+
+  const trackers = object.url.filter(u => isAPVideoTrackerUrlObject(u))
+    .map((u: ActivityTrackerUrlObject) => {
+      if (isArray(u.rel) && u.rel.includes('websocket')) wsFound = true
+
+      return u.href
+    })
+
+  if (wsFound) return trackers
+
+  return [
+    buildRemoteVideoBaseUrl(video, '/tracker/socket', REMOTE_SCHEME.WS),
+    buildRemoteVideoBaseUrl(video, '/tracker/announce')
+  ]
+}
+
+async function setVideoTrackers (options: {
+  video: MVideo
+  trackers: string[]
+  transaction?: Transaction
+}) {
+  const { video, trackers, transaction } = options
+
+  const trackerInstances = await TrackerModel.findOrCreateTrackers(trackers, transaction)
+
+  await video.$set('Trackers', trackerInstances, { transaction })
 }

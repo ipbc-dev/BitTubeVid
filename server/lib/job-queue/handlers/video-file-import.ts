@@ -2,14 +2,15 @@ import * as Bull from 'bull'
 import { copy, stat } from 'fs-extra'
 import { extname } from 'path'
 import { createTorrentAndSetInfoHash } from '@server/helpers/webtorrent'
-import { getVideoFilePath } from '@server/lib/video-paths'
-import { MVideoFile, MVideoWithFile } from '@server/types/models'
+import { generateVideoFilename, getVideoFilePath } from '@server/lib/video-paths'
+import { UserModel } from '@server/models/account/user'
+import { MVideoFullLight } from '@server/types/models'
 import { VideoFileImportPayload } from '@shared/models'
 import { getVideoFileFPS, getVideoFileResolution } from '../../../helpers/ffprobe-utils'
 import { logger } from '../../../helpers/logger'
 import { VideoModel } from '../../../models/video/video'
 import { VideoFileModel } from '../../../models/video/video-file'
-import { publishNewResolutionIfNeeded } from './video-transcoding'
+import { onNewWebTorrentFileResolution } from './video-transcoding'
 
 async function processVideoFileImport (job: Bull.Job) {
   const payload = job.data as VideoFileImportPayload
@@ -22,9 +23,22 @@ async function processVideoFileImport (job: Bull.Job) {
     return undefined
   }
 
+  const data = await getVideoFileResolution(payload.filePath)
+
   await updateVideoFile(video, payload.filePath)
 
-  await publishNewResolutionIfNeeded(video)
+  const user = await UserModel.loadByChannelActorId(video.VideoChannel.actorId)
+
+  const newResolutionPayload = {
+    type: 'new-resolution-to-webtorrent' as 'new-resolution-to-webtorrent',
+    videoUUID: video.uuid,
+    resolution: data.videoFileResolution,
+    isPortraitMode: data.isPortraitMode,
+    copyCodecs: false,
+    isNewVideo: false
+  }
+  await onNewWebTorrentFileResolution(video, user, newResolutionPayload)
+
   return video
 }
 
@@ -36,42 +50,39 @@ export {
 
 // ---------------------------------------------------------------------------
 
-async function updateVideoFile (video: MVideoWithFile, inputFilePath: string) {
+async function updateVideoFile (video: MVideoFullLight, inputFilePath: string) {
   const { videoFileResolution } = await getVideoFileResolution(inputFilePath)
   const { size } = await stat(inputFilePath)
   const fps = await getVideoFileFPS(inputFilePath)
 
-  let updatedVideoFile = new VideoFileModel({
-    resolution: videoFileResolution,
-    extname: extname(inputFilePath),
-    size,
-    fps,
-    videoId: video.id
-  }) as MVideoFile
+  const fileExt = extname(inputFilePath)
 
-  const currentVideoFile = video.VideoFiles.find(videoFile => videoFile.resolution === updatedVideoFile.resolution)
+  const currentVideoFile = video.VideoFiles.find(videoFile => videoFile.resolution === videoFileResolution)
 
   if (currentVideoFile) {
     // Remove old file and old torrent
     await video.removeFile(currentVideoFile)
-    await video.removeTorrent(currentVideoFile)
+    await currentVideoFile.removeTorrent()
     // Remove the old video file from the array
     video.VideoFiles = video.VideoFiles.filter(f => f !== currentVideoFile)
 
-    // Update the database
-    currentVideoFile.extname = updatedVideoFile.extname
-    currentVideoFile.size = updatedVideoFile.size
-    currentVideoFile.fps = updatedVideoFile.fps
-
-    updatedVideoFile = currentVideoFile
+    await currentVideoFile.destroy()
   }
 
-  const outputPath = getVideoFilePath(video, updatedVideoFile)
+  const newVideoFile = new VideoFileModel({
+    resolution: videoFileResolution,
+    extname: fileExt,
+    filename: generateVideoFilename(video, false, videoFileResolution, fileExt),
+    size,
+    fps,
+    videoId: video.id
+  })
+
+  const outputPath = getVideoFilePath(video, newVideoFile)
   await copy(inputFilePath, outputPath)
 
-  await createTorrentAndSetInfoHash(video, updatedVideoFile)
+  video.VideoFiles.push(newVideoFile)
+  await createTorrentAndSetInfoHash(video, newVideoFile)
 
-  await updatedVideoFile.save()
-
-  video.VideoFiles.push(updatedVideoFile)
+  await newVideoFile.save()
 }

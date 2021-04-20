@@ -1,11 +1,13 @@
 import { Transaction } from 'sequelize/types'
+import { DEFAULT_AUDIO_RESOLUTION, JOB_PRIORITY } from '@server/initializers/constants'
 import { sequelizeTypescript } from '@server/initializers/database'
 import { TagModel } from '@server/models/video/tag'
 import { VideoModel } from '@server/models/video/video'
 import { FilteredModelAttributes } from '@server/types'
-import { MTag, MThumbnail, MVideoTag, MVideoThumbnail, MVideoUUID } from '@server/types/models'
-import { ThumbnailType, VideoCreate, VideoPrivacy } from '@shared/models'
+import { MThumbnail, MUserId, MVideo, MVideoFile, MVideoTag, MVideoThumbnail, MVideoUUID } from '@server/types/models'
+import { ThumbnailType, VideoCreate, VideoPrivacy, VideoTranscodingPayload } from '@shared/models'
 import { federateVideoIfNeeded } from './activitypub/videos'
+import { JobQueue } from './job-queue/job-queue'
 import { Notifier } from './notifier'
 import { createVideoMiniatureFromExisting } from './thumbnail'
 
@@ -67,18 +69,14 @@ async function setVideoTags (options: {
   video: MVideoTag
   tags: string[]
   transaction?: Transaction
-  defaultValue?: MTag[]
 }) {
-  const { video, tags, transaction, defaultValue } = options
-  // Set tags to the video
-  if (tags) {
-    const tagInstances = await TagModel.findOrCreateTags(tags, transaction)
+  const { video, tags, transaction } = options
 
-    await video.$set('Tags', tagInstances, { transaction })
-    video.Tags = tagInstances
-  } else {
-    video.Tags = defaultValue || []
-  }
+  const internalTags = tags || []
+  const tagInstances = await TagModel.findOrCreateTags(internalTags, transaction)
+
+  await video.$set('Tags', tagInstances, { transaction })
+  video.Tags = tagInstances
 }
 
 async function publishAndFederateIfNeeded (video: MVideoUUID, wasLive = false) {
@@ -104,11 +102,47 @@ async function publishAndFederateIfNeeded (video: MVideoUUID, wasLive = false) {
   }
 }
 
+async function addOptimizeOrMergeAudioJob (video: MVideo, videoFile: MVideoFile, user: MUserId) {
+  let dataInput: VideoTranscodingPayload
+
+  if (videoFile.isAudio()) {
+    dataInput = {
+      type: 'merge-audio-to-webtorrent',
+      resolution: DEFAULT_AUDIO_RESOLUTION,
+      videoUUID: video.uuid,
+      isNewVideo: true
+    }
+  } else {
+    dataInput = {
+      type: 'optimize-to-webtorrent',
+      videoUUID: video.uuid,
+      isNewVideo: true
+    }
+  }
+
+  const jobOptions = {
+    priority: JOB_PRIORITY.TRANSCODING.OPTIMIZER + await getJobTranscodingPriorityMalus(user)
+  }
+
+  return JobQueue.Instance.createJobWithPromise({ type: 'video-transcoding', payload: dataInput }, jobOptions)
+}
+
+async function getJobTranscodingPriorityMalus (user: MUserId) {
+  const now = new Date()
+  const lastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7)
+
+  const videoUploadedByUser = await VideoModel.countVideosUploadedByUserSince(user.id, lastWeek)
+
+  return videoUploadedByUser
+}
+
 // ---------------------------------------------------------------------------
 
 export {
   buildLocalVideoFromReq,
   publishAndFederateIfNeeded,
   buildVideoThumbnailsFromReq,
-  setVideoTags
+  setVideoTags,
+  addOptimizeOrMergeAudioJob,
+  getJobTranscodingPriorityMalus
 }

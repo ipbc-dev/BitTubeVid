@@ -1,3 +1,5 @@
+import { TrackerModel } from '@server/models/server/tracker'
+import { VideoTrackerModel } from '@server/models/server/video-tracker'
 import { QueryTypes, Transaction } from 'sequelize'
 import { Sequelize as SequelizeTypescript } from 'sequelize-typescript'
 import { isTestInstance } from '../helpers/core-utils'
@@ -72,12 +74,12 @@ const sequelizeTypescript = new SequelizeTypescript({
   logging: (message: string, benchmark: number) => {
     if (process.env.NODE_DB_LOG === 'false') return
 
-    let newMessage = message
+    let newMessage = 'Executed SQL request'
     if (isTestInstance() === true && benchmark !== undefined) {
-      newMessage += ' | ' + benchmark + 'ms'
+      newMessage += ' in ' + benchmark + 'ms'
     }
 
-    logger.debug(newMessage)
+    logger.debug(newMessage, { sql: message })
   }
 })
 
@@ -134,6 +136,8 @@ async function initDatabaseModels (silent: boolean) {
     PremiumStoragePlanModel,
     userPremiumStoragePaymentModel,
     premiumStorageSlowPayer,
+    TrackerModel,
+    VideoTrackerModel,
     PluginModel
   ])
 

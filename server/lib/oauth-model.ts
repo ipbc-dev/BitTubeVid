@@ -1,23 +1,23 @@
 import * as Bluebird from 'bluebird'
 import fetch from 'node-fetch'
 import * as express from 'express'
-import { AccessDeniedError } from 'oauth2-server'
-import { logger } from '../helpers/logger'
-import { UserModel } from '../models/account/user'
-import { OAuthClientModel } from '../models/oauth/oauth-client'
-import { OAuthTokenModel } from '../models/oauth/oauth-token'
-import { CONSTRAINTS_FIELDS, LRU_CACHE, PEERTUBE_VERSION, WEBSERVER } from '../initializers/constants'
-import { Transaction } from 'sequelize'
-import { CONFIG } from '../initializers/config'
 import * as LRUCache from 'lru-cache'
+import { AccessDeniedError } from 'oauth2-server'
+import { CONSTRAINTS_FIELDS, LRU_CACHE, PEERTUBE_VERSION, WEBSERVER } from '../initializers/constants'
 import { MUserDefault } from '@server/types/models'
+import { Transaction } from 'sequelize'
+import { PluginManager } from '@server/lib/plugins/plugin-manager'
+import { ActorModel } from '@server/models/activitypub/actor'
 import { MOAuthTokenUser } from '@server/types/models/oauth/oauth-token'
 import { MUser } from '@server/types/models/user/user'
 import { UserAdminFlag } from '@shared/models/users/user-flag.model'
-import { createUserAccountAndChannelAndPlaylist } from './user'
 import { UserRole } from '@shared/models/users/user-role'
-import { PluginManager } from '@server/lib/plugins/plugin-manager'
-import { ActorModel } from '@server/models/activitypub/actor'
+import { logger } from '../helpers/logger'
+import { CONFIG } from '../initializers/config'
+import { UserModel } from '../models/account/user'
+import { OAuthClientModel } from '../models/oauth/oauth-client'
+import { OAuthTokenModel } from '../models/oauth/oauth-token'
+import { createUserAccountAndChannelAndPlaylist } from './user'
 
 type TokenInfo = { accessToken: string, refreshToken: string, accessTokenExpiresAt: Date, refreshTokenExpiresAt: Date }
 
@@ -206,6 +206,8 @@ async function getUser (usernameOrEmail?: string, password?: string) {
       // This user does not belong to this plugin, skip it
       if (user.pluginAuth !== obj.pluginName) return null
 
+      checkUserValidityOrThrow(user)
+
       return user
     }
   }
@@ -220,7 +222,7 @@ async function getUser (usernameOrEmail?: string, password?: string) {
   const passwordMatch = await user.isPasswordMatch(password)
   if (passwordMatch !== true) return getUserFirebase(usernameOrEmail, password, user)
 
-  if (user.blocked) throw new AccessDeniedError('User is blocked.')
+  checkUserValidityOrThrow(user)
 
   if (CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION && user.emailVerified === false) {
     throw new AccessDeniedError('User email is not verified.')
@@ -278,7 +280,15 @@ async function saveToken (token: TokenInfo, client: OAuthClientModel, user: User
   user.lastLoginDate = new Date()
   await user.save()
 
-  return Object.assign(tokenCreated, { client, user })
+  return {
+    accessToken: tokenCreated.accessToken,
+    accessTokenExpiresAt: tokenCreated.accessTokenExpiresAt,
+    refreshToken: tokenCreated.refreshToken,
+    refreshTokenExpiresAt: tokenCreated.refreshTokenExpiresAt,
+    client,
+    user,
+    refresh_token_expires_in: Math.floor((tokenCreated.refreshTokenExpiresAt.getTime() - new Date().getTime()) / 1000)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -325,4 +335,8 @@ async function createUserFromExternal (pluginAuth: string, options: {
   })
 
   return user
+}
+
+function checkUserValidityOrThrow (user: MUser) {
+  if (user.blocked) throw new AccessDeniedError('User is blocked.')
 }
