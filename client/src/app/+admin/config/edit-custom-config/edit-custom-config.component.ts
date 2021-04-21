@@ -96,6 +96,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
     this.serverService.getConfig()
         .subscribe(config => {
           this.serverConfig = config
+          console.log('ICEICE config is: ', config)
         })
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
@@ -269,6 +270,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
         }
       }
     }
+    // Subcribe to serveStats
+    this.serverService.getServerStats()
+      .subscribe(res => {
+        this.serverStats = res
+      })
 
     for (const resolution of this.editConfigurationService.getVODResolutions()) {
       defaultValues.transcoding.resolutions[resolution.id] = 'false'
@@ -504,6 +510,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
       .subscribe(
         res => {
           this.customConfig = res
+          console.log('ICEICE getting customconfig', res)
 
           // Reload general configuration
           this.serverService.resetConfig()
