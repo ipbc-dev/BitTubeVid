@@ -88,8 +88,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
   ngOnInit () {
     this.subscribeConfigAndPlans()
     this.serverConfig = this.serverService.getTmpConfig()
-    // this.serverService.getConfig()
-    //     .subscribe(config => this.serverConfig = config)
     this.resetNewStoragePlan()
     this.serverService.getConfig()
         .subscribe(config => {

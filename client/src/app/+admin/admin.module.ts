@@ -19,6 +19,7 @@ import {
   EditCustomConfigComponent,
   EditInstanceInformationComponent,
   EditLiveConfigurationComponent,
+  EditPremiumStorageConfiguration,
   EditVODTranscodingComponent
 } from './config'
 import { ConfigService } from './config/shared/config.service'
@@ -97,6 +98,7 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     EditBasicConfigurationComponent,
     EditVODTranscodingComponent,
     EditLiveConfigurationComponent,
+    EditPremiumStorageConfiguration,
     EditAdvancedConfigurationComponent,
     EditInstanceInformationComponent
   ],
