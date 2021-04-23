@@ -71,10 +71,6 @@
       <div class="form-error submit-error" i18n *ngIf="!form.valid">
         There are errors in the form:
 
-        <!-- <span *ngFor="let fobject of formGroupData">
-          {{ fobject }}
-        </span> -->
-
         <ul>
           <li *ngFor="let error of grabAllErrors()">
             {{ error }}

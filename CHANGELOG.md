@@ -3,6 +3,9 @@
   * Based on Peertube V3.1.1
   * Please, check Peertube V3.1.1 release important notes below before installing this package
   * Improving LiveStreams
+## v0.3.1rc1 (BitTube)
+  * Based on Peertube V3.1.0
+  * Please, check Peertube V3.1.0 release important notes below before installing this package
   * Fixing minor bugs
 ## v0.3.1 (BitTube)
   * Based on Peertube V3.0.1

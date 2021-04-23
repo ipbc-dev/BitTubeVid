@@ -74,7 +74,12 @@ async function cleanVideosFromSlowPayers (videosAmmountToDelete: number) {
   await parallel(1, slowPayersList, async (slowPayer) => {
     const userInfo = await UserModel.loadById(slowPayer.userId)
     const actorInfo = await AccountModel.loadByNameWithHost(userInfo.username + '@' + CONFIG.WEBSERVER.HOSTNAME)
-    const userVideos = await VideoModel.listUserVideosForApi(actorInfo.actorId, 0, videosAmmountToDelete, "-createdAt")
+    const userVideos = await VideoModel.listUserVideosForApi({
+      accountId: actorInfo.actorId,
+      start: 0,
+      count: videosAmmountToDelete,
+      sort: "-createdAt"
+    })
     const userVideoQuota = userInfo.videoQuota
     let deletedVideosCounter = 0
     const deletedVideosNames = []

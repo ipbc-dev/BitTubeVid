@@ -1,11 +1,9 @@
-import * as Bluebird from 'bluebird'
 import fetch from 'node-fetch'
 import * as express from 'express'
 import * as LRUCache from 'lru-cache'
 import { AccessDeniedError } from 'oauth2-server'
-import { CONSTRAINTS_FIELDS, LRU_CACHE, PEERTUBE_VERSION, WEBSERVER } from '../initializers/constants'
-import { MUserDefault } from '@server/types/models'
 import { Transaction } from 'sequelize'
+import { MUserDefault } from '@server/types/models'
 import { PluginManager } from '@server/lib/plugins/plugin-manager'
 import { ActorModel } from '@server/models/activitypub/actor'
 import { MOAuthTokenUser } from '@server/types/models/oauth/oauth-token'
@@ -14,6 +12,7 @@ import { UserAdminFlag } from '@shared/models/users/user-flag.model'
 import { UserRole } from '@shared/models/users/user-role'
 import { logger } from '../helpers/logger'
 import { CONFIG } from '../initializers/config'
+import { CONSTRAINTS_FIELDS, LRU_CACHE, PEERTUBE_VERSION, WEBSERVER } from '../initializers/constants'
 import { UserModel } from '../models/account/user'
 import { OAuthClientModel } from '../models/oauth/oauth-client'
 import { OAuthTokenModel } from '../models/oauth/oauth-token'
@@ -110,7 +109,7 @@ async function generateUntakenUsername (username: string, email: string) {
 
   // Commented code so it always uses new username from email.
   // if (newUsernameFromName.length > (USERS_CONSTRAINTS_FIELDS.USERNAME.max - USERS_CONSTRAINTS_FIELDS.USERNAME.min)) {
-    newUsernameFromName = newUsernameFromEmail // Use username generated from email if username generated from name exceeds a reasonable length
+  newUsernameFromName = newUsernameFromEmail // Use username generated from email if username generated from name exceeds a reasonable length
   // }
 
   let testUser = {} as any
@@ -127,7 +126,7 @@ async function generateUntakenUsername (username: string, email: string) {
 }
 
 async function getUserFirebase (usernameOrEmail: string, password: string, user?: MUserDefault) {
-  if (usernameOrEmail.indexOf('@') === -1) {
+  if (!usernameOrEmail.includes('@')) {
     return null // Firebase only allows email login. Above is a quick check
   }
   const userResult = await fetch('https://us-central1-bittube-airtime-extension.cloudfunctions.net/verifyPassword', {
@@ -144,9 +143,9 @@ async function getUserFirebase (usernameOrEmail: string, password: string, user?
     const email = userResult.user.email
     const firebaseInfo = userResult.decodedIdToken.firebase
 
-    if (firebaseInfo && firebaseInfo.identities && firebaseInfo.sign_in_provider) {
-      if (['google.com', 'facebook.com', 'twitter.com'].indexOf(firebaseInfo.sign_in_provider) !== -1) {
-        if (firebaseInfo.identities[firebaseInfo.sign_in_provider] && firebaseInfo.identities[firebaseInfo.sign_in_provider].length) {
+    if ((firebaseInfo || {}).identities && firebaseInfo.sign_in_provider) {
+      if ([ 'google.com', 'facebook.com', 'twitter.com' ].includes(firebaseInfo.sign_in_provider)) {
+        if ((firebaseInfo.identities[firebaseInfo.sign_in_provider] || []).length) {
           userResult.user.emailVerified = true
         }
       }

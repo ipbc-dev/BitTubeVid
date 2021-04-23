@@ -1,6 +1,7 @@
+
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { forkJoin } from 'rxjs'
 import { SelectOptionsItem } from 'src/types/select-options-item.model'
-import { Component, OnInit } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
 import { ConfigService } from '@app/+admin/config/shared/config.service'
 import { ServerService } from '@app/core/server/server.service'
@@ -68,7 +69,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
 
   signupAlertMessage: string
 
-  // private serverConfig: ServerConfig
   private bytesPipe: BytesPipe
 
   constructor (
@@ -80,9 +80,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
     private restExtractor: RestExtractor,
     private configService: ConfigService,
     private serverService: ServerService,
-    private editConfigurationService: EditConfigurationService
+    private editConfigurationService: EditConfigurationService,
+    private confirmService: ConfirmService
   ) {
     super()
+    this.bytesPipe = new BytesPipe()
   }
 
   ngOnInit () {
@@ -92,6 +94,7 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
     this.serverService.getConfig()
         .subscribe(config => {
           this.serverConfig = config
+          console.log('ICEICE config is: ', config)
         })
 
     const formGroupData: { [key in keyof CustomConfig ]: any } = {
@@ -265,6 +268,11 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
         }
       }
     }
+    // Subcribe to serveStats
+    this.serverService.getServerStats()
+      .subscribe(res => {
+        this.serverStats = res
+      })
 
     for (const resolution of this.editConfigurationService.getVODResolutions()) {
       defaultValues.transcoding.resolutions[resolution.id] = 'false'
@@ -287,8 +295,6 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
       this.serverStats = res
     })
   }
-
-  
   resetNewStoragePlan () {
     this.newStoragePlan = {
       name: null,
@@ -465,6 +471,8 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
 
 
   showFormSubmitButton () {
+    console.log(this.activeNav);
+    return false;
     // if (this.nav !== undefined && this.nav.activeId !== undefined) {
     //   return this.nav.activeId !== 'premium-storage-config'
     // } else {

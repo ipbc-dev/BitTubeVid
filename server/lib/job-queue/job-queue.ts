@@ -245,7 +245,7 @@ class JobQueue {
     this.queues['premium-storage-checker'].add({}, {
       repeat: REPEAT_JOBS['premium-storage-checker']
     }).catch(err => logger.error('Cannot add premium-storage-checker repeatable job.', { err }))
-    
+
     if (CONFIG.FEDERATION.VIDEOS.CLEANUP_REMOTE_INTERACTIONS) {
       this.queues['activitypub-cleaner'].add({}, {
         repeat: REPEAT_JOBS['activitypub-cleaner']

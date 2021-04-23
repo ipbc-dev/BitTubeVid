@@ -18,7 +18,6 @@ import { PluginManager } from '../../lib/plugins/plugin-manager'
 import { getThemeOrDefault } from '../../lib/plugins/theme-utils'
 import { asyncMiddleware, authenticate, ensureUserHasRight } from '../../middlewares'
 import { customConfigUpdateValidator } from '../../middlewares/validators/config'
-import { logger } from '@server/helpers/logger'
 import { VideoTranscodingProfilesManager } from '@server/lib/video-transcoding-profiles'
 
 const configRouter = express.Router()
