@@ -34,13 +34,7 @@ import { EditConfigurationService } from './edit-configuration.service'
   styleUrls: [ './edit-custom-config.component.scss' ]
 })
 export class EditCustomConfigComponent extends FormReactive implements OnInit {
-  // FIXME: use built-in router
-  // resolutions: { id: string, label: string, description?: string }[] = []
-  // liveResolutions: { id: string, label: string, description?: string }[] = []
-  // transcodingThreadOptions: { label: string, value: number }[] = []
-  // liveMaxDurationOptions: { label: string, value: number }[] = []
   activeNav: string
-  
   customConfig: CustomConfig
   serverConfig: ServerConfig
 
@@ -252,31 +246,10 @@ export class EditCustomConfigComponent extends FormReactive implements OnInit {
     if (this.route.snapshot.fragment) {
       this.onNavChange(this.route.snapshot.fragment)
     }
+
+    this.loadConfigAndUpdateForm()
+    this.loadCategoriesAndLanguages()
   }
-
-  // isTranscodingEnabled () {
-  //   return this.form.value['transcoding']['enabled'] === true
-  // }
-
-  // isLiveEnabled () {
-  //   return this.form.value['live']['enabled'] === true
-  // }
-
-  // isLiveTranscodingEnabled () {
-  //   return this.form.value['live']['transcoding']['enabled'] === true
-  // }
-
-  // isSignupEnabled () {
-  //   return this.form.value['signup']['enabled'] === true
-  // }
-
-  // isSearchIndexEnabled () {
-  //   return this.form.value['search']['searchIndex']['enabled'] === true
-  // }
-
-  // isAutoFollowIndexEnabled () {
-  //   return this.form.value['followings']['instance']['autoFollowIndex']['enabled'] === true
-  // }
 
   async formValidated () {
     const value: CustomConfig = this.form.getRawValue()

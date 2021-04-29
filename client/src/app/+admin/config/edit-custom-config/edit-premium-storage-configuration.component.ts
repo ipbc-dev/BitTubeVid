@@ -20,8 +20,7 @@ import { Notifier } from '@app/core'
 
 @Component({
   selector: 'my-edit-premium-storage-configuration',
-  template: '', 
-  // './edit-premium-storage-configuration.component.html',
+  templateUrl: './edit-premium-storage-configuration.component.html',
   styleUrls: [ './edit-custom-config.component.scss' ]
 })
 export class EditPremiumStorageConfiguration implements OnInit, OnChanges {
@@ -67,9 +66,9 @@ export class EditPremiumStorageConfiguration implements OnInit, OnChanges {
     })
     // Subcribe to serveStats
     this.serverService.getServerStats()
-    .subscribe(res => {
-      this.serverStats = res
-    })
+      .subscribe(res => {
+        this.serverStats = res
+      })
   }
 
   ngOnChanges (changes: SimpleChanges) {

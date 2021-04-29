@@ -305,22 +305,23 @@
     <div class="form-group col-12">
       <div i18n class="inner-form-title">ACTIVE / DEACTIVATE</div>
     </div>
-
-    <ng-container class="form-group form-group-right col-12" formGroupName="premium_storage">
-      <div class="form-group">
-        <my-peertube-checkbox inputName="premiumStorageActive" formControlName="enabled">
-          <ng-template ptTemplate="label">
-            <ng-container i18n>Premium storage is enabled</ng-container>
-          </ng-template>
-
-          <ng-template ptTemplate="help">
-            <ng-container i18n>
-              Enabling it, will allow users to pay for a premium storage plan with Tube Coins.<br /><br />
-              You need to create your own plans in this section.
-            </ng-container>
-          </ng-template>
-        </my-peertube-checkbox>
-      </div>
+    <ng-container [formGroup]="form" >
+      <ng-container class="form-group form-group-right col-12" formGroupName="premium_storage">
+        <div class="form-group">
+          <my-peertube-checkbox inputName="premiumStorageActive" formControlName="enabled">
+            <ng-template ptTemplate="label">
+              <ng-container i18n>Premium storage is enabled</ng-container>
+            </ng-template>
+  
+            <ng-template ptTemplate="help">
+              <ng-container i18n>
+                Enabling it, will allow users to pay for a premium storage plan with Tube Coins.<br /><br />
+                You need to create your own plans in this section.
+              </ng-container>
+            </ng-template>
+          </my-peertube-checkbox>
+        </div>
+      </ng-container>
     </ng-container>
   </div>
   <!-- OVERVIEW -->
@@ -333,7 +334,7 @@
       <div class="col-6 col-lg-4 col-xl-3">
         <div class="card stat">
           <div class="card-body">
-            <p class="stat-value">{{ serverStats.totalLocalVideoFilesSize | bytes:1 }}</p>
+            <p *ngIf="serverStats" class="stat-value">{{ serverStats.totalLocalVideoFilesSize | bytes:1 }}</p>
             <p class="stat-label" i18n>of hosted video</p>
           </div>
           <i class="glyphicon glyphicon-film"></i>
@@ -346,7 +347,7 @@
       <div class="col-6 col-lg-4 col-xl-3">
         <div class="card stat">
           <div class="card-body">
-            <p class="stat-value">{{ serverStats.premiumStorageStadistics.soldStorage | bytes:1 }}</p>
+            <p *ngIf="serverStats" class="stat-value">{{ serverStats.premiumStorageStadistics.soldStorage | bytes:1 }}</p>
             <p class="stat-label" i18n>of sold storage</p>
           </div>
           <i class="glyphicon glyphicon-hdd"></i>
@@ -358,7 +359,7 @@
       <div class="col-6 col-lg-4 col-xl-3">
         <div class="card stat">
           <div class="card-body">
-            <p class="stat-value">{{ serverStats.premiumStorageStadistics.activePayments }}</p>
+            <p *ngIf="serverStats" class="stat-value">{{ serverStats.premiumStorageStadistics.activePayments }}</p>
             <p class="stat-label" i18n>users with active payments</p>
           </div>
           <i class="glyphicon glyphicon-user"></i>
@@ -370,7 +371,7 @@
       <div class="col-6 col-lg-4 col-xl-3">
         <div class="card stat">
           <div class="card-body">
-            <p class="stat-value">{{ serverStats.premiumStorageStadistics.currentMonthIncome }}</p>
+            <p *ngIf="serverStats" class="stat-value">{{ serverStats.premiumStorageStadistics.currentMonthIncome }}</p>
             <p class="stat-label" i18n>USD earned this month</p>
           </div>
           <i class="glyphicon glyphicon-piggy-bank"></i>
