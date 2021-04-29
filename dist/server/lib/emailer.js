@@ -33,58 +33,16 @@ class Emailer {
         if (this.initialized === true)
             return;
         this.initialized = true;
-        if (config_1.isEmailEnabled()) {
-            if (config_1.CONFIG.SMTP.TRANSPORT === 'smtp') {
-                logger_1.logger.info('Using %s:%s as SMTP server.', config_1.CONFIG.SMTP.HOSTNAME, config_1.CONFIG.SMTP.PORT);
-                let tls;
-                if (config_1.CONFIG.SMTP.CA_FILE) {
-                    tls = {
-                        ca: [fs_extra_1.readFileSync(config_1.CONFIG.SMTP.CA_FILE)]
-                    };
-                }
-                let auth;
-                if (config_1.CONFIG.SMTP.USERNAME && config_1.CONFIG.SMTP.PASSWORD) {
-                    auth = {
-                        user: config_1.CONFIG.SMTP.USERNAME,
-                        pass: config_1.CONFIG.SMTP.PASSWORD
-                    };
-                }
-                this.transporter = nodemailer_1.createTransport({
-                    host: config_1.CONFIG.SMTP.HOSTNAME,
-                    port: config_1.CONFIG.SMTP.PORT,
-                    secure: config_1.CONFIG.SMTP.TLS,
-                    debug: config_1.CONFIG.LOG.LEVEL === 'debug',
-                    logger: logger_1.bunyanLogger,
-                    ignoreTLS: config_1.CONFIG.SMTP.DISABLE_STARTTLS,
-                    tls,
-                    auth
-                });
-            }
-            else {
-                logger_1.logger.info('Using sendmail to send emails');
-                this.transporter = nodemailer_1.createTransport({
-                    sendmail: true,
-                    newline: 'unix',
-                    path: config_1.CONFIG.SMTP.SENDMAIL
-                });
-            }
-        }
-        else {
+        if (!config_1.isEmailEnabled()) {
             if (!core_utils_2.isTestInstance()) {
                 logger_1.logger.error('Cannot use SMTP server because of lack of configuration. BitTube will not be able to send mails!');
             }
+            return;
         }
-    }
-    static isEnabled() {
-        if (config_1.CONFIG.SMTP.TRANSPORT === 'sendmail') {
-            return !!config_1.CONFIG.SMTP.SENDMAIL;
-        }
-        else if (config_1.CONFIG.SMTP.TRANSPORT === 'smtp') {
-            return !!config_1.CONFIG.SMTP.HOSTNAME && !!config_1.CONFIG.SMTP.PORT;
-        }
-        else {
-            return false;
-        }
+        if (config_1.CONFIG.SMTP.TRANSPORT === 'smtp')
+            this.initSMTPTransport();
+        else if (config_1.CONFIG.SMTP.TRANSPORT === 'sendmail')
+            this.initSendmailTransport();
     }
     checkConnection() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -571,6 +529,40 @@ class Emailer {
     }
     warnOnConnectionFailure(err) {
         logger_1.logger.error('Failed to connect to SMTP %s:%d.', config_1.CONFIG.SMTP.HOSTNAME, config_1.CONFIG.SMTP.PORT, { err });
+    }
+    initSMTPTransport() {
+        logger_1.logger.info('Using %s:%s as SMTP server.', config_1.CONFIG.SMTP.HOSTNAME, config_1.CONFIG.SMTP.PORT);
+        let tls;
+        if (config_1.CONFIG.SMTP.CA_FILE) {
+            tls = {
+                ca: [fs_extra_1.readFileSync(config_1.CONFIG.SMTP.CA_FILE)]
+            };
+        }
+        let auth;
+        if (config_1.CONFIG.SMTP.USERNAME && config_1.CONFIG.SMTP.PASSWORD) {
+            auth = {
+                user: config_1.CONFIG.SMTP.USERNAME,
+                pass: config_1.CONFIG.SMTP.PASSWORD
+            };
+        }
+        this.transporter = nodemailer_1.createTransport({
+            host: config_1.CONFIG.SMTP.HOSTNAME,
+            port: config_1.CONFIG.SMTP.PORT,
+            secure: config_1.CONFIG.SMTP.TLS,
+            debug: config_1.CONFIG.LOG.LEVEL === 'debug',
+            logger: logger_1.bunyanLogger,
+            ignoreTLS: config_1.CONFIG.SMTP.DISABLE_STARTTLS,
+            tls,
+            auth
+        });
+    }
+    initSendmailTransport() {
+        logger_1.logger.info('Using sendmail to send emails');
+        this.transporter = nodemailer_1.createTransport({
+            sendmail: true,
+            newline: 'unix',
+            path: config_1.CONFIG.SMTP.SENDMAIL
+        });
     }
     static get Instance() {
         return this.instance || (this.instance = new this());

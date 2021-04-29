@@ -124,6 +124,7 @@ describe('Test stats (excluding redundancy)', function () {
                         '480p': false,
                         '720p': false,
                         '1080p': false,
+                        '1440p': false,
                         '2160p': false
                     }
                 }
@@ -157,10 +158,21 @@ describe('Test stats (excluding redundancy)', function () {
                 yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video' });
             }
             yield jobs_1.waitJobs(servers);
+            yield extra_utils_1.wait(6000);
             const res2 = yield stats_1.getStats(servers[1].url);
             const second = res2.body;
             expect(second.totalActivityPubMessagesProcessed).to.be.greaterThan(first.totalActivityPubMessagesProcessed);
-            yield extra_utils_1.wait(5000);
+            const apTypes = [
+                'Create', 'Update', 'Delete', 'Follow', 'Accept', 'Announce', 'Undo', 'Like', 'Reject', 'View', 'Dislike', 'Flag'
+            ];
+            const processed = apTypes.reduce((previous, type) => previous + second['totalActivityPub' + type + 'MessagesSuccesses'], 0);
+            expect(second.totalActivityPubMessagesProcessed).to.equal(processed);
+            expect(second.totalActivityPubMessagesSuccesses).to.equal(processed);
+            expect(second.totalActivityPubMessagesErrors).to.equal(0);
+            for (const apType of apTypes) {
+                expect(second['totalActivityPub' + apType + 'MessagesErrors']).to.equal(0);
+            }
+            yield extra_utils_1.wait(6000);
             const res3 = yield stats_1.getStats(servers[1].url);
             const third = res3.body;
             expect(third.totalActivityPubMessagesWaiting).to.equal(0);

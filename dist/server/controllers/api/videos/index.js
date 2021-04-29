@@ -6,14 +6,14 @@ const express = require("express");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const toInt_1 = require("validator/lib/toInt");
-const video_1 = require("@server/helpers/video");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const share_1 = require("@server/lib/activitypub/share");
 const url_1 = require("@server/lib/activitypub/url");
 const live_manager_1 = require("@server/lib/live-manager");
-const video_2 = require("@server/lib/video");
+const video_1 = require("@server/lib/video");
 const video_paths_1 = require("@server/lib/video-paths");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const audit_logger_1 = require("../../../helpers/audit-logger");
 const database_utils_1 = require("../../../helpers/database-utils");
 const express_utils_1 = require("../../../helpers/express-utils");
@@ -33,7 +33,7 @@ const thumbnail_1 = require("../../../lib/thumbnail");
 const video_blacklist_1 = require("../../../lib/video-blacklist");
 const middlewares_1 = require("../../../middlewares");
 const schedule_video_update_1 = require("../../../models/video/schedule-video-update");
-const video_3 = require("../../../models/video/video");
+const video_2 = require("../../../models/video/video");
 const video_file_1 = require("../../../models/video/video-file");
 const blacklist_1 = require("./blacklist");
 const captions_1 = require("./captions");
@@ -43,7 +43,6 @@ const live_1 = require("./live");
 const ownership_1 = require("./ownership");
 const rate_1 = require("./rate");
 const watching_1 = require("./watching");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const auditLogger = audit_logger_1.auditLoggerFactory('videos');
 const videosRouter = express.Router();
 exports.videosRouter = videosRouter;
@@ -96,10 +95,11 @@ function addVideo(req, res) {
         });
         const videoPhysicalFile = req.files['videofile'][0];
         const videoInfo = req.body;
-        const videoData = video_2.buildLocalVideoFromReq(videoInfo, res.locals.videoChannel.id);
+        const videoData = video_1.buildLocalVideoFromReq(videoInfo, res.locals.videoChannel.id);
         videoData.state = config_1.CONFIG.TRANSCODING.ENABLED ? 2 : 1;
         videoData.duration = videoPhysicalFile['duration'];
-        const video = new video_3.VideoModel(videoData);
+        const video = new video_2.VideoModel(videoData);
+        video.VideoChannel = res.locals.videoChannel;
         video.url = url_1.getLocalVideoActivityPubUrl(video);
         const videoFile = new video_file_1.VideoFileModel({
             extname: path_1.extname(videoPhysicalFile.filename),
@@ -114,16 +114,16 @@ function addVideo(req, res) {
             videoFile.fps = yield ffprobe_utils_1.getVideoFileFPS(videoPhysicalFile.path);
             videoFile.resolution = (yield ffprobe_utils_1.getVideoFileResolution(videoPhysicalFile.path)).videoFileResolution;
         }
+        videoFile.filename = video_paths_1.generateVideoFilename(video, false, videoFile.resolution, videoFile.extname);
         const destination = video_paths_1.getVideoFilePath(video, videoFile);
         yield fs_extra_1.move(videoPhysicalFile.path, destination);
         videoPhysicalFile.filename = video_paths_1.getVideoFilePath(video, videoFile);
         videoPhysicalFile.path = destination;
-        const [thumbnailModel, previewModel] = yield video_2.buildVideoThumbnailsFromReq({
+        const [thumbnailModel, previewModel] = yield video_1.buildVideoThumbnailsFromReq({
             video,
             files: req.files,
-            fallback: type => thumbnail_1.generateVideoMiniature(video, videoFile, type)
+            fallback: type => thumbnail_1.generateVideoMiniature({ video, videoFile, type })
         });
-        yield webtorrent_1.createTorrentAndSetInfoHash(video, videoFile);
         const { videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const sequelizeOptions = { transaction: t };
             const videoCreated = yield video.save(sequelizeOptions);
@@ -133,7 +133,7 @@ function addVideo(req, res) {
             videoFile.videoId = video.id;
             yield videoFile.save(sequelizeOptions);
             video.VideoFiles = [videoFile];
-            yield video_2.setVideoTags({ video, tags: videoInfo.tags, transaction: t });
+            yield video_1.setVideoTags({ video, tags: videoInfo.tags, transaction: t });
             if (videoInfo.scheduleUpdate) {
                 yield schedule_video_update_1.ScheduleVideoUpdateModel.create({
                     videoId: video.id,
@@ -148,14 +148,24 @@ function addVideo(req, res) {
                 isNew: true,
                 transaction: t
             });
-            yield videos_1.federateVideoIfNeeded(video, true, t);
             auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoAuditView(videoCreated.toFormattedDetailsJSON()));
             logger_1.logger.info('Video with name %s and uuid %s created.', videoInfo.name, videoCreated.uuid);
             return { videoCreated };
         }));
-        notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(videoCreated);
+        createTorrentAndSetInfoHashAsync(video, videoFile)
+            .catch(err => logger_1.logger.error('Cannot create torrent file for video %s', video.url, { err }))
+            .then(() => video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.id))
+            .then(refreshedVideo => {
+            if (!refreshedVideo)
+                return;
+            notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(refreshedVideo);
+            return database_utils_1.retryTransactionWrapper(() => {
+                return database_1.sequelizeTypescript.transaction(t => videos_1.federateVideoIfNeeded(refreshedVideo, true, t));
+            });
+        })
+            .catch(err => logger_1.logger.error('Cannot federate or notify video creation %s', video.url, { err }));
         if (video.state === 2) {
-            yield video_1.addOptimizeOrMergeAudioJob(videoCreated, videoFile);
+            yield video_1.addOptimizeOrMergeAudioJob(videoCreated, videoFile, res.locals.oauth.token.User);
         }
         hooks_1.Hooks.runAction('action:api.video.uploaded', { video: videoCreated });
         return res.json({
@@ -174,7 +184,7 @@ function updateVideo(req, res) {
         const videoInfoToUpdate = req.body;
         const wasConfidentialVideo = videoInstance.isConfidential();
         const hadPrivacyForFederation = videoInstance.hasPrivacyForFederation();
-        const [thumbnailModel, previewModel] = yield video_2.buildVideoThumbnailsFromReq({
+        const [thumbnailModel, previewModel] = yield video_1.buildVideoThumbnailsFromReq({
             video: videoInstance,
             files: req.files,
             fallback: () => Promise.resolve(undefined),
@@ -213,7 +223,7 @@ function updateVideo(req, res) {
                     const newPrivacy = parseInt(videoInfoToUpdate.privacy.toString(), 10);
                     videoInstance.setPrivacy(newPrivacy);
                     if (hadPrivacyForFederation && !videoInstance.hasPrivacyForFederation()) {
-                        yield video_3.VideoModel.sendDelete(videoInstance, { transaction: t });
+                        yield video_2.VideoModel.sendDelete(videoInstance, { transaction: t });
                     }
                 }
                 const videoInstanceUpdated = yield videoInstance.save(sequelizeOptions);
@@ -221,12 +231,13 @@ function updateVideo(req, res) {
                     yield videoInstanceUpdated.addAndSaveThumbnail(thumbnailModel, t);
                 if (previewModel)
                     yield videoInstanceUpdated.addAndSaveThumbnail(previewModel, t);
-                yield video_2.setVideoTags({
-                    video: videoInstanceUpdated,
-                    tags: videoInfoToUpdate.tags,
-                    transaction: t,
-                    defaultValue: videoInstanceUpdated.Tags
-                });
+                if (videoInfoToUpdate.tags !== undefined) {
+                    yield video_1.setVideoTags({
+                        video: videoInstanceUpdated,
+                        tags: videoInfoToUpdate.tags,
+                        transaction: t
+                    });
+                }
                 if (res.locals.videoChannel && videoInstanceUpdated.channelId !== res.locals.videoChannel.id) {
                     yield videoInstanceUpdated.$set('VideoChannel', res.locals.videoChannel, { transaction: t });
                     videoInstanceUpdated.VideoChannel = res.locals.videoChannel;
@@ -272,7 +283,7 @@ function updateVideo(req, res) {
 function getVideo(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const userId = res.locals.oauth ? res.locals.oauth.token.User.id : null;
-        const video = yield hooks_1.Hooks.wrapPromiseFun(video_3.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
+        const video = yield hooks_1.Hooks.wrapPromiseFun(video_2.VideoModel.loadForGetAPI, { id: res.locals.onlyVideoWithRights.id, userId }, 'filter:api.video.get.result');
         if (video.isOutdated()) {
             job_queue_1.JobQueue.Instance.createJob({ type: 'activitypub-refresher', payload: { type: 'video', url: video.url } });
         }
@@ -288,7 +299,7 @@ function viewVideo(req, res) {
             logger_1.logger.debug('View for ip %s and video %s already exists.', ip, immutableVideoAttrs.uuid);
             return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
         }
-        const video = yield video_3.VideoModel.load(immutableVideoAttrs.id);
+        const video = yield video_2.VideoModel.load(immutableVideoAttrs.id);
         const promises = [
             redis_1.Redis.Instance.setIPVideoView(ip, video.uuid, video.isLive)
         ];
@@ -347,7 +358,7 @@ function listVideos(req, res) {
             user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
             countVideos
         }, 'filter:api.videos.list.params');
-        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_3.VideoModel.listForApi, apiOptions, 'filter:api.videos.list.result');
+        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_2.VideoModel.listForApi, apiOptions, 'filter:api.videos.list.result');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }
@@ -363,5 +374,16 @@ function removeVideo(req, res) {
         return res.type('json')
             .status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204)
             .end();
+    });
+}
+function createTorrentAndSetInfoHashAsync(video, fileArg) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        yield webtorrent_1.createTorrentAndSetInfoHash(video, fileArg);
+        const refreshedFile = yield video_file_1.VideoFileModel.loadWithVideo(fileArg.id);
+        if (!refreshedFile)
+            return fileArg.removeTorrent();
+        refreshedFile.infoHash = fileArg.infoHash;
+        refreshedFile.torrentFilename = fileArg.torrentFilename;
+        return refreshedFile.save();
     });
 }

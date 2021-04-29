@@ -11,6 +11,13 @@ const extra_utils_1 = require("../../../../shared/extra-utils");
 const expect = chai.expect;
 describe('Test live', function () {
     let servers = [];
+    function waitUntilLivePublishedOnAllServers(videoId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const server of servers) {
+                yield extra_utils_1.waitUntilLivePublished(server.url, server.accessToken, videoId);
+            }
+        });
+    }
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
@@ -306,10 +313,10 @@ describe('Test live', function () {
         });
         it('Should enable transcoding without additional resolutions', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(30000);
+                this.timeout(60000);
                 liveVideoId = yield createLiveWrapper(false);
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoId);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoId);
+                yield waitUntilLivePublishedOnAllServers(liveVideoId);
                 yield extra_utils_1.waitJobs(servers);
                 yield testVideoResolutions(liveVideoId, [720]);
                 yield extra_utils_1.stopFfmpeg(command);
@@ -317,12 +324,12 @@ describe('Test live', function () {
         });
         it('Should enable transcoding with some resolutions', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(30000);
+                this.timeout(60000);
                 const resolutions = [240, 480];
                 yield updateConf(resolutions);
                 liveVideoId = yield createLiveWrapper(false);
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoId);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoId);
+                yield waitUntilLivePublishedOnAllServers(liveVideoId);
                 yield extra_utils_1.waitJobs(servers);
                 yield testVideoResolutions(liveVideoId, resolutions);
                 yield extra_utils_1.stopFfmpeg(command);
@@ -335,13 +342,13 @@ describe('Test live', function () {
                 yield updateConf(resolutions);
                 liveVideoId = yield createLiveWrapper(true);
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoId, 'video_short2.webm');
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoId);
+                yield waitUntilLivePublishedOnAllServers(liveVideoId);
                 yield extra_utils_1.waitJobs(servers);
                 yield testVideoResolutions(liveVideoId, resolutions);
                 yield extra_utils_1.stopFfmpeg(command);
                 yield extra_utils_1.waitUntilLiveEnded(servers[0].url, servers[0].accessToken, liveVideoId);
                 yield extra_utils_1.waitJobs(servers);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoId);
+                yield waitUntilLivePublishedOnAllServers(liveVideoId);
                 const bitrateLimits = {
                     720: 5000 * 1000,
                     360: 1100 * 1000,
@@ -408,7 +415,7 @@ describe('Test live', function () {
                 const res = yield extra_utils_1.createLive(servers[0].url, servers[0].accessToken, liveAttributes);
                 liveVideoId = res.body.video.uuid;
                 command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoId);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoId);
+                yield waitUntilLivePublishedOnAllServers(liveVideoId);
                 yield extra_utils_1.waitJobs(servers);
             });
         });
@@ -484,9 +491,7 @@ describe('Test live', function () {
                     remoteSocket.emit('subscribe', { videoId });
                 }
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                for (const server of servers) {
-                    yield extra_utils_1.waitUntilLivePublished(server.url, server.accessToken, liveVideoUUID);
-                }
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 for (const stateChanges of [localStateChanges, remoteStateChanges]) {
                     expect(stateChanges).to.have.length.at.least(1);
@@ -523,9 +528,7 @@ describe('Test live', function () {
                     remoteSocket.emit('subscribe', { videoId });
                 }
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                for (const server of servers) {
-                    yield extra_utils_1.waitUntilLivePublished(server.url, server.accessToken, liveVideoUUID);
-                }
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 expect(localLastVideoViews).to.equal(0);
                 expect(remoteLastVideoViews).to.equal(0);
@@ -550,7 +553,7 @@ describe('Test live', function () {
                 socket.on('state-change', data => stateChanges.push(data.state));
                 socket.emit('subscribe', { videoId });
                 const command = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 expect(stateChanges).to.have.lengthOf(1);
                 socket.emit('unsubscribe', { videoId });

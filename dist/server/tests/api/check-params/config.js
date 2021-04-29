@@ -25,8 +25,8 @@ describe('Test config API validators', function () {
             languages: ['en', 'es'],
             categories: [1, 2],
             isNSFW: true,
-            defaultClientRoute: '/videos/recently-added',
             defaultNSFWPolicy: 'blur',
+            defaultClientRoute: '/videos/recently-added',
             customizations: {
                 javascript: 'alert("coucou")',
                 css: 'body { background-color: red; }'
@@ -47,6 +47,9 @@ describe('Test config API validators', function () {
             },
             captions: {
                 size: 3
+            },
+            torrents: {
+                size: 4
             }
         },
         signup: {
@@ -68,7 +71,9 @@ describe('Test config API validators', function () {
             enabled: true,
             allowAdditionalExtensions: true,
             allowAudioFiles: true,
+            concurrency: 1,
             threads: 1,
+            profile: 'vod_profile',
             resolutions: {
                 '0p': false,
                 '240p': false,
@@ -76,6 +81,7 @@ describe('Test config API validators', function () {
                 '480p': true,
                 '720p': false,
                 '1080p': false,
+                '1440p': false,
                 '2160p': false
             },
             webtorrent: {
@@ -94,23 +100,34 @@ describe('Test config API validators', function () {
             transcoding: {
                 enabled: true,
                 threads: 4,
+                profile: 'live_profile',
                 resolutions: {
                     '240p': true,
                     '360p': true,
                     '480p': true,
                     '720p': true,
                     '1080p': true,
+                    '1440p': true,
                     '2160p': true
                 }
             }
         },
         import: {
             videos: {
+                concurrency: 1,
                 http: {
                     enabled: false
                 },
                 torrent: {
                     enabled: false
+                }
+            }
+        },
+        trending: {
+            videos: {
+                algorithms: {
+                    enabled: ['best', 'hot', 'most-viewed', 'most-liked'],
+                    default: 'most-viewed'
                 }
             }
         },

@@ -8,10 +8,10 @@ const database_1 = require("../../../initializers/database");
 const account_video_rate_1 = require("../../../models/account/account-video-rate");
 const actor_1 = require("../../../models/activitypub/actor");
 const actor_follow_1 = require("../../../models/activitypub/actor-follow");
+const video_redundancy_1 = require("../../../models/redundancy/video-redundancy");
+const video_share_1 = require("../../../models/video/video-share");
 const utils_1 = require("../send/utils");
 const videos_1 = require("../videos");
-const video_share_1 = require("../../../models/video/video-share");
-const video_redundancy_1 = require("../../../models/redundancy/video-redundancy");
 function processUndoActivity(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { activity, byActor } = options;
@@ -20,10 +20,7 @@ function processUndoActivity(options) {
             return database_utils_1.retryTransactionWrapper(processUndoLike, byActor, activity);
         }
         if (activityToUndo.type === 'Create') {
-            if (activityToUndo.object.type === 'Dislike') {
-                return database_utils_1.retryTransactionWrapper(processUndoDislike, byActor, activity);
-            }
-            else if (activityToUndo.object.type === 'CacheFile') {
+            if (activityToUndo.object.type === 'CacheFile') {
                 return database_utils_1.retryTransactionWrapper(processUndoCacheFile, byActor, activity);
             }
         }

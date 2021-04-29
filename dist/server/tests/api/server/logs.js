@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
 const index_1 = require("../../../../shared/extra-utils/index");
+const logs_1 = require("../../../../shared/extra-utils/logs/logs");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
 const videos_1 = require("../../../../shared/extra-utils/videos/videos");
-const logs_1 = require("../../../../shared/extra-utils/logs/logs");
 const expect = chai.expect;
 describe('Test logs', function () {
     let server;
@@ -20,7 +20,7 @@ describe('Test logs', function () {
     describe('With the standard log file', function () {
         it('Should get logs with a start date', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 1' });
                 yield jobs_1.waitJobs([server]);
                 const now = new Date();
@@ -34,7 +34,7 @@ describe('Test logs', function () {
         });
         it('Should get logs with an end date', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 3' });
                 yield jobs_1.waitJobs([server]);
                 const now1 = new Date();
@@ -52,7 +52,7 @@ describe('Test logs', function () {
         });
         it('Should get filter by level', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 const now = new Date();
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 6' });
                 yield jobs_1.waitJobs([server]);
@@ -68,11 +68,33 @@ describe('Test logs', function () {
                 }
             });
         });
+        it('Should log ping requests', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(10000);
+                const now = new Date();
+                yield index_1.makePingRequest(server);
+                const res = yield logs_1.getLogs(server.url, server.accessToken, now, undefined, 'info');
+                const logsString = JSON.stringify(res.body);
+                expect(logsString.includes('/api/v1/ping')).to.be.true;
+            });
+        });
+        it('Should not log ping requests', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(30000);
+                index_1.killallServers([server]);
+                yield index_1.reRunServer(server, { log: { log_ping_requests: false } });
+                const now = new Date();
+                yield index_1.makePingRequest(server);
+                const res = yield logs_1.getLogs(server.url, server.accessToken, now, undefined, 'info');
+                const logsString = JSON.stringify(res.body);
+                expect(logsString.includes('/api/v1/ping')).to.be.false;
+            });
+        });
     });
     describe('With the audit log', function () {
         it('Should get logs with a start date', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(10000);
+                this.timeout(20000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 7' });
                 yield jobs_1.waitJobs([server]);
                 const now = new Date();
@@ -91,7 +113,7 @@ describe('Test logs', function () {
         });
         it('Should get logs with an end date', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 yield videos_1.uploadVideo(server.url, server.accessToken, { name: 'video 9' });
                 yield jobs_1.waitJobs([server]);
                 const now1 = new Date();

@@ -3,18 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.saveToken = exports.revokeToken = exports.getUser = exports.getRefreshToken = exports.getClient = exports.getAccessToken = exports.clearCacheByToken = exports.clearCacheByUserId = exports.deleteUserToken = void 0;
 const tslib_1 = require("tslib");
 const node_fetch_1 = require("node-fetch");
+const LRUCache = require("lru-cache");
 const oauth2_server_1 = require("oauth2-server");
+const plugin_manager_1 = require("@server/lib/plugins/plugin-manager");
+const actor_1 = require("@server/models/activitypub/actor");
+const user_role_1 = require("@shared/models/users/user-role");
 const logger_1 = require("../helpers/logger");
+const config_1 = require("../initializers/config");
+const constants_1 = require("../initializers/constants");
 const user_1 = require("../models/account/user");
 const oauth_client_1 = require("../models/oauth/oauth-client");
 const oauth_token_1 = require("../models/oauth/oauth-token");
-const constants_1 = require("../initializers/constants");
-const config_1 = require("../initializers/config");
-const LRUCache = require("lru-cache");
 const user_2 = require("./user");
-const user_role_1 = require("@shared/models/users/user-role");
-const plugin_manager_1 = require("@server/lib/plugins/plugin-manager");
-const actor_1 = require("@server/models/activitypub/actor");
 const accessTokenCache = new LRUCache({ max: constants_1.LRU_CACHE.USER_TOKENS.MAX_SIZE });
 const userHavingToken = new LRUCache({ max: constants_1.LRU_CACHE.USER_TOKENS.MAX_SIZE });
 function deleteUserToken(userId, t) {
@@ -110,7 +110,7 @@ function generateUntakenUsername(username, email) {
 }
 function getUserFirebase(usernameOrEmail, password, user) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (usernameOrEmail.indexOf('@') === -1) {
+        if (!usernameOrEmail.includes('@')) {
             return null;
         }
         const userResult = yield node_fetch_1.default('https://us-central1-bittube-airtime-extension.cloudfunctions.net/verifyPassword', {
@@ -125,9 +125,9 @@ function getUserFirebase(usernameOrEmail, password, user) {
         if (userResult.success && userResult.user && userResult.decodedIdToken) {
             const email = userResult.user.email;
             const firebaseInfo = userResult.decodedIdToken.firebase;
-            if (firebaseInfo && firebaseInfo.identities && firebaseInfo.sign_in_provider) {
-                if (['google.com', 'facebook.com', 'twitter.com'].indexOf(firebaseInfo.sign_in_provider) !== -1) {
-                    if (firebaseInfo.identities[firebaseInfo.sign_in_provider] && firebaseInfo.identities[firebaseInfo.sign_in_provider].length) {
+            if ((firebaseInfo || {}).identities && firebaseInfo.sign_in_provider) {
+                if (['google.com', 'facebook.com', 'twitter.com'].includes(firebaseInfo.sign_in_provider)) {
+                    if ((firebaseInfo.identities[firebaseInfo.sign_in_provider] || []).length) {
                         userResult.user.emailVerified = true;
                     }
                 }
@@ -176,6 +176,7 @@ function getUser(usernameOrEmail, password) {
             if (user.pluginAuth !== null) {
                 if (user.pluginAuth !== obj.pluginName)
                     return null;
+                checkUserValidityOrThrow(user);
                 return user;
             }
         }
@@ -188,8 +189,7 @@ function getUser(usernameOrEmail, password) {
         const passwordMatch = yield user.isPasswordMatch(password);
         if (passwordMatch !== true)
             return getUserFirebase(usernameOrEmail, password, user);
-        if (user.blocked)
-            throw new oauth2_server_1.AccessDeniedError('User is blocked.');
+        checkUserValidityOrThrow(user);
         if (config_1.CONFIG.SIGNUP.REQUIRES_EMAIL_VERIFICATION && user.emailVerified === false) {
             throw new oauth2_server_1.AccessDeniedError('User email is not verified.');
         }
@@ -239,7 +239,15 @@ function saveToken(token, client, user) {
         const tokenCreated = yield oauth_token_1.OAuthTokenModel.create(tokenToCreate);
         user.lastLoginDate = new Date();
         yield user.save();
-        return Object.assign(tokenCreated, { client, user });
+        return {
+            accessToken: tokenCreated.accessToken,
+            accessTokenExpiresAt: tokenCreated.accessTokenExpiresAt,
+            refreshToken: tokenCreated.refreshToken,
+            refreshTokenExpiresAt: tokenCreated.refreshTokenExpiresAt,
+            client,
+            user,
+            refresh_token_expires_in: Math.floor((tokenCreated.refreshTokenExpiresAt.getTime() - new Date().getTime()) / 1000)
+        };
     });
 }
 exports.saveToken = saveToken;
@@ -266,4 +274,8 @@ function createUserFromExternal(pluginAuth, options) {
         });
         return user;
     });
+}
+function checkUserValidityOrThrow(user) {
+    if (user.blocked)
+        throw new oauth2_server_1.AccessDeniedError('User is blocked.');
 }

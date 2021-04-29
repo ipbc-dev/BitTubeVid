@@ -1,16 +1,38 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
+const redundancy_1 = require("@shared/extra-utils/server/redundancy");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
-const redundancy_1 = require("@shared/extra-utils/server/redundancy");
 const expect = chai.expect;
 describe('Test redundancy constraints', function () {
     let remoteServer;
     let localServer;
     let servers;
+    const remoteServerConfig = {
+        redundancy: {
+            videos: {
+                check_interval: '1 second',
+                strategies: [
+                    {
+                        strategy: 'recently-added',
+                        min_lifetime: '1 hour',
+                        size: '100MB',
+                        min_views: 0
+                    }
+                ]
+            }
+        }
+    };
+    function uploadWrapper(videoName) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.uploadVideo(localServer.url, localServer.accessToken, { name: 'to transcode', privacy: 3 });
+            yield jobs_1.waitJobs([localServer]);
+            yield extra_utils_1.updateVideo(localServer.url, localServer.accessToken, res.body.video.id, { name: videoName, privacy: 1 });
+        });
+    }
     function getTotalRedundanciesLocalServer() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield redundancy_1.listVideoRedundancies({
@@ -35,22 +57,7 @@ describe('Test redundancy constraints', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
             {
-                const config = {
-                    redundancy: {
-                        videos: {
-                            check_interval: '1 second',
-                            strategies: [
-                                {
-                                    strategy: 'recently-added',
-                                    min_lifetime: '1 hour',
-                                    size: '100MB',
-                                    min_views: 0
-                                }
-                            ]
-                        }
-                    }
-                };
-                remoteServer = yield extra_utils_1.flushAndRunServer(1, config);
+                remoteServer = yield extra_utils_1.flushAndRunServer(1, remoteServerConfig);
             }
             {
                 const config = {
@@ -100,8 +107,7 @@ describe('Test redundancy constraints', function () {
             };
             yield extra_utils_1.killallServers([localServer]);
             yield extra_utils_1.reRunServer(localServer, config);
-            yield extra_utils_1.uploadVideo(localServer.url, localServer.accessToken, { name: 'video 2 server 2' });
-            yield jobs_1.waitJobs(servers);
+            yield uploadWrapper('video 2 server 2');
             yield extra_utils_1.waitUntilLog(remoteServer, 'Duplicated ', 10);
             yield jobs_1.waitJobs(servers);
             {
@@ -126,8 +132,7 @@ describe('Test redundancy constraints', function () {
             };
             yield extra_utils_1.killallServers([localServer]);
             yield extra_utils_1.reRunServer(localServer, config);
-            yield extra_utils_1.uploadVideo(localServer.url, localServer.accessToken, { name: 'video 3 server 2' });
-            yield jobs_1.waitJobs(servers);
+            yield uploadWrapper('video 3 server 2');
             yield extra_utils_1.waitUntilLog(remoteServer, 'Duplicated ', 15);
             yield jobs_1.waitJobs(servers);
             {
@@ -145,8 +150,7 @@ describe('Test redundancy constraints', function () {
             this.timeout(120000);
             yield extra_utils_1.follow(localServer.url, [remoteServer.url], localServer.accessToken);
             yield jobs_1.waitJobs(servers);
-            yield extra_utils_1.uploadVideo(localServer.url, localServer.accessToken, { name: 'video 4 server 2' });
-            yield jobs_1.waitJobs(servers);
+            yield uploadWrapper('video 4 server 2');
             yield extra_utils_1.waitUntilLog(remoteServer, 'Duplicated ', 20);
             yield jobs_1.waitJobs(servers);
             {

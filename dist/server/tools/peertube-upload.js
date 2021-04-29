@@ -20,16 +20,17 @@ command
     .option('-v, --preview <previewPath>', 'Preview path')
     .option('-f, --file <file>', 'Video absolute file path')
     .parse(process.argv);
+const options = command.opts();
 cli_1.getServerCredentials(command)
     .then(({ url, username, password }) => {
-    if (!program['videoName'] || !program['file']) {
-        if (!program['videoName'])
+    if (!options.videoName || !options.file) {
+        if (!options.videoName)
             console.error('--video-name is required.');
-        if (!program['file'])
+        if (!options.file)
             console.error('--file is required.');
         process.exit(-1);
     }
-    if (path_1.isAbsolute(program['file']) === false) {
+    if (path_1.isAbsolute(options.file) === false) {
         console.error('File path should be absolute.');
         process.exit(-1);
     }
@@ -42,17 +43,17 @@ cli_1.getServerCredentials(command)
 function run(url, username, password) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const accessToken = yield extra_utils_1.getAccessToken(url, username, password);
-        yield fs_extra_1.access(program['file'], fs_extra_1.constants.F_OK);
-        console.log('Uploading %s video...', program['videoName']);
+        yield fs_extra_1.access(options.file, fs_extra_1.constants.F_OK);
+        console.log('Uploading %s video...', options.videoName);
         const videoAttributes = yield cli_1.buildVideoAttributesFromCommander(url, program);
         Object.assign(videoAttributes, {
-            fixture: program['file'],
-            thumbnailfile: program['thumbnail'],
-            previewfile: program['preview']
+            fixture: options.file,
+            thumbnailfile: options.thumbnail,
+            previewfile: options.preview
         });
         try {
             yield extra_utils_2.uploadVideo(url, accessToken, videoAttributes);
-            console.log(`Video ${program['videoName']} uploaded.`);
+            console.log(`Video ${options.videoName} uploaded.`);
             process.exit(0);
         }
         catch (err) {

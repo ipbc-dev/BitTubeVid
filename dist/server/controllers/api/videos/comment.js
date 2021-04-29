@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoCommentRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const audit_logger_1 = require("../../../helpers/audit-logger");
 const utils_1 = require("../../../helpers/utils");
 const database_1 = require("../../../initializers/database");
@@ -13,7 +14,6 @@ const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
 const account_1 = require("../../../models/account/account");
 const video_comment_2 = require("../../../models/video/video-comment");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const auditLogger = audit_logger_1.auditLoggerFactory('comments');
 const videoCommentRouter = express.Router();
 exports.videoCommentRouter = videoCommentRouter;
@@ -60,10 +60,11 @@ function listVideoThreads(req, res) {
         else {
             resultList = {
                 total: 0,
+                totalNotDeletedComments: 0,
                 data: []
             };
         }
-        return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
+        return res.json(Object.assign(Object.assign({}, utils_1.getFormattedObjects(resultList.data, resultList.total)), { totalNotDeletedComments: resultList.totalNotDeletedComments }));
     });
 }
 function listVideoThreadComments(req, res) {

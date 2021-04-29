@@ -14,7 +14,7 @@ function crawlCollectionPage(uri, handler, cleaner) {
             uri,
             json: true,
             activityPub: true,
-            timeout: constants_1.JOB_REQUEST_TIMEOUT
+            timeout: constants_1.REQUEST_TIMEOUT
         };
         const startDate = new Date();
         const response = yield requests_1.doRequest(options);

@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
 const user_1 = require("@server/lib/user");
 const application_1 = require("@server/models/application/application");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const search_1 = require("../../../helpers/custom-validators/search");
 const video_ownership_1 = require("../../../helpers/custom-validators/video-ownership");
@@ -22,12 +23,12 @@ const account_1 = require("../../../models/account/account");
 const video_2 = require("../../../models/video/video");
 const oauth_1 = require("../../oauth");
 const utils_1 = require("../utils");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const videosAddValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.body('videofile')
         .custom((value, { req }) => misc_1.isFileFieldValid(req.files, 'videofile'))
         .withMessage('Should have a file'),
     express_validator_1.body('name')
+        .trim()
         .custom(videos_1.isVideoNameValid)
         .withMessage('Should have a valid name'),
     express_validator_1.body('channelId')
@@ -84,6 +85,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
     express_validator_1.param('id').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
     express_validator_1.body('name')
         .optional()
+        .trim()
         .custom(videos_1.isVideoNameValid).withMessage('Should have a valid name'),
     express_validator_1.body('channelId')
         .optional()
@@ -141,11 +143,10 @@ const videosCustomGetValidator = (fetchType, authenticateInQuery = false) => {
             if (fetchType === 'only-immutable-attributes')
                 return next();
             const video = video_1.getVideoWithAttributes(res);
-            const videoAll = video;
-            if (videoAll.requiresAuth()) {
+            if (video.requiresAuth()) {
                 yield oauth_1.authenticatePromiseIfNeeded(req, res, authenticateInQuery);
                 const user = res.locals.oauth ? res.locals.oauth.token.User : null;
-                if (!user || !user.canGetVideo(videoAll)) {
+                if (!user || !user.canGetVideo(video)) {
                     return res.status(http_error_codes_1.HttpStatusCode.FORBIDDEN_403)
                         .json({ error: 'Cannot get this private/internal or blacklisted video.' });
                 }
@@ -363,6 +364,9 @@ const commonVideosFiltersValidator = [
         .optional()
         .customSanitizer(misc_1.toBooleanOrNull)
         .custom(misc_1.isBooleanValid).withMessage('Should have a valid skip count boolean'),
+    express_validator_1.query('search')
+        .optional()
+        .custom(misc_1.exists).withMessage('Should have a valid search'),
     (req, res, next) => {
         logger_1.logger.debug('Checking commons video filters query', { parameters: req.query });
         if (utils_1.areValidationErrors(req, res))

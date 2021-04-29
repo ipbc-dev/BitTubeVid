@@ -67,7 +67,7 @@ describe('Test bulk actions', function () {
         }
         before(function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(60000);
+                this.timeout(120000);
                 yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video 1 server 1' });
                 yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video 2 server 1' });
                 yield index_1.uploadVideo(servers[0].url, user1AccessToken, { name: 'video 3 server 1' });

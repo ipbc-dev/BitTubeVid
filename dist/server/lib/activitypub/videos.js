@@ -6,7 +6,9 @@ const Bluebird = require("bluebird");
 const lodash_1 = require("lodash");
 const magnetUtil = require("magnet-uri");
 const path_1 = require("path");
+const tracker_1 = require("@server/models/server/tracker");
 const video_live_1 = require("@server/models/video/video-live");
+const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const activitypub_1 = require("../../helpers/activitypub");
 const videos_1 = require("../../helpers/custom-validators/activitypub/videos");
 const misc_1 = require("../../helpers/custom-validators/misc");
@@ -31,13 +33,13 @@ const peertube_socket_1 = require("../peertube-socket");
 const thumbnail_1 = require("../thumbnail");
 const video_3 = require("../video");
 const video_blacklist_1 = require("../video-blacklist");
+const video_paths_1 = require("../video-paths");
 const actor_1 = require("./actor");
 const crawl_1 = require("./crawl");
 const send_1 = require("./send");
 const share_1 = require("./share");
 const video_comments_1 = require("./video-comments");
 const video_rates_1 = require("./video-rates");
-const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = videoArg;
@@ -45,7 +47,7 @@ function federateVideoIfNeeded(videoArg, isNewVideo, transaction) {
             video.hasPrivacyForFederation() && video.hasStateForFederation()) {
             if (misc_1.isArray(video.VideoCaptions) === false) {
                 video.VideoCaptions = yield video.$get('VideoCaptions', {
-                    attributes: ['language'],
+                    attributes: ['filename', 'language'],
                     transaction
                 });
             }
@@ -201,7 +203,11 @@ function updateVideoFromAP(options) {
         try {
             let thumbnailModel;
             try {
-                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, 1);
+                thumbnailModel = yield thumbnail_1.createVideoMiniatureFromUrl({
+                    downloadUrl: getThumbnailFromIcons(videoObject).url,
+                    video,
+                    type: 1
+                });
             }
             catch (err) {
                 logger_1.logger.warn('Cannot generate thumbnail of %s.', videoObject.id, { err });
@@ -209,9 +215,12 @@ function updateVideoFromAP(options) {
             const videoUpdated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const sequelizeOptions = { transaction: t };
                 videoFieldsSave = video.toJSON();
-                const videoChannel = video.VideoChannel;
-                if (videoChannel.Account.id !== account.id) {
-                    throw new Error('Account ' + account.Actor.url + ' does not own video channel ' + videoChannel.Actor.url);
+                const oldVideoChannel = video.VideoChannel;
+                if (!oldVideoChannel.Actor.serverId || !channel.Actor.serverId) {
+                    throw new Error('Cannot check old channel/new channel validity because `serverId` is null');
+                }
+                if (oldVideoChannel.Actor.serverId !== channel.Actor.serverId) {
+                    throw new Error('New channel ' + channel.Actor.url + ' is not on the same server than new channel ' + oldVideoChannel.Actor.url);
                 }
                 const to = overrideTo || videoObject.to;
                 const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, to);
@@ -241,8 +250,13 @@ function updateVideoFromAP(options) {
                 if (thumbnailModel)
                     yield videoUpdated.addAndSaveThumbnail(thumbnailModel, t);
                 if (videoUpdated.getPreview()) {
-                    const previewUrl = videoUpdated.getPreview().getFileUrl(videoUpdated);
-                    const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, video, 2, constants_1.PREVIEWS_SIZE);
+                    const previewUrl = getPreviewUrl(getPreviewFromIcons(videoObject), video);
+                    const previewModel = thumbnail_1.createPlaceholderThumbnail({
+                        fileUrl: previewUrl,
+                        video,
+                        type: 2,
+                        size: constants_1.PREVIEWS_SIZE
+                    });
                     yield videoUpdated.addAndSaveThumbnail(previewModel, t);
                 }
                 {
@@ -266,6 +280,7 @@ function updateVideoFromAP(options) {
                     for (const playlistAttributes of streamingPlaylistAttributes) {
                         const streamingPlaylistModel = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.upsert(playlistAttributes, { returning: true, transaction: t })
                             .then(([streamingPlaylist]) => streamingPlaylist);
+                        streamingPlaylistModel.Video = videoUpdated;
                         const newVideoFiles = videoFileActivityUrlToDBAttributes(streamingPlaylistModel, playlistAttributes.tagAPObject)
                             .map(a => new video_file_1.VideoFileModel(a));
                         const destroyTasks = database_utils_1.deleteNonExistingModels(oldStreamingPlaylistFiles, newVideoFiles, t);
@@ -279,12 +294,22 @@ function updateVideoFromAP(options) {
                     const tags = videoObject.tag
                         .filter(isAPHashTagObject)
                         .map(tag => tag.name);
-                    yield video_3.setVideoTags({ video: videoUpdated, tags, transaction: t, defaultValue: videoUpdated.Tags });
+                    yield video_3.setVideoTags({ video: videoUpdated, tags, transaction: t });
+                }
+                {
+                    const trackers = getTrackerUrls(videoObject, videoUpdated);
+                    yield setVideoTrackers({ video: videoUpdated, trackers, transaction: t });
                 }
                 {
                     yield video_caption_1.VideoCaptionModel.deleteAllCaptionsOfRemoteVideo(videoUpdated.id, t);
                     const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-                        return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoUpdated.id, c.identifier, c.url, t);
+                        const caption = new video_caption_1.VideoCaptionModel({
+                            videoId: videoUpdated.id,
+                            filename: video_caption_1.VideoCaptionModel.generateCaptionName(c.identifier),
+                            language: c.identifier,
+                            fileUrl: c.url
+                        });
+                        return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(caption, t);
                     });
                     yield Promise.all(videoCaptionsPromises);
                 }
@@ -396,8 +421,11 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
         logger_1.logger.debug('Adding remote video %s.', videoObject.id);
         const videoData = yield videoActivityObjectToDBAttributes(channel, videoObject, videoObject.to);
         const video = video_2.VideoModel.build(videoData);
-        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl(getThumbnailFromIcons(videoObject).url, video, 1)
-            .catch(err => {
+        const promiseThumbnail = thumbnail_1.createVideoMiniatureFromUrl({
+            downloadUrl: getThumbnailFromIcons(videoObject).url,
+            video,
+            type: 1
+        }).catch(err => {
             logger_1.logger.error('Cannot create miniature from url.', { err });
             return undefined;
         });
@@ -406,57 +434,77 @@ function createVideo(videoObject, channel, waitThumbnail = false) {
             thumbnailModel = yield promiseThumbnail;
         }
         const { autoBlacklisted, videoCreated } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const sequelizeOptions = { transaction: t };
-            const videoCreated = yield video.save(sequelizeOptions);
-            videoCreated.VideoChannel = channel;
-            if (thumbnailModel)
-                yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
-            const previewIcon = getPreviewFromIcons(videoObject);
-            const previewUrl = previewIcon
-                ? previewIcon.url
-                : activitypub_1.buildRemoteVideoBaseUrl(videoCreated, path_1.join(constants_1.STATIC_PATHS.PREVIEWS, video.generatePreviewName()));
-            const previewModel = thumbnail_1.createPlaceholderThumbnail(previewUrl, videoCreated, 2, constants_1.PREVIEWS_SIZE);
-            if (thumbnailModel)
-                yield videoCreated.addAndSaveThumbnail(previewModel, t);
-            const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url);
-            const videoFilePromises = videoFileAttributes.map(f => video_file_1.VideoFileModel.create(f, { transaction: t }));
-            const videoFiles = yield Promise.all(videoFilePromises);
-            const streamingPlaylistsAttributes = streamingPlaylistActivityUrlToDBAttributes(videoCreated, videoObject, videoFiles);
-            videoCreated.VideoStreamingPlaylists = [];
-            for (const playlistAttributes of streamingPlaylistsAttributes) {
-                const playlistModel = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.create(playlistAttributes, { transaction: t });
-                const playlistFiles = videoFileActivityUrlToDBAttributes(playlistModel, playlistAttributes.tagAPObject);
-                const videoFilePromises = playlistFiles.map(f => video_file_1.VideoFileModel.create(f, { transaction: t }));
-                playlistModel.VideoFiles = yield Promise.all(videoFilePromises);
-                videoCreated.VideoStreamingPlaylists.push(playlistModel);
-            }
-            const tags = videoObject.tag
-                .filter(isAPHashTagObject)
-                .map(t => t.name);
-            yield video_3.setVideoTags({ video: videoCreated, tags, transaction: t });
-            const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
-                return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCreated.id, c.identifier, c.url, t);
-            });
-            yield Promise.all(videoCaptionsPromises);
-            videoCreated.VideoFiles = videoFiles;
-            if (videoCreated.isLive) {
-                const videoLive = new video_live_1.VideoLiveModel({
-                    streamKey: null,
-                    saveReplay: videoObject.liveSaveReplay,
-                    permanentLive: videoObject.permanentLive,
-                    videoId: videoCreated.id
+            try {
+                const sequelizeOptions = { transaction: t };
+                const videoCreated = yield video.save(sequelizeOptions);
+                videoCreated.VideoChannel = channel;
+                if (thumbnailModel)
+                    yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
+                const previewUrl = getPreviewUrl(getPreviewFromIcons(videoObject), videoCreated);
+                const previewModel = thumbnail_1.createPlaceholderThumbnail({
+                    fileUrl: previewUrl,
+                    video: videoCreated,
+                    type: 2,
+                    size: constants_1.PREVIEWS_SIZE
                 });
-                videoCreated.VideoLive = yield videoLive.save({ transaction: t });
+                if (thumbnailModel)
+                    yield videoCreated.addAndSaveThumbnail(previewModel, t);
+                const videoFileAttributes = videoFileActivityUrlToDBAttributes(videoCreated, videoObject.url);
+                const videoFilePromises = videoFileAttributes.map(f => video_file_1.VideoFileModel.create(f, { transaction: t }));
+                const videoFiles = yield Promise.all(videoFilePromises);
+                const streamingPlaylistsAttributes = streamingPlaylistActivityUrlToDBAttributes(videoCreated, videoObject, videoFiles);
+                videoCreated.VideoStreamingPlaylists = [];
+                for (const playlistAttributes of streamingPlaylistsAttributes) {
+                    const playlist = yield video_streaming_playlist_1.VideoStreamingPlaylistModel.create(playlistAttributes, { transaction: t });
+                    playlist.Video = videoCreated;
+                    const playlistFiles = videoFileActivityUrlToDBAttributes(playlist, playlistAttributes.tagAPObject);
+                    const videoFilePromises = playlistFiles.map(f => video_file_1.VideoFileModel.create(f, { transaction: t }));
+                    playlist.VideoFiles = yield Promise.all(videoFilePromises);
+                    videoCreated.VideoStreamingPlaylists.push(playlist);
+                }
+                const tags = videoObject.tag
+                    .filter(isAPHashTagObject)
+                    .map(t => t.name);
+                yield video_3.setVideoTags({ video: videoCreated, tags, transaction: t });
+                const videoCaptionsPromises = videoObject.subtitleLanguage.map(c => {
+                    const caption = new video_caption_1.VideoCaptionModel({
+                        videoId: videoCreated.id,
+                        filename: video_caption_1.VideoCaptionModel.generateCaptionName(c.identifier),
+                        language: c.identifier,
+                        fileUrl: c.url
+                    });
+                    return video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(caption, t);
+                });
+                yield Promise.all(videoCaptionsPromises);
+                {
+                    const trackers = getTrackerUrls(videoObject, videoCreated);
+                    yield setVideoTrackers({ video: videoCreated, trackers, transaction: t });
+                }
+                videoCreated.VideoFiles = videoFiles;
+                if (videoCreated.isLive) {
+                    const videoLive = new video_live_1.VideoLiveModel({
+                        streamKey: null,
+                        saveReplay: videoObject.liveSaveReplay,
+                        permanentLive: videoObject.permanentLive,
+                        videoId: videoCreated.id
+                    });
+                    videoCreated.VideoLive = yield videoLive.save({ transaction: t });
+                }
+                const autoBlacklisted = yield video_blacklist_1.autoBlacklistVideoIfNeeded({
+                    video: videoCreated,
+                    user: undefined,
+                    isRemote: true,
+                    isNew: true,
+                    transaction: t
+                });
+                logger_1.logger.info('Remote video with uuid %s inserted.', videoObject.uuid);
+                return { autoBlacklisted, videoCreated };
             }
-            const autoBlacklisted = yield video_blacklist_1.autoBlacklistVideoIfNeeded({
-                video: videoCreated,
-                user: undefined,
-                isRemote: true,
-                isNew: true,
-                transaction: t
-            });
-            logger_1.logger.info('Remote video with uuid %s inserted.', videoObject.uuid);
-            return { autoBlacklisted, videoCreated };
+            catch (err) {
+                if (thumbnailModel)
+                    yield thumbnailModel.removeThumbnail();
+                throw err;
+            }
         }));
         if (waitThumbnail === false) {
             promiseThumbnail.then(thumbnailModel => {
@@ -528,22 +576,32 @@ function videoFileActivityUrlToDBAttributes(videoOrPlaylist, urls) {
         if (!parsed || videos_2.isVideoFileInfoHashValid(parsed.infoHash) === false) {
             throw new Error('Cannot parse magnet URI ' + magnet.href);
         }
-        const metadata = urls.filter(videos_1.isAPVideoFileMetadataObject)
+        const torrentUrl = Array.isArray(parsed.xs)
+            ? parsed.xs[0]
+            : parsed.xs;
+        const metadata = urls.filter(videos_1.isAPVideoFileUrlMetadataObject)
             .find(u => {
             return u.height === fileUrl.height &&
                 u.fps === fileUrl.fps &&
                 u.rel.includes(fileUrl.mediaType);
         });
-        const mediaType = fileUrl.mediaType;
+        const extname = video_1.getExtFromMimetype(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT, fileUrl.mediaType);
+        const resolution = fileUrl.height;
+        const videoId = videoOrPlaylist.playlistUrl ? null : videoOrPlaylist.id;
+        const videoStreamingPlaylistId = videoOrPlaylist.playlistUrl ? videoOrPlaylist.id : null;
         const attribute = {
-            extname: video_1.getExtFromMimetype(constants_1.MIMETYPES.VIDEO.MIMETYPE_EXT, mediaType),
+            extname,
             infoHash: parsed.infoHash,
-            resolution: fileUrl.height,
+            resolution,
             size: fileUrl.size,
             fps: fileUrl.fps || -1,
             metadataUrl: metadata === null || metadata === void 0 ? void 0 : metadata.href,
-            videoId: videoOrPlaylist.playlistUrl ? null : videoOrPlaylist.id,
-            videoStreamingPlaylistId: videoOrPlaylist.playlistUrl ? videoOrPlaylist.id : null
+            filename: path_1.basename(fileUrl.href),
+            fileUrl: fileUrl.href,
+            torrentUrl,
+            torrentFilename: video_paths_1.generateTorrentFileName(videoOrPlaylist, resolution),
+            videoId,
+            videoStreamingPlaylistId
         };
         attributes.push(attribute);
     }
@@ -585,4 +643,31 @@ function getThumbnailFromIcons(videoObject) {
 function getPreviewFromIcons(videoObject) {
     const validIcons = videoObject.icon.filter(i => i.width > constants_1.PREVIEWS_SIZE.minWidth);
     return lodash_1.maxBy(validIcons, 'width');
+}
+function getPreviewUrl(previewIcon, video) {
+    return previewIcon
+        ? previewIcon.url
+        : activitypub_1.buildRemoteVideoBaseUrl(video, path_1.join(constants_1.LAZY_STATIC_PATHS.PREVIEWS, video.generatePreviewName()));
+}
+function getTrackerUrls(object, video) {
+    let wsFound = false;
+    const trackers = object.url.filter(u => videos_1.isAPVideoTrackerUrlObject(u))
+        .map((u) => {
+        if (misc_1.isArray(u.rel) && u.rel.includes('websocket'))
+            wsFound = true;
+        return u.href;
+    });
+    if (wsFound)
+        return trackers;
+    return [
+        activitypub_1.buildRemoteVideoBaseUrl(video, '/tracker/socket', constants_1.REMOTE_SCHEME.WS),
+        activitypub_1.buildRemoteVideoBaseUrl(video, '/tracker/announce')
+    ];
+}
+function setVideoTrackers(options) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { video, trackers, transaction } = options;
+        const trackerInstances = yield tracker_1.TrackerModel.findOrCreateTrackers(trackers, transaction);
+        yield video.$set('Trackers', trackerInstances, { transaction });
+    });
 }

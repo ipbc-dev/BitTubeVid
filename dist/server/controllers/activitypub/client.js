@@ -29,7 +29,7 @@ const utils_1 = require("./utils");
 const activityPubClientRouter = express.Router();
 exports.activityPubClientRouter = activityPubClientRouter;
 activityPubClientRouter.use(cors());
-activityPubClientRouter.get('/accounts?/:name', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localAccountValidator), accountController);
+activityPubClientRouter.get(['/accounts?/:name', '/accounts?/:name/video-channels'], middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localAccountValidator), accountController);
 activityPubClientRouter.get('/accounts?/:name/followers', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localAccountValidator), middlewares_1.asyncMiddleware(accountFollowersController));
 activityPubClientRouter.get('/accounts?/:name/following', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localAccountValidator), middlewares_1.asyncMiddleware(accountFollowingController));
 activityPubClientRouter.get('/accounts?/:name/playlists', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localAccountValidator), middlewares_1.asyncMiddleware(accountPlaylistsController));
@@ -44,7 +44,7 @@ activityPubClientRouter.get('/videos/watch/:id/dislikes', middlewares_1.executeI
 activityPubClientRouter.get('/videos/watch/:id/comments', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.videosCustomGetValidator('only-immutable-attributes')), middlewares_1.asyncMiddleware(videoCommentsController));
 activityPubClientRouter.get('/videos/watch/:videoId/comments/:commentId', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(validators_1.videoCommentGetValidator), middlewares_1.asyncMiddleware(videoCommentController));
 activityPubClientRouter.get('/videos/watch/:videoId/comments/:commentId/activity', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(validators_1.videoCommentGetValidator), middlewares_1.asyncMiddleware(videoCommentController));
-activityPubClientRouter.get('/video-channels/:name', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localVideoChannelValidator), videoChannelController);
+activityPubClientRouter.get(['/video-channels/:name', '/video-channels/:name/videos'], middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localVideoChannelValidator), videoChannelController);
 activityPubClientRouter.get('/video-channels/:name/followers', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localVideoChannelValidator), middlewares_1.asyncMiddleware(videoChannelFollowersController));
 activityPubClientRouter.get('/video-channels/:name/following', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localVideoChannelValidator), middlewares_1.asyncMiddleware(videoChannelFollowingController));
 activityPubClientRouter.get('/video-channels/:name/playlists', middlewares_1.executeIfActivityPub, middlewares_1.asyncMiddleware(middlewares_1.localVideoChannelValidator), middlewares_1.asyncMiddleware(videoChannelPlaylistsController));

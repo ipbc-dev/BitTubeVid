@@ -140,15 +140,40 @@ function buildListQuery(model, options) {
             and.push('(' + languagesQueryParts.join(' OR ') + ')');
         }
     }
-    if (options.trendingDays && options.isCount !== true) {
-        const viewsGteDate = new Date(new Date().getTime() - (24 * 3600 * 1000) * options.trendingDays);
-        joins.push('LEFT JOIN "videoView" ON "video"."id" = "videoView"."videoId" AND "videoView"."startDate" >= :viewsGteDate');
-        replacements.viewsGteDate = viewsGteDate;
-        attributes.push('COALESCE(SUM("videoView"."views"), 0) AS "videoViewsSum"');
-        group = 'GROUP BY "video"."id"';
+    if (options.isCount !== true) {
+        if (options.trendingDays) {
+            const viewsGteDate = new Date(new Date().getTime() - (24 * 3600 * 1000) * options.trendingDays);
+            joins.push('LEFT JOIN "videoView" ON "video"."id" = "videoView"."videoId" AND "videoView"."startDate" >= :viewsGteDate');
+            replacements.viewsGteDate = viewsGteDate;
+            attributes.push('COALESCE(SUM("videoView"."views"), 0) AS "score"');
+            group = 'GROUP BY "video"."id"';
+        }
+        else if (['best', 'hot'].includes(options.trendingAlgorithm)) {
+            const weights = {
+                like: 3 * 50,
+                dislike: -3 * 50,
+                view: Math.floor((1 / 3) * 50),
+                comment: 2 * 50,
+                history: -2 * 50
+            };
+            joins.push('LEFT JOIN "videoComment" ON "video"."id" = "videoComment"."videoId"');
+            let attribute = `LOG(GREATEST(1, "video"."likes" - 1)) * ${weights.like} ` +
+                `+ LOG(GREATEST(1, "video"."dislikes" - 1)) * ${weights.dislike} ` +
+                `+ LOG("video"."views" + 1) * ${weights.view} ` +
+                `+ LOG(GREATEST(1, COUNT(DISTINCT "videoComment"."id"))) * ${weights.comment} ` +
+                '+ (SELECT (EXTRACT(epoch FROM "video"."publishedAt") - 1446156582) / 47000) ';
+            if (options.trendingAlgorithm === 'best' && options.user) {
+                joins.push('LEFT JOIN "userVideoHistory" ON "video"."id" = "userVideoHistory"."videoId" AND "userVideoHistory"."userId" = :bestUser');
+                replacements.bestUser = options.user.id;
+                attribute += `+ POWER(COUNT(DISTINCT "userVideoHistory"."id"), 2.0) * ${weights.history} `;
+            }
+            attribute += 'AS "score"';
+            attributes.push(attribute);
+            group = 'GROUP BY "video"."id"';
+        }
     }
     if (options.historyOfUser) {
-        joins.push('INNER JOIN "userVideoHistory" on "video"."id" = "userVideoHistory"."videoId"');
+        joins.push('INNER JOIN "userVideoHistory" ON "video"."id" = "userVideoHistory"."videoId"');
         and.push('"userVideoHistory"."userId" = :historyOfUser');
         replacements.historyOfUser = options.historyOfUser.id;
     }
@@ -245,8 +270,8 @@ function buildOrder(value) {
         throw new Error('Invalid sort column ' + field);
     if (field.toLowerCase() === 'random')
         return 'ORDER BY RANDOM()';
-    if (field.toLowerCase() === 'trending') {
-        return `ORDER BY "videoViewsSum" ${direction}, "video"."views" ${direction}`;
+    if (['trending', 'hot', 'best'].includes(field.toLowerCase())) {
+        return `ORDER BY "score" ${direction}, "video"."views" ${direction}`;
     }
     let firstSort;
     if (field.toLowerCase() === 'match') {
@@ -328,18 +353,29 @@ function wrapForAPIResults(baseQuery, replacements, options, order) {
             '"VideoFiles"."resolution"': '"VideoFiles.resolution"',
             '"VideoFiles"."size"': '"VideoFiles.size"',
             '"VideoFiles"."extname"': '"VideoFiles.extname"',
+            '"VideoFiles"."filename"': '"VideoFiles.filename"',
+            '"VideoFiles"."fileUrl"': '"VideoFiles.fileUrl"',
+            '"VideoFiles"."torrentFilename"': '"VideoFiles.torrentFilename"',
+            '"VideoFiles"."torrentUrl"': '"VideoFiles.torrentUrl"',
             '"VideoFiles"."infoHash"': '"VideoFiles.infoHash"',
             '"VideoFiles"."fps"': '"VideoFiles.fps"',
             '"VideoFiles"."videoId"': '"VideoFiles.videoId"',
             '"VideoStreamingPlaylists"."id"': '"VideoStreamingPlaylists.id"',
+            '"VideoStreamingPlaylists"."playlistUrl"': '"VideoStreamingPlaylists.playlistUrl"',
+            '"VideoStreamingPlaylists"."type"': '"VideoStreamingPlaylists.type"',
             '"VideoStreamingPlaylists->VideoFiles"."id"': '"VideoStreamingPlaylists.VideoFiles.id"',
             '"VideoStreamingPlaylists->VideoFiles"."createdAt"': '"VideoStreamingPlaylists.VideoFiles.createdAt"',
             '"VideoStreamingPlaylists->VideoFiles"."updatedAt"': '"VideoStreamingPlaylists.VideoFiles.updatedAt"',
             '"VideoStreamingPlaylists->VideoFiles"."resolution"': '"VideoStreamingPlaylists.VideoFiles.resolution"',
             '"VideoStreamingPlaylists->VideoFiles"."size"': '"VideoStreamingPlaylists.VideoFiles.size"',
             '"VideoStreamingPlaylists->VideoFiles"."extname"': '"VideoStreamingPlaylists.VideoFiles.extname"',
+            '"VideoStreamingPlaylists->VideoFiles"."filename"': '"VideoStreamingPlaylists.VideoFiles.filename"',
+            '"VideoStreamingPlaylists->VideoFiles"."fileUrl"': '"VideoStreamingPlaylists.VideoFiles.fileUrl"',
+            '"VideoStreamingPlaylists->VideoFiles"."torrentFilename"': '"VideoStreamingPlaylists.VideoFiles.torrentFilename"',
+            '"VideoStreamingPlaylists->VideoFiles"."torrentUrl"': '"VideoStreamingPlaylists.VideoFiles.torrentUrl"',
             '"VideoStreamingPlaylists->VideoFiles"."infoHash"': '"VideoStreamingPlaylists.VideoFiles.infoHash"',
             '"VideoStreamingPlaylists->VideoFiles"."fps"': '"VideoStreamingPlaylists.VideoFiles.fps"',
+            '"VideoStreamingPlaylists->VideoFiles"."videoStreamingPlaylistId"': '"VideoStreamingPlaylists.VideoFiles.videoStreamingPlaylistId"',
             '"VideoStreamingPlaylists->VideoFiles"."videoId"': '"VideoStreamingPlaylists.VideoFiles.videoId"'
         });
     }

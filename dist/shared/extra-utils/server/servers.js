@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.waitUntilLog = exports.reRunServer = exports.killallServers = exports.flushAndRunServer = exports.flushTests = exports.flushAndRunMultipleServers = exports.cleanupTests = exports.parallelTests = exports.getServerFileSize = exports.checkTmpIsEmpty = exports.checkDirectoryIsEmpty = void 0;
+exports.waitUntilLog = exports.reRunServer = exports.killallServers = exports.flushAndRunServer = exports.makePingRequest = exports.flushTests = exports.flushAndRunMultipleServers = exports.cleanupTests = exports.parallelTests = exports.getServerFileSize = exports.checkTmpIsEmpty = exports.checkDirectoryIsEmpty = void 0;
 const tslib_1 = require("tslib");
 const chai_1 = require("chai");
 const child_process_1 = require("child_process");
@@ -8,6 +8,7 @@ const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const miscs_1 = require("../../core-utils/miscs/miscs");
 const miscs_2 = require("../miscs/miscs");
+const requests_1 = require("../requests/requests");
 function parallelTests() {
     return process.env.MOCHA_PARALLEL === 'true';
 }
@@ -200,7 +201,12 @@ function reRunServer(server, configOverride) {
 }
 exports.reRunServer = reRunServer;
 function checkTmpIsEmpty(server) {
-    return checkDirectoryIsEmpty(server, 'tmp', ['plugins-global.css']);
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        yield checkDirectoryIsEmpty(server, 'tmp', ['plugins-global.css', 'hls']);
+        if (yield fs_extra_1.pathExists(path_1.join('test' + server.internalServerNumber, 'tmp', 'hls'))) {
+            yield checkDirectoryIsEmpty(server, 'tmp/hls');
+        }
+    });
 }
 exports.checkTmpIsEmpty = checkTmpIsEmpty;
 function checkDirectoryIsEmpty(server, directory, exceptions = []) {
@@ -271,3 +277,11 @@ function getServerFileSize(server, subPath) {
     });
 }
 exports.getServerFileSize = getServerFileSize;
+function makePingRequest(server) {
+    return requests_1.makeGetRequest({
+        url: server.url,
+        path: '/api/v1/ping',
+        statusCodeExpected: 200
+    });
+}
+exports.makePingRequest = makePingRequest;

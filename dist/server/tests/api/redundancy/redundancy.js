@@ -1,16 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-const chai = require("chai");
 require("mocha");
+const chai = require("chai");
+const fs_extra_1 = require("fs-extra");
+const magnetUtil = require("magnet-uri");
+const path_1 = require("path");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const extra_utils_1 = require("../../../../shared/extra-utils");
 const jobs_1 = require("../../../../shared/extra-utils/server/jobs");
-const magnetUtil = require("magnet-uri");
 const redundancy_1 = require("../../../../shared/extra-utils/server/redundancy");
-const fs_extra_1 = require("fs-extra");
-const path_1 = require("path");
 const stats_1 = require("../../../../shared/extra-utils/server/stats");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const expect = chai.expect;
 let servers = [];
 let video1Server2UUID;
@@ -23,7 +23,7 @@ function checkMagnetWebseeds(file, baseWebseeds, server) {
     }
     expect(parsed.urlList).to.have.lengthOf(baseWebseeds.length);
 }
-function flushAndRunServers(strategy, additionalParams = {}) {
+function flushAndRunServers(strategy, additionalParams = {}, withWebtorrent = true) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const strategies = [];
         if (strategy !== null) {
@@ -35,6 +35,9 @@ function flushAndRunServers(strategy, additionalParams = {}) {
         }
         const config = {
             transcoding: {
+                webtorrent: {
+                    enabled: withWebtorrent
+                },
                 hls: {
                     enabled: true
                 }
@@ -180,15 +183,15 @@ function checkStatsGlobal(strategy) {
         return stat;
     });
 }
-function checkStatsWith2Webseed(strategy) {
+function checkStatsWith1Redundancy(strategy, onlyHls = false) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const stat = yield checkStatsGlobal(strategy);
         expect(stat.totalUsed).to.be.at.least(1).and.below(409601);
-        expect(stat.totalVideoFiles).to.equal(4);
+        expect(stat.totalVideoFiles).to.equal(onlyHls ? 4 : 8);
         expect(stat.totalVideos).to.equal(1);
     });
 }
-function checkStatsWith1Webseed(strategy) {
+function checkStatsWithoutRedundancy(strategy) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const stat = yield checkStatsGlobal(strategy);
         expect(stat.totalUsed).to.equal(0);
@@ -233,7 +236,7 @@ describe('Test videos redundancy', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check1WebSeed();
                 yield check0PlaylistRedundancies();
-                yield checkStatsWith1Webseed(strategy);
+                yield checkStatsWithoutRedundancy(strategy);
             });
         });
         it('Should enable redundancy on server 1', function () {
@@ -247,7 +250,7 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield check2Webseeds();
                 yield check1PlaylistRedundancies();
-                yield checkStatsWith2Webseed(strategy);
+                yield checkStatsWith1Redundancy(strategy);
             });
         });
         it('Should undo redundancy on server 1 and remove duplicated videos', function () {
@@ -277,7 +280,7 @@ describe('Test videos redundancy', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check1WebSeed();
                 yield check0PlaylistRedundancies();
-                yield checkStatsWith1Webseed(strategy);
+                yield checkStatsWithoutRedundancy(strategy);
             });
         });
         it('Should enable redundancy on server 1', function () {
@@ -291,7 +294,7 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield check2Webseeds();
                 yield check1PlaylistRedundancies();
-                yield checkStatsWith2Webseed(strategy);
+                yield checkStatsWith1Redundancy(strategy);
             });
         });
         it('Should unfollow on server 1 and remove duplicated videos', function () {
@@ -321,7 +324,7 @@ describe('Test videos redundancy', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check1WebSeed();
                 yield check0PlaylistRedundancies();
-                yield checkStatsWith1Webseed(strategy);
+                yield checkStatsWithoutRedundancy(strategy);
             });
         });
         it('Should enable redundancy on server 1', function () {
@@ -335,7 +338,7 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield check1WebSeed();
                 yield check0PlaylistRedundancies();
-                yield checkStatsWith1Webseed(strategy);
+                yield checkStatsWithoutRedundancy(strategy);
             });
         });
         it('Should view 2 times the first video to have > min_views config', function () {
@@ -355,7 +358,64 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield check2Webseeds();
                 yield check1PlaylistRedundancies();
-                yield checkStatsWith2Webseed(strategy);
+                yield checkStatsWith1Redundancy(strategy);
+            });
+        });
+        it('Should remove the video and the redundancy files', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(20000);
+                yield extra_utils_1.removeVideo(servers[1].url, servers[1].accessToken, video1Server2UUID);
+                yield jobs_1.waitJobs(servers);
+                for (const server of servers) {
+                    yield extra_utils_1.checkVideoFilesWereRemoved(video1Server2UUID, server.internalServerNumber);
+                }
+            });
+        });
+        after(function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.cleanupTests(servers);
+            });
+        });
+    });
+    describe('With only HLS files', function () {
+        const strategy = 'recently-added';
+        before(function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(120000);
+                yield flushAndRunServers(strategy, { min_views: 3 }, false);
+            });
+        });
+        it('Should have 0 playlist redundancy on the first video', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield check1WebSeed();
+                yield check0PlaylistRedundancies();
+            });
+        });
+        it('Should enable redundancy on server 1', function () {
+            return enableRedundancyOnServer1();
+        });
+        it('Should still have 0 redundancy on the first video', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(80000);
+                yield jobs_1.waitJobs(servers);
+                yield extra_utils_1.wait(15000);
+                yield jobs_1.waitJobs(servers);
+                yield check0PlaylistRedundancies();
+                yield checkStatsWithoutRedundancy(strategy);
+            });
+        });
+        it('Should have 1 redundancy on the first video', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                this.timeout(160000);
+                yield extra_utils_1.viewVideo(servers[0].url, video1Server2UUID);
+                yield extra_utils_1.viewVideo(servers[2].url, video1Server2UUID);
+                yield extra_utils_1.wait(10000);
+                yield jobs_1.waitJobs(servers);
+                yield jobs_1.waitJobs(servers);
+                yield extra_utils_1.waitUntilLog(servers[0], 'Duplicated ', 1);
+                yield jobs_1.waitJobs(servers);
+                yield check1PlaylistRedundancies();
+                yield checkStatsWith1Redundancy(strategy, true);
             });
         });
         it('Should remove the video and the redundancy files', function () {
@@ -383,7 +443,7 @@ describe('Test videos redundancy', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 yield check1WebSeed();
                 yield check0PlaylistRedundancies();
-                yield checkStatsWith1Webseed('manual');
+                yield checkStatsWithoutRedundancy('manual');
             });
         });
         it('Should create a redundancy on first video', function () {
@@ -403,7 +463,7 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield check2Webseeds();
                 yield check1PlaylistRedundancies();
-                yield checkStatsWith2Webseed('manual');
+                yield checkStatsWith1Redundancy('manual');
             });
         });
         it('Should manually remove redundancies on server 1 and remove duplicated videos', function () {
@@ -506,11 +566,13 @@ describe('Test videos redundancy', function () {
                 yield jobs_1.waitJobs(servers);
                 yield extra_utils_1.waitUntilLog(servers[0], 'Duplicated ', 5);
                 yield jobs_1.waitJobs(servers);
-                yield check2Webseeds();
-                yield check1PlaylistRedundancies();
-                yield checkStatsWith2Webseed(strategy);
-                const res = yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'video 2 server 2' });
+                yield check2Webseeds(video1Server2UUID);
+                yield check1PlaylistRedundancies(video1Server2UUID);
+                yield checkStatsWith1Redundancy(strategy);
+                const res = yield extra_utils_1.uploadVideo(servers[1].url, servers[1].accessToken, { name: 'video 2 server 2', privacy: 3 });
                 video2Server2UUID = res.body.video.uuid;
+                yield jobs_1.waitJobs(servers);
+                yield extra_utils_1.updateVideo(servers[1].url, servers[1].accessToken, video2Server2UUID, { privacy: 1 });
             });
         });
         it('Should cache video 2 webseeds on the first video', function () {

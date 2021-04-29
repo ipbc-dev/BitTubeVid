@@ -1,0 +1,31 @@
+{
+  "name": "bep53-range",
+  "description": "Magnet URI extension (BEP53) range implementation",
+  "version": "1.1.0",
+  "author": {
+    "name": "Julen Garcia Leunda",
+    "email": "hicom150@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/webtorrent/bep53-range/issues"
+  },
+  "devDependencies": {
+    "standard": "*",
+    "tape": "^5.0.1"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "standard && tape test/*.js"
+  },
+  "keywords": [
+    "bittorrent",
+    "magnet",
+    "p2p",
+    "uri",
+    "bep53",
+    "range",
+    "webtorrent"
+  ],
+  "license": "MIT"
+}

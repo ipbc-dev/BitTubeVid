@@ -82,6 +82,18 @@ describe('Test plugin filter hooks', function () {
             expect(res.body.total).to.equal(13);
         });
     });
+    it('Should run filter:api.user.me.videos.list.params', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getMyVideos(servers[0].url, servers[0].accessToken, 0, 2);
+            expect(res.body.data).to.have.lengthOf(6);
+        });
+    });
+    it('Should run filter:api.user.me.videos.list.result', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getMyVideos(servers[0].url, servers[0].accessToken, 0, 2);
+            expect(res.body.total).to.equal(14);
+        });
+    });
     it('Should run filter:api.video.get.result', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const res = yield extra_utils_1.getVideo(servers[0].url, videoUUID);

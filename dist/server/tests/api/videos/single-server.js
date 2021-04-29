@@ -304,6 +304,22 @@ describe('Test a single server', function () {
             expect(videos.length).to.equal(2);
         });
     });
+    it('Should list and sort by hotness in descending order', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getVideosListPagination(server.url, 0, 2, '-hot');
+            const videos = res.body.data;
+            expect(res.body.total).to.equal(6);
+            expect(videos.length).to.equal(2);
+        });
+    });
+    it('Should list and sort by best in descending order', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield extra_utils_1.getVideosListPagination(server.url, 0, 2, '-best');
+            const videos = res.body.data;
+            expect(res.body.total).to.equal(6);
+            expect(videos.length).to.equal(2);
+        });
+    });
     it('Should update a video', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const attributes = {

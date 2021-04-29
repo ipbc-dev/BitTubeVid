@@ -4,16 +4,17 @@ const tslib_1 = require("tslib");
 const register_ts_paths_1 = require("../helpers/register-ts-paths");
 register_ts_paths_1.registerTSPaths();
 const program = require("commander");
-const path_1 = require("path");
-const requests_1 = require("../helpers/requests");
-const constants_1 = require("../initializers/constants");
-const index_1 = require("../../shared/extra-utils/index");
-const lodash_1 = require("lodash");
-const prompt = require("prompt");
 const fs_1 = require("fs");
 const fs_extra_1 = require("fs-extra");
+const lodash_1 = require("lodash");
+const path_1 = require("path");
+const prompt = require("prompt");
+const util_1 = require("util");
+const index_1 = require("../../shared/extra-utils/index");
 const core_utils_1 = require("../helpers/core-utils");
+const requests_1 = require("../helpers/requests");
 const youtube_dl_1 = require("../helpers/youtube-dl");
+const constants_1 = require("../initializers/constants");
 const cli_1 = require("./cli");
 const processOptions = {
     maxBuffer: Infinity
@@ -30,23 +31,25 @@ command
     .option('--until <until>', 'Publication date (inclusive) until which the videos can be imported (YYYY-MM-DD)', parseDate)
     .option('--first <first>', 'Process first n elements of returned playlist')
     .option('--last <last>', 'Process last n elements of returned playlist')
+    .option('--wait-interval <waitInterval>', 'Duration between two video imports (in seconds)', convertIntoMs)
     .option('-T, --tmpdir <tmpdir>', 'Working directory', __dirname)
     .usage("[global options] [ -- youtube-dl options]")
     .parse(process.argv);
-const log = cli_1.getLogger(program['verbose']);
+const options = command.opts();
+const log = cli_1.getLogger(options.verbose);
 cli_1.getServerCredentials(command)
     .then(({ url, username, password }) => {
-    if (!program['targetUrl']) {
+    if (!options.targetUrl) {
         exitError('--target-url field is required.');
     }
     try {
-        fs_1.accessSync(program['tmpdir'], fs_1.constants.R_OK | fs_1.constants.W_OK);
+        fs_1.accessSync(options.tmpdir, fs_1.constants.R_OK | fs_1.constants.W_OK);
     }
     catch (e) {
-        exitError('--tmpdir %s: directory does not exist or is not accessible', program['tmpdir']);
+        exitError('--tmpdir %s: directory does not exist or is not accessible', options.tmpdir);
     }
     url = normalizeTargetUrl(url);
-    program['targetUrl'] = normalizeTargetUrl(program['targetUrl']);
+    options.targetUrl = normalizeTargetUrl(options.targetUrl);
     const user = { username, password };
     run(url, user)
         .catch(err => exitError(err));
@@ -58,7 +61,7 @@ function run(url, user) {
             user.password = yield promptPassword();
         }
         const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-        let info = yield getYoutubeDLInfo(youtubeDL, program['targetUrl'], command.args);
+        let info = yield getYoutubeDLInfo(youtubeDL, options.targetUrl, command.args);
         if (!Array.isArray(info))
             info = [info];
         const uploadsObject = info.find(i => !i.ie_key && !i.duration && i.title === 'Uploads');
@@ -68,78 +71,76 @@ function run(url, user) {
         }
         let infoArray;
         infoArray = [].concat(info);
-        if (program['first']) {
-            infoArray = infoArray.slice(0, program['first']);
+        if (options.first) {
+            infoArray = infoArray.slice(0, options.first);
         }
-        else if (program['last']) {
-            infoArray = infoArray.slice(-program['last']);
+        else if (options.last) {
+            infoArray = infoArray.slice(-options.last);
         }
         infoArray = infoArray.map(i => normalizeObject(i));
         log.info('Will download and upload %d videos.\n', infoArray.length);
-        for (const info of infoArray) {
+        for (const [index, info] of infoArray.entries()) {
             try {
+                if (index > 0 && options.waitInterval) {
+                    log.info("Wait for %d seconds before continuing.", options.waitInterval / 1000);
+                    yield new Promise(res => setTimeout(res, options.waitInterval));
+                }
                 yield processVideo({
-                    cwd: program['tmpdir'],
+                    cwd: options.tmpdir,
                     url,
                     user,
                     youtubeInfo: info
                 });
             }
             catch (err) {
-                console.error('Cannot process video.', { info, url });
+                console.error('Cannot process video.', { info, url, err });
             }
         }
-        log.info('Video/s for user %s imported: %s', user.username, program['targetUrl']);
+        log.info('Video/s for user %s imported: %s', user.username, options.targetUrl);
         process.exit(0);
     });
 }
 function processVideo(parameters) {
-    const { youtubeInfo, cwd, url, user } = parameters;
-    return new Promise((res) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { youtubeInfo, cwd, url, user } = parameters;
         log.debug('Fetching object.', youtubeInfo);
         const videoInfo = yield fetchObject(youtubeInfo);
         log.debug('Fetched object.', videoInfo);
         const originallyPublishedAt = youtube_dl_1.buildOriginallyPublishedAt(videoInfo);
-        if (program['since'] && originallyPublishedAt && originallyPublishedAt.getTime() < program['since'].getTime()) {
-            log.info('Video "%s" has been published before "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['since']));
-            return res();
+        if (options.since && originallyPublishedAt && originallyPublishedAt.getTime() < options.since.getTime()) {
+            log.info('Video "%s" has been published before "%s", don\'t upload it.\n', videoInfo.title, formatDate(options.since));
+            return;
         }
-        if (program['until'] && originallyPublishedAt && originallyPublishedAt.getTime() > program['until'].getTime()) {
-            log.info('Video "%s" has been published after "%s", don\'t upload it.\n', videoInfo.title, formatDate(program['until']));
-            return res();
+        if (options.until && originallyPublishedAt && originallyPublishedAt.getTime() > options.until.getTime()) {
+            log.info('Video "%s" has been published after "%s", don\'t upload it.\n', videoInfo.title, formatDate(options.until));
+            return;
         }
-        const result = yield index_1.searchVideoWithSort(url, videoInfo.title, '-match');
+        const result = yield index_1.advancedVideosSearch(url, { search: videoInfo.title, sort: '-match', searchTarget: 'local' });
         log.info('############################################################\n');
         if (result.body.data.find(v => v.name === videoInfo.title)) {
             log.info('Video "%s" already exists, don\'t reupload it.\n', videoInfo.title);
-            return res();
+            return;
         }
         const path = path_1.join(cwd, core_utils_1.sha256(videoInfo.url) + '.mp4');
         log.info('Downloading video "%s"...', videoInfo.title);
-        const options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', ...command.args, '-o', path];
+        const youtubeDLOptions = ['-f', youtube_dl_1.getYoutubeDLVideoFormat(), ...command.args, '-o', path];
         try {
             const youtubeDL = yield youtube_dl_1.safeGetYoutubeDL();
-            youtubeDL.exec(videoInfo.url, options, processOptions, (err, output) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                if (err) {
-                    log.error(err);
-                    return res();
-                }
-                log.info(output.join('\n'));
-                yield uploadVideoOnPeerTube({
-                    cwd,
-                    url,
-                    user,
-                    videoInfo: normalizeObject(videoInfo),
-                    videoPath: path
-                });
-                return res();
-            }));
+            const youtubeDLExec = util_1.promisify(youtubeDL.exec).bind(youtubeDL);
+            const output = yield youtubeDLExec(videoInfo.url, youtubeDLOptions, processOptions);
+            log.info(output.join('\n'));
+            yield uploadVideoOnPeerTube({
+                cwd,
+                url,
+                user,
+                videoInfo: normalizeObject(videoInfo),
+                videoPath: path
+            });
         }
         catch (err) {
             log.error(err.message);
-            return res();
         }
-    }));
+    });
 }
 function uploadVideoOnPeerTube(parameters) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -322,6 +323,13 @@ function parseDate(dateAsStr) {
 }
 function formatDate(date) {
     return date.toISOString().split('T')[0];
+}
+function convertIntoMs(secondsAsStr) {
+    const seconds = parseInt(secondsAsStr, 10);
+    if (seconds <= 0) {
+        exitError(`Invalid duration passed: ${seconds}. Expected duration to be strictly positive and in seconds`);
+    }
+    return Math.round(seconds * 1000);
 }
 function exitError(message, ...meta) {
     console.error(message, ...meta);

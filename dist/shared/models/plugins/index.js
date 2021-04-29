@@ -14,6 +14,7 @@ tslib_1.__exportStar(require("./plugin-package-json.model"), exports);
 tslib_1.__exportStar(require("./plugin-playlist-privacy-manager.model"), exports);
 tslib_1.__exportStar(require("./plugin-settings-manager.model"), exports);
 tslib_1.__exportStar(require("./plugin-storage-manager.model"), exports);
+tslib_1.__exportStar(require("./plugin-transcoding-manager.model"), exports);
 tslib_1.__exportStar(require("./plugin-translation.model"), exports);
 tslib_1.__exportStar(require("./plugin-video-category-manager.model"), exports);
 tslib_1.__exportStar(require("./plugin-video-language-manager.model"), exports);

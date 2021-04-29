@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pushAvatarProcessInQueue = exports.updateActorAvatarFile = exports.avatarPathUnsafeCache = void 0;
+exports.pushAvatarProcessInQueue = exports.deleteLocalActorAvatarFile = exports.updateLocalActorAvatarFile = exports.avatarPathUnsafeCache = void 0;
 const tslib_1 = require("tslib");
 require("multer");
 const send_1 = require("./activitypub/send");
@@ -15,7 +15,7 @@ const database_1 = require("../initializers/database");
 const LRUCache = require("lru-cache");
 const async_1 = require("async");
 const requests_1 = require("../helpers/requests");
-function updateActorAvatarFile(avatarPhysicalFile, accountOrChannel) {
+function updateLocalActorAvatarFile(accountOrChannel, avatarPhysicalFile) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const extension = path_1.extname(avatarPhysicalFile.filename);
         const avatarName = uuid_1.v4() + extension;
@@ -36,7 +36,20 @@ function updateActorAvatarFile(avatarPhysicalFile, accountOrChannel) {
         });
     });
 }
-exports.updateActorAvatarFile = updateActorAvatarFile;
+exports.updateLocalActorAvatarFile = updateLocalActorAvatarFile;
+function deleteLocalActorAvatarFile(accountOrChannel) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        return database_utils_1.retryTransactionWrapper(() => {
+            return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const updatedActor = yield actor_1.deleteActorAvatarInstance(accountOrChannel.Actor, t);
+                yield updatedActor.save({ transaction: t });
+                yield send_1.sendUpdateActor(accountOrChannel, t);
+                return updatedActor.Avatar;
+            }));
+        });
+    });
+}
+exports.deleteLocalActorAvatarFile = deleteLocalActorAvatarFile;
 const downloadImageQueue = async_1.queue((task, cb) => {
     requests_1.downloadImage(task.fileUrl, config_1.CONFIG.STORAGE.AVATARS_DIR, task.filename, constants_1.AVATARS_SIZE)
         .then(() => cb())

@@ -471,7 +471,7 @@ describe('Test follows', function () {
                 const caption1 = res.body.data[0];
                 expect(caption1.language.id).to.equal('ar');
                 expect(caption1.language.label).to.equal('Arabic');
-                expect(caption1.captionPath).to.equal('/lazy-static/video-captions/' + video4.uuid + '-ar.vtt');
+                expect(caption1.captionPath).to.match(new RegExp('^/lazy-static/video-captions/.+-ar.vtt$'));
                 yield video_captions_1.testCaptionFile(servers[0].url, caption1.captionPath, 'Subtitle good 2.');
             });
         });

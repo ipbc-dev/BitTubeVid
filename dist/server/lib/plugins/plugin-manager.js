@@ -13,7 +13,7 @@ const config_1 = require("../../initializers/config");
 const constants_1 = require("../../initializers/constants");
 const plugin_1 = require("../../models/server/plugin");
 const client_html_1 = require("../client-html");
-const register_helpers_store_1 = require("./register-helpers-store");
+const register_helpers_1 = require("./register-helpers");
 const yarn_1 = require("./yarn");
 class PluginManager {
     constructor() {
@@ -53,7 +53,7 @@ class PluginManager {
             npmName: p.npmName,
             name: p.name,
             version: p.version,
-            idAndPassAuths: p.registerHelpersStore.getIdAndPassAuths()
+            idAndPassAuths: p.registerHelpers.getIdAndPassAuths()
         }))
             .filter(v => v.idAndPassAuths.length !== 0);
     }
@@ -63,7 +63,7 @@ class PluginManager {
             npmName: p.npmName,
             name: p.name,
             version: p.version,
-            externalAuths: p.registerHelpersStore.getExternalAuths()
+            externalAuths: p.registerHelpers.getExternalAuths()
         }))
             .filter(v => v.externalAuths.length !== 0);
     }
@@ -71,13 +71,13 @@ class PluginManager {
         const result = this.getRegisteredPluginOrTheme(npmName);
         if (!result || result.type !== plugin_type_1.PluginType.PLUGIN)
             return [];
-        return result.registerHelpersStore.getSettings();
+        return result.registerHelpers.getSettings();
     }
     getRouter(npmName) {
         const result = this.getRegisteredPluginOrTheme(npmName);
         if (!result || result.type !== plugin_type_1.PluginType.PLUGIN)
             return null;
-        return result.registerHelpersStore.getRouter();
+        return result.registerHelpers.getRouter();
     }
     getTranslations(locale) {
         return this.translations[locale] || {};
@@ -126,7 +126,7 @@ class PluginManager {
         if (!registered) {
             logger_1.logger.error('Cannot find plugin %s to call on settings changed.', name);
         }
-        for (const cb of registered.registerHelpersStore.getOnSettingsChangedCallbacks()) {
+        for (const cb of registered.registerHelpers.getOnSettingsChangedCallbacks()) {
             try {
                 cb(settings);
             }
@@ -183,8 +183,9 @@ class PluginManager {
                 for (const key of Object.keys(this.hooks)) {
                     this.hooks[key] = this.hooks[key].filter(h => h.npmName !== npmName);
                 }
-                const store = plugin.registerHelpersStore;
+                const store = plugin.registerHelpers;
                 store.reinitVideoConstants(plugin.npmName);
+                store.reinitTranscodingProfilesAndEncoders(plugin.npmName);
                 logger_1.logger.info('Regenerating registered plugin CSS to global file.');
                 yield this.regeneratePluginGlobalCSS();
             }
@@ -267,11 +268,11 @@ class PluginManager {
             const pluginPath = this.getPluginPath(plugin.name, plugin.type);
             this.sanitizeAndCheckPackageJSONOrThrow(packageJSON, plugin.type);
             let library;
-            let registerHelpersStore;
+            let registerHelpers;
             if (plugin.type === plugin_type_1.PluginType.PLUGIN) {
                 const result = yield this.registerPlugin(plugin, pluginPath, packageJSON);
                 library = result.library;
-                registerHelpersStore = result.registerStore;
+                registerHelpers = result.registerStore;
             }
             const clientScripts = {};
             for (const c of packageJSON.clientScripts) {
@@ -288,7 +289,7 @@ class PluginManager {
                 staticDirs: packageJSON.staticDirs,
                 clientScripts,
                 css: packageJSON.css,
-                registerHelpersStore: registerHelpersStore || undefined,
+                registerHelpers: registerHelpers || undefined,
                 unregister: library ? library.unregister : undefined
             };
             yield this.addTranslations(plugin, npmName, packageJSON.translations);
@@ -377,8 +378,8 @@ class PluginManager {
         const plugin = this.getRegisteredPluginOrTheme(npmName);
         if (!plugin || plugin.type !== plugin_type_1.PluginType.PLUGIN)
             return null;
-        let auths = plugin.registerHelpersStore.getIdAndPassAuths();
-        auths = auths.concat(plugin.registerHelpersStore.getExternalAuths());
+        let auths = plugin.registerHelpers.getIdAndPassAuths();
+        auths = auths.concat(plugin.registerHelpers.getExternalAuths());
         return auths.find(a => a.authName === authName);
     }
     getRegisteredPluginsOrThemes(type) {
@@ -402,10 +403,10 @@ class PluginManager {
                 priority: options.priority || 0
             });
         };
-        const registerHelpersStore = new register_helpers_store_1.RegisterHelpersStore(npmName, plugin, onHookAdded.bind(this));
+        const registerHelpers = new register_helpers_1.RegisterHelpers(npmName, plugin, onHookAdded.bind(this));
         return {
-            registerStore: registerHelpersStore,
-            registerOptions: registerHelpersStore.buildRegisterHelpers()
+            registerStore: registerHelpers,
+            registerOptions: registerHelpers.buildRegisterHelpers()
         };
     }
     sanitizeAndCheckPackageJSONOrThrow(packageJSON, pluginType) {

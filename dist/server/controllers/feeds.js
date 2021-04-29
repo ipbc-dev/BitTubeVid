@@ -174,7 +174,7 @@ function initFeed(parameters) {
 }
 function addVideosToFeed(feed, videos) {
     for (const video of videos) {
-        const formattedVideoFiles = video.getFormattedVideoFilesJSON();
+        const formattedVideoFiles = video.getFormattedVideoFilesJSON(false);
         const torrents = formattedVideoFiles.map(videoFile => ({
             title: video.name,
             url: videoFile.torrentUrl,

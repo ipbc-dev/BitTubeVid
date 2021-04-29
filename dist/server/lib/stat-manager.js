@@ -13,12 +13,27 @@ const user_premium_storage_payments_1 = require("@server/models/user-premium-sto
 class StatsManager {
     constructor() {
         this.instanceStartDate = new Date();
-        this.inboxMessagesProcessed = 0;
-        this.inboxMessagesWaiting = 0;
+        this.inboxMessages = {
+            processed: 0,
+            errors: 0,
+            successes: 0,
+            waiting: 0,
+            errorsPerType: this.buildAPPerType(),
+            successesPerType: this.buildAPPerType()
+        };
     }
-    updateInboxStats(inboxMessagesProcessed, inboxMessagesWaiting) {
-        this.inboxMessagesProcessed = inboxMessagesProcessed;
-        this.inboxMessagesWaiting = inboxMessagesWaiting;
+    updateInboxWaiting(inboxMessagesWaiting) {
+        this.inboxMessages.waiting = inboxMessagesWaiting;
+    }
+    addInboxProcessedSuccess(type) {
+        this.inboxMessages.processed++;
+        this.inboxMessages.successes++;
+        this.inboxMessages.successesPerType[type]++;
+    }
+    addInboxProcessedError(type) {
+        this.inboxMessages.processed++;
+        this.inboxMessages.errors++;
+        this.inboxMessages.errorsPerType[type]++;
     }
     getStats() {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -29,8 +44,7 @@ class StatsManager {
             const { totalLocalVideoFilesSize } = yield video_file_1.VideoFileModel.getStats();
             const premiumStorageStadistics = yield user_premium_storage_payments_1.userPremiumStoragePaymentModel.getStats();
             const videosRedundancyStats = yield this.buildRedundancyStats();
-            const data = {
-                totalLocalVideos,
+            const data = Object.assign({ totalLocalVideos,
                 totalLocalVideoViews,
                 totalLocalVideoFilesSize,
                 totalLocalVideoComments,
@@ -41,20 +55,14 @@ class StatsManager {
                 totalWeeklyActiveUsers,
                 totalMonthlyActiveUsers,
                 totalInstanceFollowers,
-                totalInstanceFollowing,
-                videosRedundancy: videosRedundancyStats,
-                premiumStorageStadistics,
-                totalActivityPubMessagesProcessed: this.inboxMessagesProcessed,
-                activityPubMessagesProcessedPerSecond: this.buildActivityPubMessagesProcessedPerSecond(),
-                totalActivityPubMessagesWaiting: this.inboxMessagesWaiting
-            };
+                totalInstanceFollowing, videosRedundancy: videosRedundancyStats, premiumStorageStadistics }, this.buildAPStats());
             return data;
         });
     }
     buildActivityPubMessagesProcessedPerSecond() {
         const now = new Date();
         const startedSeconds = (now.getTime() - this.instanceStartDate.getTime()) / 1000;
-        return this.inboxMessagesProcessed / startedSeconds;
+        return this.inboxMessages.processed / startedSeconds;
     }
     buildRedundancyStats() {
         const strategies = config_1.CONFIG.REDUNDANCY.VIDEOS.STRATEGIES
@@ -67,6 +75,55 @@ class StatsManager {
             return video_redundancy_1.VideoRedundancyModel.getStats(r.strategy)
                 .then(stats => Object.assign(stats, { strategy: r.strategy, totalSize: r.size }));
         }));
+    }
+    buildAPPerType() {
+        return {
+            Create: 0,
+            Update: 0,
+            Delete: 0,
+            Follow: 0,
+            Accept: 0,
+            Reject: 0,
+            Announce: 0,
+            Undo: 0,
+            Like: 0,
+            Dislike: 0,
+            Flag: 0,
+            View: 0
+        };
+    }
+    buildAPStats() {
+        return {
+            totalActivityPubMessagesProcessed: this.inboxMessages.processed,
+            totalActivityPubMessagesSuccesses: this.inboxMessages.successes,
+            totalActivityPubCreateMessagesSuccesses: this.inboxMessages.successesPerType.Create,
+            totalActivityPubUpdateMessagesSuccesses: this.inboxMessages.successesPerType.Update,
+            totalActivityPubDeleteMessagesSuccesses: this.inboxMessages.successesPerType.Delete,
+            totalActivityPubFollowMessagesSuccesses: this.inboxMessages.successesPerType.Follow,
+            totalActivityPubAcceptMessagesSuccesses: this.inboxMessages.successesPerType.Accept,
+            totalActivityPubRejectMessagesSuccesses: this.inboxMessages.successesPerType.Reject,
+            totalActivityPubAnnounceMessagesSuccesses: this.inboxMessages.successesPerType.Announce,
+            totalActivityPubUndoMessagesSuccesses: this.inboxMessages.successesPerType.Undo,
+            totalActivityPubLikeMessagesSuccesses: this.inboxMessages.successesPerType.Like,
+            totalActivityPubDislikeMessagesSuccesses: this.inboxMessages.successesPerType.Dislike,
+            totalActivityPubFlagMessagesSuccesses: this.inboxMessages.successesPerType.Flag,
+            totalActivityPubViewMessagesSuccesses: this.inboxMessages.successesPerType.View,
+            totalActivityPubCreateMessagesErrors: this.inboxMessages.errorsPerType.Create,
+            totalActivityPubUpdateMessagesErrors: this.inboxMessages.errorsPerType.Update,
+            totalActivityPubDeleteMessagesErrors: this.inboxMessages.errorsPerType.Delete,
+            totalActivityPubFollowMessagesErrors: this.inboxMessages.errorsPerType.Follow,
+            totalActivityPubAcceptMessagesErrors: this.inboxMessages.errorsPerType.Accept,
+            totalActivityPubRejectMessagesErrors: this.inboxMessages.errorsPerType.Reject,
+            totalActivityPubAnnounceMessagesErrors: this.inboxMessages.errorsPerType.Announce,
+            totalActivityPubUndoMessagesErrors: this.inboxMessages.errorsPerType.Undo,
+            totalActivityPubLikeMessagesErrors: this.inboxMessages.errorsPerType.Like,
+            totalActivityPubDislikeMessagesErrors: this.inboxMessages.errorsPerType.Dislike,
+            totalActivityPubFlagMessagesErrors: this.inboxMessages.errorsPerType.Flag,
+            totalActivityPubViewMessagesErrors: this.inboxMessages.errorsPerType.View,
+            totalActivityPubMessagesErrors: this.inboxMessages.errors,
+            activityPubMessagesProcessedPerSecond: this.buildActivityPubMessagesProcessedPerSecond(),
+            totalActivityPubMessagesWaiting: this.inboxMessages.waiting
+        };
     }
     static get Instance() {
         return this.instance || (this.instance = new this());

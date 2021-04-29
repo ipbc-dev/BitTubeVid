@@ -4,10 +4,11 @@ exports.clientsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
 const fs_1 = require("fs");
+const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const config_1 = require("@server/initializers/config");
-const i18n_1 = require("@shared/core-utils/i18n");
 const core_utils_1 = require("@shared/core-utils");
+const i18n_1 = require("@shared/core-utils/i18n");
 const core_utils_2 = require("../helpers/core-utils");
 const constants_1 = require("../initializers/constants");
 const client_html_1 = require("../lib/client-html");
@@ -36,16 +37,6 @@ clientsRouter.use('/video-playlists/embed', ...embedMiddlewares);
 const testEmbedController = (req, res) => res.sendFile(testEmbedPath);
 clientsRouter.use('/videos/test-embed', testEmbedController);
 clientsRouter.use('/video-playlists/test-embed', testEmbedController);
-const staticClientFiles = [
-    'ngsw-worker.js',
-    'ngsw.json'
-];
-for (const staticClientFile of staticClientFiles) {
-    const path = path_1.join(core_utils_2.root(), 'client', 'dist', staticClientFile);
-    clientsRouter.get(`/${staticClientFile}`, (req, res) => {
-        res.sendFile(path, { maxAge: constants_1.STATIC_MAX_AGE.SERVER });
-    });
-}
 clientsRouter.get('/manifest.webmanifest', middlewares_1.asyncMiddleware(generateManifest));
 const staticClientOverrides = [
     'assets/images/logo.svg',
@@ -112,7 +103,7 @@ function generateVideoChannelHtmlPage(req, res) {
 function generateManifest(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const manifestPhysicalPath = path_1.join(core_utils_2.root(), 'client', 'dist', 'manifest.webmanifest');
-        const manifestJson = yield fs_1.promises.readFile(manifestPhysicalPath, 'utf8');
+        const manifestJson = yield fs_extra_1.readFile(manifestPhysicalPath, 'utf8');
         const manifest = JSON.parse(manifestJson);
         manifest.name = config_1.CONFIG.INSTANCE.NAME;
         manifest.short_name = config_1.CONFIG.INSTANCE.NAME;

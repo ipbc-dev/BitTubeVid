@@ -30,7 +30,7 @@ function run() {
         }
         yield database_1.initDatabaseModels(true);
         let toDelete = [];
-        toDelete = toDelete.concat(yield pruneDirectory(config_1.CONFIG.STORAGE.VIDEOS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.TORRENTS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, doesRedundancyExist), yield pruneDirectory(config_1.CONFIG.STORAGE.PREVIEWS_DIR, doesThumbnailExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, doesThumbnailExist(false)), yield pruneDirectory(config_1.CONFIG.STORAGE.AVATARS_DIR, doesAvatarExist));
+        toDelete = toDelete.concat(yield pruneDirectory(config_1.CONFIG.STORAGE.VIDEOS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.TORRENTS_DIR, doesVideoExist(true)), yield pruneDirectory(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, doesRedundancyExist), yield pruneDirectory(config_1.CONFIG.STORAGE.PREVIEWS_DIR, doesThumbnailExist(true, 2)), yield pruneDirectory(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, doesThumbnailExist(false, 1)), yield pruneDirectory(config_1.CONFIG.STORAGE.AVATARS_DIR, doesAvatarExist));
         const tmpFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.TMP_DIR);
         toDelete = toDelete.concat(tmpFiles.map(t => path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, t)));
         if (toDelete.length === 0) {
@@ -70,9 +70,9 @@ function doesVideoExist(keepOnlyOwned) {
         return video && (keepOnlyOwned === false || video.isOwned());
     });
 }
-function doesThumbnailExist(keepOnlyOwned) {
+function doesThumbnailExist(keepOnlyOwned, type) {
     return (file) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const thumbnail = yield thumbnail_1.ThumbnailModel.loadByName(file);
+        const thumbnail = yield thumbnail_1.ThumbnailModel.loadByFilename(file, type);
         if (!thumbnail)
             return false;
         if (keepOnlyOwned) {

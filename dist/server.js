@@ -83,6 +83,7 @@ const hooks_1 = require("./server/lib/plugins/hooks");
 const plugin_manager_1 = require("./server/lib/plugins/plugin-manager");
 const live_manager_1 = require("./server/lib/live-manager");
 const http_error_codes_1 = require("./shared/core-utils/miscs/http-error-codes");
+const videos_torrent_cache_1 = require("@server/lib/files-cache/videos-torrent-cache");
 cli
     .option('--no-client', 'Start PeerTube without client interface')
     .option('--no-plugins', 'Start PeerTube without plugins/themes enabled')
@@ -107,7 +108,8 @@ morgan.token('user-agent', (req) => {
     return req.get('user-agent');
 });
 app.use(morgan('combined', {
-    stream: { write: logger_1.logger.info.bind(logger_1.logger) }
+    stream: { write: logger_1.logger.info.bind(logger_1.logger) },
+    skip: req => config_1.CONFIG.LOG.LOG_PING_REQUESTS === false && req.originalUrl === '/api/v1/ping'
 }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({
@@ -132,8 +134,10 @@ app.use('/', controllers_1.webfingerRouter);
 app.use('/', controllers_1.trackerRouter);
 app.use('/', controllers_1.botsRouter);
 app.use('/', controllers_1.staticRouter);
+app.use('/', controllers_1.downloadRouter);
 app.use('/', controllers_1.lazyStaticRouter);
-if (cli.client)
+const cliOptions = cli.opts();
+if (cliOptions.client)
     app.use('/', controllers_1.clientsRouter);
 app.use(function (req, res, next) {
     const err = new Error('Not Found');
@@ -167,6 +171,7 @@ function startApplication() {
         ]);
         files_cache_1.VideosPreviewCache.Instance.init(config_1.CONFIG.CACHE.PREVIEWS.SIZE, constants_1.FILES_CACHE.PREVIEWS.MAX_AGE);
         files_cache_1.VideosCaptionCache.Instance.init(config_1.CONFIG.CACHE.VIDEO_CAPTIONS.SIZE, constants_1.FILES_CACHE.VIDEO_CAPTIONS.MAX_AGE);
+        videos_torrent_cache_1.VideosTorrentCache.Instance.init(config_1.CONFIG.CACHE.TORRENTS.SIZE, constants_1.FILES_CACHE.TORRENTS.MAX_AGE);
         actor_follow_scheduler_1.ActorFollowScheduler.Instance.enable();
         remove_old_jobs_scheduler_1.RemoveOldJobsScheduler.Instance.enable();
         update_videos_scheduler_1.UpdateVideosScheduler.Instance.enable();
@@ -180,7 +185,7 @@ function startApplication() {
         peertube_socket_1.PeerTubeSocket.Instance.init(server);
         hls_1.updateStreamingPlaylistsInfohashesIfNeeded()
             .catch(err => logger_1.logger.error('Cannot update streaming playlist infohashes.', { err }));
-        if (cli.plugins)
+        if (cliOptions.plugins)
             yield plugin_manager_1.PluginManager.Instance.registerPluginsAndThemes();
         live_manager_1.LiveManager.Instance.init();
         if (config_1.CONFIG.LIVE.ENABLED)

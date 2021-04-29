@@ -57,6 +57,55 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
             return VideoRedundancyModel_1.scope(ScopeNames.WITH_VIDEO).findOne(query);
         });
     }
+    static listLocalByVideoId(videoId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const actor = yield application_1.getServerActor();
+            const queryStreamingPlaylist = {
+                where: {
+                    actorId: actor.id
+                },
+                include: [
+                    {
+                        model: video_streaming_playlist_1.VideoStreamingPlaylistModel.unscoped(),
+                        required: true,
+                        include: [
+                            {
+                                model: video_1.VideoModel.unscoped(),
+                                required: true,
+                                where: {
+                                    id: videoId
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            const queryFiles = {
+                where: {
+                    actorId: actor.id
+                },
+                include: [
+                    {
+                        model: video_file_1.VideoFileModel,
+                        required: true,
+                        include: [
+                            {
+                                model: video_1.VideoModel,
+                                required: true,
+                                where: {
+                                    id: videoId
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            return Promise.all([
+                VideoRedundancyModel_1.findAll(queryStreamingPlaylist),
+                VideoRedundancyModel_1.findAll(queryFiles)
+            ]).then(([r1, r2]) => r1.concat(r2));
+        });
+    }
     static loadLocalByStreamingPlaylistId(videoStreamingPlaylistId) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
@@ -128,16 +177,13 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static findMostViewToDuplicate(randomizedFactor) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const peertubeActor = yield application_1.getServerActor();
             const query = {
                 attributes: ['id', 'views'],
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-views'),
-                where: {
-                    privacy: 1,
-                    isLive: false
-                },
+                where: Object.assign({ privacy: 1, isLive: false }, this.buildVideoIdsForDuplication(peertubeActor)),
                 include: [
-                    yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
                     VideoRedundancyModel_1.buildServerRedundancyInclude()
                 ]
             };
@@ -146,18 +192,15 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static findTrendingToDuplicate(randomizedFactor) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const peertubeActor = yield application_1.getServerActor();
             const query = {
                 attributes: ['id', 'views'],
                 subQuery: false,
                 group: 'VideoModel.id',
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-trending'),
-                where: {
-                    privacy: 1,
-                    isLive: false
-                },
+                where: Object.assign({ privacy: 1, isLive: false }, this.buildVideoIdsForDuplication(peertubeActor)),
                 include: [
-                    yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
                     VideoRedundancyModel_1.buildServerRedundancyInclude(),
                     video_1.VideoModel.buildTrendingQuery(config_1.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS)
                 ]
@@ -167,19 +210,15 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     }
     static findRecentlyAddedToDuplicate(randomizedFactor, minViews) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const peertubeActor = yield application_1.getServerActor();
             const query = {
                 attributes: ['id', 'publishedAt'],
                 limit: randomizedFactor,
                 order: utils_1.getVideoSort('-publishedAt'),
-                where: {
-                    privacy: 1,
-                    isLive: false,
-                    views: {
+                where: Object.assign({ privacy: 1, isLive: false, views: {
                         [sequelize_1.Op.gte]: minViews
-                    }
-                },
+                    } }, this.buildVideoIdsForDuplication(peertubeActor)),
                 include: [
-                    yield VideoRedundancyModel_1.buildVideoFileForDuplication(),
                     VideoRedundancyModel_1.buildServerRedundancyInclude()
                 ]
             };
@@ -408,30 +447,33 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
     static getStats(strategy) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const actor = yield application_1.getServerActor();
-            const query = {
-                raw: true,
-                attributes: [
-                    [sequelize_1.fn('COALESCE', sequelize_1.fn('SUM', sequelize_1.col('VideoFile.size')), '0'), 'totalUsed'],
-                    [sequelize_1.fn('COUNT', sequelize_1.fn('DISTINCT', sequelize_1.col('videoId'))), 'totalVideos'],
-                    [sequelize_1.fn('COUNT', sequelize_1.col('videoFileId')), 'totalVideoFiles']
-                ],
-                where: {
-                    strategy,
-                    actorId: actor.id
-                },
-                include: [
-                    {
-                        attributes: [],
-                        model: video_file_1.VideoFileModel,
-                        required: true
-                    }
-                ]
-            };
-            return VideoRedundancyModel_1.findOne(query)
-                .then((r) => ({
-                totalUsed: utils_1.parseAggregateResult(r.totalUsed),
-                totalVideos: r.totalVideos,
-                totalVideoFiles: r.totalVideoFiles
+            const sql = `WITH "tmp" AS ` +
+                `(` +
+                `SELECT "videoFile"."size" AS "videoFileSize", "videoStreamingFile"."size" AS "videoStreamingFileSize", ` +
+                `"videoFile"."videoId" AS "videoFileVideoId", "videoStreamingPlaylist"."videoId" AS "videoStreamingVideoId"` +
+                `FROM "videoRedundancy" AS "videoRedundancy" ` +
+                `LEFT JOIN "videoFile" AS "videoFile" ON "videoRedundancy"."videoFileId" = "videoFile"."id" ` +
+                `LEFT JOIN "videoStreamingPlaylist" ON "videoRedundancy"."videoStreamingPlaylistId" = "videoStreamingPlaylist"."id" ` +
+                `LEFT JOIN "videoFile" AS "videoStreamingFile" ` +
+                `ON "videoStreamingPlaylist"."id" = "videoStreamingFile"."videoStreamingPlaylistId" ` +
+                `WHERE "videoRedundancy"."strategy" = :strategy AND "videoRedundancy"."actorId" = :actorId` +
+                `), ` +
+                `"videoIds" AS (` +
+                `SELECT "videoFileVideoId" AS "videoId" FROM "tmp" ` +
+                `UNION SELECT "videoStreamingVideoId" AS "videoId" FROM "tmp" ` +
+                `) ` +
+                `SELECT ` +
+                `COALESCE(SUM("videoFileSize"), '0') + COALESCE(SUM("videoStreamingFileSize"), '0') AS "totalUsed", ` +
+                `(SELECT COUNT("videoIds"."videoId") FROM "videoIds") AS "totalVideos", ` +
+                `COUNT(*) AS "totalVideoFiles" ` +
+                `FROM "tmp"`;
+            return VideoRedundancyModel_1.sequelize.query(sql, {
+                replacements: { strategy, actorId: actor.id },
+                type: sequelize_1.QueryTypes.SELECT
+            }).then(([row]) => ({
+                totalUsed: utils_1.parseAggregateResult(row.totalUsed),
+                totalVideos: row.totalVideos,
+                totalVideoFiles: row.totalVideoFiles
             }));
         });
     }
@@ -477,9 +519,10 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
         };
     }
     getVideo() {
-        if (this.VideoFile)
+        var _a, _b;
+        if ((_a = this.VideoFile) === null || _a === void 0 ? void 0 : _a.Video)
             return this.VideoFile.Video;
-        if (this.VideoStreamingPlaylist.Video)
+        if ((_b = this.VideoStreamingPlaylist) === null || _b === void 0 ? void 0 : _b.Video)
             return this.VideoStreamingPlaylist.Video;
         return undefined;
     }
@@ -515,23 +558,21 @@ let VideoRedundancyModel = VideoRedundancyModel_1 = class VideoRedundancyModel e
             }
         };
     }
-    static buildVideoFileForDuplication() {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const actor = yield application_1.getServerActor();
-            const notIn = sequelize_1.literal('(' +
-                `SELECT "videoFileId" FROM "videoRedundancy" WHERE "actorId" = ${actor.id} AND "videoFileId" IS NOT NULL` +
-                ')');
-            return {
-                attributes: [],
-                model: video_file_1.VideoFileModel,
-                required: true,
-                where: {
-                    id: {
-                        [sequelize_1.Op.notIn]: notIn
-                    }
-                }
-            };
-        });
+    static buildVideoIdsForDuplication(peertubeActor) {
+        const notIn = sequelize_1.literal('(' +
+            `SELECT "videoFile"."videoId" AS "videoId" FROM "videoRedundancy" ` +
+            `INNER JOIN "videoFile" ON "videoFile"."id" = "videoRedundancy"."videoFileId" ` +
+            `WHERE "videoRedundancy"."actorId" = ${peertubeActor.id} ` +
+            `UNION ` +
+            `SELECT "videoStreamingPlaylist"."videoId" AS "videoId" FROM "videoRedundancy" ` +
+            `INNER JOIN "videoStreamingPlaylist" ON "videoStreamingPlaylist"."id" = "videoRedundancy"."videoStreamingPlaylistId" ` +
+            `WHERE "videoRedundancy"."actorId" = ${peertubeActor.id} ` +
+            ')');
+        return {
+            id: {
+                [sequelize_1.Op.notIn]: notIn
+            }
+        };
     }
     static buildServerRedundancyInclude() {
         return {

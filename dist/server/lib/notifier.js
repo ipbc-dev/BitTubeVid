@@ -583,7 +583,8 @@ class Notifier {
     }
     getAbuseUrl(abuse) {
         var _a, _b, _c, _d;
-        return ((_b = (_a = abuse.VideoAbuse) === null || _a === void 0 ? void 0 : _a.Video) === null || _b === void 0 ? void 0 : _b.url) || ((_d = (_c = abuse.VideoCommentAbuse) === null || _c === void 0 ? void 0 : _c.VideoComment) === null || _d === void 0 ? void 0 : _d.url) ||
+        return ((_b = (_a = abuse.VideoAbuse) === null || _a === void 0 ? void 0 : _a.Video) === null || _b === void 0 ? void 0 : _b.url) ||
+            ((_d = (_c = abuse.VideoCommentAbuse) === null || _c === void 0 ? void 0 : _c.VideoComment) === null || _d === void 0 ? void 0 : _d.url) ||
             abuse.FlaggedAccount.Actor.url;
     }
     static get Instance() {

@@ -92,7 +92,8 @@ function listAccountVideos(req, res) {
             withFiles: false,
             accountId: account.id,
             user: res.locals.oauth ? res.locals.oauth.token.User : undefined,
-            countVideos
+            countVideos,
+            search: req.query.search
         }, 'filter:api.accounts.videos.list.params');
         const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.listForApi, apiOptions, 'filter:api.accounts.videos.list.result');
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));

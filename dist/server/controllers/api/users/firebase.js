@@ -38,7 +38,7 @@ firebaseRouter.post('/firebase/avatar/sync', (req, res) => tslib_1.__awaiter(voi
             throw new Error('User account not found.');
         const { filename } = yield downloader.image({ url: photoURL, dest: config_1.CONFIG.STORAGE.TMP_DIR });
         const multerFile = { filename: filename.split('/').pop(), path: filename };
-        yield avatar_1.updateActorAvatarFile(multerFile, userAccount);
+        yield avatar_1.updateLocalActorAvatarFile(userAccount, multerFile);
         return res.send({ success: true, mssg: 'Avatar changed.' });
     }
     catch (error) {

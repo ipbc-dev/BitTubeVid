@@ -96,8 +96,9 @@ function run() {
             yield comment.save();
         }
         console.log('Updating video and torrent files.');
-        const videos = yield video_1.VideoModel.listLocal();
-        for (const video of videos) {
+        const localVideos = yield video_1.VideoModel.listLocal();
+        for (const localVideo of localVideos) {
+            const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(localVideo.id);
             console.log('Updating video ' + video.uuid);
             video.url = url_1.getLocalVideoActivityPubUrl(video);
             yield video.save();

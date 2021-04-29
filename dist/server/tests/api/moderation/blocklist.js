@@ -65,7 +65,7 @@ describe('Test blocklist', function () {
     let userToken2;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            this.timeout(60000);
+            this.timeout(120000);
             servers = yield index_2.flushAndRunMultipleServers(3);
             yield login_1.setAccessTokensToServers(servers);
             {

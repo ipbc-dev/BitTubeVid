@@ -362,7 +362,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4'),
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
@@ -372,7 +372,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'preview-big.png'),
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
@@ -382,7 +382,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png'),
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4'),
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
@@ -392,7 +392,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png'),
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'preview-big.png'),
                     videofile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path: path + '/upload', token: server.accessToken, fields, attaches });
@@ -567,7 +567,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -583,7 +583,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
+                    thumbnailfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'preview-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -599,7 +599,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar.png')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,
@@ -615,7 +615,7 @@ describe('Test videos API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'avatar-big.png')
+                    previewfile: path_1.join(extra_utils_1.root(), 'server', 'tests', 'fixtures', 'preview-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({
                     url: server.url,

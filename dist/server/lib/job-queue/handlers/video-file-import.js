@@ -6,6 +6,7 @@ const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const webtorrent_1 = require("@server/helpers/webtorrent");
 const video_paths_1 = require("@server/lib/video-paths");
+const user_1 = require("@server/models/account/user");
 const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
 const logger_1 = require("../../../helpers/logger");
 const video_1 = require("../../../models/video/video");
@@ -20,8 +21,18 @@ function processVideoFileImport(job) {
             logger_1.logger.info('Do not process job %d, video does not exist.', job.id);
             return undefined;
         }
+        const data = yield ffprobe_utils_1.getVideoFileResolution(payload.filePath);
         yield updateVideoFile(video, payload.filePath);
-        yield video_transcoding_1.publishNewResolutionIfNeeded(video);
+        const user = yield user_1.UserModel.loadByChannelActorId(video.VideoChannel.actorId);
+        const newResolutionPayload = {
+            type: 'new-resolution-to-webtorrent',
+            videoUUID: video.uuid,
+            resolution: data.videoFileResolution,
+            isPortraitMode: data.isPortraitMode,
+            copyCodecs: false,
+            isNewVideo: false
+        };
+        yield video_transcoding_1.onNewWebTorrentFileResolution(video, user, newResolutionPayload);
         return video;
     });
 }
@@ -31,27 +42,26 @@ function updateVideoFile(video, inputFilePath) {
         const { videoFileResolution } = yield ffprobe_utils_1.getVideoFileResolution(inputFilePath);
         const { size } = yield fs_extra_1.stat(inputFilePath);
         const fps = yield ffprobe_utils_1.getVideoFileFPS(inputFilePath);
-        let updatedVideoFile = new video_file_1.VideoFileModel({
+        const fileExt = path_1.extname(inputFilePath);
+        const currentVideoFile = video.VideoFiles.find(videoFile => videoFile.resolution === videoFileResolution);
+        if (currentVideoFile) {
+            yield video.removeFile(currentVideoFile);
+            yield currentVideoFile.removeTorrent();
+            video.VideoFiles = video.VideoFiles.filter(f => f !== currentVideoFile);
+            yield currentVideoFile.destroy();
+        }
+        const newVideoFile = new video_file_1.VideoFileModel({
             resolution: videoFileResolution,
-            extname: path_1.extname(inputFilePath),
+            extname: fileExt,
+            filename: video_paths_1.generateVideoFilename(video, false, videoFileResolution, fileExt),
             size,
             fps,
             videoId: video.id
         });
-        const currentVideoFile = video.VideoFiles.find(videoFile => videoFile.resolution === updatedVideoFile.resolution);
-        if (currentVideoFile) {
-            yield video.removeFile(currentVideoFile);
-            yield video.removeTorrent(currentVideoFile);
-            video.VideoFiles = video.VideoFiles.filter(f => f !== currentVideoFile);
-            currentVideoFile.extname = updatedVideoFile.extname;
-            currentVideoFile.size = updatedVideoFile.size;
-            currentVideoFile.fps = updatedVideoFile.fps;
-            updatedVideoFile = currentVideoFile;
-        }
-        const outputPath = video_paths_1.getVideoFilePath(video, updatedVideoFile);
+        const outputPath = video_paths_1.getVideoFilePath(video, newVideoFile);
         yield fs_extra_1.copy(inputFilePath, outputPath);
-        yield webtorrent_1.createTorrentAndSetInfoHash(video, updatedVideoFile);
-        yield updatedVideoFile.save();
-        video.VideoFiles.push(updatedVideoFile);
+        video.VideoFiles.push(newVideoFile);
+        yield webtorrent_1.createTorrentAndSetInfoHash(video, newVideoFile);
+        yield newVideoFile.save();
     });
 }

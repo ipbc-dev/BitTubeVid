@@ -8,6 +8,7 @@ const servers_1 = require("../../../shared/extra-utils/server/servers");
 describe('Official plugin auth-ldap', function () {
     let server;
     let accessToken;
+    let userId;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
@@ -82,11 +83,24 @@ describe('Official plugin auth-ldap', function () {
             const body = res.body;
             chai_1.expect(body.username).to.equal('fry');
             chai_1.expect(body.email).to.equal('fry@planetexpress.com');
+            userId = body.id;
         });
     });
     it('Should upload a video', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield extra_utils_1.uploadVideo(server.url, accessToken, { name: 'my super video' });
+        });
+    });
+    it('Should not be able to login if the user is banned', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            yield extra_utils_1.blockUser(server.url, userId, server.accessToken);
+            yield extra_utils_1.userLogin(server, { username: 'fry@planetexpress.com', password: 'fry' }, 400);
+        });
+    });
+    it('Should be able to login if the user is unbanned', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            yield extra_utils_1.unblockUser(server.url, userId, server.accessToken);
+            yield extra_utils_1.userLogin(server, { username: 'fry@planetexpress.com', password: 'fry' });
         });
     });
     it('Should not login if the plugin is uninstalled', function () {

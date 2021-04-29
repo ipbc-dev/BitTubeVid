@@ -79,7 +79,12 @@ function cleanVideosFromSlowPayers(videosAmmountToDelete) {
         yield parallel(1, slowPayersList, (slowPayer) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const userInfo = yield user_1.UserModel.loadById(slowPayer.userId);
             const actorInfo = yield account_1.AccountModel.loadByNameWithHost(userInfo.username + '@' + config_1.CONFIG.WEBSERVER.HOSTNAME);
-            const userVideos = yield video_1.VideoModel.listUserVideosForApi(actorInfo.actorId, 0, videosAmmountToDelete, "-createdAt");
+            const userVideos = yield video_1.VideoModel.listUserVideosForApi({
+                accountId: actorInfo.actorId,
+                start: 0,
+                count: videosAmmountToDelete,
+                sort: "-createdAt"
+            });
             const userVideoQuota = userInfo.videoQuota;
             let deletedVideosCounter = 0;
             const deletedVideosNames = [];

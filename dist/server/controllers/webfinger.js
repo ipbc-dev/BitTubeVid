@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.webfingerRouter = void 0;
 const cors = require("cors");
 const express = require("express");
+const constants_1 = require("@server/initializers/constants");
 const middlewares_1 = require("../middlewares");
 const validators_1 = require("../middlewares/validators");
 const webfingerRouter = express.Router();
@@ -19,6 +20,10 @@ function webfingerController(req, res) {
                 rel: 'self',
                 type: 'application/activity+json',
                 href: actor.url
+            },
+            {
+                rel: 'http://ostatus.org/schema/1.0/subscribe',
+                template: constants_1.WEBSERVER.URL + '/remote-interaction?uri={uri}'
             }
         ]
     };

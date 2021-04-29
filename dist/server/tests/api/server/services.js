@@ -9,6 +9,7 @@ const expect = chai.expect;
 describe('Test services', function () {
     let server = null;
     let playlistUUID;
+    let video;
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(30000);
@@ -21,7 +22,7 @@ describe('Test services', function () {
                 };
                 yield extra_utils_1.uploadVideo(server.url, server.accessToken, videoAttributes);
                 const res = yield extra_utils_1.getVideosList(server.url);
-                server.video = res.body.data[0];
+                video = res.body.data[0];
             }
             {
                 const res = yield extra_utils_1.createVideoPlaylist({
@@ -39,7 +40,7 @@ describe('Test services', function () {
                     token: server.accessToken,
                     playlistId: res.body.videoPlaylist.id,
                     elementAttrs: {
-                        videoId: server.video.id
+                        videoId: video.id
                     }
                 });
             }
@@ -47,14 +48,14 @@ describe('Test services', function () {
     });
     it('Should have a valid oEmbed video response', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + server.video.uuid;
+            const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + video.uuid;
             const res = yield extra_utils_1.getOEmbed(server.url, oembedUrl);
             const expectedHtml = '<iframe width="560" height="315" sandbox="allow-same-origin allow-scripts" ' +
-                `src="http://localhost:${server.port}/videos/embed/${server.video.uuid}" ` +
+                `src="http://localhost:${server.port}/videos/embed/${video.uuid}" ` +
                 'frameborder="0" allowfullscreen></iframe>';
-            const expectedThumbnailUrl = 'http://localhost:' + server.port + '/lazy-static/previews/' + server.video.uuid + '.jpg';
+            const expectedThumbnailUrl = 'http://localhost:' + server.port + video.previewPath;
             expect(res.body.html).to.equal(expectedHtml);
-            expect(res.body.title).to.equal(server.video.name);
+            expect(res.body.title).to.equal(video.name);
             expect(res.body.author_name).to.equal(server.videoChannel.displayName);
             expect(res.body.width).to.equal(560);
             expect(res.body.height).to.equal(315);
@@ -82,16 +83,16 @@ describe('Test services', function () {
     });
     it('Should have a valid oEmbed response with small max height query', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + server.video.uuid;
+            const oembedUrl = 'http://localhost:' + server.port + '/videos/watch/' + video.uuid;
             const format = 'json';
             const maxHeight = 50;
             const maxWidth = 50;
             const res = yield extra_utils_1.getOEmbed(server.url, oembedUrl, format, maxHeight, maxWidth);
             const expectedHtml = '<iframe width="50" height="50" sandbox="allow-same-origin allow-scripts" ' +
-                `src="http://localhost:${server.port}/videos/embed/${server.video.uuid}" ` +
+                `src="http://localhost:${server.port}/videos/embed/${video.uuid}" ` +
                 'frameborder="0" allowfullscreen></iframe>';
             expect(res.body.html).to.equal(expectedHtml);
-            expect(res.body.title).to.equal(server.video.name);
+            expect(res.body.title).to.equal(video.name);
             expect(res.body.author_name).to.equal(server.videoChannel.displayName);
             expect(res.body.height).to.equal(50);
             expect(res.body.width).to.equal(50);

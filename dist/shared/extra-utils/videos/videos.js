@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getVideoIdFromUUID = exports.getLocalIdByUUID = exports.uploadVideoAndGetId = exports.getPlaylistVideos = exports.checkVideoFilesWereRemoved = exports.completeVideoCheck = exports.getLocalVideos = exports.parseTorrentVideo = exports.viewVideo = exports.rateVideo = exports.updateVideo = exports.uploadRandomVideoOnServers = exports.getVideosWithFilters = exports.uploadVideo = exports.getVideosListWithToken = exports.removeVideo = exports.getVideosListSort = exports.getVideosListPagination = exports.removeAllVideos = exports.getVideosList = exports.getVideoWithToken = exports.getVideoFileMetadataUrl = exports.getVideo = exports.getVideoChannelVideos = exports.getAccountVideos = exports.getMyVideos = exports.getVideoLanguages = exports.getVideoPrivacies = exports.videoUUIDToId = exports.getVideoLicences = exports.uploadRandomVideo = exports.getVideoCategories = exports.getVideoDescription = void 0;
 const tslib_1 = require("tslib");
-const core_utils_1 = require("@shared/core-utils");
 const chai_1 = require("chai");
 const fs_extra_1 = require("fs-extra");
 const parseTorrent = require("parse-torrent");
@@ -10,6 +9,7 @@ const path_1 = require("path");
 const request = require("supertest");
 const uuid_1 = require("uuid");
 const validator_1 = require("validator");
+const core_utils_1 = require("@shared/core-utils");
 const constants_1 = require("../../../server/initializers/constants");
 const miscs_1 = require("../miscs/miscs");
 const requests_1 = require("../requests/requests");
@@ -264,7 +264,7 @@ function checkVideoFilesWereRemoved(videoUUID, serverNumber, directories = [
                 continue;
             const files = yield fs_extra_1.readdir(directoryPath);
             for (const file of files) {
-                chai_1.expect(file).to.not.contain(videoUUID);
+                chai_1.expect(file, `File ${file} should not exist in ${directoryPath}`).to.not.contain(videoUUID);
             }
         }
     });
@@ -340,8 +340,17 @@ function uploadVideo(url, accessToken, videoAttributesArg, specialStatus = core_
         if (attributes.originallyPublishedAt !== undefined) {
             req.field('originallyPublishedAt', attributes.originallyPublishedAt);
         }
-        return req.attach('videofile', miscs_1.buildAbsoluteFixturePath(attributes.fixture))
+        const res = yield req.attach('videofile', miscs_1.buildAbsoluteFixturePath(attributes.fixture))
             .expect(specialStatus);
+        if (specialStatus === core_utils_1.HttpStatusCode.OK_200) {
+            let video;
+            do {
+                const resVideo = yield getVideoWithToken(url, accessToken, res.body.video.uuid);
+                video = resVideo.body;
+                yield miscs_1.wait(50);
+            } while (!video.files[0].torrentUrl);
+        }
+        return res;
     });
 }
 exports.uploadVideo = uploadVideo;
@@ -427,6 +436,8 @@ function completeVideoCheck(url, video, attributes) {
             attributes.likes = 0;
         if (!attributes.dislikes)
             attributes.dislikes = 0;
+        const host = new URL(url).host;
+        const originHost = attributes.account.host;
         chai_1.expect(video.name).to.equal(attributes.name);
         chai_1.expect(video.category.id).to.equal(attributes.category);
         chai_1.expect(video.category.label).to.equal(attributes.category !== null ? constants_1.VIDEO_CATEGORIES[attributes.category] : 'Misc');
@@ -480,8 +491,16 @@ function completeVideoCheck(url, video, attributes) {
             if (attributes.files.length > 1)
                 extension = '.mp4';
             chai_1.expect(file.magnetUri).to.have.lengthOf.above(2);
-            chai_1.expect(file.torrentUrl).to.equal(`http://${attributes.account.host}/static/torrents/${videoDetails.uuid}-${file.resolution.id}.torrent`);
-            chai_1.expect(file.fileUrl).to.equal(`http://${attributes.account.host}/static/webseed/${videoDetails.uuid}-${file.resolution.id}${extension}`);
+            chai_1.expect(file.torrentDownloadUrl).to.equal(`http://${host}/download/torrents/${videoDetails.uuid}-${file.resolution.id}.torrent`);
+            chai_1.expect(file.torrentUrl).to.equal(`http://${host}/lazy-static/torrents/${videoDetails.uuid}-${file.resolution.id}.torrent`);
+            chai_1.expect(file.fileUrl).to.equal(`http://${originHost}/static/webseed/${videoDetails.uuid}-${file.resolution.id}${extension}`);
+            chai_1.expect(file.fileDownloadUrl).to.equal(`http://${originHost}/download/videos/${videoDetails.uuid}-${file.resolution.id}${extension}`);
+            yield Promise.all([
+                requests_1.makeRawRequest(file.torrentUrl, 200),
+                requests_1.makeRawRequest(file.torrentDownloadUrl, 200),
+                requests_1.makeRawRequest(file.metadataUrl, 200),
+                requests_1.makeRawRequest(`http://${originHost}/static/torrents/${videoDetails.uuid}-${file.resolution.id}.torrent`, 200)
+            ]);
             chai_1.expect(file.resolution.id).to.equal(attributeFile.resolution);
             chai_1.expect(file.resolution.label).to.equal(attributeFile.resolution + 'p');
             const minSize = attributeFile.size - ((10 * attributeFile.size) / 100);
@@ -515,6 +534,8 @@ function uploadVideoAndGetId(options) {
             videoAttrs.nsfw = options.nsfw;
         if (options.privacy)
             videoAttrs.privacy = options.privacy;
+        if (options.fixture)
+            videoAttrs.fixture = options.fixture;
         const res = yield uploadVideo(options.server.url, options.token || options.server.accessToken, videoAttrs);
         return { id: res.body.video.id, uuid: res.body.video.uuid };
     });

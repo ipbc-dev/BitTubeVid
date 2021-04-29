@@ -63,7 +63,7 @@ function saveLive(video, live) {
         video.views = 0;
         video.state = 2;
         yield video.save();
-        const videoWithFiles = yield video_2.VideoModel.loadWithFiles(video.id);
+        const videoWithFiles = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.id);
         const hlsPlaylist = videoWithFiles.getHLSPlaylist();
         yield video_file_1.VideoFileModel.removeHLSFilesOfVideoId(hlsPlaylist.id);
         hlsPlaylist.VideoFiles = [];
@@ -74,7 +74,7 @@ function saveLive(video, live) {
             const probe = yield ffprobe_utils_1.ffprobePromise(concatenatedTsFilePath);
             const { audioStream } = yield ffprobe_utils_1.getAudioStream(concatenatedTsFilePath, probe);
             const { videoFileResolution, isPortraitMode } = yield ffprobe_utils_1.getVideoFileResolution(concatenatedTsFilePath, probe);
-            const outputPath = yield video_transcoding_1.generateHlsPlaylistFromTS({
+            const outputPath = yield video_transcoding_1.generateHlsPlaylistResolutionFromTS({
                 video: videoWithFiles,
                 concatenatedTsFilePath,
                 resolution: videoFileResolution,
@@ -89,10 +89,18 @@ function saveLive(video, live) {
         }
         yield fs_extra_1.remove(replayDirectory);
         if (videoWithFiles.getMiniature().automaticallyGenerated === true) {
-            yield thumbnail_1.generateVideoMiniature(videoWithFiles, videoWithFiles.getMaxQualityFile(), 1);
+            yield thumbnail_1.generateVideoMiniature({
+                video: videoWithFiles,
+                videoFile: videoWithFiles.getMaxQualityFile(),
+                type: 1
+            });
         }
         if (videoWithFiles.getPreview().automaticallyGenerated === true) {
-            yield thumbnail_1.generateVideoMiniature(videoWithFiles, videoWithFiles.getMaxQualityFile(), 2);
+            yield thumbnail_1.generateVideoMiniature({
+                video: videoWithFiles,
+                videoFile: videoWithFiles.getMaxQualityFile(),
+                type: 2
+            });
         }
         yield video_1.publishAndFederateIfNeeded(videoWithFiles, true);
     });

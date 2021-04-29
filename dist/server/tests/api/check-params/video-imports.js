@@ -179,7 +179,7 @@ describe('Test video imports API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -188,7 +188,7 @@ describe('Test video imports API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    thumbnailfile: path_1.join(__dirname, '..', '..', 'fixtures', 'preview-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -197,7 +197,7 @@ describe('Test video imports API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar.png')
+                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'video_short.mp4')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });
@@ -206,7 +206,7 @@ describe('Test video imports API validator', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const fields = baseCorrectParams;
                 const attaches = {
-                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'avatar-big.png')
+                    previewfile: path_1.join(__dirname, '..', '..', 'fixtures', 'preview-big.png')
                 };
                 yield extra_utils_1.makeUploadRequest({ url: server.url, path, token: server.accessToken, fields, attaches });
             });

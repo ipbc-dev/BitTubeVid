@@ -42,7 +42,8 @@ function getActorsInvolvedInVideo(video, t) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actors = yield video_share_1.VideoShareModel.loadActorsByShare(video.id, t);
         const videoAll = video;
-        const videoActor = ((_a = videoAll.VideoChannel) === null || _a === void 0 ? void 0 : _a.Account) ? videoAll.VideoChannel.Account.Actor
+        const videoActor = ((_a = videoAll.VideoChannel) === null || _a === void 0 ? void 0 : _a.Account)
+            ? videoAll.VideoChannel.Account.Actor
             : yield actor_1.ActorModel.loadFromAccountByVideoId(video.id, t);
         actors.push(videoActor);
         return actors;

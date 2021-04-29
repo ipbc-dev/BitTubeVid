@@ -1,12 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGoodVideoUrl = exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
+exports.getGoodVideoUrl = exports.getMyVideoImports = exports.getMagnetURI = exports.importVideo = exports.getYoutubeHDRVideoUrl = exports.getYoutubeVideoUrl = exports.getBadVideoUrl = void 0;
 const requests_1 = require("../requests/requests");
 const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function getYoutubeVideoUrl() {
-    return 'http://www.youtube.com/watch?v=msX3jv1XdvM';
+    return 'https://www.youtube.com/watch?v=msX3jv1XdvM';
 }
 exports.getYoutubeVideoUrl = getYoutubeVideoUrl;
+function getYoutubeHDRVideoUrl() {
+    return 'https://www.youtube.com/watch?v=qR5vOXbZsI4';
+}
+exports.getYoutubeHDRVideoUrl = getYoutubeHDRVideoUrl;
 function getMagnetURI() {
     return 'magnet:?xs=https%3A%2F%2Fpeertube2.cpy.re%2Fstatic%2Ftorrents%2Fb209ca00-c8bb-4b2b-b421-1ede169f3dbc-720.torrent&xt=urn:btih:0f498834733e8057ed5c6f2ee2b4efd8d84a76ee&dn=super+peertube2+video&tr=wss%3A%2F%2Fpeertube2.cpy.re%3A443%2Ftracker%2Fsocket&tr=https%3A%2F%2Fpeertube2.cpy.re%2Ftracker%2Fannounce&ws=https%3A%2F%2Fpeertube2.cpy.re%2Fstatic%2Fwebseed%2Fb209ca00-c8bb-4b2b-b421-1ede169f3dbc-720.mp4';
 }

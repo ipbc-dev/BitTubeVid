@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const application_1 = require("@server/models/application/application");
+const tracker_1 = require("@server/models/server/tracker");
 const video_1 = require("@server/models/video/video");
 const logger_1 = require("../../helpers/logger");
 const webtorrent_1 = require("../../helpers/webtorrent");
@@ -172,15 +173,15 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             file.Video = video;
             const serverActor = yield application_1.getServerActor();
             logger_1.logger.info('Duplicating %s - %d in videos redundancy with "%s" strategy.', video.url, file.resolution, strategy);
-            const { baseUrlHttp, baseUrlWs } = video.getBaseUrls();
-            const magnetUri = webtorrent_1.generateMagnetUri(video, file, baseUrlHttp, baseUrlWs);
+            const trackerUrls = yield tracker_1.TrackerModel.listUrlsByVideoId(video.id);
+            const magnetUri = webtorrent_1.generateMagnetUri(video, file, trackerUrls);
             const tmpPath = yield webtorrent_1.downloadWebTorrentVideo({ magnetUri }, constants_1.VIDEO_IMPORT_TIMEOUT);
-            const destPath = path_1.join(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, video_paths_1.getVideoFilename(video, file));
+            const destPath = path_1.join(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, file.filename);
             yield fs_extra_1.move(tmpPath, destPath, { overwrite: true });
             const createdModel = yield video_redundancy_1.VideoRedundancyModel.create({
                 expiresOn,
                 url: url_1.getLocalVideoCacheFileActivityPubUrl(file),
-                fileUrl: video.getVideoRedundancyUrl(file, constants_1.WEBSERVER.URL),
+                fileUrl: video_paths_1.generateWebTorrentRedundancyUrl(file),
                 strategy,
                 videoFileId: file.id,
                 actorId: serverActor.id
@@ -207,7 +208,7 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
             const createdModel = yield video_redundancy_1.VideoRedundancyModel.create({
                 expiresOn,
                 url: url_1.getLocalVideoCacheStreamingPlaylistActivityPubUrl(video, playlist),
-                fileUrl: playlist.getVideoRedundancyUrl(constants_1.WEBSERVER.URL),
+                fileUrl: video_paths_1.generateHLSRedundancyUrl(video, playlistArg),
                 strategy,
                 videoStreamingPlaylistId: playlist.id,
                 actorId: serverActor.id
@@ -233,7 +234,13 @@ class VideosRedundancyScheduler extends abstract_scheduler_1.AbstractScheduler {
                 const toDelete = yield video_redundancy_1.VideoRedundancyModel.loadOldestLocalExpired(redundancy.strategy, redundancy.minLifetime);
                 if (!toDelete)
                     return;
-                yield redundancy_1.removeVideoRedundancy(toDelete);
+                const videoId = toDelete.VideoFile
+                    ? toDelete.VideoFile.videoId
+                    : toDelete.VideoStreamingPlaylist.videoId;
+                const redundancies = yield video_redundancy_1.VideoRedundancyModel.listLocalByVideoId(videoId);
+                for (const redundancy of redundancies) {
+                    yield redundancy_1.removeVideoRedundancy(redundancy);
+                }
             }
         });
     }

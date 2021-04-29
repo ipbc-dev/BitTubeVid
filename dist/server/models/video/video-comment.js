@@ -153,7 +153,12 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const { videoId, isVideoOwned, start, count, sort, user } = parameters;
             const blockerAccountIds = yield VideoCommentModel_1.buildBlockerAccountIds({ videoId, user, isVideoOwned });
-            const query = {
+            const accountBlockedWhere = {
+                accountId: {
+                    [sequelize_1.Op.notIn]: sequelize_1.Sequelize.literal('(' + utils_1.buildBlockedAccountSQL(blockerAccountIds) + ')')
+                }
+            };
+            const queryList = {
                 offset: start,
                 limit: count,
                 order: utils_1.getCommentSort(sort),
@@ -164,6 +169,49 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
                         },
                         {
                             inReplyToCommentId: null
+                        },
+                        {
+                            [sequelize_1.Op.or]: [
+                                accountBlockedWhere,
+                                {
+                                    accountId: null
+                                }
+                            ]
+                        }
+                    ]
+                }
+            };
+            const scopesList = [
+                ScopeNames.WITH_ACCOUNT_FOR_API,
+                {
+                    method: [ScopeNames.ATTRIBUTES_FOR_API, blockerAccountIds]
+                }
+            ];
+            const queryCount = {
+                where: Object.assign({ videoId, deletedAt: null }, accountBlockedWhere)
+            };
+            return Promise.all([
+                VideoCommentModel_1.scope(scopesList).findAndCountAll(queryList),
+                VideoCommentModel_1.count(queryCount)
+            ]).then(([{ rows, count }, totalNotDeletedComments]) => {
+                return { total: count, data: rows, totalNotDeletedComments };
+            });
+        });
+    }
+    static listThreadCommentsForApi(parameters) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const { videoId, threadId, user, isVideoOwned } = parameters;
+            const blockerAccountIds = yield VideoCommentModel_1.buildBlockerAccountIds({ videoId, user, isVideoOwned });
+            const query = {
+                order: [['createdAt', 'ASC'], ['updatedAt', 'ASC']],
+                where: {
+                    videoId,
+                    [sequelize_1.Op.and]: [
+                        {
+                            [sequelize_1.Op.or]: [
+                                { id: threadId },
+                                { originCommentId: threadId }
+                            ]
                         },
                         {
                             [sequelize_1.Op.or]: [
@@ -186,39 +234,7 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
                     method: [ScopeNames.ATTRIBUTES_FOR_API, blockerAccountIds]
                 }
             ];
-            return VideoCommentModel_1
-                .scope(scopes)
-                .findAndCountAll(query)
-                .then(({ rows, count }) => {
-                return { total: count, data: rows };
-            });
-        });
-    }
-    static listThreadCommentsForApi(parameters) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            const { videoId, threadId, user, isVideoOwned } = parameters;
-            const blockerAccountIds = yield VideoCommentModel_1.buildBlockerAccountIds({ videoId, user, isVideoOwned });
-            const query = {
-                order: [['createdAt', 'ASC'], ['updatedAt', 'ASC']],
-                where: {
-                    videoId,
-                    [sequelize_1.Op.or]: [
-                        { id: threadId },
-                        { originCommentId: threadId }
-                    ],
-                    accountId: {
-                        [sequelize_1.Op.notIn]: sequelize_1.Sequelize.literal('(' + utils_1.buildBlockedAccountSQL(blockerAccountIds) + ')')
-                    }
-                }
-            };
-            const scopes = [
-                ScopeNames.WITH_ACCOUNT_FOR_API,
-                {
-                    method: [ScopeNames.ATTRIBUTES_FOR_API, blockerAccountIds]
-                }
-            ];
-            return VideoCommentModel_1
-                .scope(scopes)
+            return VideoCommentModel_1.scope(scopes)
                 .findAndCountAll(query)
                 .then(({ rows, count }) => {
                 return { total: count, data: rows };
@@ -376,6 +392,16 @@ let VideoCommentModel = VideoCommentModel_1 = class VideoCommentModel extends se
                 totalVideoComments
             };
         });
+    }
+    static listRemoteCommentUrlsOfLocalVideos() {
+        const query = `SELECT "videoComment".url FROM "videoComment" ` +
+            `INNER JOIN account ON account.id = "videoComment"."accountId" ` +
+            `INNER JOIN actor ON actor.id = "account"."actorId" AND actor."serverId" IS NOT NULL ` +
+            `INNER JOIN video ON video.id = "videoComment"."videoId" AND video.remote IS FALSE`;
+        return VideoCommentModel_1.sequelize.query(query, {
+            type: sequelize_1.QueryTypes.SELECT,
+            raw: true
+        }).then(rows => rows.map(r => r.url));
     }
     static cleanOldCommentsOf(videoId, beforeUpdatedAt) {
         const query = {

@@ -40,7 +40,7 @@ const videoImportAddValidator = videos_2.getCommonVideoEditAttributes().concat([
         const torrentFile = ((_a = req.files) === null || _a === void 0 ? void 0 : _a['torrentfile']) ? req.files['torrentfile'][0] : undefined;
         if (utils_1.areValidationErrors(req, res))
             return express_utils_1.cleanUpReqFiles(req);
-        if (req.body.targetUrl && config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED !== true) {
+        if (config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED !== true && req.body.targetUrl) {
             express_utils_1.cleanUpReqFiles(req);
             return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .json({ error: 'HTTP import is not enabled on this instance.' })

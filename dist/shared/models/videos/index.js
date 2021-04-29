@@ -28,6 +28,7 @@ tslib_1.__exportStar(require("./video-sort-field.type"), exports);
 tslib_1.__exportStar(require("./video-state.enum"), exports);
 tslib_1.__exportStar(require("./video-streaming-playlist.model"), exports);
 tslib_1.__exportStar(require("./video-streaming-playlist.type"), exports);
+tslib_1.__exportStar(require("./video-transcoding.model"), exports);
 tslib_1.__exportStar(require("./video-transcoding-fps.model"), exports);
 tslib_1.__exportStar(require("./video-update.model"), exports);
 tslib_1.__exportStar(require("./video.model"), exports);

@@ -2,10 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.bunyanLogger = exports.logger = exports.jsonLoggerFormat = exports.consoleLoggerFormat = exports.labelFormatter = exports.timestampFormatter = exports.buildLogger = void 0;
 const fs_extra_1 = require("fs-extra");
+const lodash_1 = require("lodash");
 const path = require("path");
+const sql_formatter_1 = require("sql-formatter");
 const winston = require("winston");
 const config_1 = require("../initializers/config");
-const lodash_1 = require("lodash");
 const constants_1 = require("../initializers/constants");
 const label = config_1.CONFIG.WEBSERVER.HOSTNAME + ':' + config_1.CONFIG.WEBSERVER.PORT;
 fs_extra_1.mkdirpSync(config_1.CONFIG.STORAGE.LOG_DIR);
@@ -19,6 +20,12 @@ function getLoggerReplacer() {
                 return;
             seen.add(value);
         }
+        if (value instanceof Set) {
+            return Array.from(value);
+        }
+        if (value instanceof Map) {
+            return Array.from(value.entries());
+        }
         if (value instanceof Error) {
             const error = {};
             Object.getOwnPropertyNames(value).forEach(key => { error[key] = value[key]; });
@@ -28,12 +35,24 @@ function getLoggerReplacer() {
     };
 }
 const consoleLoggerFormat = winston.format.printf(info => {
-    const obj = lodash_1.omit(info, 'label', 'timestamp', 'level', 'message');
+    const toOmit = ['label', 'timestamp', 'level', 'message', 'sql'];
+    const obj = lodash_1.omit(info, ...toOmit);
     let additionalInfos = JSON.stringify(obj, getLoggerReplacer(), 2);
     if (additionalInfos === undefined || additionalInfos === '{}')
         additionalInfos = '';
     else
         additionalInfos = ' ' + additionalInfos;
+    if (info.sql) {
+        if (config_1.CONFIG.LOG.PRETTIFY_SQL) {
+            additionalInfos += '\n' + sql_formatter_1.format(info.sql, {
+                language: 'sql',
+                indent: '  '
+            });
+        }
+        else {
+            additionalInfos += ' - ' + info.sql;
+        }
+    }
     return `[${info.label}] ${info.timestamp} ${info.level}: ${info.message}${additionalInfos}`;
 });
 exports.consoleLoggerFormat = consoleLoggerFormat;

@@ -3,18 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.videoCaptionsRouter = void 0;
 const tslib_1 = require("tslib");
 const express = require("express");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
+const captions_utils_1 = require("../../../helpers/captions-utils");
+const express_utils_1 = require("../../../helpers/express-utils");
+const logger_1 = require("../../../helpers/logger");
+const utils_1 = require("../../../helpers/utils");
+const config_1 = require("../../../initializers/config");
+const constants_1 = require("../../../initializers/constants");
+const database_1 = require("../../../initializers/database");
+const videos_1 = require("../../../lib/activitypub/videos");
 const middlewares_1 = require("../../../middlewares");
 const validators_1 = require("../../../middlewares/validators");
-const express_utils_1 = require("../../../helpers/express-utils");
-const constants_1 = require("../../../initializers/constants");
-const utils_1 = require("../../../helpers/utils");
 const video_caption_1 = require("../../../models/video/video-caption");
-const logger_1 = require("../../../helpers/logger");
-const videos_1 = require("../../../lib/activitypub/videos");
-const captions_utils_1 = require("../../../helpers/captions-utils");
-const config_1 = require("../../../initializers/config");
-const database_1 = require("../../../initializers/database");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const reqVideoCaptionAdd = express_utils_1.createReqFiles(['captionfile'], constants_1.MIMETYPES.VIDEO_CAPTIONS.MIMETYPE_EXT, {
     captionfile: config_1.CONFIG.STORAGE.CAPTIONS_DIR
 });
@@ -33,14 +33,15 @@ function addVideoCaption(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const videoCaptionPhysicalFile = req.files['captionfile'][0];
         const video = res.locals.videoAll;
+        const captionLanguage = req.params.captionLanguage;
         const videoCaption = new video_caption_1.VideoCaptionModel({
             videoId: video.id,
-            language: req.params.captionLanguage
+            filename: video_caption_1.VideoCaptionModel.generateCaptionName(captionLanguage),
+            language: captionLanguage
         });
-        videoCaption.Video = video;
         yield captions_utils_1.moveAndProcessCaptionFile(videoCaptionPhysicalFile, videoCaption);
         yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, req.params.captionLanguage, null, t);
+            yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCaption, t);
             yield videos_1.federateVideoIfNeeded(video, false, t);
         }));
         return res.status(http_error_codes_1.HttpStatusCode.NO_CONTENT_204).end();

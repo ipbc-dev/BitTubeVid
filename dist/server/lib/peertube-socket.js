@@ -14,7 +14,7 @@ class PeerTubeSocket {
         io.of('/user-notifications')
             .use(middlewares_1.authenticateSocket)
             .on('connection', socket => {
-            const userId = socket.handshake.query.user.id;
+            const userId = socket.handshake.auth.user.id;
             logger_1.logger.debug('User %d connected on the notification system.', userId);
             if (!this.userNotificationSockets[userId])
                 this.userNotificationSockets[userId] = [];

@@ -33,6 +33,13 @@ describe('Test live constraints', function () {
             yield extra_utils_1.checkLiveCleanup(servers[0], videoId, resolutions);
         });
     }
+    function waitUntilLivePublishedOnAllServers(videoId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const server of servers) {
+                yield extra_utils_1.waitUntilLivePublished(server.url, server.accessToken, videoId);
+            }
+        });
+    }
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
@@ -84,6 +91,7 @@ describe('Test live constraints', function () {
             yield extra_utils_1.wait(5000);
             const userVideoLiveoId = yield createLiveWrapper(true);
             yield extra_utils_1.runAndTestFfmpegStreamError(servers[0].url, userAccessToken, userVideoLiveoId, true);
+            yield waitUntilLivePublishedOnAllServers(userVideoLiveoId);
             yield extra_utils_1.waitJobs(servers);
             yield checkSaveReplay(userVideoLiveoId);
         });
@@ -101,6 +109,7 @@ describe('Test live constraints', function () {
             });
             const userVideoLiveoId = yield createLiveWrapper(true);
             yield extra_utils_1.runAndTestFfmpegStreamError(servers[0].url, userAccessToken, userVideoLiveoId, true);
+            yield waitUntilLivePublishedOnAllServers(userVideoLiveoId);
             yield extra_utils_1.waitJobs(servers);
             yield checkSaveReplay(userVideoLiveoId);
         });
@@ -136,6 +145,7 @@ describe('Test live constraints', function () {
                             '480p': true,
                             '720p': true,
                             '1080p': true,
+                            '1440p': true,
                             '2160p': true
                         }
                     }
@@ -143,6 +153,7 @@ describe('Test live constraints', function () {
             });
             const userVideoLiveoId = yield createLiveWrapper(true);
             yield extra_utils_1.runAndTestFfmpegStreamError(servers[0].url, userAccessToken, userVideoLiveoId, true);
+            yield waitUntilLivePublishedOnAllServers(userVideoLiveoId);
             yield extra_utils_1.waitJobs(servers);
             yield checkSaveReplay(userVideoLiveoId, [720, 480, 360, 240]);
         });

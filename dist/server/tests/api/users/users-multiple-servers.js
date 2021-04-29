@@ -124,6 +124,22 @@ describe('Test users with multiple servers', function () {
             }
         });
     });
+    it('Should search through account videos', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(10000);
+            const resVideo = yield index_1.uploadVideo(servers[0].url, userAccessToken, { name: 'Kami no chikara' });
+            yield jobs_1.waitJobs(servers);
+            for (const server of servers) {
+                const res = yield extra_utils_1.getAccountVideos(server.url, server.accessToken, 'user1@localhost:' + servers[0].port, 0, 5, undefined, {
+                    search: 'Kami'
+                });
+                expect(res.body.total).to.equal(1);
+                expect(res.body.data).to.be.an('array');
+                expect(res.body.data).to.have.lengthOf(1);
+                expect(res.body.data[0].uuid).to.equal(resVideo.body.video.uuid);
+            }
+        });
+    });
     it('Should remove the user', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(10000);

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="sq">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="theme-color" content="#fff"/>
+    <meta property="og:platform" content="PeerTube"/>
+    <!-- Web Manifest file -->
+    <link rel="manifest" href="/manifest.webmanifest?[manifestContentHash]">
+
+    <link rel="icon" type="image/png" href="/client/assets/images/favicon.png?[faviconContentHash]"/>
+    <link rel="apple-touch-icon" href="/client/assets/images/icons/icon-144x144.png" sizes="144x144"/>
+    <link rel="apple-touch-icon" href="/client/assets/images/icons/icon-192x192.png" sizes="192x192"/>
+
+    <!-- logo background-image -->
+    <style type="text/css">
+      .icon-logo {
+        background-image: url(/client/assets/images/logo.svg?[logoContentHash]);
+      }
+    </style>
+
+    <!-- base url -->
+    <base href="/client/sq/">
+
+    <!-- /!\ The following comment is used by the server to prerender some tags /!\ -->
+
+    <!-- title tag -->
+    <!-- description tag -->
+    <!-- custom css tag -->
+    <!-- meta tags -->
+
+    <!-- /!\ Do not remove it /!\ -->
+  <link rel="stylesheet" href="styles.f5f3398cb8a14d89e2a8.css"></head>
+
+  <!-- 3. Display the application -->
+  <body id="custom-css">
+
+    <noscript class="alert alert-light" role="alert">
+      <h1 class="alert-heading">PeerTube</h1>
+      <h2 class="mb-3">JavaScript required</h2>
+
+      <p>It seems JavaScript is either blocked or disabled in your web browser. We totally get that. However, this page will not work without it.</p>
+      <p>If you are concerned about the security and privacy (or lack thereof) of JavaScript web applications, you might want to review the source code of the instance you are trying to access, or look for security audits.</p>
+
+      <hr>
+
+      <h2 class="mb-3">Your options</h2>
+
+      <ul>
+        <li>Allow JavaScript in your browser</li>
+        <li>Use one of the <a class="alert-link" href="https://framagit.org/framasoft/peertube/documentation/-/raw/master/use-third-party-application.md" target="_blank">third-party applications</a> to browse this instance</li>
+        <li>Review the source code on <a class="alert-link" href="https://github.com/Chocobozzz/PeerTube" target="_blank">GitHub</a> or <a class="alert-link" href="https://framagit.org/framasoft/peertube/PeerTube" target="_blank">Framasoft's GitLab</a>, and ask for eventual modifications to the instance owner.
+      </ul>
+    </noscript>
+
+    <div id="incompatible-browser" class="alert alert-light" role="alert" style="display: none">
+      <h1 class="alert-heading">BitTube</h1>
+      <h2 class="mb-3">Incompatible browser</h2>
+
+      <p>We are sorry but it seems that BitTube is not compatible with your web browser.</p>
+
+      <hr>
+      <p>Please try with the latest version of <a class="alert-link" href="https://www.mozilla.org" target="_blank">Mozilla Firefox</a>.</p>
+      <!-- <p class="mb-0">If you think this is a mistake, please <a class="alert-link" href="https://github.com/Chocobozzz/PeerTube/issues/new" target="_blank">report it</a>.</p> -->
+    </div>
+
+    <script type="text/javascript">
+      function displayIncompatibleBrowser () {
+        var elem = document.getElementById('incompatible-browser')
+        if (elem.className.indexOf('browser-ok') === -1) {
+          elem.style.display = 'block'
+        }
+      }
+
+      window.onerror = function () {
+        displayIncompatibleBrowser()
+      }
+
+      if (/MSIE|Trident/.test(window.navigator.userAgent) ) {
+        displayIncompatibleBrowser()
+      }
+    </script>
+
+    <my-app role="main">
+    </my-app>
+
+  <script src="runtime.c849f90f4f71110fbfc5.js" defer></script><script src="polyfills.4f37ccce2d727f54127f.js" defer></script><script src="main.84a4fd63dc696c80f054.js" defer></script></body>
+</html>

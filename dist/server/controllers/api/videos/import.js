@@ -105,18 +105,17 @@ function addYoutubeDLImport(req, res) {
         }
         catch (err) {
             logger_1.logger.info('Cannot fetch information from import for URL %s.', targetUrl, { err });
-            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400).json({
+            return res.status(http_error_codes_1.HttpStatusCode.BAD_REQUEST_400)
+                .json({
                 error: 'Cannot fetch remote information of this URL.'
-            }).end();
+            });
         }
         const video = buildVideo(res.locals.videoChannel.id, body, youtubeDLInfo);
-        let thumbnailModel;
-        thumbnailModel = yield processThumbnail(req, video);
+        let thumbnailModel = yield processThumbnail(req, video);
         if (!thumbnailModel && youtubeDLInfo.thumbnailUrl) {
             thumbnailModel = yield processThumbnailFromUrl(youtubeDLInfo.thumbnailUrl, video);
         }
-        let previewModel;
-        previewModel = yield processPreview(req, video);
+        let previewModel = yield processPreview(req, video);
         if (!previewModel && youtubeDLInfo.thumbnailUrl) {
             previewModel = yield processPreviewFromUrl(youtubeDLInfo.thumbnailUrl, video);
         }
@@ -141,12 +140,12 @@ function addYoutubeDLImport(req, res) {
             for (const subtitle of subtitles) {
                 const videoCaption = new video_caption_1.VideoCaptionModel({
                     videoId: video.id,
-                    language: subtitle.language
+                    language: subtitle.language,
+                    filename: video_caption_1.VideoCaptionModel.generateCaptionName(subtitle.language)
                 });
-                videoCaption.Video = video;
                 yield captions_utils_1.moveAndProcessCaptionFile(subtitle, videoCaption);
                 yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(video.id, subtitle.language, null, t);
+                    yield video_caption_1.VideoCaptionModel.insertOrReplaceLanguage(videoCaption, t);
                 }));
             }
         }
@@ -156,11 +155,7 @@ function addYoutubeDLImport(req, res) {
         const payload = {
             type: 'youtube-dl',
             videoImportId: videoImport.id,
-            generateThumbnail: !thumbnailModel,
-            generatePreview: !previewModel,
-            fileExt: youtubeDLInfo.fileExt
-                ? `.${youtubeDLInfo.fileExt}`
-                : '.mp4'
+            fileExt: `.${youtubeDLInfo.ext || 'mp4'}`
         };
         yield job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-import', payload });
         auditLogger.create(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.VideoImportAuditView(videoImport.toFormattedJSON()));
@@ -223,7 +218,7 @@ function processPreview(req, video) {
 function processThumbnailFromUrl(url, video) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
-            return thumbnail_1.createVideoMiniatureFromUrl(url, video, 1);
+            return thumbnail_1.createVideoMiniatureFromUrl({ downloadUrl: url, video, type: 1 });
         }
         catch (err) {
             logger_1.logger.warn('Cannot generate video thumbnail %s for %s.', url, video.url, { err });
@@ -234,7 +229,7 @@ function processThumbnailFromUrl(url, video) {
 function processPreviewFromUrl(url, video) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         try {
-            return thumbnail_1.createVideoMiniatureFromUrl(url, video, 2);
+            return thumbnail_1.createVideoMiniatureFromUrl({ downloadUrl: url, video, type: 2 });
         }
         catch (err) {
             logger_1.logger.warn('Cannot generate video preview %s for %s.', url, video.url, { err });
@@ -243,26 +238,29 @@ function processPreviewFromUrl(url, video) {
     });
 }
 function insertIntoDB(parameters) {
-    const { video, thumbnailModel, previewModel, videoChannel, tags, videoImportAttributes, user } = parameters;
-    return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const sequelizeOptions = { transaction: t };
-        const videoCreated = yield video.save(sequelizeOptions);
-        videoCreated.VideoChannel = videoChannel;
-        if (thumbnailModel)
-            yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
-        if (previewModel)
-            yield videoCreated.addAndSaveThumbnail(previewModel, t);
-        yield video_blacklist_1.autoBlacklistVideoIfNeeded({
-            video: videoCreated,
-            user,
-            notify: false,
-            isRemote: false,
-            isNew: true,
-            transaction: t
-        });
-        yield video_1.setVideoTags({ video: videoCreated, tags, transaction: t });
-        const videoImport = yield video_import_1.VideoImportModel.create(Object.assign({ videoId: videoCreated.id }, videoImportAttributes), sequelizeOptions);
-        videoImport.Video = videoCreated;
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { video, thumbnailModel, previewModel, videoChannel, tags, videoImportAttributes, user } = parameters;
+        const videoImport = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const sequelizeOptions = { transaction: t };
+            const videoCreated = yield video.save(sequelizeOptions);
+            videoCreated.VideoChannel = videoChannel;
+            if (thumbnailModel)
+                yield videoCreated.addAndSaveThumbnail(thumbnailModel, t);
+            if (previewModel)
+                yield videoCreated.addAndSaveThumbnail(previewModel, t);
+            yield video_blacklist_1.autoBlacklistVideoIfNeeded({
+                video: videoCreated,
+                user,
+                notify: false,
+                isRemote: false,
+                isNew: true,
+                transaction: t
+            });
+            yield video_1.setVideoTags({ video: videoCreated, tags, transaction: t });
+            const videoImport = yield video_import_1.VideoImportModel.create(Object.assign({ videoId: videoCreated.id }, videoImportAttributes), sequelizeOptions);
+            videoImport.Video = videoCreated;
+            return videoImport;
+        }));
         return videoImport;
-    }));
+    });
 }

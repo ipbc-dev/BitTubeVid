@@ -16,7 +16,7 @@ function activityPubValidator(req, res, next) {
         }
         const serverActor = yield application_1.getServerActor();
         const remoteActor = res.locals.signature.actor;
-        if (serverActor.id === remoteActor.id) {
+        if (serverActor.id === remoteActor.id || remoteActor.serverId === null) {
             logger_1.logger.error('Receiving request in INBOX by ourselves!', req.body);
             return res.status(http_error_codes_1.HttpStatusCode.CONFLICT_409)
                 .end();

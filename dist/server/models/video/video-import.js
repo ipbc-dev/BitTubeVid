@@ -10,10 +10,11 @@ const constants_1 = require("../../initializers/constants");
 const user_1 = require("../account/user");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
+const database_utils_1 = require("@server/helpers/database-utils");
 let VideoImportModel = VideoImportModel_1 = class VideoImportModel extends sequelize_typescript_1.Model {
     static deleteVideoIfFailed(instance, options) {
         if (instance.state === 3) {
-            return instance.Video.destroy({ transaction: options.transaction });
+            return database_utils_1.afterCommitIfTransaction(options.transaction, () => instance.Video.destroy());
         }
         return undefined;
     }

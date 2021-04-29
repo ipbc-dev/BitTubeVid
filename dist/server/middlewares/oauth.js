@@ -27,13 +27,15 @@ function authenticateSocket(socket, next) {
     logger_1.logger.debug('Checking socket access token %s.', accessToken);
     if (!accessToken)
         return next(new Error('No access token provided'));
+    if (typeof accessToken !== 'string')
+        return next(new Error('Access token is invalid'));
     oauth_model_1.getAccessToken(accessToken)
         .then(tokenDB => {
         const now = new Date();
         if (!tokenDB || tokenDB.accessTokenExpiresAt < now || tokenDB.refreshTokenExpiresAt < now) {
             return next(new Error('Invalid access token.'));
         }
-        socket.handshake.query['user'] = tokenDB.User;
+        socket.handshake.auth.user = tokenDB.User;
         return next();
     })
         .catch(err => logger_1.logger.error('Cannot get access token.', { err }));

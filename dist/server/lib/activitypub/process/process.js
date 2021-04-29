@@ -17,6 +17,7 @@ const actor_1 = require("../actor");
 const process_dislike_1 = require("./process-dislike");
 const process_flag_1 = require("./process-flag");
 const process_view_1 = require("./process-view");
+const stat_manager_1 = require("@server/lib/stat-manager");
 const processActivity = {
     Create: process_create_1.processCreateActivity,
     Update: process_update_1.processUpdateActivity,
@@ -58,9 +59,11 @@ function processActivities(activities, options = {}) {
             }
             try {
                 yield activityProcessor({ activity, byActor, inboxActor, fromFetch });
+                stat_manager_1.StatsManager.Instance.addInboxProcessedSuccess(activity.type);
             }
             catch (err) {
                 logger_1.logger.warn('Cannot process activity %s.', activity.type, { err });
+                stat_manager_1.StatsManager.Instance.addInboxProcessedError(activity.type);
             }
         }
     });

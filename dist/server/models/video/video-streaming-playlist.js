@@ -3,22 +3,19 @@ var VideoStreamingPlaylistModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VideoStreamingPlaylistModel = void 0;
 const tslib_1 = require("tslib");
+const memoizee = require("memoizee");
+const path_1 = require("path");
+const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const video_file_1 = require("@server/models/video/video-file");
+const core_utils_1 = require("../../helpers/core-utils");
+const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
+const misc_2 = require("../../helpers/custom-validators/misc");
 const videos_1 = require("../../helpers/custom-validators/videos");
+const constants_1 = require("../../initializers/constants");
+const video_redundancy_1 = require("../redundancy/video-redundancy");
 const utils_1 = require("../utils");
 const video_1 = require("./video");
-const video_redundancy_1 = require("../redundancy/video-redundancy");
-const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
-const constants_1 = require("../../initializers/constants");
-const path_1 = require("path");
-const core_utils_1 = require("../../helpers/core-utils");
-const misc_2 = require("../../helpers/custom-validators/misc");
-const sequelize_1 = require("sequelize");
-const video_file_1 = require("@server/models/video/video-file");
-const video_paths_1 = require("@server/lib/video-paths");
-const memoizee = require("memoizee");
-const fs_extra_1 = require("fs-extra");
-const logger_1 = require("@server/helpers/logger");
 let VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = class VideoStreamingPlaylistModel extends sequelize_typescript_1.Model {
     static doesInfohashExist(infoHash) {
         const query = 'SELECT 1 FROM "videoStreamingPlaylist" WHERE $infoHash = ANY("p2pMediaLoaderInfohashes") LIMIT 1';
@@ -92,32 +89,12 @@ let VideoStreamingPlaylistModel = VideoStreamingPlaylistModel_1 = class VideoStr
             return 'hls';
         return 'unknown';
     }
-    getVideoRedundancyUrl(baseUrlHttp) {
-        return baseUrlHttp + constants_1.STATIC_PATHS.REDUNDANCY + this.getStringType() + '/' + this.Video.uuid;
-    }
-    getTorrentDownloadUrl(videoFile, baseUrlHttp) {
-        return baseUrlHttp + constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + video_paths_1.getTorrentFileName(this, videoFile);
-    }
-    getVideoFileDownloadUrl(videoFile, baseUrlHttp) {
-        return baseUrlHttp + constants_1.STATIC_DOWNLOAD_PATHS.HLS_VIDEOS + video_paths_1.getVideoFilename(this, videoFile);
-    }
-    getVideoFileUrl(videoFile, baseUrlHttp) {
-        return baseUrlHttp + path_1.join(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, this.Video.uuid, video_paths_1.getVideoFilename(this, videoFile));
-    }
-    getTorrentUrl(videoFile, baseUrlHttp) {
-        return baseUrlHttp + path_1.join(constants_1.STATIC_PATHS.TORRENTS, video_paths_1.getTorrentFileName(this, videoFile));
-    }
     getTrackerUrls(baseUrlHttp, baseUrlWs) {
         return [baseUrlWs + '/tracker/socket', baseUrlHttp + '/tracker/announce'];
     }
     hasSameUniqueKeysThan(other) {
         return this.type === other.type &&
             this.videoId === other.videoId;
-    }
-    removeTorrent(videoFile) {
-        const torrentPath = video_paths_1.getTorrentFilePath(this, videoFile);
-        return fs_extra_1.remove(torrentPath)
-            .catch(err => logger_1.logger.warn('Cannot delete torrent %s.', torrentPath, { err }));
     }
 };
 VideoStreamingPlaylistModel.doesInfohashExistCached = memoizee(VideoStreamingPlaylistModel_1.doesInfohashExist, {

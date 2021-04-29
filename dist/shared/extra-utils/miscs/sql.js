@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.closeAllSequelize = exports.setActorFollowScores = exports.setPluginVersion = exports.countVideoViewsOf = exports.setActorField = exports.setPlaylistField = exports.setVideoField = void 0;
+exports.getCount = exports.closeAllSequelize = exports.setActorFollowScores = exports.updateQuery = exports.deleteAll = exports.selectQuery = exports.setPluginVersion = exports.countVideoViewsOf = exports.setActorField = exports.setPlaylistField = exports.setVideoField = void 0;
 const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const sequelizes = {};
@@ -21,6 +21,23 @@ function getSequelize(internalServerNumber) {
     sequelizes[internalServerNumber] = seq;
     return seq;
 }
+function deleteAll(internalServerNumber, table) {
+    const seq = getSequelize(internalServerNumber);
+    const options = { type: sequelize_1.QueryTypes.DELETE };
+    return seq.query(`DELETE FROM "${table}"`, options);
+}
+exports.deleteAll = deleteAll;
+function getCount(internalServerNumber, table) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const seq = getSequelize(internalServerNumber);
+        const options = { type: sequelize_1.QueryTypes.SELECT };
+        const [{ total }] = yield seq.query(`SELECT COUNT(*) as total FROM "${table}"`, options);
+        if (total === null)
+            return 0;
+        return parseInt(total, 10);
+    });
+}
+exports.getCount = getCount;
 function setActorField(internalServerNumber, to, field, value) {
     const seq = getSequelize(internalServerNumber);
     const options = { type: sequelize_1.QueryTypes.UPDATE };
@@ -52,6 +69,18 @@ function countVideoViewsOf(internalServerNumber, uuid) {
     });
 }
 exports.countVideoViewsOf = countVideoViewsOf;
+function selectQuery(internalServerNumber, query) {
+    const seq = getSequelize(internalServerNumber);
+    const options = { type: sequelize_1.QueryTypes.SELECT };
+    return seq.query(query, options);
+}
+exports.selectQuery = selectQuery;
+function updateQuery(internalServerNumber, query) {
+    const seq = getSequelize(internalServerNumber);
+    const options = { type: sequelize_1.QueryTypes.UPDATE };
+    return seq.query(query, options);
+}
+exports.updateQuery = updateQuery;
 function closeAllSequelize(servers) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         for (const server of servers) {

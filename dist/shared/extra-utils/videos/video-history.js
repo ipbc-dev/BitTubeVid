@@ -9,12 +9,15 @@ function userWatchVideo(url, token, videoId, currentTime, statusCodeExpected = h
     return requests_1.makePutBodyRequest({ url, path, token, fields, statusCodeExpected });
 }
 exports.userWatchVideo = userWatchVideo;
-function listMyVideosHistory(url, token) {
+function listMyVideosHistory(url, token, search) {
     const path = '/api/v1/users/me/history/videos';
     return requests_1.makeGetRequest({
         url,
         path,
         token,
+        query: {
+            search
+        },
         statusCodeExpected: http_error_codes_1.HttpStatusCode.OK_200
     });
 }

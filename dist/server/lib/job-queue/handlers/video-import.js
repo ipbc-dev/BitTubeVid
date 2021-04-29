@@ -4,11 +4,13 @@ exports.processVideoImport = void 0;
 const tslib_1 = require("tslib");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
-const video_1 = require("@server/helpers/video");
+const database_utils_1 = require("@server/helpers/database-utils");
 const moderation_1 = require("@server/lib/moderation");
 const hooks_1 = require("@server/lib/plugins/hooks");
 const user_1 = require("@server/lib/user");
+const video_1 = require("@server/lib/video");
 const video_paths_1 = require("@server/lib/video-paths");
+const thumbnail_1 = require("@server/models/video/thumbnail");
 const ffprobe_utils_1 = require("../../../helpers/ffprobe-utils");
 const logger_1 = require("../../../helpers/logger");
 const utils_1 = require("../../../helpers/utils");
@@ -22,7 +24,7 @@ const video_file_1 = require("../../../models/video/video-file");
 const video_import_1 = require("../../../models/video/video-import");
 const videos_1 = require("../../activitypub/videos");
 const notifier_1 = require("../../notifier");
-const thumbnail_1 = require("../../thumbnail");
+const thumbnail_2 = require("../../thumbnail");
 function processVideoImport(job) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const payload = job.data;
@@ -39,9 +41,7 @@ function processTorrentImport(job, payload) {
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
             type: payload.type,
-            videoImportId: payload.videoImportId,
-            generateThumbnail: true,
-            generatePreview: true
+            videoImportId: payload.videoImportId
         };
         const target = {
             torrentName: videoImport.torrentName ? utils_1.getSecureTorrentName(videoImport.torrentName) : undefined,
@@ -56,9 +56,7 @@ function processYoutubeDLImport(job, payload) {
         const videoImport = yield getVideoImportOrDie(payload.videoImportId);
         const options = {
             type: payload.type,
-            videoImportId: videoImport.id,
-            generateThumbnail: payload.generateThumbnail,
-            generatePreview: payload.generatePreview
+            videoImportId: videoImport.id
         };
         return processFile(() => youtube_dl_1.downloadYoutubeDLVideo(videoImport.targetUrl, payload.fileExt, constants_1.VIDEO_IMPORT_TIMEOUT), videoImport, options);
     });
@@ -87,10 +85,12 @@ function processFile(downloader, videoImport, options) {
             const { videoFileResolution } = yield ffprobe_utils_1.getVideoFileResolution(tempVideoPath);
             const fps = yield ffprobe_utils_1.getVideoFileFPS(tempVideoPath);
             const duration = yield ffprobe_utils_1.getDurationFromVideoFile(tempVideoPath);
+            const fileExt = path_1.extname(tempVideoPath);
             const videoFileData = {
-                extname: path_1.extname(tempVideoPath),
+                extname: fileExt,
                 resolution: videoFileResolution,
                 size: stats.size,
+                filename: video_paths_1.generateVideoFilename(videoImport.Video, false, videoFileResolution, fileExt),
                 fps,
                 videoId: videoImport.videoId
             };
@@ -118,36 +118,58 @@ function processFile(downloader, videoImport, options) {
             yield fs_extra_1.move(tempVideoPath, videoDestFile);
             tempVideoPath = null;
             let thumbnailModel;
-            if (options.generateThumbnail) {
-                thumbnailModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, 1);
+            let thumbnailSave;
+            if (!videoImportWithFiles.Video.getMiniature()) {
+                thumbnailModel = yield thumbnail_2.generateVideoMiniature({
+                    video: videoImportWithFiles.Video,
+                    videoFile,
+                    type: 1
+                });
+                thumbnailSave = thumbnailModel.toJSON();
             }
             let previewModel;
-            if (options.generatePreview) {
-                previewModel = yield thumbnail_1.generateVideoMiniature(videoImportWithFiles.Video, videoFile, 2);
+            let previewSave;
+            if (!videoImportWithFiles.Video.getPreview()) {
+                previewModel = yield thumbnail_2.generateVideoMiniature({
+                    video: videoImportWithFiles.Video,
+                    videoFile,
+                    type: 2
+                });
+                previewSave = previewModel.toJSON();
             }
             yield webtorrent_1.createTorrentAndSetInfoHash(videoImportWithFiles.Video, videoFile);
-            const { videoImportUpdated, video } = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const videoImportToUpdate = videoImportWithFiles;
-                const video = yield video_2.VideoModel.load(videoImportToUpdate.videoId, t);
-                if (!video)
-                    throw new Error('Video linked to import ' + videoImportToUpdate.videoId + ' does not exist anymore.');
-                const videoFileCreated = yield videoFile.save({ transaction: t });
-                videoImportToUpdate.Video = Object.assign(video, { VideoFiles: [videoFileCreated] });
-                video.duration = duration;
-                video.state = config_1.CONFIG.TRANSCODING.ENABLED ? 2 : 1;
-                yield video.save({ transaction: t });
-                if (thumbnailModel)
-                    yield video.addAndSaveThumbnail(thumbnailModel, t);
-                if (previewModel)
-                    yield video.addAndSaveThumbnail(previewModel, t);
-                const videoForFederation = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
-                yield videos_1.federateVideoIfNeeded(videoForFederation, true, t);
-                videoImportToUpdate.state = 2;
-                const videoImportUpdated = yield videoImportToUpdate.save({ transaction: t });
-                videoImportUpdated.Video = video;
-                logger_1.logger.info('Video %s imported.', video.uuid);
-                return { videoImportUpdated, video: videoForFederation };
-            }));
+            const videoFileSave = videoFile.toJSON();
+            const { videoImportUpdated, video } = yield database_utils_1.retryTransactionWrapper(() => {
+                return database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+                    const videoImportToUpdate = videoImportWithFiles;
+                    const video = yield video_2.VideoModel.load(videoImportToUpdate.videoId, t);
+                    if (!video)
+                        throw new Error('Video linked to import ' + videoImportToUpdate.videoId + ' does not exist anymore.');
+                    const videoFileCreated = yield videoFile.save({ transaction: t });
+                    video.duration = duration;
+                    video.state = config_1.CONFIG.TRANSCODING.ENABLED ? 2 : 1;
+                    yield video.save({ transaction: t });
+                    if (thumbnailModel)
+                        yield video.addAndSaveThumbnail(thumbnailModel, t);
+                    if (previewModel)
+                        yield video.addAndSaveThumbnail(previewModel, t);
+                    const videoForFederation = yield video_2.VideoModel.loadAndPopulateAccountAndServerAndTags(video.uuid, t);
+                    yield videos_1.federateVideoIfNeeded(videoForFederation, true, t);
+                    videoImportToUpdate.state = 2;
+                    const videoImportUpdated = yield videoImportToUpdate.save({ transaction: t });
+                    videoImportUpdated.Video = video;
+                    videoImportToUpdate.Video = Object.assign(video, { VideoFiles: [videoFileCreated] });
+                    logger_1.logger.info('Video %s imported.', video.uuid);
+                    return { videoImportUpdated, video: videoForFederation };
+                })).catch(err => {
+                    if (thumbnailModel)
+                        thumbnailModel = new thumbnail_1.ThumbnailModel(thumbnailSave);
+                    if (previewModel)
+                        previewModel = new thumbnail_1.ThumbnailModel(previewSave);
+                    videoFile = new video_file_1.VideoFileModel(videoFileSave);
+                    throw err;
+                });
+            });
             notifier_1.Notifier.Instance.notifyOnFinishedVideoImport(videoImportUpdated, true);
             if (video.isBlacklisted()) {
                 const videoBlacklist = Object.assign(video.VideoBlacklist, { Video: video });
@@ -157,7 +179,7 @@ function processFile(downloader, videoImport, options) {
                 notifier_1.Notifier.Instance.notifyOnNewVideoIfNeeded(video);
             }
             if (video.state === 2) {
-                yield video_1.addOptimizeOrMergeAudioJob(videoImportUpdated.Video, videoFile);
+                yield video_1.addOptimizeOrMergeAudioJob(videoImportUpdated.Video, videoFile, videoImport.User);
             }
         }
         catch (err) {

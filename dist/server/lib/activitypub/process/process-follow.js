@@ -56,6 +56,10 @@ function processFollow(byActor, activityId, targetActorURL) {
                 actorFollow.state = 'accepted';
                 yield actorFollow.save({ transaction: t });
             }
+            if (!actorFollow.url) {
+                actorFollow.url = activityId;
+                yield actorFollow.save({ transaction: t });
+            }
             actorFollow.ActorFollower = byActor;
             actorFollow.ActorFollowing = targetActor;
             if (actorFollow.state === 'accepted') {

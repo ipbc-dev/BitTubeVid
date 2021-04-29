@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildRemoteVideoBaseUrl = exports.buildSignedActivity = exports.activityPubCollectionPagination = exports.activityPubContextify = exports.getAPId = exports.checkUrlsSameHost = void 0;
 const tslib_1 = require("tslib");
+const url_1 = require("url");
 const validator_1 = require("validator");
 const constants_1 = require("../initializers/constants");
-const peertube_crypto_1 = require("./peertube-crypto");
 const core_utils_1 = require("./core-utils");
-const url_1 = require("url");
+const peertube_crypto_1 = require("./peertube-crypto");
 function getContextData(type) {
     const context = [
         'https://www.w3.org/ns/activitystreams',
@@ -175,8 +175,10 @@ function checkUrlsSameHost(url1, url2) {
     return idHost && actorHost && idHost.toLowerCase() === actorHost.toLowerCase();
 }
 exports.checkUrlsSameHost = checkUrlsSameHost;
-function buildRemoteVideoBaseUrl(video, path) {
-    const host = video.VideoChannel.Account.Actor.Server.host;
-    return constants_1.REMOTE_SCHEME.HTTP + '://' + host + path;
+function buildRemoteVideoBaseUrl(video, path, scheme) {
+    if (!scheme)
+        scheme = constants_1.REMOTE_SCHEME.HTTP;
+    const host = video.VideoChannel.Actor.Server.host;
+    return scheme + '://' + host + path;
 }
 exports.buildRemoteVideoBaseUrl = buildRemoteVideoBaseUrl;

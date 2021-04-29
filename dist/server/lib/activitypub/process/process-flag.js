@@ -36,13 +36,13 @@ function processCreateAbuse(activity, byActor) {
                 const uri = activitypub_1.getAPId(object);
                 logger_1.logger.debug('Reporting remote abuse for object %s.', uri);
                 yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                    const video = yield video_1.VideoModel.loadByUrlAndPopulateAccount(uri);
+                    const video = yield video_1.VideoModel.loadByUrlAndPopulateAccount(uri, t);
                     let videoComment;
                     let flaggedAccount;
                     if (!video)
-                        videoComment = yield video_comment_1.VideoCommentModel.loadByUrlAndPopulateAccountAndVideo(uri);
+                        videoComment = yield video_comment_1.VideoCommentModel.loadByUrlAndPopulateAccountAndVideo(uri, t);
                     if (!videoComment)
-                        flaggedAccount = yield account_1.AccountModel.loadByUrl(uri);
+                        flaggedAccount = yield account_1.AccountModel.loadByUrl(uri, t);
                     if (!video && !videoComment && !flaggedAccount) {
                         logger_1.logger.warn('Cannot flag unknown entity %s.', object);
                         return;

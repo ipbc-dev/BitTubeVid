@@ -27,7 +27,7 @@ function checkHlsPlaylist(servers, videoUUID, hlsOnly, resolutions = [240, 360, 
                 const file = hlsFiles.find(f => f.resolution.id === resolution);
                 expect(file).to.not.be.undefined;
                 expect(file.magnetUri).to.have.lengthOf.above(2);
-                expect(file.torrentUrl).to.equal(`${baseUrl}/static/torrents/${videoDetails.uuid}-${file.resolution.id}-hls.torrent`);
+                expect(file.torrentUrl).to.equal(`http://${server.host}/lazy-static/torrents/${videoDetails.uuid}-${file.resolution.id}-hls.torrent`);
                 expect(file.fileUrl).to.equal(`${baseUrl}/static/streaming-playlists/hls/${videoDetails.uuid}/${videoDetails.uuid}-${file.resolution.id}-fragmented.mp4`);
                 expect(file.resolution.label).to.equal(resolution + 'p');
                 yield extra_utils_1.makeRawRequest(file.torrentUrl, http_error_codes_1.HttpStatusCode.OK_200);
@@ -82,7 +82,7 @@ describe('Test HLS videos', function () {
                 const res = yield extra_utils_1.uploadVideo(servers[0].url, servers[0].accessToken, { name: 'video audio', fixture: 'sample.ogg' });
                 videoAudioUUID = res.body.video.uuid;
                 yield extra_utils_1.waitJobs(servers);
-                yield checkHlsPlaylist(servers, videoAudioUUID, hlsOnly, [constants_1.DEFAULT_AUDIO_RESOLUTION]);
+                yield checkHlsPlaylist(servers, videoAudioUUID, hlsOnly, [constants_1.DEFAULT_AUDIO_RESOLUTION, 360, 240]);
             });
         });
         it('Should update the video', function () {
@@ -154,6 +154,7 @@ describe('Test HLS videos', function () {
                             '480p': true,
                             '720p': true,
                             '1080p': true,
+                            '1440p': true,
                             '2160p': true
                         },
                         hls: {

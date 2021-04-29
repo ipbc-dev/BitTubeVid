@@ -4,42 +4,33 @@ exports.staticRouter = void 0;
 const tslib_1 = require("tslib");
 const cors = require("cors");
 const express = require("express");
-const constants_1 = require("../initializers/constants");
-const cache_1 = require("../middlewares/cache");
-const middlewares_1 = require("../middlewares");
-const video_1 = require("../models/video/video");
-const user_1 = require("../models/account/user");
-const video_comment_1 = require("../models/video/video-comment");
 const path_1 = require("path");
-const core_utils_1 = require("../helpers/core-utils");
-const config_1 = require("../initializers/config");
-const lazy_static_1 = require("./lazy-static");
-const video_paths_1 = require("@server/lib/video-paths");
-const theme_utils_1 = require("../lib/plugins/theme-utils");
-const config_2 = require("@server/controllers/api/config");
-const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
+const config_1 = require("@server/controllers/api/config");
 const client_html_1 = require("@server/lib/client-html");
+const http_error_codes_1 = require("@shared/core-utils/miscs/http-error-codes");
+const core_utils_1 = require("../helpers/core-utils");
+const config_2 = require("../initializers/config");
+const constants_1 = require("../initializers/constants");
+const theme_utils_1 = require("../lib/plugins/theme-utils");
+const video_transcoding_1 = require("../lib/video-transcoding");
+const middlewares_1 = require("../middlewares");
+const cache_1 = require("../middlewares/cache");
+const user_1 = require("../models/account/user");
+const video_1 = require("../models/video/video");
+const video_comment_1 = require("../models/video/video-comment");
 const staticRouter = express.Router();
 exports.staticRouter = staticRouter;
 staticRouter.use(cors());
-const torrentsPhysicalPath = config_1.CONFIG.STORAGE.TORRENTS_DIR;
-staticRouter.use(constants_1.STATIC_PATHS.TORRENTS, cors(), express.static(torrentsPhysicalPath, { maxAge: 0 }));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+).torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadTorrent);
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.TORRENTS + ':id-:resolution([0-9]+)-hls.torrent', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadHLSVideoFileTorrent);
-staticRouter.use(constants_1.STATIC_PATHS.WEBSEED, cors(), express.static(config_1.CONFIG.STORAGE.VIDEOS_DIR, { fallthrough: false }));
-staticRouter.use(constants_1.STATIC_PATHS.REDUNDANCY, cors(), express.static(config_1.CONFIG.STORAGE.REDUNDANCY_DIR, { fallthrough: false }));
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.VIDEOS + ':id-:resolution([0-9]+).:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadVideoFile);
-staticRouter.use(constants_1.STATIC_DOWNLOAD_PATHS.HLS_VIDEOS + ':id-:resolution([0-9]+)-fragmented.:extension', middlewares_1.asyncMiddleware(middlewares_1.videosDownloadValidator), downloadHLSVideoFile);
+const torrentsPhysicalPath = config_2.CONFIG.STORAGE.TORRENTS_DIR;
+staticRouter.use(constants_1.STATIC_PATHS.TORRENTS, express.static(torrentsPhysicalPath, { maxAge: 0 }));
+staticRouter.use(constants_1.STATIC_PATHS.WEBSEED, express.static(config_2.CONFIG.STORAGE.VIDEOS_DIR, { fallthrough: false }));
+staticRouter.use(constants_1.STATIC_PATHS.REDUNDANCY, express.static(config_2.CONFIG.STORAGE.REDUNDANCY_DIR, { fallthrough: false }));
 staticRouter.use(constants_1.STATIC_PATHS.STREAMING_PLAYLISTS.HLS, cors(), express.static(constants_1.HLS_STREAMING_PLAYLIST_DIRECTORY, { fallthrough: false }));
-const thumbnailsPhysicalPath = config_1.CONFIG.STORAGE.THUMBNAILS_DIR;
+const thumbnailsPhysicalPath = config_2.CONFIG.STORAGE.THUMBNAILS_DIR;
 staticRouter.use(constants_1.STATIC_PATHS.THUMBNAILS, express.static(thumbnailsPhysicalPath, { maxAge: constants_1.STATIC_MAX_AGE.SERVER, fallthrough: false }));
-const avatarsPhysicalPath = config_1.CONFIG.STORAGE.AVATARS_DIR;
-staticRouter.use(constants_1.STATIC_PATHS.AVATARS, express.static(avatarsPhysicalPath, { maxAge: constants_1.STATIC_MAX_AGE.SERVER, fallthrough: false }));
-staticRouter.use(constants_1.STATIC_PATHS.PREVIEWS + ':uuid.jpg', middlewares_1.asyncMiddleware(lazy_static_1.getPreview));
-staticRouter.use(constants_1.STATIC_PATHS.VIDEO_CAPTIONS + ':videoId-:captionLanguage([a-z]+).vtt', middlewares_1.asyncMiddleware(lazy_static_1.getVideoCaption));
 staticRouter.get('/robots.txt', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.ROBOTS)), (_, res) => {
     res.type('text/plain');
-    return res.send(config_1.CONFIG.INSTANCE.ROBOTS);
+    return res.send(config_2.CONFIG.INSTANCE.ROBOTS);
 });
 staticRouter.all('/teapot', getCup, middlewares_1.asyncMiddleware(client_html_1.serveIndexHTML));
 staticRouter.get('/security.txt', (_, res) => {
@@ -47,7 +38,7 @@ staticRouter.get('/security.txt', (_, res) => {
 });
 staticRouter.get('/.well-known/security.txt', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.SECURITYTXT)), (_, res) => {
     res.type('text/plain');
-    return res.send(config_1.CONFIG.INSTANCE.SECURITYTXT + config_1.CONFIG.INSTANCE.SECURITYTXT_CONTACT);
+    return res.send(config_2.CONFIG.INSTANCE.SECURITYTXT + config_2.CONFIG.INSTANCE.SECURITYTXT_CONTACT);
 });
 staticRouter.use('/.well-known/nodeinfo', middlewares_1.asyncMiddleware(cache_1.cacheRoute()(constants_1.ROUTE_CACHE_LIFETIME.NODEINFO)), (_, res) => {
     return res.json({
@@ -101,7 +92,7 @@ function generateNodeinfo(req, res) {
                         'rss2.0'
                     ]
                 },
-                openRegistrations: config_1.CONFIG.SIGNUP.ENABLED,
+                openRegistrations: config_2.CONFIG.SIGNUP.ENABLED,
                 usage: {
                     users: {
                         total: totalUsers,
@@ -115,58 +106,58 @@ function generateNodeinfo(req, res) {
                     taxonomy: {
                         postsName: 'Videos'
                     },
-                    nodeName: config_1.CONFIG.INSTANCE.NAME,
-                    nodeDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
+                    nodeName: config_2.CONFIG.INSTANCE.NAME,
+                    nodeDescription: config_2.CONFIG.INSTANCE.SHORT_DESCRIPTION,
                     nodeConfig: {
                         search: {
                             remoteUri: {
-                                users: config_1.CONFIG.SEARCH.REMOTE_URI.USERS,
-                                anonymous: config_1.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
+                                users: config_2.CONFIG.SEARCH.REMOTE_URI.USERS,
+                                anonymous: config_2.CONFIG.SEARCH.REMOTE_URI.ANONYMOUS
                             }
                         },
                         plugin: {
-                            registered: config_2.getRegisteredPlugins()
+                            registered: config_1.getRegisteredPlugins()
                         },
                         theme: {
-                            registered: config_2.getRegisteredThemes(),
-                            default: theme_utils_1.getThemeOrDefault(config_1.CONFIG.THEME.DEFAULT, constants_1.DEFAULT_THEME_NAME)
+                            registered: config_1.getRegisteredThemes(),
+                            default: theme_utils_1.getThemeOrDefault(config_2.CONFIG.THEME.DEFAULT, constants_1.DEFAULT_THEME_NAME)
                         },
                         email: {
-                            enabled: config_1.isEmailEnabled()
+                            enabled: config_2.isEmailEnabled()
                         },
                         contactForm: {
-                            enabled: config_1.CONFIG.CONTACT_FORM.ENABLED
+                            enabled: config_2.CONFIG.CONTACT_FORM.ENABLED
                         },
                         transcoding: {
                             hls: {
-                                enabled: config_1.CONFIG.TRANSCODING.HLS.ENABLED
+                                enabled: config_2.CONFIG.TRANSCODING.HLS.ENABLED
                             },
                             webtorrent: {
-                                enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
+                                enabled: config_2.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
                             },
-                            enabledResolutions: config_2.getEnabledResolutions('vod')
+                            enabledResolutions: video_transcoding_1.getEnabledResolutions('vod')
                         },
                         live: {
-                            enabled: config_1.CONFIG.LIVE.ENABLED,
+                            enabled: config_2.CONFIG.LIVE.ENABLED,
                             transcoding: {
-                                enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
-                                enabledResolutions: config_2.getEnabledResolutions('live')
+                                enabled: config_2.CONFIG.LIVE.TRANSCODING.ENABLED,
+                                enabledResolutions: video_transcoding_1.getEnabledResolutions('live')
                             }
                         },
                         import: {
                             videos: {
                                 http: {
-                                    enabled: config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
+                                    enabled: config_2.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
                                 },
                                 torrent: {
-                                    enabled: config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
+                                    enabled: config_2.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
                                 }
                             }
                         },
                         autoBlacklist: {
                             videos: {
                                 ofUsers: {
-                                    enabled: config_1.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
+                                    enabled: config_2.CONFIG.AUTO_BLACKLIST.VIDEOS.OF_USERS.ENABLED
                                 }
                             }
                         },
@@ -198,16 +189,16 @@ function generateNodeinfo(req, res) {
                             }
                         },
                         user: {
-                            videoQuota: config_1.CONFIG.USER.VIDEO_QUOTA,
-                            videoQuotaDaily: config_1.CONFIG.USER.VIDEO_QUOTA_DAILY
+                            videoQuota: config_2.CONFIG.USER.VIDEO_QUOTA,
+                            videoQuotaDaily: config_2.CONFIG.USER.VIDEO_QUOTA_DAILY
                         },
                         trending: {
                             videos: {
-                                intervalDays: config_1.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS
+                                intervalDays: config_2.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS
                             }
                         },
                         tracker: {
-                            enabled: config_1.CONFIG.TRACKER.ENABLED
+                            enabled: config_2.CONFIG.TRACKER.ENABLED
                         }
                     }
                 }
@@ -220,51 +211,6 @@ function generateNodeinfo(req, res) {
         }
         return res.send(json).end();
     });
-}
-function downloadTorrent(req, res) {
-    const video = res.locals.videoAll;
-    const videoFile = getVideoFile(req, video.VideoFiles);
-    if (!videoFile)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
-    return res.download(video_paths_1.getTorrentFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p.torrent`);
-}
-function downloadHLSVideoFileTorrent(req, res) {
-    const video = res.locals.videoAll;
-    const playlist = getHLSPlaylist(video);
-    if (!playlist)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end;
-    const videoFile = getVideoFile(req, playlist.VideoFiles);
-    if (!videoFile)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
-    return res.download(video_paths_1.getTorrentFilePath(playlist, videoFile), `${video.name}-${videoFile.resolution}p-hls.torrent`);
-}
-function downloadVideoFile(req, res) {
-    const video = res.locals.videoAll;
-    const videoFile = getVideoFile(req, video.VideoFiles);
-    if (!videoFile)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
-    return res.download(video_paths_1.getVideoFilePath(video, videoFile), `${video.name}-${videoFile.resolution}p${videoFile.extname}`);
-}
-function downloadHLSVideoFile(req, res) {
-    const video = res.locals.videoAll;
-    const playlist = getHLSPlaylist(video);
-    if (!playlist)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end;
-    const videoFile = getVideoFile(req, playlist.VideoFiles);
-    if (!videoFile)
-        return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404).end();
-    const filename = `${video.name}-${videoFile.resolution}p-${playlist.getStringType()}${videoFile.extname}`;
-    return res.download(video_paths_1.getVideoFilePath(playlist, videoFile), filename);
-}
-function getVideoFile(req, files) {
-    const resolution = parseInt(req.params.resolution, 10);
-    return files.find(f => f.resolution === resolution);
-}
-function getHLSPlaylist(video) {
-    const playlist = video.VideoStreamingPlaylists.find(p => p.type === 1);
-    if (!playlist)
-        return undefined;
-    return Object.assign(playlist, { Video: video });
 }
 function getCup(req, res, next) {
     res.status(http_error_codes_1.HttpStatusCode.I_AM_A_TEAPOT_418);

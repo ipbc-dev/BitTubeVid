@@ -80,7 +80,7 @@ function updateSha256VODSegments(video) {
                 rangeHashes[`${range.offset}-${range.offset + range.length - 1}`] = core_utils_1.sha256(buf);
             }
             yield fs_extra_1.close(fd);
-            const videoFilename = video_paths_1.getVideoFilename(hlsPlaylist, file);
+            const videoFilename = file.filename;
             json[videoFilename] = rangeHashes;
         }
         const outputPath = path_1.join(playlistDirectory, video_streaming_playlist_1.VideoStreamingPlaylistModel.getHlsSha256SegmentsFilename());

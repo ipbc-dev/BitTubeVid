@@ -24,6 +24,8 @@ function rateVideo(req, res) {
             const sequelizeOptions = { transaction: t };
             const accountInstance = yield account_1.AccountModel.load(userAccount.id, t);
             const previousRate = yield account_video_rate_1.AccountVideoRateModel.load(accountInstance.id, videoInstance.id, t);
+            if (rateType === 'none' && !previousRate || (previousRate === null || previousRate === void 0 ? void 0 : previousRate.type) === rateType)
+                return;
             let likesToIncrement = 0;
             let dislikesToIncrement = 0;
             if (rateType === constants_1.VIDEO_RATE_TYPES.LIKE)

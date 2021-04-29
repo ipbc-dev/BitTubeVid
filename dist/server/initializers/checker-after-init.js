@@ -89,6 +89,14 @@ function checkConfig() {
         if (config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED === false && config_1.CONFIG.TRANSCODING.HLS.ENABLED === false) {
             return 'You need to enable at least WebTorrent transcoding or HLS transcoding.';
         }
+        if (config_1.CONFIG.TRANSCODING.CONCURRENCY <= 0) {
+            return 'Transcoding concurrency should be > 0';
+        }
+    }
+    if (config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED || config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED) {
+        if (config_1.CONFIG.IMPORT.VIDEOS.CONCURRENCY <= 0) {
+            return 'Video import concurrency should be > 0';
+        }
     }
     if (config_1.CONFIG.BROADCAST_MESSAGE.ENABLED) {
         const currentLevel = config_1.CONFIG.BROADCAST_MESSAGE.LEVEL;

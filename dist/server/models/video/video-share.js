@@ -96,6 +96,15 @@ let VideoShareModel = VideoShareModel_1 = class VideoShareModel extends sequeliz
         };
         return VideoShareModel_1.findAndCountAll(query);
     }
+    static listRemoteShareUrlsOfLocalVideos() {
+        const query = `SELECT "videoShare".url FROM "videoShare" ` +
+            `INNER JOIN actor ON actor.id = "videoShare"."actorId" AND actor."serverId" IS NOT NULL ` +
+            `INNER JOIN video ON video.id = "videoShare"."videoId" AND video.remote IS FALSE`;
+        return VideoShareModel_1.sequelize.query(query, {
+            type: sequelize_1.QueryTypes.SELECT,
+            raw: true
+        }).then(rows => rows.map(r => r.url));
+    }
     static cleanOldSharesOf(videoId, beforeUpdatedAt) {
         const query = {
             where: {

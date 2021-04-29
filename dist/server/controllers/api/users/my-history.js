@@ -10,12 +10,12 @@ const database_1 = require("../../../initializers/database");
 const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const myVideosHistoryRouter = express.Router();
 exports.myVideosHistoryRouter = myVideosHistoryRouter;
-myVideosHistoryRouter.get('/me/history/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.asyncMiddleware(listMyVideosHistory));
+myVideosHistoryRouter.get('/me/history/videos', middlewares_1.authenticate, middlewares_1.paginationValidator, middlewares_1.setDefaultPagination, middlewares_1.userHistoryListValidator, middlewares_1.asyncMiddleware(listMyVideosHistory));
 myVideosHistoryRouter.post('/me/history/videos/remove', middlewares_1.authenticate, middlewares_1.userHistoryRemoveValidator, middlewares_1.asyncRetryTransactionMiddleware(removeUserHistory));
 function listMyVideosHistory(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
-        const resultList = yield user_video_history_1.UserVideoHistoryModel.listForApi(user, req.query.start, req.query.count);
+        const resultList = yield user_video_history_1.UserVideoHistoryModel.listForApi(user, req.query.start, req.query.count, req.query.search);
         return res.json(utils_1.getFormattedObjects(resultList.data, resultList.total));
     });
 }

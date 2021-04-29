@@ -90,8 +90,8 @@ describe('Test video imports', function () {
                 const attributes = extra_utils_1.immutableAssign(baseAttributes, { targetUrl: video_imports_1.getYoutubeVideoUrl() });
                 const res = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
                 expect(res.body.video.name).to.equal('small video - youtube');
-                expect(res.body.video.thumbnailPath).to.equal(`/static/thumbnails/${res.body.video.uuid}.jpg`);
-                expect(res.body.video.previewPath).to.equal(`/lazy-static/previews/${res.body.video.uuid}.jpg`);
+                expect(res.body.video.thumbnailPath).to.match(new RegExp(`^/static/thumbnails/.+.jpg$`));
+                expect(res.body.video.previewPath).to.match(new RegExp(`^/lazy-static/previews/.+.jpg$`));
                 yield miscs_1.testImage(servers[0].url, 'video_import_thumbnail', res.body.video.thumbnailPath);
                 yield miscs_1.testImage(servers[0].url, 'video_import_preview', res.body.video.previewPath);
                 const resCaptions = yield extra_utils_1.listVideoCaptions(servers[0].url, res.body.video.id);
@@ -100,7 +100,7 @@ describe('Test video imports', function () {
                 const enCaption = videoCaptions.find(caption => caption.language.id === 'en');
                 expect(enCaption).to.exist;
                 expect(enCaption.language.label).to.equal('English');
-                expect(enCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-en.vtt`);
+                expect(enCaption.captionPath).to.match(new RegExp(`^/lazy-static/video-captions/.+-en.vtt$`));
                 yield extra_utils_1.testCaptionFile(servers[0].url, enCaption.captionPath, `WEBVTT
 Kind: captions
 Language: en
@@ -116,7 +116,7 @@ Adding subtitles is very easy to do`);
                 const frCaption = videoCaptions.find(caption => caption.language.id === 'fr');
                 expect(frCaption).to.exist;
                 expect(frCaption.language.label).to.equal('French');
-                expect(frCaption.captionPath).to.equal(`/lazy-static/video-captions/${res.body.video.uuid}-fr.vtt`);
+                expect(frCaption.captionPath).to.match(new RegExp(`^/lazy-static/video-captions/.+-fr.vtt`));
                 yield extra_utils_1.testCaptionFile(servers[0].url, frCaption.captionPath, `WEBVTT
 Kind: captions
 Language: fr
@@ -244,6 +244,52 @@ Ajouter un sous-titre est vraiment facile`);
                 expect(video.name).to.equal('transcoded video');
                 expect(video.files).to.have.lengthOf(4);
             }
+        });
+    });
+    it('Should import no HDR version on a HDR video', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            this.timeout(120000);
+            const config = {
+                transcoding: {
+                    enabled: true,
+                    resolutions: {
+                        '240p': false,
+                        '360p': false,
+                        '480p': false,
+                        '720p': false,
+                        '1080p': true,
+                        '1440p': false,
+                        '2160p': false
+                    },
+                    webtorrent: { enabled: true },
+                    hls: { enabled: false }
+                },
+                import: {
+                    videos: {
+                        http: {
+                            enabled: true
+                        },
+                        torrent: {
+                            enabled: true
+                        }
+                    }
+                }
+            };
+            yield extra_utils_1.updateCustomSubConfig(servers[0].url, servers[0].accessToken, config);
+            const attributes = {
+                name: 'hdr video',
+                targetUrl: video_imports_1.getYoutubeHDRVideoUrl(),
+                channelId: channelIdServer1,
+                privacy: 1
+            };
+            const res1 = yield video_imports_1.importVideo(servers[0].url, servers[0].accessToken, attributes);
+            const videoUUID = res1.body.video.uuid;
+            yield jobs_1.waitJobs(servers);
+            const res2 = yield extra_utils_1.getVideo(servers[0].url, videoUUID);
+            const video = res2.body;
+            expect(video.name).to.equal('hdr video');
+            const maxResolution = Math.max.apply(Math, video.files.map(function (o) { return o.resolution.id; }));
+            expect(maxResolution, 'expected max resolution not met').to.equals(1080);
         });
     });
     after(function () {

@@ -227,7 +227,14 @@ describe('Test video playlists API validator', function () {
         });
         it('Should fail with an incorrect thumbnail file', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                const params = getBase({ thumbnailfile: 'avatar.png' });
+                const params = getBase({ thumbnailfile: 'video_short.mp4' });
+                yield extra_utils_1.createVideoPlaylist(params);
+                yield extra_utils_1.updateVideoPlaylist(getUpdate(params, playlistUUID));
+            });
+        });
+        it('Should fail with a thumbnail file too big', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                const params = getBase({ thumbnailfile: 'preview-big.png' });
                 yield extra_utils_1.createVideoPlaylist(params);
                 yield extra_utils_1.updateVideoPlaylist(getUpdate(params, playlistUUID));
             });

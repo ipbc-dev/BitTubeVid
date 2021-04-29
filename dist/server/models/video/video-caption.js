@@ -6,7 +6,7 @@ const tslib_1 = require("tslib");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const activitypub_1 = require("@server/helpers/activitypub");
+const uuid_1 = require("uuid");
 const video_captions_1 = require("../../helpers/custom-validators/video-captions");
 const logger_1 = require("../../helpers/logger");
 const config_1 = require("../../initializers/config");
@@ -24,12 +24,12 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
                 instance.Video = yield instance.$get('Video');
             }
             if (instance.isOwned()) {
-                logger_1.logger.info('Removing captions %s of video %s.', instance.Video.uuid, instance.language);
+                logger_1.logger.info('Removing caption %s.', instance.filename);
                 try {
                     yield instance.removeCaptionFile();
                 }
                 catch (err) {
-                    logger_1.logger.error('Cannot remove caption file of video %s.', instance.Video.uuid);
+                    logger_1.logger.error('Cannot remove caption file %s.', instance.filename);
                 }
             }
             return undefined;
@@ -51,14 +51,27 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
         };
         return VideoCaptionModel_1.findOne(query);
     }
-    static insertOrReplaceLanguage(videoId, language, fileUrl, transaction) {
-        const values = {
-            videoId,
-            language,
-            fileUrl
+    static loadWithVideoByFilename(filename) {
+        const query = {
+            where: {
+                filename
+            },
+            include: [
+                {
+                    model: video_1.VideoModel.unscoped(),
+                    attributes: ['id', 'remote', 'uuid']
+                }
+            ]
         };
-        return VideoCaptionModel_1.upsert(values, { transaction, returning: true })
-            .then(([caption]) => caption);
+        return VideoCaptionModel_1.findOne(query);
+    }
+    static insertOrReplaceLanguage(caption, transaction) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const existing = yield VideoCaptionModel_1.loadByVideoIdAndLanguage(caption.videoId, caption.language);
+            if (existing)
+                yield existing.destroy({ transaction });
+            return caption.save({ transaction });
+        });
     }
     static listVideoCaptions(videoId) {
         const query = {
@@ -81,6 +94,9 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
         };
         return VideoCaptionModel_1.destroy(query);
     }
+    static generateCaptionName(language) {
+        return `${uuid_1.v4()}-${language}.vtt`;
+    }
     isOwned() {
         return this.Video.remote === false;
     }
@@ -94,22 +110,17 @@ let VideoCaptionModel = VideoCaptionModel_1 = class VideoCaptionModel extends se
         };
     }
     getCaptionStaticPath() {
-        return path_1.join(constants_1.LAZY_STATIC_PATHS.VIDEO_CAPTIONS, this.getCaptionName());
-    }
-    getCaptionName() {
-        return `${this.Video.uuid}-${this.language}.vtt`;
+        return path_1.join(constants_1.LAZY_STATIC_PATHS.VIDEO_CAPTIONS, this.filename);
     }
     removeCaptionFile() {
-        return fs_extra_1.remove(config_1.CONFIG.STORAGE.CAPTIONS_DIR + this.getCaptionName());
+        return fs_extra_1.remove(config_1.CONFIG.STORAGE.CAPTIONS_DIR + this.filename);
     }
     getFileUrl(video) {
         if (!this.Video)
             this.Video = video;
         if (video.isOwned())
             return constants_1.WEBSERVER.URL + this.getCaptionStaticPath();
-        if (this.fileUrl)
-            return this.fileUrl;
-        return activitypub_1.buildRemoteVideoBaseUrl(video, this.getCaptionStaticPath());
+        return this.fileUrl;
     }
 };
 tslib_1.__decorate([
@@ -126,6 +137,11 @@ tslib_1.__decorate([
     sequelize_typescript_1.Column,
     tslib_1.__metadata("design:type", String)
 ], VideoCaptionModel.prototype, "language", void 0);
+tslib_1.__decorate([
+    sequelize_typescript_1.AllowNull(false),
+    sequelize_typescript_1.Column,
+    tslib_1.__metadata("design:type", String)
+], VideoCaptionModel.prototype, "filename", void 0);
 tslib_1.__decorate([
     sequelize_typescript_1.AllowNull(true),
     sequelize_typescript_1.Column(sequelize_typescript_1.DataType.STRING(constants_1.CONSTRAINTS_FIELDS.COMMONS.URL.max)),
@@ -166,6 +182,10 @@ VideoCaptionModel = VideoCaptionModel_1 = tslib_1.__decorate([
     sequelize_typescript_1.Table({
         tableName: 'videoCaption',
         indexes: [
+            {
+                fields: ['filename'],
+                unique: true
+            },
             {
                 fields: ['videoId']
             },

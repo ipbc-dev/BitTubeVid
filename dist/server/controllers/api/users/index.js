@@ -102,7 +102,7 @@ function createUser(req, res) {
                     id: account.id
                 }
             }
-        }).end();
+        });
     });
 }
 function registerUser(req, res) {
@@ -176,7 +176,9 @@ function removeUser(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.user;
         auditLogger.delete(audit_logger_1.getAuditIdFromRes(res), new audit_logger_1.UserAuditView(user.toFormattedJSON()));
-        yield user.destroy();
+        yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            yield user.destroy({ transaction: t });
+        }));
         hooks_1.Hooks.runAction('action:api.user.deleted', { user });
         return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
@@ -201,6 +203,8 @@ function updateUser(req, res) {
             userToUpdate.role = body.role;
         if (body.adminFlags !== undefined)
             userToUpdate.adminFlags = body.adminFlags;
+        if (body.pluginAuth !== undefined)
+            userToUpdate.pluginAuth = body.pluginAuth;
         const user = yield userToUpdate.save();
         if (roleChanged || body.password !== undefined)
             yield oauth_model_1.deleteUserToken(userToUpdate.id);

@@ -78,7 +78,11 @@ function addVideoPlaylist(req, res) {
         }
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
-            ? yield thumbnail_1.createPlaylistMiniatureFromExisting(thumbnailField[0].path, videoPlaylist, false)
+            ? yield thumbnail_1.createPlaylistMiniatureFromExisting({
+                inputPath: thumbnailField[0].path,
+                playlist: videoPlaylist,
+                automaticallyGenerated: false
+            })
             : undefined;
         const videoPlaylistCreated = yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             const videoPlaylistCreated = yield videoPlaylist.save({ transaction: t });
@@ -108,7 +112,11 @@ function updateVideoPlaylist(req, res) {
         const wasNotPrivatePlaylist = videoPlaylistInstance.privacy !== 3;
         const thumbnailField = req.files['thumbnailfile'];
         const thumbnailModel = thumbnailField
-            ? yield thumbnail_1.createPlaylistMiniatureFromExisting(thumbnailField[0].path, videoPlaylistInstance, false)
+            ? yield thumbnail_1.createPlaylistMiniatureFromExisting({
+                inputPath: thumbnailField[0].path,
+                playlist: videoPlaylistInstance,
+                automaticallyGenerated: false
+            })
             : undefined;
         try {
             yield database_1.sequelizeTypescript.transaction((t) => tslib_1.__awaiter(this, void 0, void 0, function* () {
@@ -310,7 +318,12 @@ function generateThumbnailForPlaylist(videoPlaylist, video) {
             return;
         }
         const inputPath = path_1.join(config_1.CONFIG.STORAGE.THUMBNAILS_DIR, videoMiniature.filename);
-        const thumbnailModel = yield thumbnail_1.createPlaylistMiniatureFromExisting(inputPath, videoPlaylist, true, true);
+        const thumbnailModel = yield thumbnail_1.createPlaylistMiniatureFromExisting({
+            inputPath,
+            playlist: videoPlaylist,
+            automaticallyGenerated: true,
+            keepOriginal: true
+        });
         thumbnailModel.videoPlaylistId = videoPlaylist.id;
         videoPlaylist.Thumbnail = yield thumbnailModel.save();
     });

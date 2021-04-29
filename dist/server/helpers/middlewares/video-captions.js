@@ -9,8 +9,7 @@ function doesVideoCaptionExist(video, language, res) {
         const videoCaption = yield video_caption_1.VideoCaptionModel.loadByVideoIdAndLanguage(video.id, language);
         if (!videoCaption) {
             res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
-                .json({ error: 'Video caption not found' })
-                .end();
+                .json({ error: 'Video caption not found' });
             return false;
         }
         res.locals.videoCaption = videoCaption;

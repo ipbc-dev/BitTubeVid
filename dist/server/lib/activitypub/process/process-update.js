@@ -44,7 +44,13 @@ function processUpdateVideo(actor, activity) {
             logger_1.logger.debug('Video sent by update is not valid.', { videoObject });
             return undefined;
         }
-        const { video } = yield videos_1.getOrCreateVideoAndAccountAndChannel({ videoObject: videoObject.id, allowRefresh: false, fetchType: 'all' });
+        const { video, created } = yield videos_1.getOrCreateVideoAndAccountAndChannel({
+            videoObject: videoObject.id,
+            allowRefresh: false,
+            fetchType: 'all'
+        });
+        if (created)
+            return;
         const channelActor = yield videos_1.getOrCreateVideoChannelFromVideoObject(videoObject);
         const account = actor.Account;
         account.Actor = actor;

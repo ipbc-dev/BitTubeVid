@@ -42,13 +42,16 @@ function getJobsListPaginationAndSort(options) {
 exports.getJobsListPaginationAndSort = getJobsListPaginationAndSort;
 function waitJobs(serversArg) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const pendingJobWait = process.env.NODE_PENDING_JOB_WAIT ? parseInt(process.env.NODE_PENDING_JOB_WAIT, 10) : 2000;
+        const pendingJobWait = process.env.NODE_PENDING_JOB_WAIT
+            ? parseInt(process.env.NODE_PENDING_JOB_WAIT, 10)
+            : 500;
         let servers;
         if (Array.isArray(serversArg) === false)
             servers = [serversArg];
         else
             servers = serversArg;
         const states = ['waiting', 'active', 'delayed'];
+        const repeatableJobs = ['videos-views', 'activitypub-cleaner'];
         let pendingRequests;
         function tasksBuilder() {
             const tasks = [];
@@ -61,9 +64,8 @@ function waitJobs(serversArg) {
                         start: 0,
                         count: 10,
                         sort: '-createdAt'
-                    })
-                        .then(res => res.body.data)
-                        .then((jobs) => jobs.filter(j => j.type !== 'videos-views'))
+                    }).then(res => res.body.data)
+                        .then((jobs) => jobs.filter(j => !repeatableJobs.includes(j.type)))
                         .then(jobs => {
                         if (jobs.length !== 0) {
                             pendingRequests = true;
@@ -71,6 +73,14 @@ function waitJobs(serversArg) {
                     });
                     tasks.push(p);
                 }
+                const p = extra_utils_1.getDebug(server.url, server.accessToken)
+                    .then(res => res.body)
+                    .then((obj) => {
+                    if (obj.activityPubMessagesWaiting !== 0) {
+                        pendingRequests = true;
+                    }
+                });
+                tasks.push(p);
             }
             return tasks;
         }

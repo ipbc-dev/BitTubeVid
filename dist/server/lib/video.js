@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setVideoTags = exports.buildVideoThumbnailsFromReq = exports.publishAndFederateIfNeeded = exports.buildLocalVideoFromReq = void 0;
+exports.getJobTranscodingPriorityMalus = exports.addOptimizeOrMergeAudioJob = exports.setVideoTags = exports.buildVideoThumbnailsFromReq = exports.publishAndFederateIfNeeded = exports.buildLocalVideoFromReq = void 0;
 const tslib_1 = require("tslib");
+const constants_1 = require("@server/initializers/constants");
 const database_1 = require("@server/initializers/database");
 const tag_1 = require("@server/models/video/tag");
 const video_1 = require("@server/models/video/video");
 const videos_1 = require("./activitypub/videos");
+const job_queue_1 = require("./job-queue/job-queue");
 const notifier_1 = require("./notifier");
 const thumbnail_1 = require("./thumbnail");
 function buildLocalVideoFromReq(videoInfo, channelId) {
@@ -57,15 +59,11 @@ function buildVideoThumbnailsFromReq(options) {
 exports.buildVideoThumbnailsFromReq = buildVideoThumbnailsFromReq;
 function setVideoTags(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { video, tags, transaction, defaultValue } = options;
-        if (tags) {
-            const tagInstances = yield tag_1.TagModel.findOrCreateTags(tags, transaction);
-            yield video.$set('Tags', tagInstances, { transaction });
-            video.Tags = tagInstances;
-        }
-        else {
-            video.Tags = defaultValue || [];
-        }
+        const { video, tags, transaction } = options;
+        const internalTags = tags || [];
+        const tagInstances = yield tag_1.TagModel.findOrCreateTags(internalTags, transaction);
+        yield video.$set('Tags', tagInstances, { transaction });
+        video.Tags = tagInstances;
     });
 }
 exports.setVideoTags = setVideoTags;
@@ -86,3 +84,37 @@ function publishAndFederateIfNeeded(video, wasLive = false) {
     });
 }
 exports.publishAndFederateIfNeeded = publishAndFederateIfNeeded;
+function addOptimizeOrMergeAudioJob(video, videoFile, user) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        let dataInput;
+        if (videoFile.isAudio()) {
+            dataInput = {
+                type: 'merge-audio-to-webtorrent',
+                resolution: constants_1.DEFAULT_AUDIO_RESOLUTION,
+                videoUUID: video.uuid,
+                isNewVideo: true
+            };
+        }
+        else {
+            dataInput = {
+                type: 'optimize-to-webtorrent',
+                videoUUID: video.uuid,
+                isNewVideo: true
+            };
+        }
+        const jobOptions = {
+            priority: constants_1.JOB_PRIORITY.TRANSCODING.OPTIMIZER + (yield getJobTranscodingPriorityMalus(user))
+        };
+        return job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-transcoding', payload: dataInput }, jobOptions);
+    });
+}
+exports.addOptimizeOrMergeAudioJob = addOptimizeOrMergeAudioJob;
+function getJobTranscodingPriorityMalus(user) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const now = new Date();
+        const lastWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+        const videoUploadedByUser = yield video_1.VideoModel.countVideosUploadedByUserSince(user.id, lastWeek);
+        return videoUploadedByUser;
+    });
+}
+exports.getJobTranscodingPriorityMalus = getJobTranscodingPriorityMalus;

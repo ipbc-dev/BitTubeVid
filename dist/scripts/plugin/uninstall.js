@@ -9,7 +9,8 @@ const plugin_manager_1 = require("../../server/lib/plugins/plugin-manager");
 program
     .option('-n, --npm-name [npmName]', 'Package name to install')
     .parse(process.argv);
-if (!program['npmName']) {
+const options = program.opts();
+if (!options.npmName) {
     console.error('You need to specify the plugin name.');
     process.exit(-1);
 }
@@ -22,7 +23,7 @@ run()
 function run() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield database_1.initDatabaseModels(true);
-        const toUninstall = program['npmName'];
+        const toUninstall = options.npmName;
         yield plugin_manager_1.PluginManager.Instance.uninstall(toUninstall);
     });
 }

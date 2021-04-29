@@ -33,7 +33,8 @@ function run() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield database_1.initDatabaseModels(true);
         const localVideos = yield video_1.VideoModel.listLocal();
-        for (const video of localVideos) {
+        for (const localVideo of localVideos) {
+            const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(localVideo.id);
             currentVideoId = video.id;
             for (const file of video.VideoFiles) {
                 currentFile = video_paths_1.getVideoFilePath(video, file);

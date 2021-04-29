@@ -5,6 +5,7 @@ require("./create-transcoding-job");
 require("./optimize-old-videos");
 require("./peertube");
 require("./plugins");
+require("./print-transcode-command");
 require("./prune-storage");
 require("./reset-password");
 require("./update-host");

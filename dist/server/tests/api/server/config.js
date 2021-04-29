@@ -29,6 +29,7 @@ function checkInitialConfig(server, data) {
     expect(data.services.twitter.whitelisted).to.be.false;
     expect(data.cache.previews.size).to.equal(1);
     expect(data.cache.captions.size).to.equal(1);
+    expect(data.cache.torrents.size).to.equal(1);
     expect(data.signup.enabled).to.be.true;
     expect(data.signup.limit).to.equal(4);
     expect(data.signup.requiresEmailVerification).to.be.false;
@@ -40,11 +41,14 @@ function checkInitialConfig(server, data) {
     expect(data.transcoding.allowAdditionalExtensions).to.be.false;
     expect(data.transcoding.allowAudioFiles).to.be.false;
     expect(data.transcoding.threads).to.equal(2);
+    expect(data.transcoding.concurrency).to.equal(2);
+    expect(data.transcoding.profile).to.equal('default');
     expect(data.transcoding.resolutions['240p']).to.be.true;
     expect(data.transcoding.resolutions['360p']).to.be.true;
     expect(data.transcoding.resolutions['480p']).to.be.true;
     expect(data.transcoding.resolutions['720p']).to.be.true;
     expect(data.transcoding.resolutions['1080p']).to.be.true;
+    expect(data.transcoding.resolutions['1440p']).to.be.true;
     expect(data.transcoding.resolutions['2160p']).to.be.true;
     expect(data.transcoding.webtorrent.enabled).to.be.true;
     expect(data.transcoding.hls.enabled).to.be.true;
@@ -55,12 +59,15 @@ function checkInitialConfig(server, data) {
     expect(data.live.maxUserLives).to.equal(3);
     expect(data.live.transcoding.enabled).to.be.false;
     expect(data.live.transcoding.threads).to.equal(2);
+    expect(data.live.transcoding.profile).to.equal('default');
     expect(data.live.transcoding.resolutions['240p']).to.be.false;
     expect(data.live.transcoding.resolutions['360p']).to.be.false;
     expect(data.live.transcoding.resolutions['480p']).to.be.false;
     expect(data.live.transcoding.resolutions['720p']).to.be.false;
     expect(data.live.transcoding.resolutions['1080p']).to.be.false;
+    expect(data.live.transcoding.resolutions['1440p']).to.be.false;
     expect(data.live.transcoding.resolutions['2160p']).to.be.false;
+    expect(data.import.videos.concurrency).to.equal(2);
     expect(data.import.videos.http.enabled).to.be.true;
     expect(data.import.videos.torrent.enabled).to.be.true;
     expect(data.autoBlacklist.videos.ofUsers.enabled).to.be.false;
@@ -97,6 +104,7 @@ function checkUpdatedConfig(data) {
     expect(data.services.twitter.whitelisted).to.be.true;
     expect(data.cache.previews.size).to.equal(2);
     expect(data.cache.captions.size).to.equal(3);
+    expect(data.cache.torrents.size).to.equal(4);
     expect(data.signup.enabled).to.be.false;
     expect(data.signup.limit).to.equal(5);
     expect(data.signup.requiresEmailVerification).to.be.false;
@@ -108,8 +116,10 @@ function checkUpdatedConfig(data) {
     expect(data.user.videoQuotaDaily).to.equal(318742);
     expect(data.transcoding.enabled).to.be.true;
     expect(data.transcoding.threads).to.equal(1);
+    expect(data.transcoding.concurrency).to.equal(3);
     expect(data.transcoding.allowAdditionalExtensions).to.be.true;
     expect(data.transcoding.allowAudioFiles).to.be.true;
+    expect(data.transcoding.profile).to.equal('vod_profile');
     expect(data.transcoding.resolutions['240p']).to.be.false;
     expect(data.transcoding.resolutions['360p']).to.be.true;
     expect(data.transcoding.resolutions['480p']).to.be.true;
@@ -125,12 +135,14 @@ function checkUpdatedConfig(data) {
     expect(data.live.maxUserLives).to.equal(10);
     expect(data.live.transcoding.enabled).to.be.true;
     expect(data.live.transcoding.threads).to.equal(4);
+    expect(data.live.transcoding.profile).to.equal('live_profile');
     expect(data.live.transcoding.resolutions['240p']).to.be.true;
     expect(data.live.transcoding.resolutions['360p']).to.be.true;
     expect(data.live.transcoding.resolutions['480p']).to.be.true;
     expect(data.live.transcoding.resolutions['720p']).to.be.true;
     expect(data.live.transcoding.resolutions['1080p']).to.be.true;
     expect(data.live.transcoding.resolutions['2160p']).to.be.true;
+    expect(data.import.videos.concurrency).to.equal(4);
     expect(data.import.videos.http.enabled).to.be.false;
     expect(data.import.videos.torrent.enabled).to.be.false;
     expect(data.autoBlacklist.videos.ofUsers.enabled).to.be.true;
@@ -210,9 +222,9 @@ describe('Test config', function () {
                     hardwareInformation: '2vCore 3GB RAM',
                     languages: ['en', 'es'],
                     categories: [1, 2],
-                    defaultClientRoute: '/videos/recently-added',
                     isNSFW: true,
                     defaultNSFWPolicy: 'blur',
+                    defaultClientRoute: '/videos/recently-added',
                     customizations: {
                         javascript: 'alert("coucou")',
                         css: 'body { background-color: red; }'
@@ -233,6 +245,9 @@ describe('Test config', function () {
                     },
                     captions: {
                         size: 3
+                    },
+                    torrents: {
+                        size: 4
                     }
                 },
                 signup: {
@@ -255,6 +270,8 @@ describe('Test config', function () {
                     allowAdditionalExtensions: true,
                     allowAudioFiles: true,
                     threads: 1,
+                    concurrency: 3,
+                    profile: 'vod_profile',
                     resolutions: {
                         '0p': false,
                         '240p': false,
@@ -262,6 +279,7 @@ describe('Test config', function () {
                         '480p': true,
                         '720p': false,
                         '1080p': false,
+                        '1440p': false,
                         '2160p': false
                     },
                     webtorrent: {
@@ -280,23 +298,34 @@ describe('Test config', function () {
                     transcoding: {
                         enabled: true,
                         threads: 4,
+                        profile: 'live_profile',
                         resolutions: {
                             '240p': true,
                             '360p': true,
                             '480p': true,
                             '720p': true,
                             '1080p': true,
+                            '1440p': true,
                             '2160p': true
                         }
                     }
                 },
                 import: {
                     videos: {
+                        concurrency: 4,
                         http: {
                             enabled: false
                         },
                         torrent: {
                             enabled: false
+                        }
+                    }
+                },
+                trending: {
+                    videos: {
+                        algorithms: {
+                            enabled: ['best', 'hot', 'most-viewed', 'most-liked'],
+                            default: 'hot'
                         }
                     }
                 },

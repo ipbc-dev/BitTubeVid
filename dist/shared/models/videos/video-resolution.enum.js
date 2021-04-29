@@ -20,6 +20,9 @@ function getBaseBitrate(resolution) {
     if (resolution <= 1080) {
         return 5200 * 1000;
     }
+    if (resolution <= 1440) {
+        return 10000 * 1000;
+    }
     return 22000 * 1000;
 }
 function getTargetBitrate(resolution, fps, fpsTranscodingConstants) {

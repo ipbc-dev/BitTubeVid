@@ -9,6 +9,7 @@ const video_abuse_1 = require("@server/models/abuse/video-abuse");
 const video_comment_abuse_1 = require("@server/models/abuse/video-comment-abuse");
 const send_flag_1 = require("./activitypub/send/send-flag");
 const notifier_1 = require("./notifier");
+const database_utils_1 = require("@server/helpers/database-utils");
 function isLocalVideoAccepted(object) {
     return { accepted: true };
 }
@@ -113,10 +114,12 @@ function createAbuse(options) {
         }
         const abuseJSON = abuseInstance.toFormattedAdminJSON();
         auditLogger.create(reporterAccount.Actor.getIdentifier(), new audit_logger_1.AbuseAuditView(abuseJSON));
-        notifier_1.Notifier.Instance.notifyOnNewAbuse({
-            abuse: abuseJSON,
-            abuseInstance,
-            reporter: reporterAccount.Actor.getIdentifier()
+        database_utils_1.afterCommitIfTransaction(transaction, () => {
+            notifier_1.Notifier.Instance.notifyOnNewAbuse({
+                abuse: abuseJSON,
+                abuseInstance,
+                reporter: reporterAccount.Actor.getIdentifier()
+            });
         });
         logger_1.logger.info('Abuse report %d created.', abuseInstance.id);
         return abuseJSON;

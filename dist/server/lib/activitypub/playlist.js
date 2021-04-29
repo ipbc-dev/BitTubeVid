@@ -90,11 +90,10 @@ function createOrUpdateVideoPlaylist(playlistObject, byAccount, to) {
             accItems = accItems.concat(items);
             return Promise.resolve();
         });
-        logger_1.logger.info('toto', { playlist, id: playlist.id });
         const refreshedPlaylist = yield video_playlist_1.VideoPlaylistModel.loadWithAccountAndChannel(playlist.id, null);
         if (playlistObject.icon) {
             try {
-                const thumbnailModel = yield thumbnail_1.createPlaylistMiniatureFromUrl(playlistObject.icon.url, refreshedPlaylist);
+                const thumbnailModel = yield thumbnail_1.createPlaylistMiniatureFromUrl({ downloadUrl: playlistObject.icon.url, playlist: refreshedPlaylist });
                 yield refreshedPlaylist.setAndSaveThumbnail(thumbnailModel, undefined);
             }
             catch (err) {

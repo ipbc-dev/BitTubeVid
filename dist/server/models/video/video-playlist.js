@@ -6,6 +6,7 @@ const tslib_1 = require("tslib");
 const path_1 = require("path");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
+const uuid_1 = require("uuid");
 const activitypub_1 = require("../../helpers/activitypub");
 const misc_1 = require("../../helpers/custom-validators/activitypub/misc");
 const video_playlists_1 = require("../../helpers/custom-validators/video-playlists");
@@ -165,7 +166,7 @@ let VideoPlaylistModel = VideoPlaylistModel_1 = class VideoPlaylistModel extends
     }
     generateThumbnailName() {
         const extension = '.jpg';
-        return 'playlist-' + this.uuid + extension;
+        return 'playlist-' + uuid_1.v4() + extension;
     }
     getThumbnailUrl() {
         if (!this.hasThumbnail())

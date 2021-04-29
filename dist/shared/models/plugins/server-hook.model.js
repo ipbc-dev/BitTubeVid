@@ -8,6 +8,8 @@ exports.serverFilterHookObject = {
     'filter:api.accounts.videos.list.result': true,
     'filter:api.video-channels.videos.list.params': true,
     'filter:api.video-channels.videos.list.result': true,
+    'filter:api.user.me.videos.list.params': true,
+    'filter:api.user.me.videos.list.result': true,
     'filter:api.video.get.result': true,
     'filter:api.video.upload.accept.result': true,
     'filter:api.live-video.create.accept.result': true,

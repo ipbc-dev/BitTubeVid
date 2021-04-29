@@ -3,8 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 require("mocha");
 const chai = require("chai");
-const extra_utils_1 = require("../../../../shared/extra-utils");
 const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
+const extra_utils_1 = require("../../../../shared/extra-utils");
 const expect = chai.expect;
 describe('Save replay setting', function () {
     let servers = [];
@@ -50,6 +50,20 @@ describe('Save replay setting', function () {
             }
         });
     }
+    function waitUntilLivePublishedOnAllServers(videoId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const server of servers) {
+                yield extra_utils_1.waitUntilLivePublished(server.url, server.accessToken, videoId);
+            }
+        });
+    }
+    function waitUntilLiveSavedOnAllServers(videoId) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            for (const server of servers) {
+                yield extra_utils_1.waitUntilLiveSaved(server.url, server.accessToken, videoId);
+            }
+        });
+    }
     before(function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             this.timeout(120000);
@@ -70,6 +84,7 @@ describe('Save replay setting', function () {
                             '480p': true,
                             '720p': true,
                             '1080p': true,
+                            '1440p': true,
                             '2160p': true
                         }
                     }
@@ -94,9 +109,9 @@ describe('Save replay setting', function () {
         });
         it('Should correctly have updated the live and federated it when streaming in the live', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(20000);
+                this.timeout(30000);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield checkVideoState(liveVideoUUID, 1);
@@ -106,10 +121,12 @@ describe('Save replay setting', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(40000);
                 yield extra_utils_1.stopFfmpeg(ffmpegCommand);
+                for (const server of servers) {
+                    yield extra_utils_1.waitUntilLiveEnded(server.url, server.accessToken, liveVideoUUID);
+                }
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, false, http_error_codes_1.HttpStatusCode.OK_200);
                 yield checkVideoState(liveVideoUUID, 5);
-                yield extra_utils_1.waitJobs(servers);
                 yield extra_utils_1.checkLiveCleanup(servers[0], liveVideoUUID, []);
             });
         });
@@ -118,7 +135,7 @@ describe('Save replay setting', function () {
                 this.timeout(40000);
                 liveVideoUUID = yield createLiveWrapper(false);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield Promise.all([
@@ -129,6 +146,8 @@ describe('Save replay setting', function () {
                 yield checkVideosExist(liveVideoUUID, false);
                 yield extra_utils_1.getVideo(servers[0].url, liveVideoUUID, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
                 yield extra_utils_1.getVideo(servers[1].url, liveVideoUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.wait(5000);
+                yield extra_utils_1.waitJobs(servers);
                 yield extra_utils_1.checkLiveCleanup(servers[0], liveVideoUUID, []);
             });
         });
@@ -137,13 +156,14 @@ describe('Save replay setting', function () {
                 this.timeout(40000);
                 liveVideoUUID = yield createLiveWrapper(false);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield Promise.all([
                     extra_utils_1.testFfmpegStreamError(ffmpegCommand, true),
                     extra_utils_1.removeVideo(servers[0].url, servers[0].accessToken, liveVideoUUID)
                 ]);
+                yield extra_utils_1.wait(5000);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, false, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 yield extra_utils_1.checkLiveCleanup(servers[0], liveVideoUUID, []);
@@ -164,7 +184,7 @@ describe('Save replay setting', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(20000);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield checkVideoState(liveVideoUUID, 1);
@@ -174,6 +194,7 @@ describe('Save replay setting', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
                 this.timeout(30000);
                 yield extra_utils_1.stopFfmpeg(ffmpegCommand);
+                yield waitUntilLiveSavedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield checkVideoState(liveVideoUUID, 1);
@@ -201,7 +222,7 @@ describe('Save replay setting', function () {
                 this.timeout(40000);
                 liveVideoUUID = yield createLiveWrapper(true);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield Promise.all([
@@ -212,6 +233,8 @@ describe('Save replay setting', function () {
                 yield checkVideosExist(liveVideoUUID, false);
                 yield extra_utils_1.getVideo(servers[0].url, liveVideoUUID, http_error_codes_1.HttpStatusCode.UNAUTHORIZED_401);
                 yield extra_utils_1.getVideo(servers[1].url, liveVideoUUID, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
+                yield extra_utils_1.wait(5000);
+                yield extra_utils_1.waitJobs(servers);
                 yield extra_utils_1.checkLiveCleanup(servers[0], liveVideoUUID, [720]);
             });
         });
@@ -220,13 +243,14 @@ describe('Save replay setting', function () {
                 this.timeout(40000);
                 liveVideoUUID = yield createLiveWrapper(true);
                 ffmpegCommand = yield extra_utils_1.sendRTMPStreamInVideo(servers[0].url, servers[0].accessToken, liveVideoUUID);
-                yield extra_utils_1.waitUntilLivePublished(servers[0].url, servers[0].accessToken, liveVideoUUID);
+                yield waitUntilLivePublishedOnAllServers(liveVideoUUID);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, true, http_error_codes_1.HttpStatusCode.OK_200);
                 yield Promise.all([
                     extra_utils_1.removeVideo(servers[0].url, servers[0].accessToken, liveVideoUUID),
                     extra_utils_1.testFfmpegStreamError(ffmpegCommand, true)
                 ]);
+                yield extra_utils_1.wait(5000);
                 yield extra_utils_1.waitJobs(servers);
                 yield checkVideosExist(liveVideoUUID, false, http_error_codes_1.HttpStatusCode.NOT_FOUND_404);
                 yield extra_utils_1.checkLiveCleanup(servers[0], liveVideoUUID, []);

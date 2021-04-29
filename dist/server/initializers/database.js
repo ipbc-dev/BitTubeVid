@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sequelizeTypescript = exports.checkDatabaseConnectionOrDie = exports.initDatabaseModels = void 0;
 const tslib_1 = require("tslib");
+const tracker_1 = require("@server/models/server/tracker");
+const video_tracker_1 = require("@server/models/server/video-tracker");
 const sequelize_1 = require("sequelize");
 const sequelize_typescript_1 = require("sequelize-typescript");
 const core_utils_1 = require("../helpers/core-utils");
@@ -73,11 +75,11 @@ const sequelizeTypescript = new sequelize_typescript_1.Sequelize({
     logging: (message, benchmark) => {
         if (process.env.NODE_DB_LOG === 'false')
             return;
-        let newMessage = message;
+        let newMessage = 'Executed SQL request';
         if (core_utils_1.isTestInstance() === true && benchmark !== undefined) {
-            newMessage += ' | ' + benchmark + 'ms';
+            newMessage += ' in ' + benchmark + 'ms';
         }
-        logger_1.logger.debug(newMessage);
+        logger_1.logger.debug(newMessage, { sql: message });
     }
 });
 exports.sequelizeTypescript = sequelizeTypescript;
@@ -134,6 +136,8 @@ function initDatabaseModels(silent) {
             premium_storage_plan_1.PremiumStoragePlanModel,
             user_premium_storage_payments_1.userPremiumStoragePaymentModel,
             premium_storage_slow_payer_1.premiumStorageSlowPayer,
+            tracker_1.TrackerModel,
+            video_tracker_1.VideoTrackerModel,
             plugin_1.PluginModel
         ]);
         yield checkPostgresExtensions();

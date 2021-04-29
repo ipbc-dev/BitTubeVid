@@ -1,13 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.JOB_REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.VIDEO_TRANSCODING_ENCODERS = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.VIDEO_LIVE = exports.API_VERSION = exports.WEBSERVER = void 0;
-const miscs_1 = require("../../shared/core-utils/miscs/miscs");
+exports.THUMBNAILS_SIZE = exports.ACTIVITY_PUB_ACTOR_TYPES = exports.ACTIVITY_PUB = exports.MAX_LOGS_OUTPUT_CHARACTERS = exports.VIDEO_PLAYLIST_TYPES = exports.VIDEO_IMPORT_TIMEOUT = exports.STATIC_PATHS = exports.STATIC_MAX_AGE = exports.NSFW_POLICY_TYPES = exports.DEFAULT_THEME_NAME = exports.JOB_TTL = exports.FEEDS = exports.HLS_STREAMING_PLAYLIST_DIRECTORY = exports.SORTABLE_COLUMNS = exports.ROUTE_CACHE_LIFETIME = exports.PRIVATE_RSA_KEY_SIZE = exports.PLUGIN_GLOBAL_CSS_PATH = exports.PLUGIN_GLOBAL_CSS_FILE_NAME = exports.SERVER_ACTOR_NAME = exports.DEFAULT_USER_THEME_NAME = exports.FOLLOW_STATES = exports.REMOTE_SCHEME = exports.PREVIEWS_SIZE = exports.ACTOR_FOLLOW_SCORE = exports.PAGINATION = exports.AUDIT_LOG_FILENAME = exports.BROADCAST_CONCURRENCY = exports.CUSTOM_HTML_TAG_COMMENTS = exports.OAUTH_LIFETIME = exports.LAST_MIGRATION_VERSION = exports.AP_CLEANER_CONCURRENCY = exports.JOB_ATTEMPTS = exports.JOB_CONCURRENCY = exports.REDUNDANCY = exports.EMBED_SIZE = exports.CONSTRAINTS_FIELDS = exports.LOG_FILENAME = exports.FILES_CACHE = exports.TRACKER_RATE_LIMITS = exports.BCRYPT_SALT_SIZE = exports.ACCEPT_HEADERS = exports.AVATARS_SIZE = exports.P2P_MEDIA_LOADER_PEER_VERSION = exports.HLS_REDUNDANCY_DIRECTORY = exports.SEARCH_INDEX = exports.LAZY_STATIC_PATHS = exports.PEERTUBE_VERSION = exports.VIDEO_LIVE = exports.API_VERSION = exports.WEBSERVER = void 0;
+exports.generateContentHash = exports.buildLanguages = exports.loadLanguages = exports.FILES_CONTENT_HASH = exports.ASSETS_PATH = exports.PLUGIN_EXTERNAL_AUTH_TOKEN_LIFETIME = exports.VIDEO_PLAYLIST_PRIVACIES = exports.CONTACT_FORM_LIFETIME = exports.VIEW_LIFETIME = exports.VIDEO_IMPORT_STATES = exports.HTTP_SIGNATURE = exports.JOB_COMPLETED_LIFETIME = exports.DEFAULT_AUDIO_RESOLUTION = exports.CRAWL_REQUEST_CONCURRENCY = exports.MIMETYPES = exports.STATIC_DOWNLOAD_PATHS = exports.REPEAT_JOBS = exports.SCHEDULER_INTERVALS_MS = exports.OVERVIEWS = exports.USER_EMAIL_VERIFY_LIFETIME = exports.MEMOIZE_TTL = exports.USER_PASSWORD_CREATE_LIFETIME = exports.USER_PASSWORD_RESET_LIFETIME = exports.REQUEST_TIMEOUT = exports.LRU_CACHE = exports.VIDEO_CHANNELS = exports.ABUSE_STATES = exports.FFMPEG_NICE = exports.VIDEO_TRANSCODING_FPS = exports.JOB_PRIORITY = exports.VIDEO_RATE_TYPES = exports.QUEUE_CONCURRENCY = exports.VIDEO_STATES = exports.VIDEO_LICENCES = exports.VIDEO_PRIVACIES = exports.VIDEO_LANGUAGES = exports.MEMOIZE_LENGTH = exports.VIDEO_CATEGORIES = void 0;
 const crypto_1 = require("crypto");
 const lodash_1 = require("lodash");
 const path_1 = require("path");
+const miscs_1 = require("../../shared/core-utils/miscs/miscs");
 const core_utils_1 = require("../helpers/core-utils");
 const config_1 = require("./config");
-const LAST_MIGRATION_VERSION = 570;
+const LAST_MIGRATION_VERSION = 612;
 exports.LAST_MIGRATION_VERSION = LAST_MIGRATION_VERSION;
 const API_VERSION = 'v1';
 exports.API_VERSION = API_VERSION;
@@ -50,7 +51,7 @@ const SORTABLE_COLUMNS = {
     BLACKLISTS: ['id', 'name', 'duration', 'views', 'likes', 'dislikes', 'uuid', 'createdAt'],
     FOLLOWERS: ['createdAt', 'state', 'score'],
     FOLLOWING: ['createdAt', 'redundancyAllowed', 'state'],
-    VIDEOS: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending'],
+    VIDEOS: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'trending', 'hot', 'best'],
     VIDEOS_SEARCH: ['name', 'duration', 'createdAt', 'publishedAt', 'originallyPublishedAt', 'views', 'likes', 'match'],
     VIDEO_CHANNELS_SEARCH: ['match', 'displayName', 'createdAt'],
     ABUSES: ['id', 'createdAt', 'state'],
@@ -103,10 +104,12 @@ const JOB_ATTEMPTS = {
     'activitypub-http-unicast': 5,
     'activitypub-http-fetcher': 5,
     'activitypub-follow': 5,
+    'activitypub-cleaner': 1,
     'video-file-import': 1,
     'video-transcoding': 1,
     'video-import': 1,
     'email': 5,
+    'actor-keys': 3,
     'videos-views': 1,
     'premium-storage-checker': 1,
     'activitypub-refresher': 1,
@@ -118,11 +121,11 @@ const JOB_CONCURRENCY = {
     'activitypub-http-broadcast': 1,
     'activitypub-http-unicast': 5,
     'activitypub-http-fetcher': 1,
+    'activitypub-cleaner': 1,
     'activitypub-follow': 1,
     'video-file-import': 1,
-    'video-transcoding': 4,
-    'video-import': 1,
     'email': 5,
+    'actor-keys': 1,
     'videos-views': 1,
     'premium-storage-checker': 1,
     'activitypub-refresher': 1,
@@ -135,10 +138,12 @@ const JOB_TTL = {
     'activitypub-http-unicast': 60000 * 10,
     'activitypub-http-fetcher': 1000 * 3600 * 10,
     'activitypub-follow': 60000 * 10,
+    'activitypub-cleaner': 1000 * 3600,
     'video-file-import': 1000 * 3600,
     'video-transcoding': 1000 * 3600 * 48,
     'video-import': 1000 * 3600 * 2,
     'email': 60000 * 10,
+    'actor-keys': 60000 * 20,
     'videos-views': undefined,
     'premium-storage-checker': undefined,
     'activitypub-refresher': 60000 * 10,
@@ -152,15 +157,27 @@ const REPEAT_JOBS = {
     },
     'premium-storage-checker': {
         cron: '0 0 * * *'
+    },
+    'activitypub-cleaner': {
+        cron: '30 5 * * ' + miscs_1.randomInt(0, 7)
     }
 };
 exports.REPEAT_JOBS = REPEAT_JOBS;
-const BROADCAST_CONCURRENCY = 10;
+const JOB_PRIORITY = {
+    TRANSCODING: {
+        OPTIMIZER: 10,
+        NEW_RESOLUTION: 100
+    }
+};
+exports.JOB_PRIORITY = JOB_PRIORITY;
+const BROADCAST_CONCURRENCY = 30;
 exports.BROADCAST_CONCURRENCY = BROADCAST_CONCURRENCY;
+const AP_CLEANER_CONCURRENCY = 10;
+exports.AP_CLEANER_CONCURRENCY = AP_CLEANER_CONCURRENCY;
 const CRAWL_REQUEST_CONCURRENCY = 1;
 exports.CRAWL_REQUEST_CONCURRENCY = CRAWL_REQUEST_CONCURRENCY;
-const JOB_REQUEST_TIMEOUT = 3000;
-exports.JOB_REQUEST_TIMEOUT = JOB_REQUEST_TIMEOUT;
+const REQUEST_TIMEOUT = 7000;
+exports.REQUEST_TIMEOUT = REQUEST_TIMEOUT;
 const JOB_COMPLETED_LIFETIME = 60000 * 60 * 24 * 2;
 exports.JOB_COMPLETED_LIFETIME = JOB_COMPLETED_LIFETIME;
 const VIDEO_IMPORT_TIMEOUT = 1000 * 3600;
@@ -235,7 +252,7 @@ const CONSTRAINTS_FIELDS = {
         DESCRIPTION: { min: 3, max: 10000 },
         SUPPORT: { min: 3, max: 1000 },
         IMAGE: {
-            EXTNAME: ['.jpg', '.jpeg'],
+            EXTNAME: ['.png', '.jpg', '.jpeg', '.webp'],
             FILE_SIZE: {
                 max: 2 * 1024 * 1024
             }
@@ -245,8 +262,6 @@ const CONSTRAINTS_FIELDS = {
         DURATION: { min: 0 },
         TAGS: { min: 0, max: 5 },
         TAG: { min: 2, max: 30 },
-        THUMBNAIL: { min: 2, max: 30 },
-        THUMBNAIL_DATA: { min: 0, max: 20000 },
         VIEWS: { min: 0 },
         LIKES: { min: 0 },
         DISLIKES: { min: 0 },
@@ -269,7 +284,7 @@ const CONSTRAINTS_FIELDS = {
         PRIVATE_KEY: { min: 10, max: 5000 },
         URL: { min: 3, max: 2000 },
         AVATAR: {
-            EXTNAME: ['.png', '.jpeg', '.jpg', '.gif'],
+            EXTNAME: ['.png', '.jpeg', '.jpg', '.gif', '.webp'],
             FILE_SIZE: {
                 max: 2 * 1024 * 1024
             }
@@ -314,14 +329,6 @@ const VIDEO_TRANSCODING_FPS = {
     KEEP_ORIGIN_FPS_RESOLUTION_MIN: 720
 };
 exports.VIDEO_TRANSCODING_FPS = VIDEO_TRANSCODING_FPS;
-const VIDEO_TRANSCODING_ENCODERS = {
-    VIDEO: ['libx264', 'h264_qsv'],
-    AUDIO: [
-        'libfdk_aac',
-        'aac'
-    ]
-};
-exports.VIDEO_TRANSCODING_ENCODERS = VIDEO_TRANSCODING_ENCODERS;
 const DEFAULT_AUDIO_RESOLUTION = 480;
 exports.DEFAULT_AUDIO_RESOLUTION = DEFAULT_AUDIO_RESOLUTION;
 const VIDEO_RATE_TYPES = {
@@ -330,8 +337,9 @@ const VIDEO_RATE_TYPES = {
 };
 exports.VIDEO_RATE_TYPES = VIDEO_RATE_TYPES;
 const FFMPEG_NICE = {
-    THUMBNAIL: 2,
-    TRANSCODING: 15
+    LIVE: 5,
+    THUMBNAIL: 10,
+    VOD: 15
 };
 exports.FFMPEG_NICE = FFMPEG_NICE;
 const VIDEO_CATEGORIES = {
@@ -418,6 +426,9 @@ const MIMETYPES = {
             'audio/x-flac': '.flac',
             'audio/flac': '.flac',
             '‎audio/aac': '.aac',
+            'audio/m4a': '.m4a',
+            'audio/mp4': '.m4a',
+            'audio/x-m4a': '.m4a',
             'audio/ac3': '.ac3'
         },
         EXT_MIMETYPE: null
@@ -521,16 +532,13 @@ const NSFW_POLICY_TYPES = {
 };
 exports.NSFW_POLICY_TYPES = NSFW_POLICY_TYPES;
 const STATIC_PATHS = {
-    PREVIEWS: '/static/previews/',
     THUMBNAILS: '/static/thumbnails/',
     TORRENTS: '/static/torrents/',
     WEBSEED: '/static/webseed/',
     REDUNDANCY: '/static/redundancy/',
     STREAMING_PLAYLISTS: {
         HLS: '/static/streaming-playlists/hls'
-    },
-    AVATARS: '/static/avatars/',
-    VIDEO_CAPTIONS: '/static/video-captions/'
+    }
 };
 exports.STATIC_PATHS = STATIC_PATHS;
 const STATIC_DOWNLOAD_PATHS = {
@@ -542,11 +550,13 @@ exports.STATIC_DOWNLOAD_PATHS = STATIC_DOWNLOAD_PATHS;
 const LAZY_STATIC_PATHS = {
     AVATARS: '/lazy-static/avatars/',
     PREVIEWS: '/lazy-static/previews/',
-    VIDEO_CAPTIONS: '/lazy-static/video-captions/'
+    VIDEO_CAPTIONS: '/lazy-static/video-captions/',
+    TORRENTS: '/lazy-static/torrents/'
 };
 exports.LAZY_STATIC_PATHS = LAZY_STATIC_PATHS;
 const STATIC_MAX_AGE = {
     SERVER: '2h',
+    LAZY_SERVER: '2d',
     CLIENT: '30d'
 };
 exports.STATIC_MAX_AGE = STATIC_MAX_AGE;
@@ -580,6 +590,10 @@ const FILES_CACHE = {
     VIDEO_CAPTIONS: {
         DIRECTORY: path_1.join(config_1.CONFIG.STORAGE.CACHE_DIR, 'video-captions'),
         MAX_AGE: 1000 * 3600 * 3
+    },
+    TORRENTS: {
+        DIRECTORY: path_1.join(config_1.CONFIG.STORAGE.CACHE_DIR, 'torrents'),
+        MAX_AGE: 1000 * 3600 * 3
     }
 };
 exports.FILES_CACHE = FILES_CACHE;
@@ -603,6 +617,7 @@ const VIDEO_LIVE = {
     SEGMENTS_LIST_SIZE: 15,
     REPLAY_DIRECTORY: 'replay',
     EDGE_LIVE_DELAY_SEGMENTS_NOTIFICATION: 4,
+    MAX_SOCKET_WAITING_DATA: 1024 * 1000 * 100,
     RTMP: {
         CHUNK_SIZE: 60000,
         GOP_CACHE: true,
@@ -615,7 +630,8 @@ exports.VIDEO_LIVE = VIDEO_LIVE;
 const MEMOIZE_TTL = {
     OVERVIEWS_SAMPLE: 1000 * 3600 * 4,
     INFO_HASH_EXISTS: 1000 * 3600 * 12,
-    LIVE_ABLE_TO_UPLOAD: 1000 * 60
+    LIVE_ABLE_TO_UPLOAD: 1000 * 60,
+    LIVE_CHECK_SOCKET_HEALTH: 1000 * 60
 };
 exports.MEMOIZE_TTL = MEMOIZE_TTL;
 const MEMOIZE_LENGTH = {
@@ -693,6 +709,7 @@ if (core_utils_1.isTestInstance() === true) {
     ACTIVITY_PUB.VIDEO_REFRESH_INTERVAL = 10 * 1000;
     ACTIVITY_PUB.VIDEO_PLAYLIST_REFRESH_INTERVAL = 10 * 1000;
     CONSTRAINTS_FIELDS.ACTORS.AVATAR.FILE_SIZE.max = 100 * 1024;
+    CONSTRAINTS_FIELDS.VIDEOS.IMAGE.FILE_SIZE.max = 400 * 1024;
     SCHEDULER_INTERVALS_MS.actorFollowScores = 1000;
     SCHEDULER_INTERVALS_MS.removeOldJobs = 10000;
     SCHEDULER_INTERVALS_MS.removeOldHistory = 5000;
@@ -702,6 +719,7 @@ if (core_utils_1.isTestInstance() === true) {
     SCHEDULER_INTERVALS_MS.updateInboxStats = 5000;
     REPEAT_JOBS['videos-views'] = { every: 5000 };
     REPEAT_JOBS['premium-storage-checker'] = { every: 600000 };
+    REPEAT_JOBS['activitypub-cleaner'] = { every: 5000 };
     REDUNDANCY.VIDEOS.RANDOMIZED_FACTOR = 1;
     VIEW_LIFETIME.VIDEO = 1000;
     VIEW_LIFETIME.LIVE = 1000 * 5;

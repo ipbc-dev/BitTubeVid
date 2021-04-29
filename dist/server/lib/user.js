@@ -40,8 +40,8 @@ function createUserAccountAndChannelAndPlaylist(parameters) {
             return { user: userCreated, account: accountCreated, videoChannel, videoPlaylist };
         }));
         const [accountActorWithKeys, channelActorWithKeys] = yield Promise.all([
-            actor_2.setAsyncActorKeys(account.Actor),
-            actor_2.setAsyncActorKeys(videoChannel.Actor)
+            actor_2.generateAndSaveActorKeys(account.Actor),
+            actor_2.generateAndSaveActorKeys(videoChannel.Actor)
         ]);
         account.Actor = accountActorWithKeys;
         videoChannel.Actor = channelActorWithKeys;
@@ -76,7 +76,7 @@ function createApplicationActor(applicationId) {
             t: undefined,
             type: 'Application'
         });
-        accountCreated.Actor = yield actor_2.setAsyncActorKeys(accountCreated.Actor);
+        accountCreated.Actor = yield actor_2.generateAndSaveActorKeys(accountCreated.Actor);
         return accountCreated;
     });
 }

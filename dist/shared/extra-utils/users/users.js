@@ -232,6 +232,8 @@ function updateUser(options) {
         toSend['role'] = options.role;
     if (options.adminFlags !== undefined && options.adminFlags !== null)
         toSend['adminFlags'] = options.adminFlags;
+    if (options.pluginAuth !== undefined)
+        toSend['pluginAuth'] = options.pluginAuth;
     return requests_1.makePutBodyRequest({
         url: options.url,
         path,

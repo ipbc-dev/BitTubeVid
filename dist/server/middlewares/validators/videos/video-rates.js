@@ -28,12 +28,12 @@ exports.videoUpdateRateValidator = videoUpdateRateValidator;
 const getAccountVideoRateValidatorFactory = function (rateType) {
     return [
         express_validator_1.param('name').custom(accounts_1.isAccountNameValid).withMessage('Should have a valid account name'),
-        express_validator_1.param('videoId').custom(misc_1.isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid videoId'),
+        express_validator_1.param('videoId').custom(misc_1.isIdValid).not().isEmpty().withMessage('Should have a valid videoId'),
         (req, res, next) => tslib_1.__awaiter(this, void 0, void 0, function* () {
             logger_1.logger.debug('Checking videoCommentGetValidator parameters.', { parameters: req.params });
             if (utils_1.areValidationErrors(req, res))
                 return;
-            const rate = yield account_video_rate_1.AccountVideoRateModel.loadLocalAndPopulateVideo(rateType, req.params.name, req.params.videoId);
+            const rate = yield account_video_rate_1.AccountVideoRateModel.loadLocalAndPopulateVideo(rateType, req.params.name, +req.params.videoId);
             if (!rate) {
                 return res.status(http_error_codes_1.HttpStatusCode.NOT_FOUND_404)
                     .json({ error: 'Video rate not found' });

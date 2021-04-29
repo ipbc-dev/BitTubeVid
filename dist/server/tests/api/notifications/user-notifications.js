@@ -64,7 +64,7 @@ describe('Test user notifications', function () {
         });
         it('Should send a new video notification from a remote account', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(50000);
+                this.timeout(150000);
                 yield user_subscriptions_1.addUserSubscription(servers[0].url, userAccessToken, 'root_channel@localhost:' + servers[1].port);
                 yield jobs_1.waitJobs(servers);
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 2);
@@ -89,7 +89,7 @@ describe('Test user notifications', function () {
         });
         it('Should send a new video notification on a remote scheduled publication', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(50000);
+                this.timeout(100000);
                 const updateAt = new Date(new Date().getTime() + 2000);
                 const data = {
                     privacy: 3,
@@ -127,7 +127,7 @@ describe('Test user notifications', function () {
                 const { name, uuid } = yield extra_utils_1.uploadRandomVideoOnServers(servers, 1, data);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'absence');
                 yield extra_utils_1.updateVideo(servers[0].url, servers[0].accessToken, uuid, { privacy: 1 });
-                yield extra_utils_1.wait(500);
+                yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewVideoFromSubscription(baseParams, name, uuid, 'presence');
             });
         });
@@ -258,7 +258,7 @@ describe('Test user notifications', function () {
         });
         it('Should not send a notification before the video is published', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(40000);
+                this.timeout(50000);
                 const updateAt = new Date(new Date().getTime() + 1000000);
                 const data = {
                     privacy: 3,

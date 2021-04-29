@@ -2,21 +2,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadWebTorrentVideo = exports.generateMagnetUri = exports.createTorrentAndSetInfoHash = exports.createTorrentPromise = void 0;
 const tslib_1 = require("tslib");
+const createTorrent = require("create-torrent");
+const fs_extra_1 = require("fs-extra");
+const magnetUtil = require("magnet-uri");
+const parseTorrent = require("parse-torrent");
+const path_1 = require("path");
+const WebTorrent = require("webtorrent");
+const misc_1 = require("@server/helpers/custom-validators/misc");
+const constants_1 = require("@server/initializers/constants");
+const video_paths_1 = require("@server/lib/video-paths");
+const config_1 = require("../initializers/config");
+const core_utils_1 = require("./core-utils");
 const logger_1 = require("./logger");
 const utils_1 = require("./utils");
-const WebTorrent = require("webtorrent");
-const fs_extra_1 = require("fs-extra");
-const config_1 = require("../initializers/config");
-const path_1 = require("path");
-const createTorrent = require("create-torrent");
-const core_utils_1 = require("./core-utils");
-const video_streaming_playlist_1 = require("@server/types/models/video/video-streaming-playlist");
-const constants_1 = require("@server/initializers/constants");
-const parseTorrent = require("parse-torrent");
-const magnetUtil = require("magnet-uri");
-const misc_1 = require("@server/helpers/custom-validators/misc");
-const video_paths_1 = require("@server/lib/video-paths");
-const video_1 = require("@server/helpers/video");
+const video_1 = require("./video");
 const createTorrentPromise = core_utils_1.promisify2(createTorrent);
 exports.createTorrentPromise = createTorrentPromise;
 function downloadWebTorrentVideo(target, timeout) {
@@ -70,7 +69,6 @@ exports.downloadWebTorrentVideo = downloadWebTorrentVideo;
 function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const video = video_1.extractVideo(videoOrPlaylist);
-        const { baseUrlHttp } = video.getBaseUrls();
         const options = {
             name: `${video.name} ${videoFile.resolution}p${videoFile.extname}`,
             createdBy: 'PeerTube',
@@ -78,24 +76,23 @@ function createTorrentAndSetInfoHash(videoOrPlaylist, videoFile) {
                 [constants_1.WEBSERVER.WS + '://' + constants_1.WEBSERVER.HOSTNAME + ':' + constants_1.WEBSERVER.PORT + '/tracker/socket'],
                 [constants_1.WEBSERVER.URL + '/tracker/announce']
             ],
-            urlList: [videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp)]
+            urlList: [videoFile.getFileUrl(video)]
         };
         const torrent = yield createTorrentPromise(video_paths_1.getVideoFilePath(videoOrPlaylist, videoFile), options);
-        const filePath = path_1.join(config_1.CONFIG.STORAGE.TORRENTS_DIR, video_paths_1.getTorrentFileName(videoOrPlaylist, videoFile));
-        logger_1.logger.info('Creating torrent %s.', filePath);
-        yield fs_extra_1.writeFile(filePath, torrent);
+        const torrentFilename = video_paths_1.generateTorrentFileName(videoOrPlaylist, videoFile.resolution);
+        const torrentPath = path_1.join(config_1.CONFIG.STORAGE.TORRENTS_DIR, torrentFilename);
+        logger_1.logger.info('Creating torrent %s.', torrentPath);
+        yield fs_extra_1.writeFile(torrentPath, torrent);
         const parsedTorrent = parseTorrent(torrent);
         videoFile.infoHash = parsedTorrent.infoHash;
+        videoFile.torrentFilename = torrentFilename;
     });
 }
 exports.createTorrentAndSetInfoHash = createTorrentAndSetInfoHash;
-function generateMagnetUri(videoOrPlaylist, videoFile, baseUrlHttp, baseUrlWs) {
-    const video = video_streaming_playlist_1.isStreamingPlaylist(videoOrPlaylist)
-        ? videoOrPlaylist.Video
-        : videoOrPlaylist;
-    const xs = videoOrPlaylist.getTorrentUrl(videoFile, baseUrlHttp);
-    const announce = videoOrPlaylist.getTrackerUrls(baseUrlHttp, baseUrlWs);
-    let urlList = [videoOrPlaylist.getVideoFileUrl(videoFile, baseUrlHttp)];
+function generateMagnetUri(video, videoFile, trackerUrls) {
+    const xs = videoFile.getTorrentUrl();
+    const announce = trackerUrls;
+    let urlList = [videoFile.getFileUrl(video)];
     const redundancies = videoFile.RedundancyVideos;
     if (misc_1.isArray(redundancies))
         urlList = urlList.concat(redundancies.map(r => r.fileUrl));

@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 require("multer");
 const express = require("express");
 const audit_logger_1 = require("@server/helpers/audit-logger");
+const hooks_1 = require("@server/lib/plugins/hooks");
 const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const express_utils_1 = require("../../../helpers/express-utils");
 const utils_1 = require("../../../helpers/utils");
@@ -34,10 +35,18 @@ meRouter.get('/me/videos', middlewares_1.authenticate, middlewares_1.paginationV
 meRouter.get('/me/videos/:videoId/rating', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.usersVideoRatingValidator), middlewares_1.asyncMiddleware(getUserVideoRating));
 meRouter.put('/me', middlewares_1.authenticate, middlewares_1.asyncMiddleware(middlewares_1.usersUpdateMeValidator), middlewares_1.asyncRetryTransactionMiddleware(updateMe));
 meRouter.post('/me/avatar/pick', middlewares_1.authenticate, reqAvatarFile, avatar_2.updateAvatarValidator, middlewares_1.asyncRetryTransactionMiddleware(updateMyAvatar));
+meRouter.delete('/me/avatar', middlewares_1.authenticate, middlewares_1.asyncRetryTransactionMiddleware(deleteMyAvatar));
 function getUserVideos(req, res) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const user = res.locals.oauth.token.User;
-        const resultList = yield video_1.VideoModel.listUserVideosForApi(user.Account.id, req.query.start, req.query.count, req.query.sort, req.query.search);
+        const apiOptions = yield hooks_1.Hooks.wrapObject({
+            accountId: user.Account.id,
+            start: req.query.start,
+            count: req.query.count,
+            sort: req.query.sort,
+            search: req.query.search
+        }, 'filter:api.user.me.videos.list.params');
+        const resultList = yield hooks_1.Hooks.wrapPromiseFun(video_1.VideoModel.listUserVideosForApi, apiOptions, 'filter:api.user.me.videos.list.result');
         const additionalAttributes = {
             waitTranscoding: true,
             state: true,
@@ -152,7 +161,15 @@ function updateMyAvatar(req, res) {
         const avatarPhysicalFile = req.files['avatarfile'][0];
         const user = res.locals.oauth.token.user;
         const userAccount = yield account_1.AccountModel.load(user.Account.id);
-        const avatar = yield avatar_1.updateActorAvatarFile(avatarPhysicalFile, userAccount);
+        const avatar = yield avatar_1.updateLocalActorAvatarFile(userAccount, avatarPhysicalFile);
         return res.json({ avatar: avatar.toFormattedJSON() });
+    });
+}
+function deleteMyAvatar(req, res) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const user = res.locals.oauth.token.user;
+        const userAccount = yield account_1.AccountModel.load(user.Account.id);
+        yield avatar_1.deleteLocalActorAvatarFile(userAccount);
+        return res.sendStatus(http_error_codes_1.HttpStatusCode.NO_CONTENT_204);
     });
 }

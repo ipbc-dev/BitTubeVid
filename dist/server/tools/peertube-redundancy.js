@@ -36,7 +36,7 @@ program
     .option('-U, --username <username>', 'Username')
     .option('-p, --password <token>', 'Password')
     .option('-v, --video <videoId>', 'Video id to duplicate')
-    .action((options) => addRedundancyCLI(options));
+    .action((options, command) => addRedundancyCLI(options, command));
 program
     .command('remove')
     .description('Remove a video from your redundancies')
@@ -44,7 +44,7 @@ program
     .option('-U, --username <username>', 'Username')
     .option('-p, --password <token>', 'Password')
     .option('-v, --video <videoId>', 'Video id to remove from redundancies')
-    .action((options) => removeRedundancyCLI(options));
+    .action((options, command) => removeRedundancyCLI(options, command));
 if (!process.argv.slice(2).length) {
     program.outputHelp();
 }
@@ -83,20 +83,20 @@ function listRedundanciesCLI(target) {
         process.exit(0);
     });
 }
-function addRedundancyCLI(options) {
+function addRedundancyCLI(options, command) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { url, username, password } = yield cli_1.getServerCredentials(program);
+        const { url, username, password } = yield cli_1.getServerCredentials(command);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
-        if (!options['video'] || validator_1.default.isInt('' + options['video']) === false) {
+        if (!options.video || validator_1.default.isInt('' + options.video) === false) {
             console.error('You need to specify the video id to duplicate and it should be a number.\n');
-            program.outputHelp();
+            command.outputHelp();
             process.exit(-1);
         }
         try {
             yield redundancy_1.addVideoRedundancy({
                 url,
                 accessToken,
-                videoId: options['video']
+                videoId: options.video
             });
             console.log('Video will be duplicated by your instance!');
             process.exit(0);
@@ -115,16 +115,16 @@ function addRedundancyCLI(options) {
         }
     });
 }
-function removeRedundancyCLI(options) {
+function removeRedundancyCLI(options, command) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        const { url, username, password } = yield cli_1.getServerCredentials(program);
+        const { url, username, password } = yield cli_1.getServerCredentials(command);
         const accessToken = yield cli_1.getAdminTokenOrDie(url, username, password);
-        if (!options['video'] || validator_1.default.isInt('' + options['video']) === false) {
+        if (!options.video || validator_1.default.isInt('' + options.video) === false) {
             console.error('You need to specify the video id to remove from your redundancies.\n');
-            program.outputHelp();
+            command.outputHelp();
             process.exit(-1);
         }
-        const videoId = parseInt(options['video'] + '', 10);
+        const videoId = parseInt(options.video + '', 10);
         let redundancies = yield listVideoRedundanciesData(url, accessToken, 'my-videos');
         let videoRedundancy = redundancies.find(r => videoId === r.id);
         if (!videoRedundancy) {

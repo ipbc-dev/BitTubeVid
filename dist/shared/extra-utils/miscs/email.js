@@ -2,12 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MockSmtpServer = void 0;
 const child_process_1 = require("child_process");
+const path_1 = require("path");
 const miscs_1 = require("../../core-utils/miscs/miscs");
 const servers_1 = require("../server/servers");
 class MockSmtpServer {
     constructor() {
         this.started = false;
-        this.emailChildProcess = child_process_1.fork(`${__dirname}/email-child-process`, []);
+        this.emailChildProcess = child_process_1.fork(path_1.join(__dirname, 'email-child-process'), []);
         this.emailChildProcess.on('message', (msg) => {
             if (msg.email) {
                 return this.emails.push(msg.email);
@@ -20,7 +21,7 @@ class MockSmtpServer {
             const port = servers_1.parallelTests() ? miscs_1.randomInt(1000, 2000) : 1025;
             if (this.started) {
                 this.emails = emailsCollection;
-                return res();
+                return res(undefined);
             }
             this.emailChildProcess.send({ start: true, port });
             this.emailChildProcess.on('exit', () => {

@@ -167,6 +167,7 @@ const usersUpdateValidator = [
     express_validator_1.body('emailVerified').optional().isBoolean().withMessage('Should have a valid email verified attribute'),
     express_validator_1.body('videoQuota').optional().custom(users_2.isUserVideoQuotaValid).withMessage('Should have a valid user quota'),
     express_validator_1.body('videoQuotaDaily').optional().custom(users_2.isUserVideoQuotaDailyValid).withMessage('Should have a valid daily user quota'),
+    express_validator_1.body('pluginAuth').optional(),
     express_validator_1.body('role')
         .optional()
         .customSanitizer(misc_1.toIntOrNull)

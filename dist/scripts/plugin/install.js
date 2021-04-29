@@ -12,11 +12,12 @@ program
     .option('-v, --plugin-version [pluginVersion]', 'Plugin version to install')
     .option('-p, --plugin-path [pluginPath]', 'Path of the plugin you want to install')
     .parse(process.argv);
-if (!program['npmName'] && !program['pluginPath']) {
+const options = program.opts();
+if (!options.npmName && !options.pluginPath) {
     console.error('You need to specify a plugin name with the desired version, or a plugin path.');
     process.exit(-1);
 }
-if (program['pluginPath'] && !path_1.isAbsolute(program['pluginPath'])) {
+if (options.pluginPath && !path_1.isAbsolute(options.pluginPath)) {
     console.error('Plugin path should be absolute.');
     process.exit(-1);
 }
@@ -29,7 +30,7 @@ run()
 function run() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield database_1.initDatabaseModels(true);
-        const toInstall = program['npmName'] || program['pluginPath'];
-        yield plugin_manager_1.PluginManager.Instance.install(toInstall, program['pluginVersion'], !!program['pluginPath']);
+        const toInstall = options.npmName || options.pluginPath;
+        yield plugin_manager_1.PluginManager.Instance.install(toInstall, options.pluginVersion, !!options.pluginPath);
     });
 }

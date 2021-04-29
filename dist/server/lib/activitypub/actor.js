@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addFetchOutboxJob = exports.updateActorAvatarInstance = exports.refreshActorIfNeeded = exports.updateActorInstance = exports.getAvatarInfoIfExists = exports.fetchActorTotalItems = exports.setAsyncActorKeys = exports.buildActorInstance = exports.getOrCreateActorAndServerAndModel = void 0;
+exports.addFetchOutboxJob = exports.updateActorAvatarInstance = exports.refreshActorIfNeeded = exports.deleteActorAvatarInstance = exports.updateActorInstance = exports.getAvatarInfoIfExists = exports.fetchActorTotalItems = exports.generateAndSaveActorKeys = exports.buildActorInstance = exports.getOrCreateActorAndServerAndModel = void 0;
 const tslib_1 = require("tslib");
 const sequelize_1 = require("sequelize");
 const url_1 = require("url");
@@ -25,19 +25,15 @@ const database_1 = require("../../initializers/database");
 const path_1 = require("path");
 const application_1 = require("@server/models/application/application");
 const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
-function setAsyncActorKeys(actor) {
-    return peertube_crypto_1.createPrivateAndPublicKeys()
-        .then(({ publicKey, privateKey }) => {
+function generateAndSaveActorKeys(actor) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { publicKey, privateKey } = yield peertube_crypto_1.createPrivateAndPublicKeys();
         actor.publicKey = publicKey;
         actor.privateKey = privateKey;
         return actor.save();
-    })
-        .catch(err => {
-        logger_1.logger.error('Cannot set public/private keys of actor %d.', actor.url, { err });
-        return actor;
     });
 }
-exports.setAsyncActorKeys = setAsyncActorKeys;
+exports.generateAndSaveActorKeys = generateAndSaveActorKeys;
 function getOrCreateActorAndServerAndModel(activityActor, fetchType = 'association-ids', recurseIfNeeded = true, updateCollections = false) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const actorUrl = activitypub_1.getAPId(activityActor);
@@ -65,7 +61,7 @@ function getOrCreateActorAndServerAndModel(activityActor, fetchType = 'associati
                     ownerActor = yield getOrCreateActorAndServerAndModel(accountAttributedTo.id, 'all', recurseIfNeeded);
                 }
                 catch (err) {
-                    logger_1.logger.error('Cannot get or create account attributed to video channel ' + actor.url);
+                    logger_1.logger.error('Cannot get or create account attributed to video channel ' + actorUrl);
                     throw new Error(err);
                 }
             }
@@ -156,6 +152,20 @@ function updateActorAvatarInstance(actor, info, t) {
     });
 }
 exports.updateActorAvatarInstance = updateActorAvatarInstance;
+function deleteActorAvatarInstance(actor, t) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        try {
+            yield actor.Avatar.destroy({ transaction: t });
+        }
+        catch (err) {
+            logger_1.logger.error('Cannot remove old avatar of actor %s.', actor.url, { err });
+        }
+        actor.avatarId = null;
+        actor.Avatar = null;
+        return actor;
+    });
+}
+exports.deleteActorAvatarInstance = deleteActorAvatarInstance;
 function fetchActorTotalItems(url) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const options = {
@@ -369,7 +379,8 @@ function fetchRemoteActor(actorUrl) {
             outboxUrl: actorJSON.outbox,
             followersUrl: actorJSON.followers,
             followingUrl: actorJSON.following,
-            sharedInboxUrl: ((_a = actorJSON.endpoints) === null || _a === void 0 ? void 0 : _a.sharedInbox) ? actorJSON.endpoints.sharedInbox
+            sharedInboxUrl: ((_a = actorJSON.endpoints) === null || _a === void 0 ? void 0 : _a.sharedInbox)
+                ? actorJSON.endpoints.sharedInbox
                 : null
         });
         const avatarInfo = yield getAvatarInfoIfExists(actorJSON);

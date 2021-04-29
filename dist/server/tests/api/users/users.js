@@ -628,7 +628,8 @@ describe('Test users', function () {
                     emailVerified: true,
                     videoQuota: 42,
                     role: models_1.UserRole.MODERATOR,
-                    adminFlags: 0
+                    adminFlags: 0,
+                    pluginAuth: 'toto'
                 });
                 const res = yield extra_utils_1.getUserInformation(server.url, accessToken, userId);
                 const user = res.body;
@@ -640,6 +641,15 @@ describe('Test users', function () {
                 expect(user.roleLabel).to.equal('Moderator');
                 expect(user.id).to.be.a('number');
                 expect(user.adminFlags).to.equal(0);
+                expect(user.pluginAuth).to.equal('toto');
+            });
+        });
+        it('Should reset the auth plugin', function () {
+            return tslib_1.__awaiter(this, void 0, void 0, function* () {
+                yield extra_utils_1.updateUser({ url: server.url, userId, accessToken, pluginAuth: null });
+                const res = yield extra_utils_1.getUserInformation(server.url, accessToken, userId);
+                const user = res.body;
+                expect(user.pluginAuth).to.be.null;
             });
         });
         it('Should have removed the user token', function () {

@@ -3,17 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.doVideosInPlaylistExistValidator = exports.commonVideoPlaylistFiltersValidator = exports.videoPlaylistElementAPGetValidator = exports.videoPlaylistsReorderVideosValidator = exports.videoPlaylistsUpdateOrRemoveVideoValidator = exports.videoPlaylistsAddVideoValidator = exports.videoPlaylistsSearchValidator = exports.videoPlaylistsGetValidator = exports.videoPlaylistsDeleteValidator = exports.videoPlaylistsUpdateValidator = exports.videoPlaylistsAddValidator = void 0;
 const tslib_1 = require("tslib");
 const express_validator_1 = require("express-validator");
-const logger_1 = require("../../../helpers/logger");
-const utils_1 = require("../utils");
-const videos_1 = require("../../../helpers/custom-validators/videos");
-const constants_1 = require("../../../initializers/constants");
+const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
 const misc_1 = require("../../../helpers/custom-validators/misc");
 const video_playlists_1 = require("../../../helpers/custom-validators/video-playlists");
+const videos_1 = require("../../../helpers/custom-validators/videos");
 const express_utils_1 = require("../../../helpers/express-utils");
+const logger_1 = require("../../../helpers/logger");
+const middlewares_1 = require("../../../helpers/middlewares");
+const constants_1 = require("../../../initializers/constants");
 const video_playlist_element_1 = require("../../../models/video/video-playlist-element");
 const oauth_1 = require("../../oauth");
-const middlewares_1 = require("../../../helpers/middlewares");
-const http_error_codes_1 = require("../../../../shared/core-utils/miscs/http-error-codes");
+const utils_1 = require("../utils");
 const videoPlaylistsAddValidator = getCommonPlaylistEditAttributes().concat([
     express_validator_1.body('displayName')
         .custom(video_playlists_1.isVideoPlaylistNameValid).withMessage('Should have a valid display name'),

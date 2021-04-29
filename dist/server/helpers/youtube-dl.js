@@ -1,17 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildOriginallyPublishedAt = exports.safeGetYoutubeDL = exports.getYoutubeDLInfo = exports.getYoutubeDLSubs = exports.downloadYoutubeDLVideo = exports.updateYoutubeDLBinary = void 0;
+exports.buildOriginallyPublishedAt = exports.safeGetYoutubeDL = exports.getYoutubeDLInfo = exports.getYoutubeDLSubs = exports.downloadYoutubeDLVideo = exports.getYoutubeDLVideoFormat = exports.updateYoutubeDLBinary = void 0;
 const tslib_1 = require("tslib");
-const constants_1 = require("../initializers/constants");
-const logger_1 = require("./logger");
-const utils_1 = require("./utils");
-const path_1 = require("path");
-const core_utils_1 = require("./core-utils");
-const fs_extra_1 = require("fs-extra");
-const request = require("request");
 const fs_1 = require("fs");
+const fs_extra_1 = require("fs-extra");
+const path_1 = require("path");
+const request = require("request");
 const config_1 = require("@server/initializers/config");
 const http_error_codes_1 = require("../../shared/core-utils/miscs/http-error-codes");
+const constants_1 = require("../initializers/constants");
+const video_transcoding_1 = require("../lib/video-transcoding");
+const core_utils_1 = require("./core-utils");
+const videos_1 = require("./custom-validators/videos");
+const logger_1 = require("./logger");
+const utils_1 = require("./utils");
 const processOptions = {
     maxBuffer: 1024 * 1024 * 10
 };
@@ -22,6 +24,7 @@ function getYoutubeDLInfo(url, opts) {
             args.push('--force-ipv4');
         }
         args = wrapWithProxyOptions(args);
+        args = ['-f', getYoutubeDLVideoFormat()].concat(args);
         safeGetYoutubeDL()
             .then(youtubeDL => {
             youtubeDL.getInfo(url, args, processOptions, (err, info) => {
@@ -52,7 +55,7 @@ function getYoutubeDLSubs(url, opts) {
                     return [];
                 logger_1.logger.debug('Get subtitles from youtube dl.', { url, files });
                 const subtitles = files.reduce((acc, filename) => {
-                    const matched = filename.match(/\.([a-z]{2})\.(vtt|ttml)/i);
+                    const matched = filename.match(/\.([a-z]{2})(-[a-z]+)?\.(vtt|ttml)/i);
                     if (!matched || !matched[1])
                         return acc;
                     return [
@@ -71,33 +74,59 @@ function getYoutubeDLSubs(url, opts) {
     });
 }
 exports.getYoutubeDLSubs = getYoutubeDLSubs;
-function downloadYoutubeDLVideo(url, extension, timeout) {
-    const path = utils_1.generateVideoImportTmpPath(url, extension);
+function getYoutubeDLVideoFormat() {
+    const enabledResolutions = video_transcoding_1.getEnabledResolutions('vod');
+    const resolution = enabledResolutions.length === 0
+        ? 720
+        : Math.max(...enabledResolutions);
+    return [
+        `bestvideo[vcodec^=avc1][height=${resolution}]+bestaudio[ext=m4a]`,
+        `bestvideo[vcodec!*=av01][vcodec!*=vp9.2][height=${resolution}]+bestaudio`,
+        `bestvideo[vcodec^=avc1][height<=${resolution}]+bestaudio[ext=m4a]`,
+        `bestvideo[vcodec!*=av01][vcodec!*=vp9.2]+bestaudio`,
+        'best[vcodec!*=av01][vcodec!*=vp9.2]',
+        'best'
+    ].join('/');
+}
+exports.getYoutubeDLVideoFormat = getYoutubeDLVideoFormat;
+function downloadYoutubeDLVideo(url, fileExt, timeout) {
+    const pathWithoutExtension = utils_1.generateVideoImportTmpPath(url, '');
     let timer;
-    logger_1.logger.info('Importing youtubeDL video %s to %s', url, path);
-    let options = ['-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best', '-o', path];
+    logger_1.logger.info('Importing youtubeDL video %s to %s', url, pathWithoutExtension);
+    let options = ['-f', getYoutubeDLVideoFormat(), '-o', pathWithoutExtension];
     options = wrapWithProxyOptions(options);
     if (process.env.FFMPEG_PATH) {
         options = options.concat(['--ffmpeg-location', process.env.FFMPEG_PATH]);
     }
+    logger_1.logger.debug('YoutubeDL options for %s.', url, { options });
     return new Promise((res, rej) => {
         safeGetYoutubeDL()
             .then(youtubeDL => {
-            youtubeDL.exec(url, options, processOptions, err => {
+            youtubeDL.exec(url, options, processOptions, (err) => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 clearTimeout(timer);
-                if (err) {
-                    fs_extra_1.remove(path)
-                        .catch(err => logger_1.logger.error('Cannot delete path on YoutubeDL error.', { err }));
+                try {
+                    if (yield fs_extra_1.pathExists(pathWithoutExtension)) {
+                        yield fs_extra_1.move(pathWithoutExtension, pathWithoutExtension + '.mp4');
+                    }
+                    const path = yield guessVideoPathWithExtension(pathWithoutExtension, fileExt);
+                    if (err) {
+                        fs_extra_1.remove(path)
+                            .catch(err => logger_1.logger.error('Cannot delete path on YoutubeDL error.', { err }));
+                        return rej(err);
+                    }
+                    return res(path);
+                }
+                catch (err) {
                     return rej(err);
                 }
-                return res(path);
-            });
+            }));
             timer = setTimeout(() => {
                 const err = new Error('YoutubeDL download timeout.');
-                fs_extra_1.remove(path)
+                guessVideoPathWithExtension(pathWithoutExtension, fileExt)
+                    .then(path => fs_extra_1.remove(path))
                     .finally(() => rej(err))
                     .catch(err => {
-                    logger_1.logger.error('Cannot remove %s in youtubeDL timeout.', path, { err });
+                    logger_1.logger.error('Cannot remove file in youtubeDL timeout.', { err });
                     return rej(err);
                 });
             }, timeout);
@@ -186,6 +215,20 @@ function buildOriginallyPublishedAt(obj) {
     return originallyPublishedAt;
 }
 exports.buildOriginallyPublishedAt = buildOriginallyPublishedAt;
+function guessVideoPathWithExtension(tmpPath, sourceExt) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        if (!videos_1.isVideoFileExtnameValid(sourceExt)) {
+            throw new Error('Invalid video extension ' + sourceExt);
+        }
+        const extensions = [sourceExt, '.mp4', '.mkv', '.webm'];
+        for (const extension of extensions) {
+            const path = tmpPath + extension;
+            if (yield fs_extra_1.pathExists(path))
+                return path;
+        }
+        throw new Error('Cannot guess path of ' + tmpPath);
+    });
+}
 function normalizeObject(obj) {
     const newObj = {};
     for (const key of Object.keys(obj)) {
@@ -212,7 +255,7 @@ function buildVideoInfo(obj) {
         tags: getTags(obj.tags),
         thumbnailUrl: obj.thumbnail || undefined,
         originallyPublishedAt: buildOriginallyPublishedAt(obj),
-        fileExt: obj.ext
+        ext: obj.ext
     };
 }
 function titleTruncation(title) {

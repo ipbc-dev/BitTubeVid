@@ -37,9 +37,9 @@ function resolveThread(params) {
             }
         }
         catch (err) {
-            logger_1.logger.debug('Cannot get or create account and video and channel for reply %s, fetch comment', url, { err });
+            logger_1.logger.debug('Cannot resolve thread from video %s, maybe because it was not a video', url, { err });
         }
-        return resolveParentComment(params);
+        return resolveRemoteParentComment(params);
     });
 }
 exports.resolveThread = resolveThread;
@@ -94,7 +94,7 @@ function tryResolveThreadFromVideo(params) {
         return { video, comment: resultComment, commentCreated };
     });
 }
-function resolveParentComment(params) {
+function resolveRemoteParentComment(params) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { url, comments } = params;
         if (comments.length > constants_1.ACTIVITY_PUB.MAX_RECURSION_COMMENTS) {
@@ -106,7 +106,7 @@ function resolveParentComment(params) {
             activityPub: true
         });
         if (video_comments_1.sanitizeAndCheckVideoCommentObject(body) === false) {
-            throw new Error('Remote video comment JSON is not valid:' + JSON.stringify(body));
+            throw new Error(`Remote video comment JSON ${url} is not valid:` + JSON.stringify(body));
         }
         const actorUrl = body.attributedTo;
         if (!actorUrl && body.type !== 'Tombstone')

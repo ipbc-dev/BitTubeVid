@@ -9,13 +9,14 @@ const users_1 = require("../server/helpers/custom-validators/users");
 program
     .option('-u, --user [user]', 'User')
     .parse(process.argv);
-if (program['user'] === undefined) {
+const options = program.opts();
+if (options.user === undefined) {
     console.error('All parameters are mandatory.');
     process.exit(-1);
 }
 database_1.initDatabaseModels(true)
     .then(() => {
-    return user_1.UserModel.loadByUsername(program['user']);
+    return user_1.UserModel.loadByUsername(options.user);
 })
     .then(user => {
     if (!user) {
@@ -25,7 +26,7 @@ database_1.initDatabaseModels(true)
     const readline = require('readline');
     const Writable = require('stream').Writable;
     const mutableStdout = new Writable({
-        write: function (chunk, encoding, callback) {
+        write: function (_chunk, _encoding, callback) {
             callback();
         }
     });

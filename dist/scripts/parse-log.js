@@ -11,16 +11,20 @@ const winston = require("winston");
 const logger_1 = require("../server/helpers/logger");
 const config_1 = require("../server/initializers/config");
 const logs_1 = require("../shared/core-utils/logs/logs");
+const util_1 = require("util");
+const sql_formatter_1 = require("sql-formatter");
 program
     .option('-l, --level [level]', 'Level log (debug/info/warn/error)')
     .option('-f, --files [file...]', 'Files to parse. If not provided, the script will parse the latest log file from config)')
     .parse(process.argv);
+const options = program.opts();
 const excludedKeys = {
     level: true,
     message: true,
     splat: true,
     timestamp: true,
-    label: true
+    label: true,
+    sql: true
 };
 function keysExcluder(key, value) {
     return excludedKeys[key] === true ? undefined : value;
@@ -31,12 +35,23 @@ const loggerFormat = winston.format.printf((info) => {
         additionalInfos = '';
     else
         additionalInfos = ' ' + additionalInfos;
+    if (info.sql) {
+        if (config_1.CONFIG.LOG.PRETTIFY_SQL) {
+            additionalInfos += '\n' + sql_formatter_1.format(info.sql, {
+                language: 'sql',
+                indent: '  '
+            });
+        }
+        else {
+            additionalInfos += ' - ' + info.sql;
+        }
+    }
     return `[${info.label}] ${toTimeFormat(info.timestamp)} ${info.level}: ${info.message}${additionalInfos}`;
 });
 const logger = winston.createLogger({
     transports: [
         new winston.transports.Console({
-            level: program['level'] || 'debug',
+            level: options.level || 'debug',
             stderrLevels: [],
             format: winston.format.combine(winston.format.splat(), logger_1.labelFormatter(), winston.format.colorize(), loggerFormat)
         })
@@ -68,7 +83,7 @@ function run() {
                     logLevels[log.level](log);
                 }
                 catch (err) {
-                    console.error('Cannot parse line.', line);
+                    console.error('Cannot parse line.', util_1.inspect(line));
                     throw err;
                 }
             });
@@ -84,8 +99,8 @@ function getNewestFile(files, basePath) {
 }
 function getFiles() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (program['files'])
-            return program['files'];
+        if (options.files)
+            return options.files;
         const logFiles = yield fs_extra_1.readdir(config_1.CONFIG.STORAGE.LOG_DIR);
         const filename = yield getNewestFile(logFiles, config_1.CONFIG.STORAGE.LOG_DIR);
         return [path_1.join(config_1.CONFIG.STORAGE.LOG_DIR, filename)];

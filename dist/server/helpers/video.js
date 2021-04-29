@@ -1,9 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.isStateForFederation = exports.getExtFromMimetype = exports.extractVideo = exports.addOptimizeOrMergeAudioJob = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
+exports.getPrivaciesForFederation = exports.isPrivacyForFederation = exports.isStateForFederation = exports.getExtFromMimetype = exports.extractVideo = exports.fetchVideoByUrl = exports.getVideoWithAttributes = exports.fetchVideo = void 0;
 const config_1 = require("@server/initializers/config");
-const constants_1 = require("@server/initializers/constants");
-const job_queue_1 = require("@server/lib/job-queue");
 const models_1 = require("@server/types/models");
 const video_1 = require("../models/video/video");
 function fetchVideo(id, fetchType, userId) {
@@ -32,26 +30,6 @@ function getVideoWithAttributes(res) {
     return res.locals.videoAll || res.locals.onlyVideo || res.locals.onlyVideoWithRights;
 }
 exports.getVideoWithAttributes = getVideoWithAttributes;
-function addOptimizeOrMergeAudioJob(video, videoFile) {
-    let dataInput;
-    if (videoFile.isAudio()) {
-        dataInput = {
-            type: 'merge-audio',
-            resolution: constants_1.DEFAULT_AUDIO_RESOLUTION,
-            videoUUID: video.uuid,
-            isNewVideo: true
-        };
-    }
-    else {
-        dataInput = {
-            type: 'optimize',
-            videoUUID: video.uuid,
-            isNewVideo: true
-        };
-    }
-    return job_queue_1.JobQueue.Instance.createJobWithPromise({ type: 'video-transcoding', payload: dataInput });
-}
-exports.addOptimizeOrMergeAudioJob = addOptimizeOrMergeAudioJob;
 function extractVideo(videoOrPlaylist) {
     return models_1.isStreamingPlaylist(videoOrPlaylist)
         ? videoOrPlaylist.Video

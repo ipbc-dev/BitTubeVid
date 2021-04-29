@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUUIDFromFilename = exports.generateVideoImportTmpPath = exports.getServerCommit = exports.getSecureTorrentName = exports.getFormattedObjects = exports.generateRandomString = exports.deleteFileAsync = void 0;
 const tslib_1 = require("tslib");
+const fs_extra_1 = require("fs-extra");
+const path_1 = require("path");
+const config_1 = require("../initializers/config");
 const core_utils_1 = require("./core-utils");
 const logger_1 = require("./logger");
-const path_1 = require("path");
-const fs_extra_1 = require("fs-extra");
-const config_1 = require("../initializers/config");
-const videos_1 = require("./custom-validators/videos");
 function deleteFileAsync(path) {
     fs_extra_1.remove(path)
         .catch(err => logger_1.logger.error('Cannot delete the file %s asynchronously.', path, { err }));
@@ -28,14 +27,10 @@ function getFormattedObjects(objects, objectsTotal, formattedArg) {
     };
 }
 exports.getFormattedObjects = getFormattedObjects;
-function generateVideoImportTmpPath(target, extensionArg) {
+function generateVideoImportTmpPath(target, extension = '.mp4') {
     const id = typeof target === 'string'
         ? target
         : target.infoHash;
-    let extension = '.mp4';
-    if (extensionArg && videos_1.isVideoFileExtnameValid(extensionArg)) {
-        extension = extensionArg;
-    }
     const hash = core_utils_1.sha256(id);
     return path_1.join(config_1.CONFIG.STORAGE.TMP_DIR, `${hash}-import${extension}`);
 }

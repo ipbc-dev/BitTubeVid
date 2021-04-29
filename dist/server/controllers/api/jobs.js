@@ -26,30 +26,27 @@ function listJobs(req, res) {
         const total = yield job_queue_1.JobQueue.Instance.count(state, jobType);
         const result = {
             total,
-            data: state
-                ? jobs.map(j => formatJob(j, state))
-                : yield Promise.all(jobs.map(j => formatJobWithUnknownState(j)))
+            data: yield Promise.all(jobs.map(j => formatJob(j, state)))
         };
         return res.json(result);
     });
 }
-function formatJobWithUnknownState(job) {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        return formatJob(job, yield job.getState());
-    });
-}
 function formatJob(job, state) {
-    const error = misc_1.isArray(job.stacktrace) && job.stacktrace.length !== 0
-        ? job.stacktrace[0]
-        : null;
-    return {
-        id: job.id,
-        state: state,
-        type: job.queue.name,
-        data: job.data,
-        error,
-        createdAt: new Date(job.timestamp),
-        finishedOn: new Date(job.finishedOn),
-        processedOn: new Date(job.processedOn)
-    };
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const error = misc_1.isArray(job.stacktrace) && job.stacktrace.length !== 0
+            ? job.stacktrace[0]
+            : null;
+        return {
+            id: job.id,
+            state: state || (yield job.getState()),
+            type: job.queue.name,
+            data: job.data,
+            progress: yield job.progress(),
+            priority: job.opts.priority,
+            error,
+            createdAt: new Date(job.timestamp),
+            finishedOn: new Date(job.finishedOn),
+            processedOn: new Date(job.processedOn)
+        };
+    });
 }

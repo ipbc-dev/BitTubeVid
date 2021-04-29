@@ -3,46 +3,74 @@ var ThumbnailModel_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ThumbnailModel = void 0;
 const tslib_1 = require("tslib");
+const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const sequelize_typescript_1 = require("sequelize-typescript");
-const constants_1 = require("../../initializers/constants");
+const database_utils_1 = require("@server/helpers/database-utils");
 const logger_1 = require("../../helpers/logger");
-const fs_extra_1 = require("fs-extra");
 const config_1 = require("../../initializers/config");
+const constants_1 = require("../../initializers/constants");
 const video_1 = require("./video");
 const video_playlist_1 = require("./video-playlist");
-const activitypub_1 = require("@server/helpers/activitypub");
 let ThumbnailModel = ThumbnailModel_1 = class ThumbnailModel extends sequelize_typescript_1.Model {
+    static removeOldFile(instance, options) {
+        return database_utils_1.afterCommitIfTransaction(options.transaction, () => instance.removePreviousFilenameIfNeeded());
+    }
     static removeFiles(instance) {
         logger_1.logger.info('Removing %s file %s.', ThumbnailModel_1.types[instance.type].label, instance.filename);
         instance.removeThumbnail()
             .catch(err => logger_1.logger.error('Cannot remove thumbnail file %s.', instance.filename, err));
     }
-    static loadByName(filename) {
+    static loadByFilename(filename, thumbnailType) {
         const query = {
             where: {
-                filename
+                filename,
+                type: thumbnailType
             }
         };
         return ThumbnailModel_1.findOne(query);
     }
-    static generateDefaultPreviewName(videoUUID) {
-        return videoUUID + '.jpg';
+    static loadWithVideoByFilename(filename, thumbnailType) {
+        const query = {
+            where: {
+                filename,
+                type: thumbnailType
+            },
+            include: [
+                {
+                    model: video_1.VideoModel.unscoped(),
+                    required: true
+                }
+            ]
+        };
+        return ThumbnailModel_1.findOne(query);
+    }
+    static buildPath(type, filename) {
+        const directory = ThumbnailModel_1.types[type].directory;
+        return path_1.join(directory, filename);
     }
     getFileUrl(video) {
         const staticPath = ThumbnailModel_1.types[this.type].staticPath + this.filename;
         if (video.isOwned())
             return constants_1.WEBSERVER.URL + staticPath;
-        if (this.fileUrl)
-            return this.fileUrl;
-        return activitypub_1.buildRemoteVideoBaseUrl(video, staticPath);
+        return this.fileUrl;
     }
     getPath() {
-        const directory = ThumbnailModel_1.types[this.type].directory;
-        return path_1.join(directory, this.filename);
+        return ThumbnailModel_1.buildPath(this.type, this.filename);
+    }
+    getPreviousPath() {
+        return ThumbnailModel_1.buildPath(this.type, this.previousThumbnailFilename);
     }
     removeThumbnail() {
         return fs_extra_1.remove(this.getPath());
+    }
+    removePreviousFilenameIfNeeded() {
+        if (!this.previousThumbnailFilename)
+            return;
+        const previousPath = this.getPreviousPath();
+        fs_extra_1.remove(previousPath)
+            .catch(err => logger_1.logger.error('Cannot remove previous thumbnail file %s.', previousPath, { err }));
+        this.previousThumbnailFilename = undefined;
     }
 };
 ThumbnailModel.types = {
@@ -126,6 +154,13 @@ tslib_1.__decorate([
     tslib_1.__metadata("design:type", Date)
 ], ThumbnailModel.prototype, "updatedAt", void 0);
 tslib_1.__decorate([
+    sequelize_typescript_1.BeforeCreate,
+    sequelize_typescript_1.BeforeUpdate,
+    tslib_1.__metadata("design:type", Function),
+    tslib_1.__metadata("design:paramtypes", [ThumbnailModel, Object]),
+    tslib_1.__metadata("design:returntype", void 0)
+], ThumbnailModel, "removeOldFile", null);
+tslib_1.__decorate([
     sequelize_typescript_1.AfterDestroy,
     tslib_1.__metadata("design:type", Function),
     tslib_1.__metadata("design:paramtypes", [ThumbnailModel]),
@@ -140,6 +175,10 @@ ThumbnailModel = ThumbnailModel_1 = tslib_1.__decorate([
             },
             {
                 fields: ['videoPlaylistId'],
+                unique: true
+            },
+            {
+                fields: ['filename', 'type'],
                 unique: true
             }
         ]

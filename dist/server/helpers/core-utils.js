@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.execPromise = exports.execPromise2 = exports.getPublicKey = exports.createPrivateKey = exports.randomBytesPromise = exports.promisify2 = exports.promisify1 = exports.promisify0 = exports.mapToJSON = exports.sha1 = exports.sha256 = exports.peertubeTruncate = exports.execShell = exports.buildPath = exports.sanitizeHost = exports.sanitizeUrl = exports.pageToStartAndCount = exports.escapeHTML = exports.root = exports.objectConverter = exports.getAppNumber = exports.isProdInstance = exports.isTestInstance = exports.parseBytes = exports.parseDurationToMs = void 0;
+const child_process_1 = require("child_process");
 const crypto_1 = require("crypto");
+const lodash_1 = require("lodash");
 const path_1 = require("path");
 const pem = require("pem");
 const url_1 = require("url");
-const lodash_1 = require("lodash");
-const child_process_1 = require("child_process");
 const objectConverter = (oldObject, keyConverter, valueConverter) => {
     if (!oldObject || typeof oldObject !== 'object') {
         return valueConverter(oldObject);

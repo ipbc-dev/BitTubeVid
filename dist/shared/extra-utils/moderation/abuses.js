@@ -5,17 +5,19 @@ const requests_1 = require("../requests/requests");
 const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 function reportAbuse(options) {
     const path = '/api/v1/abuses';
-    const video = options.videoId ? {
-        id: options.videoId,
-        startAt: options.startAt,
-        endAt: options.endAt
-    } : undefined;
-    const comment = options.commentId ? {
-        id: options.commentId
-    } : undefined;
-    const account = options.accountId ? {
-        id: options.accountId
-    } : undefined;
+    const video = options.videoId
+        ? {
+            id: options.videoId,
+            startAt: options.startAt,
+            endAt: options.endAt
+        }
+        : undefined;
+    const comment = options.commentId
+        ? { id: options.commentId }
+        : undefined;
+    const account = options.accountId
+        ? { id: options.accountId }
+        : undefined;
     const body = {
         account,
         video,

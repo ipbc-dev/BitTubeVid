@@ -116,6 +116,14 @@ describe('Test videos history', function () {
             expect(res.body.data).to.have.lengthOf(0);
         });
     });
+    it('Should be able to search through videos in my history', function () {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            const res = yield video_history_1.listMyVideosHistory(server.url, server.accessToken, '2');
+            expect(res.body.total).to.equal(1);
+            const videos = res.body.data;
+            expect(videos[0].name).to.equal('video 2');
+        });
+    });
     it('Should clear my history', function () {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             yield video_history_1.removeMyVideosHistory(server.url, server.accessToken, video3WatchedDate.toISOString());

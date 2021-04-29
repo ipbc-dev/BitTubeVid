@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.debugRouter = void 0;
+const inbox_manager_1 = require("@server/lib/activitypub/inbox-manager");
 const express = require("express");
 const middlewares_1 = require("../../../middlewares");
 const debugRouter = express.Router();
@@ -8,6 +9,7 @@ exports.debugRouter = debugRouter;
 debugRouter.get('/debug', middlewares_1.authenticate, middlewares_1.ensureUserHasRight(4), getDebug);
 function getDebug(req, res) {
     return res.json({
-        ip: req.ip
-    }).end();
+        ip: req.ip,
+        activityPubMessagesWaiting: inbox_manager_1.InboxManager.Instance.getActivityPubMessagesWaiting()
+    });
 }

@@ -1,3 +1,4 @@
+/*! stream-with-known-length-to-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 var once = require('once')
 
 module.exports = function getBuffer (stream, length, cb) {

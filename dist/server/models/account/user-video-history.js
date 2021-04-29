@@ -8,10 +8,11 @@ const video_1 = require("../video/video");
 const user_1 = require("./user");
 const sequelize_1 = require("sequelize");
 let UserVideoHistoryModel = UserVideoHistoryModel_1 = class UserVideoHistoryModel extends sequelize_typescript_1.Model {
-    static listForApi(user, start, count) {
+    static listForApi(user, start, count, search) {
         return video_1.VideoModel.listForApi({
             start,
             count,
+            search,
             sort: '-"userVideoHistory"."updatedAt"',
             nsfw: null,
             includeLocalVideos: true,

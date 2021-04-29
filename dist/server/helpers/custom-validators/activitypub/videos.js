@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isAPVideoFileMetadataObject = exports.isRemoteVideoUrlValid = exports.sanitizeAndCheckVideoTorrentObject = exports.isRemoteStringIdentifierValid = exports.sanitizeAndCheckVideoTorrentUpdateActivity = void 0;
+exports.isAPVideoTrackerUrlObject = exports.isAPVideoFileUrlMetadataObject = exports.isRemoteVideoUrlValid = exports.sanitizeAndCheckVideoTorrentObject = exports.isRemoteStringIdentifierValid = exports.sanitizeAndCheckVideoTorrentUpdateActivity = void 0;
 const validator_1 = require("validator");
+const logger_1 = require("@server/helpers/logger");
 const constants_1 = require("../../../initializers/constants");
 const core_utils_1 = require("../../core-utils");
 const misc_1 = require("../misc");
 const videos_1 = require("../videos");
 const misc_2 = require("./misc");
-const logger_1 = require("@server/helpers/logger");
 function sanitizeAndCheckVideoTorrentUpdateActivity(activity) {
     return misc_2.isBaseActivityValid(activity, 'Update') &&
         sanitizeAndCheckVideoTorrentObject(activity.object);
@@ -93,16 +93,23 @@ function isRemoteVideoUrlValid(url) {
         ((url.mediaType || url.mimeType) === 'application/x-mpegURL' &&
             misc_2.isActivityPubUrlValid(url.href) &&
             misc_1.isArray(url.tag)) ||
-        isAPVideoFileMetadataObject(url);
+        isAPVideoTrackerUrlObject(url) ||
+        isAPVideoFileUrlMetadataObject(url);
 }
 exports.isRemoteVideoUrlValid = isRemoteVideoUrlValid;
-function isAPVideoFileMetadataObject(url) {
+function isAPVideoFileUrlMetadataObject(url) {
     return url &&
         url.type === 'Link' &&
         url.mediaType === 'application/json' &&
         misc_1.isArray(url.rel) && url.rel.includes('metadata');
 }
-exports.isAPVideoFileMetadataObject = isAPVideoFileMetadataObject;
+exports.isAPVideoFileUrlMetadataObject = isAPVideoFileUrlMetadataObject;
+function isAPVideoTrackerUrlObject(url) {
+    return misc_1.isArray(url.rel) &&
+        url.rel.includes('tracker') &&
+        misc_2.isActivityPubUrlValid(url.href);
+}
+exports.isAPVideoTrackerUrlObject = isAPVideoTrackerUrlObject;
 function setValidRemoteTags(video) {
     if (Array.isArray(video.tag) === false)
         return false;

@@ -8,16 +8,19 @@ const video_1 = require("../server/models/video/video");
 const database_1 = require("../server/initializers/database");
 const job_queue_1 = require("../server/lib/job-queue");
 const ffprobe_utils_1 = require("@server/helpers/ffprobe-utils");
+const config_1 = require("@server/initializers/config");
+const misc_1 = require("@server/helpers/custom-validators/misc");
 program
     .option('-v, --video [videoUUID]', 'Video UUID')
     .option('-r, --resolution [resolution]', 'Video resolution (integer)')
     .option('--generate-hls', 'Generate HLS playlist')
     .parse(process.argv);
-if (program['video'] === undefined) {
+const options = program.opts();
+if (options.video === undefined) {
     console.error('All parameters are mandatory.');
     process.exit(-1);
 }
-if (program.resolution !== undefined && Number.isNaN(+program.resolution)) {
+if (options.resolution !== undefined && Number.isNaN(+options.resolution)) {
     console.error('The resolution must be an integer (example: 1080).');
     process.exit(-1);
 }
@@ -30,39 +33,50 @@ run()
 function run() {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         yield database_1.initDatabaseModels(true);
-        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(program['video']);
+        if (misc_1.isUUIDValid(options.video) === false) {
+            console.error('%s is not a valid video UUID.', options.video);
+            return;
+        }
+        const video = yield video_1.VideoModel.loadAndPopulateAccountAndServerAndTags(options.video);
         if (!video)
             throw new Error('Video not found.');
         const dataInput = [];
         const { videoFileResolution } = yield video.getMaxQualityResolution();
-        if (program.generateHls) {
-            const resolutionsEnabled = program.resolution
-                ? [program.resolution]
+        if (options.generateHls || config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED === false) {
+            const resolutionsEnabled = options.resolution
+                ? [options.resolution]
                 : ffprobe_utils_1.computeResolutionsToTranscode(videoFileResolution, 'vod').concat([videoFileResolution]);
             for (const resolution of resolutionsEnabled) {
                 dataInput.push({
-                    type: 'hls',
+                    type: 'new-resolution-to-hls',
                     videoUUID: video.uuid,
                     resolution,
                     isPortraitMode: false,
-                    copyCodecs: false
+                    copyCodecs: false,
+                    isMaxQuality: false
                 });
             }
         }
-        else if (program.resolution !== undefined) {
-            dataInput.push({
-                type: 'new-resolution',
-                videoUUID: video.uuid,
-                isNewVideo: false,
-                resolution: program.resolution
-            });
-        }
         else {
-            dataInput.push({
-                type: 'optimize',
-                videoUUID: video.uuid,
-                isNewVideo: false
-            });
+            if (options.resolution !== undefined) {
+                dataInput.push({
+                    type: 'new-resolution-to-webtorrent',
+                    videoUUID: video.uuid,
+                    isNewVideo: false,
+                    resolution: options.resolution
+                });
+            }
+            else {
+                if (video.VideoFiles.length === 0) {
+                    console.error('Cannot regenerate webtorrent files with a HLS only video.');
+                    return;
+                }
+                dataInput.push({
+                    type: 'optimize-to-webtorrent',
+                    videoUUID: video.uuid,
+                    isNewVideo: false
+                });
+            }
         }
         yield job_queue_1.JobQueue.Instance.init();
         for (const d of dataInput) {

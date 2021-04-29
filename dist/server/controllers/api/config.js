@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getRegisteredThemes = exports.getRegisteredPlugins = exports.getEnabledResolutions = exports.configRouter = void 0;
+exports.getRegisteredThemes = exports.getRegisteredPlugins = exports.configRouter = void 0;
 const tslib_1 = require("tslib");
 const hooks_1 = require("@server/lib/plugins/hooks");
 const express = require("express");
@@ -11,6 +11,7 @@ const audit_logger_1 = require("../../helpers/audit-logger");
 const core_utils_1 = require("../../helpers/core-utils");
 const signup_1 = require("../../helpers/signup");
 const utils_1 = require("../../helpers/utils");
+const video_transcoding_1 = require("../../lib/video-transcoding");
 const config_1 = require("../../initializers/config");
 const constants_1 = require("../../initializers/constants");
 const client_html_1 = require("../../lib/client-html");
@@ -18,6 +19,7 @@ const plugin_manager_1 = require("../../lib/plugins/plugin-manager");
 const theme_utils_1 = require("../../lib/plugins/theme-utils");
 const middlewares_1 = require("../../middlewares");
 const config_2 = require("../../middlewares/validators/config");
+const video_transcoding_profiles_1 = require("@server/lib/video-transcoding-profiles");
 const configRouter = express.Router();
 exports.configRouter = configRouter;
 const auditLogger = audit_logger_1.auditLoggerFactory('config');
@@ -40,9 +42,9 @@ function getConfig(req, res) {
             instance: {
                 name: config_1.CONFIG.INSTANCE.NAME,
                 shortDescription: config_1.CONFIG.INSTANCE.SHORT_DESCRIPTION,
-                defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
                 isNSFW: config_1.CONFIG.INSTANCE.IS_NSFW,
                 defaultNSFWPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
+                defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
                 customizations: {
                     javascript: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT,
                     css: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS
@@ -89,7 +91,9 @@ function getConfig(req, res) {
                 webtorrent: {
                     enabled: config_1.CONFIG.TRANSCODING.WEBTORRENT.ENABLED
                 },
-                enabledResolutions: getEnabledResolutions('vod')
+                enabledResolutions: video_transcoding_1.getEnabledResolutions('vod'),
+                profile: config_1.CONFIG.TRANSCODING.PROFILE,
+                availableProfiles: video_transcoding_profiles_1.VideoTranscodingProfilesManager.Instance.getAvailableProfiles('vod')
             },
             live: {
                 enabled: config_1.CONFIG.LIVE.ENABLED,
@@ -99,7 +103,9 @@ function getConfig(req, res) {
                 maxUserLives: config_1.CONFIG.LIVE.MAX_USER_LIVES,
                 transcoding: {
                     enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
-                    enabledResolutions: getEnabledResolutions('live')
+                    enabledResolutions: video_transcoding_1.getEnabledResolutions('live'),
+                    profile: config_1.CONFIG.LIVE.TRANSCODING.PROFILE,
+                    availableProfiles: video_transcoding_profiles_1.VideoTranscodingProfilesManager.Instance.getAvailableProfiles('live')
                 },
                 rtmp: {
                     port: config_1.CONFIG.LIVE.RTMP.PORT
@@ -155,7 +161,11 @@ function getConfig(req, res) {
             },
             trending: {
                 videos: {
-                    intervalDays: config_1.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS
+                    intervalDays: config_1.CONFIG.TRENDING.VIDEOS.INTERVAL_DAYS,
+                    algorithms: {
+                        enabled: config_1.CONFIG.TRENDING.VIDEOS.ALGORITHMS.ENABLED,
+                        default: config_1.CONFIG.TRENDING.VIDEOS.ALGORITHMS.DEFAULT
+                    }
                 }
             },
             tracker: {
@@ -238,15 +248,6 @@ function getRegisteredThemes() {
     }));
 }
 exports.getRegisteredThemes = getRegisteredThemes;
-function getEnabledResolutions(type) {
-    const transcoding = type === 'vod'
-        ? config_1.CONFIG.TRANSCODING
-        : config_1.CONFIG.LIVE.TRANSCODING;
-    return Object.keys(transcoding.RESOLUTIONS)
-        .filter(key => transcoding.ENABLED && transcoding.RESOLUTIONS[key] === true)
-        .map(r => parseInt(r, 10));
-}
-exports.getEnabledResolutions = getEnabledResolutions;
 function getRegisteredPlugins() {
     return plugin_manager_1.PluginManager.Instance.getRegisteredPlugins()
         .map(p => ({
@@ -304,8 +305,8 @@ function customConfig() {
             languages: config_1.CONFIG.INSTANCE.LANGUAGES,
             categories: config_1.CONFIG.INSTANCE.CATEGORIES,
             isNSFW: config_1.CONFIG.INSTANCE.IS_NSFW,
-            defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
             defaultNSFWPolicy: config_1.CONFIG.INSTANCE.DEFAULT_NSFW_POLICY,
+            defaultClientRoute: config_1.CONFIG.INSTANCE.DEFAULT_CLIENT_ROUTE,
             customizations: {
                 css: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.CSS,
                 javascript: config_1.CONFIG.INSTANCE.CUSTOMIZATIONS.JAVASCRIPT
@@ -326,6 +327,9 @@ function customConfig() {
             },
             captions: {
                 size: config_1.CONFIG.CACHE.VIDEO_CAPTIONS.SIZE
+            },
+            torrents: {
+                size: config_1.CONFIG.CACHE.TORRENTS.SIZE
             }
         },
         signup: {
@@ -348,6 +352,8 @@ function customConfig() {
             allowAdditionalExtensions: config_1.CONFIG.TRANSCODING.ALLOW_ADDITIONAL_EXTENSIONS,
             allowAudioFiles: config_1.CONFIG.TRANSCODING.ALLOW_AUDIO_FILES,
             threads: config_1.CONFIG.TRANSCODING.THREADS,
+            concurrency: config_1.CONFIG.TRANSCODING.CONCURRENCY,
+            profile: config_1.CONFIG.TRANSCODING.PROFILE,
             resolutions: {
                 '0p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['0p'],
                 '240p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['240p'],
@@ -355,6 +361,7 @@ function customConfig() {
                 '480p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['480p'],
                 '720p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['720p'],
                 '1080p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['1080p'],
+                '1440p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['1440p'],
                 '2160p': config_1.CONFIG.TRANSCODING.RESOLUTIONS['2160p']
             },
             webtorrent: {
@@ -373,23 +380,34 @@ function customConfig() {
             transcoding: {
                 enabled: config_1.CONFIG.LIVE.TRANSCODING.ENABLED,
                 threads: config_1.CONFIG.LIVE.TRANSCODING.THREADS,
+                profile: config_1.CONFIG.LIVE.TRANSCODING.PROFILE,
                 resolutions: {
                     '240p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['240p'],
                     '360p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['360p'],
                     '480p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['480p'],
                     '720p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['720p'],
                     '1080p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['1080p'],
+                    '1440p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['1440p'],
                     '2160p': config_1.CONFIG.LIVE.TRANSCODING.RESOLUTIONS['2160p']
                 }
             }
         },
         import: {
             videos: {
+                concurrency: config_1.CONFIG.IMPORT.VIDEOS.CONCURRENCY,
                 http: {
                     enabled: config_1.CONFIG.IMPORT.VIDEOS.HTTP.ENABLED
                 },
                 torrent: {
                     enabled: config_1.CONFIG.IMPORT.VIDEOS.TORRENT.ENABLED
+                }
+            }
+        },
+        trending: {
+            videos: {
+                algorithms: {
+                    enabled: config_1.CONFIG.TRENDING.VIDEOS.ALGORITHMS.ENABLED,
+                    default: config_1.CONFIG.TRENDING.VIDEOS.ALGORITHMS.DEFAULT
                 }
             }
         },

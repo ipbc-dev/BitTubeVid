@@ -70,6 +70,7 @@ describe('Test moderation notifications', function () {
                 const video = resVideo.body.video;
                 const resComment = yield extra_utils_1.addVideoCommentThread(servers[0].url, userAccessToken, video.id, 'comment abuse ' + uuid_1.v4());
                 const comment = resComment.body.comment;
+                yield jobs_1.waitJobs(servers);
                 yield extra_utils_1.reportAbuse({ url: servers[0].url, token: servers[0].accessToken, commentId: comment.id, reason: 'super reason' });
                 yield jobs_1.waitJobs(servers);
                 yield user_notifications_1.checkNewCommentAbuseForModerators(baseParams, video.uuid, name, 'presence');
@@ -480,7 +481,7 @@ describe('Test moderation notifications', function () {
         });
         it('Should not send a notification to moderators on new video without auto-blacklist', function () {
             return tslib_1.__awaiter(this, void 0, void 0, function* () {
-                this.timeout(40000);
+                this.timeout(60000);
                 const name = 'video without auto-blacklist ' + uuid_1.v4();
                 const resVideo = yield index_1.uploadVideo(servers[0].url, servers[0].accessToken, { name });
                 const uuid = resVideo.body.video.uuid;

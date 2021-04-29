@@ -1,6 +1,6 @@
 {
   "name": "mkdirp-classic",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Mirror of mkdirp 0.5.2",
   "main": "index.js",
   "dependencies": {},

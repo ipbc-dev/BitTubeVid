@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkNodeVersion = exports.checkMissedConfig = exports.checkFFmpegEncoders = exports.checkFFmpeg = void 0;
+exports.checkNodeVersion = exports.checkMissedConfig = exports.checkFFmpeg = void 0;
 const tslib_1 = require("tslib");
 const config = require("config");
 const core_utils_1 = require("../helpers/core-utils");
@@ -17,14 +17,15 @@ function checkMissedConfig() {
         'log.level',
         'user.video_quota', 'user.video_quota_daily',
         'csp.enabled', 'csp.report_only', 'csp.report_uri',
-        'cache.previews.size', 'admin.email', 'contact_form.enabled',
+        'cache.previews.size', 'cache.captions.size', 'cache.torrents.size', 'admin.email', 'contact_form.enabled',
         'signup.enabled', 'signup.limit', 'signup.requires_email_verification',
         'signup.filters.cidr.whitelist', 'signup.filters.cidr.blacklist',
         'redundancy.videos.strategies', 'redundancy.videos.check_interval',
         'transcoding.enabled', 'transcoding.threads', 'transcoding.allow_additional_extensions', 'transcoding.hls.enabled',
+        'transcoding.profile', 'transcoding.concurrency',
         'transcoding.resolutions.0p', 'transcoding.resolutions.240p', 'transcoding.resolutions.360p', 'transcoding.resolutions.480p',
-        'transcoding.resolutions.720p', 'transcoding.resolutions.1080p', 'transcoding.resolutions.2160p',
-        'import.videos.http.enabled', 'import.videos.torrent.enabled', 'auto_blacklist.videos.of_users.enabled',
+        'transcoding.resolutions.720p', 'transcoding.resolutions.1080p', 'transcoding.resolutions.1440p', 'transcoding.resolutions.2160p',
+        'import.videos.http.enabled', 'import.videos.torrent.enabled', 'import.videos.concurrency', 'auto_blacklist.videos.of_users.enabled',
         'trending.videos.interval_days',
         'instance.name', 'instance.short_description', 'instance.description', 'instance.terms', 'instance.default_client_route',
         'instance.is_nsfw', 'instance.default_nsfw_policy', 'instance.robots', 'instance.securitytxt',
@@ -35,13 +36,14 @@ function checkMissedConfig() {
         'rates_limit.login.window', 'rates_limit.login.max', 'rates_limit.ask_send_email.window', 'rates_limit.ask_send_email.max',
         'theme.default',
         'remote_redundancy.videos.accept_from',
-        'federation.videos.federate_unlisted',
+        'federation.videos.federate_unlisted', 'federation.videos.cleanup_remote_interactions',
         'search.remote_uri.users', 'search.remote_uri.anonymous', 'search.search_index.enabled', 'search.search_index.url',
         'search.search_index.disable_local_search', 'search.search_index.is_default_search',
         'live.enabled', 'live.allow_replay', 'live.max_duration', 'live.max_user_lives', 'live.max_instance_lives',
-        'live.transcoding.enabled', 'live.transcoding.threads',
+        'live.transcoding.enabled', 'live.transcoding.threads', 'live.transcoding.profile',
         'live.transcoding.resolutions.240p', 'live.transcoding.resolutions.360p', 'live.transcoding.resolutions.480p',
-        'live.transcoding.resolutions.720p', 'live.transcoding.resolutions.1080p', 'live.transcoding.resolutions.2160p'
+        'live.transcoding.resolutions.720p', 'live.transcoding.resolutions.1080p', 'live.transcoding.resolutions.1440p',
+        'live.transcoding.resolutions.2160p'
     ];
     const requiredAlternatives = [
         [
@@ -86,42 +88,16 @@ function checkFFmpeg(CONFIG) {
                 throw new Error('Unavailable encode codec ' + codec + ' in FFmpeg');
             }
         }
-        return checkFFmpegEncoders();
     });
 }
 exports.checkFFmpeg = checkFFmpeg;
-let supportedEncoders;
-function checkFFmpegEncoders() {
-    return tslib_1.__awaiter(this, void 0, void 0, function* () {
-        if (supportedEncoders !== undefined) {
-            return supportedEncoders;
-        }
-        const Ffmpeg = require('fluent-ffmpeg');
-        const getAvailableEncodersPromise = core_utils_1.promisify0(Ffmpeg.getAvailableEncoders);
-        const availableEncoders = yield getAvailableEncodersPromise();
-        const searchEncoders = [
-            'aac',
-            'libfdk_aac',
-            'libx264',
-            'h264_qsv'
-        ];
-        supportedEncoders = new Map();
-        for (const searchEncoder of searchEncoders) {
-            supportedEncoders.set(searchEncoder, availableEncoders[searchEncoder] !== undefined);
-        }
-        supportedEncoders.set('h264_qsv', availableEncoders['h264_qsv']);
-        logger_1.logger.error('ICEICE available supportedEncoders are -> ', supportedEncoders);
-        return supportedEncoders;
-    });
-}
-exports.checkFFmpegEncoders = checkFFmpegEncoders;
 function checkNodeVersion() {
     const v = process.version;
     const majorString = v.split('.')[0].replace('v', '');
     const major = parseInt(majorString, 10);
     logger_1.logger.debug('Checking NodeJS version %s.', v);
-    if (major < 10) {
-        logger_1.logger.warn('Your NodeJS version %s is deprecated. Please use Node 10.', v);
+    if (major <= 10) {
+        logger_1.logger.warn('Your NodeJS version %s is deprecated. Please upgrade.', v);
     }
 }
 exports.checkNodeVersion = checkNodeVersion;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testFfmpegStreamError = exports.sendRTMPStream = exports.waitFfmpegUntilError = exports.waitUntilLiveEnded = exports.sendRTMPStreamInVideo = exports.waitUntilLiveWaiting = exports.stopFfmpeg = exports.waitUntilLiveSegmentGeneration = exports.checkLiveCleanup = exports.runAndTestFfmpegStreamError = exports.createLive = exports.updateLive = exports.waitUntilLivePublished = exports.getPlaylistsCount = exports.getLive = void 0;
+exports.testFfmpegStreamError = exports.sendRTMPStream = exports.waitFfmpegUntilError = exports.waitUntilLiveEnded = exports.sendRTMPStreamInVideo = exports.waitUntilLiveWaiting = exports.stopFfmpeg = exports.waitUntilLiveSegmentGeneration = exports.checkLiveCleanup = exports.runAndTestFfmpegStreamError = exports.createLive = exports.updateLive = exports.waitUntilLivePublished = exports.waitUntilLiveSaved = exports.getPlaylistsCount = exports.getLive = void 0;
 const tslib_1 = require("tslib");
 const chai_1 = require("chai");
 const ffmpeg = require("fluent-ffmpeg");
@@ -154,6 +154,17 @@ function waitUntilLiveState(url, token, videoId, state) {
         } while (video.state.id !== state);
     });
 }
+function waitUntilLiveSaved(url, token, videoId) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        let video;
+        do {
+            const res = yield videos_1.getVideoWithToken(url, token, videoId);
+            video = res.body;
+            yield miscs_1.wait(500);
+        } while (video.isLive === true && video.state.id !== 1);
+    });
+}
+exports.waitUntilLiveSaved = waitUntilLiveSaved;
 function checkLiveCleanup(server, videoUUID, resolutions = []) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const basePath = miscs_1.buildServerDirectory(server, 'streaming-playlists');

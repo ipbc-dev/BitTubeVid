@@ -1,28 +1,56 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.transcode = exports.generateImageFromVideoFile = exports.processGIF = exports.convertWebPToJPG = exports.buildStreamSuffix = exports.getLiveMuxingCommand = exports.getLiveTranscodingCommand = void 0;
+exports.buildx264VODCommand = exports.resetSupportedEncoders = exports.runCommand = exports.transcode = exports.generateImageFromVideoFile = exports.processGIF = exports.convertWebPToJPG = exports.buildStreamSuffix = exports.getLiveMuxingCommand = exports.getLiveTranscodingCommand = void 0;
 const tslib_1 = require("tslib");
 const ffmpeg = require("fluent-ffmpeg");
 const fs_extra_1 = require("fs-extra");
 const path_1 = require("path");
 const constants_1 = require("@server/initializers/constants");
-const checker_before_init_1 = require("../initializers/checker-before-init");
 const config_1 = require("../initializers/config");
+const core_utils_1 = require("./core-utils");
 const ffprobe_utils_1 = require("./ffprobe-utils");
 const image_utils_1 = require("./image-utils");
 const logger_1 = require("./logger");
+let supportedEncoders;
+function checkFFmpegEncoders(peertubeAvailableEncoders) {
+    return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        if (supportedEncoders !== undefined) {
+            return supportedEncoders;
+        }
+        const getAvailableEncodersPromise = core_utils_1.promisify0(ffmpeg.getAvailableEncoders);
+        const availableFFmpegEncoders = yield getAvailableEncodersPromise();
+        const searchEncoders = new Set();
+        for (const type of ['live', 'vod']) {
+            for (const streamType of ['audio', 'video']) {
+                for (const encoder of peertubeAvailableEncoders.encodersToTry[type][streamType]) {
+                    searchEncoders.add(encoder);
+                }
+            }
+        }
+        supportedEncoders = new Map();
+        for (const searchEncoder of searchEncoders) {
+            supportedEncoders.set(searchEncoder, availableFFmpegEncoders[searchEncoder] !== undefined);
+        }
+        logger_1.logger.info('Built supported ffmpeg encoders.', { supportedEncoders, searchEncoders });
+        return supportedEncoders;
+    });
+}
+function resetSupportedEncoders() {
+    supportedEncoders = undefined;
+}
+exports.resetSupportedEncoders = resetSupportedEncoders;
 function convertWebPToJPG(path, destination) {
-    const command = ffmpeg(path)
+    const command = ffmpeg(path, { niceness: constants_1.FFMPEG_NICE.THUMBNAIL })
         .output(destination);
-    return runCommand(command);
+    return runCommand({ command, silent: true });
 }
 exports.convertWebPToJPG = convertWebPToJPG;
 function processGIF(path, destination, newSize) {
-    const command = ffmpeg(path)
+    const command = ffmpeg(path, { niceness: constants_1.FFMPEG_NICE.THUMBNAIL })
         .fps(20)
         .size(`${newSize.width}x${newSize.height}`)
         .output(destination);
-    return runCommand(command);
+    return runCommand({ command });
 }
 exports.processGIF = processGIF;
 function generateImageFromVideoFile(fromPath, folder, imageName, size) {
@@ -70,7 +98,7 @@ function transcode(options) {
         let command = getFFmpeg(options.inputPath, 'vod')
             .output(options.outputPath);
         command = yield builders[options.type](command, options);
-        yield runCommand(command);
+        yield runCommand({ command, job: options.job });
         yield fixHLSPlaylistIfNeeded(options);
     });
 }
@@ -112,24 +140,26 @@ function getLiveTranscodingCommand(options) {
                 videoType: 'live'
             };
             {
-                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType: 'VIDEO' }));
+                const streamType = 'video';
+                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType }));
                 if (!builderResult) {
                     throw new Error('No available live video encoder found');
                 }
                 command.outputOption(`-map [vout${resolution}]`);
                 addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
-                logger_1.logger.error('Apply ffmpeg live video params from %s.', builderResult.encoder, builderResult);
+                logger_1.logger.debug('Apply ffmpeg live video params from %s using %s profile.', builderResult.encoder, profile, builderResult);
                 command.outputOption(`${buildStreamSuffix('-c:v', i)} ${builderResult.encoder}`);
                 command.addOutputOptions(builderResult.result.outputOptions);
             }
             {
-                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType: 'AUDIO' }));
+                const streamType = 'audio';
+                const builderResult = yield getEncoderBuilderResult(Object.assign({}, baseEncoderBuilderParams, { streamType }));
                 if (!builderResult) {
                     throw new Error('No available live audio encoder found');
                 }
                 command.outputOption('-map a:0');
                 addDefaultEncoderParams({ command, encoder: builderResult.encoder, fps: resolutionFPS, streamNum: i });
-                logger_1.logger.error('Apply ffmpeg live audio params from %s.', builderResult.encoder, builderResult);
+                logger_1.logger.debug('Apply ffmpeg live audio params from %s using %s profile.', builderResult.encoder, profile, builderResult);
                 command.outputOption(`${buildStreamSuffix('-c:a', i)} ${builderResult.encoder}`);
                 command.addOutputOptions(builderResult.result.outputOptions);
             }
@@ -201,6 +231,7 @@ function buildx264VODCommand(command, options) {
         return command;
     });
 }
+exports.buildx264VODCommand = buildx264VODCommand;
 function buildAudioMergeCommand(command, options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         command = command.loop(undefined);
@@ -274,15 +305,26 @@ function getHLSVideoPath(options) {
 function getEncoderBuilderResult(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
         const { availableEncoders, input, profile, resolution, streamType, fps, streamNum, videoType } = options;
-        const encodersToTry = constants_1.VIDEO_TRANSCODING_ENCODERS[streamType];
+        const encodersToTry = availableEncoders.encodersToTry[videoType][streamType];
+        const encoders = availableEncoders.available[videoType];
         for (const encoder of encodersToTry) {
-            if (!(yield checker_before_init_1.checkFFmpegEncoders()).get(encoder) || !availableEncoders[videoType][encoder])
+            if (!(yield checkFFmpegEncoders(availableEncoders)).get(encoder)) {
+                logger_1.logger.debug('Encoder %s not available in ffmpeg, skipping.', encoder);
                 continue;
-            const builderProfiles = availableEncoders[videoType][encoder];
+            }
+            if (!encoders[encoder]) {
+                logger_1.logger.debug('Encoder %s not available in peertube encoders, skipping.', encoder);
+                continue;
+            }
+            const builderProfiles = encoders[encoder];
             let builder = builderProfiles[profile];
             if (!builder) {
                 logger_1.logger.debug('Profile %s for encoder %s not available. Fallback to default.', profile, encoder);
                 builder = builderProfiles.default;
+                if (!builder) {
+                    logger_1.logger.debug('Default profile for encoder %s not available. Try next available encoder.', encoder);
+                    continue;
+                }
             }
             const result = yield builder({ input, resolution: resolution, fps, streamNum });
             return {
@@ -302,10 +344,10 @@ function presetVideo(command, input, transcodeOptions, fps) {
             .outputOption('-movflags faststart');
         addDefaultEncoderGlobalParams({ command });
         const parsedAudio = yield ffprobe_utils_1.getAudioStream(input);
-        let streamsToProcess = ['AUDIO', 'VIDEO'];
+        let streamsToProcess = ['audio', 'video'];
         if (!parsedAudio.audioStream) {
             localCommand = localCommand.noAudio();
-            streamsToProcess = ['VIDEO'];
+            streamsToProcess = ['video'];
         }
         for (const streamType of streamsToProcess) {
             const { profile, resolution, availableEncoders } = transcodeOptions;
@@ -321,8 +363,8 @@ function presetVideo(command, input, transcodeOptions, fps) {
             if (!builderResult) {
                 throw new Error('No available encoder found for stream ' + streamType);
             }
-            logger_1.logger.debug('Apply ffmpeg params from %s.', builderResult.encoder, builderResult);
-            if (streamType === 'VIDEO') {
+            logger_1.logger.debug('Apply ffmpeg params from %s for %s stream of input %s using %s profile.', builderResult.encoder, streamType, input, profile, builderResult);
+            if (streamType === 'video') {
                 if (input.includes('.mp4')) {
                     command.inputOption(['-hwaccel qsv', '-c:v h264_qsv']);
                     localCommand.videoCodec('h264_qsv');
@@ -331,7 +373,7 @@ function presetVideo(command, input, transcodeOptions, fps) {
                     localCommand.videoCodec(builderResult.encoder);
                 }
             }
-            else if (streamType === 'AUDIO') {
+            else if (streamType === 'audio') {
                 localCommand.audioCodec(builderResult.encoder);
             }
             command.addOutputOptions(builderResult.result.outputOptions);
@@ -353,7 +395,10 @@ function presetOnlyAudio(command) {
         .noVideo();
 }
 function getFFmpeg(input, type) {
-    const command = ffmpeg(input, { niceness: constants_1.FFMPEG_NICE.TRANSCODING, cwd: config_1.CONFIG.STORAGE.TMP_DIR });
+    const command = ffmpeg(input, {
+        niceness: type === 'live' ? constants_1.FFMPEG_NICE.LIVE : constants_1.FFMPEG_NICE.VOD,
+        cwd: config_1.CONFIG.STORAGE.TMP_DIR
+    });
     const threads = type === 'live'
         ? config_1.CONFIG.LIVE.TRANSCODING.THREADS
         : config_1.CONFIG.TRANSCODING.THREADS;
@@ -362,21 +407,29 @@ function getFFmpeg(input, type) {
     }
     return command;
 }
-function runCommand(command, onEnd) {
+function runCommand(options) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const { command, silent = false, job } = options;
         return new Promise((res, rej) => {
             command.on('error', (err, stdout, stderr) => {
-                if (onEnd)
-                    onEnd();
-                logger_1.logger.error('Error in transcoding job.', { stdout, stderr });
+                if (silent !== true)
+                    logger_1.logger.error('Error in ffmpeg.', { stdout, stderr });
                 rej(err);
             });
-            command.on('end', () => {
-                if (onEnd)
-                    onEnd();
+            command.on('end', (stdout, stderr) => {
+                logger_1.logger.debug('FFmpeg command ended.', { stdout, stderr });
                 res();
             });
+            if (job) {
+                command.on('progress', progress => {
+                    if (!progress.percent)
+                        return;
+                    job.progress(Math.round(progress.percent))
+                        .catch(err => logger_1.logger.warn('Cannot set ffmpeg job progress.', { err }));
+                });
+            }
             command.run();
         });
     });
 }
+exports.runCommand = runCommand;

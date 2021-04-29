@@ -62,19 +62,20 @@ function deleteSettings() {
 }
 exports.deleteSettings = deleteSettings;
 function getRemoteObjectOrDie(program, settings, netrc) {
-    if (!program['url'] || !program['username'] || !program['password']) {
+    const options = program.opts();
+    if (!options.url || !options.username || !options.password) {
         if (settings.remotes.length === 0 || Object.keys(netrc.machines).length === 0) {
-            if (!program['url'])
+            if (!options.url)
                 console.error('--url field is required.');
-            if (!program['username'])
+            if (!options.username)
                 console.error('--username field is required.');
-            if (!program['password'])
+            if (!options.password)
                 console.error('--password field is required.');
             return process.exit(-1);
         }
-        let url = program['url'];
-        let username = program['username'];
-        let password = program['password'];
+        let url = options.url;
+        let username = options.username;
+        let password = options.password;
         if (!url && settings.default !== -1)
             url = settings.remotes[settings.default];
         const machine = netrc.machines[url];
@@ -85,9 +86,9 @@ function getRemoteObjectOrDie(program, settings, netrc) {
         return { url, username, password };
     }
     return {
-        url: program['url'],
-        username: program['username'],
-        password: program['password']
+        url: options.url,
+        username: options.username,
+        password: options.password
     };
 }
 exports.getRemoteObjectOrDie = getRemoteObjectOrDie;
@@ -114,6 +115,7 @@ function buildCommonVideoOptions(command) {
 exports.buildCommonVideoOptions = buildCommonVideoOptions;
 function buildVideoAttributesFromCommander(url, command, defaultAttributes = {}) {
     return tslib_1.__awaiter(this, void 0, void 0, function* () {
+        const options = command.opts();
         const defaultBooleanAttributes = {
             nsfw: false,
             commentsEnabled: true,
@@ -122,8 +124,8 @@ function buildVideoAttributesFromCommander(url, command, defaultAttributes = {})
         };
         const booleanAttributes = {};
         for (const key of Object.keys(defaultBooleanAttributes)) {
-            if (command[key] !== undefined) {
-                booleanAttributes[key] = command[key];
+            if (options[key] !== undefined) {
+                booleanAttributes[key] = options[key];
             }
             else if (defaultAttributes[key] !== undefined) {
                 booleanAttributes[key] = defaultAttributes[key];
@@ -133,18 +135,18 @@ function buildVideoAttributesFromCommander(url, command, defaultAttributes = {})
             }
         }
         const videoAttributes = {
-            name: command['videoName'] || defaultAttributes.name,
-            category: command['category'] || defaultAttributes.category || undefined,
-            licence: command['licence'] || defaultAttributes.licence || undefined,
-            language: command['language'] || defaultAttributes.language || undefined,
-            privacy: command['privacy'] || defaultAttributes.privacy || 1,
-            support: command['support'] || defaultAttributes.support || undefined,
-            description: command['videoDescription'] || defaultAttributes.description || undefined,
-            tags: command['tags'] || defaultAttributes.tags || undefined
+            name: options.videoName || defaultAttributes.name,
+            category: options.category || defaultAttributes.category || undefined,
+            licence: options.licence || defaultAttributes.licence || undefined,
+            language: options.language || defaultAttributes.language || undefined,
+            privacy: options.privacy || defaultAttributes.privacy || 1,
+            support: options.support || defaultAttributes.support || undefined,
+            description: options.videoDescription || defaultAttributes.description || undefined,
+            tags: options.tags || defaultAttributes.tags || undefined
         };
         Object.assign(videoAttributes, booleanAttributes);
-        if (command['channelName']) {
-            const res = yield video_channels_1.getVideoChannel(url, command['channelName']);
+        if (options.channelName) {
+            const res = yield video_channels_1.getVideoChannel(url, options.channelName);
             const videoChannel = res.body;
             Object.assign(videoAttributes, { channelId: videoChannel.id });
             if (!videoAttributes.support && videoChannel.support) {

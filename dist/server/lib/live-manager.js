@@ -5,6 +5,7 @@ const tslib_1 = require("tslib");
 const Bluebird = require("bluebird");
 const chokidar = require("chokidar");
 const fs_extra_1 = require("fs-extra");
+const net_1 = require("net");
 const path_1 = require("path");
 const core_utils_1 = require("@server/helpers/core-utils");
 const ffmpeg_utils_1 = require("@server/helpers/ffmpeg-utils");
@@ -26,7 +27,7 @@ const user_2 = require("./user");
 const video_paths_1 = require("./video-paths");
 const video_transcoding_profiles_1 = require("./video-transcoding-profiles");
 const memoizee = require("memoizee");
-const NodeRtmpServer = require('node-media-server/node_rtmp_server');
+const NodeRtmpSession = require('node-media-server/node_rtmp_session');
 const context = require('node-media-server/node_core_ctx');
 const nodeMediaServerLogger = require('node-media-server/node_core_logger');
 nodeMediaServerLogger.setLogType(0);
@@ -52,6 +53,9 @@ class LiveManager {
         this.isAbleToUploadVideoWithCache = memoizee((userId) => {
             return user_2.isAbleToUploadVideo(userId, 1000);
         }, { maxAge: constants_1.MEMOIZE_TTL.LIVE_ABLE_TO_UPLOAD });
+        this.hasClientSocketsInBadHealthWithCache = memoizee((sessionId) => {
+            return this.hasClientSocketsInBadHealth(sessionId);
+        }, { maxAge: constants_1.MEMOIZE_TTL.LIVE_CHECK_SOCKET_HEALTH });
     }
     init() {
         const events = this.getContext().nodeEvent;
@@ -83,16 +87,24 @@ class LiveManager {
     }
     run() {
         logger_1.logger.info('Running RTMP server on port %d', config.rtmp.port);
-        this.rtmpServer = new NodeRtmpServer(config);
-        this.rtmpServer.tcpServer.on('error', err => {
+        this.rtmpServer = net_1.createServer(socket => {
+            const session = new NodeRtmpSession(config, socket);
+            session.run();
+        });
+        this.rtmpServer.on('error', err => {
             logger_1.logger.error('Cannot run RTMP server.', { err });
         });
-        this.rtmpServer.run();
+        this.rtmpServer.listen(config_1.CONFIG.LIVE.RTMP.PORT);
     }
     stop() {
         logger_1.logger.info('Stopping RTMP server.');
-        this.rtmpServer.stop();
+        this.rtmpServer.close();
         this.rtmpServer = undefined;
+        this.getContext().sessions.forEach((session) => {
+            if (session instanceof NodeRtmpSession) {
+                session.stop();
+            }
+        });
     }
     isRunning() {
         return !!this.rtmpServer;
@@ -201,7 +213,7 @@ class LiveManager {
             return this.runMuxing({
                 sessionId,
                 videoLive,
-                playlist: videoStreamingPlaylist,
+                playlist: Object.assign(videoStreamingPlaylist, { Video: video }),
                 rtmpUrl,
                 fps,
                 allResolutions
@@ -245,8 +257,8 @@ class LiveManager {
                     outPath,
                     resolutions: allResolutions,
                     fps,
-                    availableEncoders: video_transcoding_profiles_1.availableEncoders,
-                    profile: 'default'
+                    availableEncoders: video_transcoding_profiles_1.VideoTranscodingProfilesManager.Instance.getAvailableEncoders(),
+                    profile: config_1.CONFIG.LIVE.TRANSCODING.PROFILE
                 })
                 : ffmpeg_utils_1.getLiveMuxingCommand(rtmpUrl, outPath);
             logger_1.logger.info('Running live muxing/transcoding for %s.', videoUUID);
@@ -260,9 +272,16 @@ class LiveManager {
                 const segmentsToProcess = segmentsToProcessPerPlaylist[playlistId] || [];
                 this.processSegments(outPath, videoUUID, videoLive, segmentsToProcess);
                 segmentsToProcessPerPlaylist[playlistId] = [segmentPath];
+                if (this.hasClientSocketsInBadHealthWithCache(sessionId)) {
+                    logger_1.logger.error('Too much data in client socket stream (ffmpeg is too slow to transcode the video).' +
+                        ' Stopping session of video %s.', videoUUID);
+                    this.stopSessionOf(videoLive.videoId);
+                    return;
+                }
                 if (this.isDurationConstraintValid(startStreamDateTime) !== true) {
                     logger_1.logger.info('Stopping session of %s: max duration exceeded.', videoUUID);
                     this.stopSessionOf(videoLive.videoId);
+                    return;
                 }
                 if (videoLive.saveReplay === true) {
                     fs_extra_1.stat(segmentPath)
@@ -359,7 +378,7 @@ class LiveManager {
                 yield videos_1.federateVideoIfNeeded(fullVideo, false);
             }
             catch (err) {
-                logger_1.logger.error('Cannot save/federate new video state of live streaming.', { err });
+                logger_1.logger.error('Cannot save/federate new video state of live streaming of video id %d.', videoId, { err });
             }
         });
     }
@@ -396,6 +415,24 @@ class LiveManager {
         const now = new Date().getTime();
         const max = streamingStartTime + maxDuration;
         return now <= max;
+    }
+    hasClientSocketsInBadHealth(sessionId) {
+        const rtmpSession = this.getContext().sessions.get(sessionId);
+        if (!rtmpSession) {
+            logger_1.logger.warn('Cannot get session %s to check players socket health.', sessionId);
+            return;
+        }
+        for (const playerSessionId of rtmpSession.players) {
+            const playerSession = this.getContext().sessions.get(playerSessionId);
+            if (!playerSession) {
+                logger_1.logger.error('Cannot get player session %s to check socket health.', playerSession);
+                continue;
+            }
+            if (playerSession.socket.writableLength > constants_1.VIDEO_LIVE.MAX_SOCKET_WAITING_DATA) {
+                return true;
+            }
+        }
+        return false;
     }
     isQuotaConstraintValid(user, live) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {

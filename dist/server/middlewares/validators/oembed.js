@@ -14,7 +14,7 @@ const utils_1 = require("./utils");
 const http_error_codes_1 = require("../../../shared/core-utils/miscs/http-error-codes");
 const startVideoPlaylistsURL = constants_1.WEBSERVER.SCHEME + '://' + path_1.join(constants_1.WEBSERVER.HOST, 'videos', 'watch', 'playlist') + '/';
 const startVideosURL = constants_1.WEBSERVER.SCHEME + '://' + path_1.join(constants_1.WEBSERVER.HOST, 'videos', 'watch') + '/';
-const watchRegex = new RegExp('([^/]+)$');
+const watchRegex = /([^/]+)$/;
 const isURLOptions = {
     require_host: true,
     require_tld: true

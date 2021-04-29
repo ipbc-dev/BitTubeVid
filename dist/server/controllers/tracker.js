@@ -23,7 +23,6 @@ const trackerServer = new TrackerServer({
     http: false,
     udp: false,
     ws: false,
-    dht: false,
     filter: function (infoHash, params, cb) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             if (config_1.CONFIG.TRACKER.ENABLED === false) {
