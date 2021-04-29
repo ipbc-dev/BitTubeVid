@@ -11,7 +11,17 @@ import { SharedVideoCommentModule } from '@app/shared/shared-video-comment'
 import { AdminRoutingModule } from './admin-routing.module'
 import { AdminComponent } from './admin.component'
 import { DialogModule } from 'primeng/dialog'
-import { ConfigComponent, EditCustomConfigComponent } from './config'
+import {
+  ConfigComponent,
+  EditAdvancedConfigurationComponent,
+  EditBasicConfigurationComponent,
+  EditConfigurationService,
+  EditCustomConfigComponent,
+  EditInstanceInformationComponent,
+  EditLiveConfigurationComponent,
+  EditPremiumStorageConfiguration,
+  EditVODTranscodingComponent
+} from './config'
 import { ConfigService } from './config/shared/config.service'
 import { FollowersListComponent, FollowsComponent, VideoRedundanciesListComponent } from './follows'
 import { FollowingListComponent } from './follows/following-list/following-list.component'
@@ -83,7 +93,14 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     DebugComponent,
 
     ConfigComponent,
-    EditCustomConfigComponent
+
+    EditCustomConfigComponent,
+    EditBasicConfigurationComponent,
+    EditVODTranscodingComponent,
+    EditLiveConfigurationComponent,
+    EditPremiumStorageConfiguration,
+    EditAdvancedConfigurationComponent,
+    EditInstanceInformationComponent
   ],
 
   exports: [
@@ -95,7 +112,8 @@ import { UserCreateComponent, UserListComponent, UserPasswordComponent, UsersCom
     LogsService,
     DebugService,
     ConfigService,
-    PluginApiService
+    PluginApiService,
+    EditConfigurationService
   ]
 })
 export class AdminModule { }

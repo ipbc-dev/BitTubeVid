@@ -223,7 +223,7 @@ async function createUser (req: express.Request, res: express.Response) {
         id: account.id
       }
     }
-  }).end()
+  })
 }
 
 async function registerUser (req: express.Request, res: express.Response) {
@@ -309,7 +309,10 @@ async function removeUser (req: express.Request, res: express.Response) {
 
   auditLogger.delete(getAuditIdFromRes(res), new UserAuditView(user.toFormattedJSON()))
 
-  await user.destroy()
+  await sequelizeTypescript.transaction(async t => {
+    // Use a transaction to avoid inconsistencies with hooks (account/channel deletion & federation)
+    await user.destroy({ transaction: t })
+  })
 
   Hooks.runAction('action:api.user.deleted', { user })
 
@@ -329,6 +332,7 @@ async function updateUser (req: express.Request, res: express.Response) {
   if (body.videoQuotaDaily !== undefined) userToUpdate.videoQuotaDaily = body.videoQuotaDaily
   if (body.role !== undefined) userToUpdate.role = body.role
   if (body.adminFlags !== undefined) userToUpdate.adminFlags = body.adminFlags
+  if (body.pluginAuth !== undefined) userToUpdate.pluginAuth = body.pluginAuth
 
   const user = await userToUpdate.save()
 

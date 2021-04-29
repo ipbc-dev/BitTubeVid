@@ -2,10 +2,13 @@ import * as express from 'express'
 import { body, param, query, ValidationChain } from 'express-validator'
 import { isAbleToUploadVideo } from '@server/lib/user'
 import { getServerActor } from '@server/models/application/application'
-import { MVideoFullLight } from '@server/types/models'
+import { ExpressPromiseHandler } from '@server/types/express'
+import { MVideoWithRights } from '@server/types/models'
 import { ServerErrorCode, UserRight, VideoChangeOwnershipStatus, VideoPrivacy } from '../../../../shared'
+import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 import { VideoChangeOwnershipAccept } from '../../../../shared/models/videos/video-change-ownership-accept.model'
 import {
+  exists,
   isBooleanValid,
   isDateValid,
   isFileFieldValid,
@@ -53,13 +56,13 @@ import { AccountModel } from '../../../models/account/account'
 import { VideoModel } from '../../../models/video/video'
 import { authenticatePromiseIfNeeded } from '../../oauth'
 import { areValidationErrors } from '../utils'
-import { HttpStatusCode } from '../../../../shared/core-utils/miscs/http-error-codes'
 
 const videosAddValidator = getCommonVideoEditAttributes().concat([
   body('videofile')
     .custom((value, { req }) => isFileFieldValid(req.files, 'videofile'))
     .withMessage('Should have a file'),
   body('name')
+    .trim()
     .custom(isVideoNameValid)
     .withMessage('Should have a valid name'),
   body('channelId')
@@ -127,6 +130,7 @@ const videosUpdateValidator = getCommonVideoEditAttributes().concat([
   param('id').custom(isIdOrUUIDValid).not().isEmpty().withMessage('Should have a valid id'),
   body('name')
     .optional()
+    .trim()
     .custom(isVideoNameValid).withMessage('Should have a valid name'),
   body('channelId')
     .optional()
@@ -193,17 +197,16 @@ const videosCustomGetValidator = (
       // Controllers does not need to check video rights
       if (fetchType === 'only-immutable-attributes') return next()
 
-      const video = getVideoWithAttributes(res)
-      const videoAll = video as MVideoFullLight
+      const video = getVideoWithAttributes(res) as MVideoWithRights
 
       // Video private or blacklisted
-      if (videoAll.requiresAuth()) {
+      if (video.requiresAuth()) {
         await authenticatePromiseIfNeeded(req, res, authenticateInQuery)
 
         const user = res.locals.oauth ? res.locals.oauth.token.User : null
 
         // Only the owner or a user that have blacklist rights can see the video
-        if (!user || !user.canGetVideo(videoAll)) {
+        if (!user || !user.canGetVideo(video)) {
           return res.status(HttpStatusCode.FORBIDDEN_403)
                     .json({ error: 'Cannot get this private/internal or blacklisted video.' })
         }
@@ -410,7 +413,7 @@ function getCommonVideoEditAttributes () {
       .optional()
       .customSanitizer(toIntOrNull)
       .custom(isScheduleVideoUpdatePrivacyValid).withMessage('Should have correct schedule update privacy')
-  ] as (ValidationChain | express.Handler)[]
+  ] as (ValidationChain | ExpressPromiseHandler)[]
 }
 
 const commonVideosFiltersValidator = [
@@ -444,6 +447,9 @@ const commonVideosFiltersValidator = [
     .optional()
     .customSanitizer(toBooleanOrNull)
     .custom(isBooleanValid).withMessage('Should have a valid skip count boolean'),
+  query('search')
+    .optional()
+    .custom(exists).withMessage('Should have a valid search'),
 
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     logger.debug('Checking commons video filters query', { parameters: req.query })

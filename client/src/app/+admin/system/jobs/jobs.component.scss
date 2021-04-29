@@ -9,7 +9,9 @@
   max-width: 30vw !important;
 }
 
-.job-type {
+.job-type,
+.job-state,
+.job-priority {
   width: 150px !important;
 }
 
@@ -33,6 +35,10 @@
     .peertube-select-container {
       @include peertube-select-container(auto);
     }
+  }
+
+  .button-filter-block {
+    align-self: flex-end;
   }
 }
 

@@ -74,4 +74,16 @@ export class MyAccountSettingsComponent implements OnInit, OnDestroy, AfterViewC
       this.user = this.authService.getUser()
     }, 1000)
   }
+  onAvatarDelete () {
+    this.userService.deleteAvatar()
+      .subscribe(
+        data => {
+          this.notifier.success($localize`Avatar deleted.`)
+
+          this.user.updateAccountAvatar()
+        },
+
+        (err: HttpErrorResponse) => this.notifier.error(err.message)
+      )
+  }
 }

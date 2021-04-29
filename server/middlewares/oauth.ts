@@ -32,6 +32,7 @@ function authenticateSocket (socket: Socket, next: (err?: any) => void) {
   logger.debug('Checking socket access token %s.', accessToken)
 
   if (!accessToken) return next(new Error('No access token provided'))
+  if (typeof accessToken !== 'string') return next(new Error('Access token is invalid'))
 
   getAccessToken(accessToken)
     .then(tokenDB => {
@@ -41,7 +42,7 @@ function authenticateSocket (socket: Socket, next: (err?: any) => void) {
         return next(new Error('Invalid access token.'))
       }
 
-      socket.handshake.query['user'] = tokenDB.User
+      socket.handshake.auth.user = tokenDB.User
 
       return next()
     })
@@ -49,7 +50,7 @@ function authenticateSocket (socket: Socket, next: (err?: any) => void) {
 }
 
 function authenticatePromiseIfNeeded (req: express.Request, res: express.Response, authenticateInQuery = false) {
-  return new Promise(resolve => {
+  return new Promise<void>(resolve => {
     // Already authenticated? (or tried to)
     if (res.locals.oauth?.token.User) return resolve()
 

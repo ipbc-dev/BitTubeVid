@@ -9,18 +9,23 @@ import * as winston from 'winston'
 import { labelFormatter } from '../server/helpers/logger'
 import { CONFIG } from '../server/initializers/config'
 import { mtimeSortFilesDesc } from '../shared/core-utils/logs/logs'
+import { inspect } from 'util'
+import { format as sqlFormat } from 'sql-formatter'
 
 program
   .option('-l, --level [level]', 'Level log (debug/info/warn/error)')
   .option('-f, --files [file...]', 'Files to parse. If not provided, the script will parse the latest log file from config)')
   .parse(process.argv)
 
+const options = program.opts()
+
 const excludedKeys = {
   level: true,
   message: true,
   splat: true,
   timestamp: true,
-  label: true
+  label: true,
+  sql: true
 }
 function keysExcluder (key, value) {
   return excludedKeys[key] === true ? undefined : value
@@ -31,13 +36,24 @@ const loggerFormat = winston.format.printf((info) => {
   if (additionalInfos === '{}') additionalInfos = ''
   else additionalInfos = ' ' + additionalInfos
 
+  if (info.sql) {
+    if (CONFIG.LOG.PRETTIFY_SQL) {
+      additionalInfos += '\n' + sqlFormat(info.sql, {
+        language: 'sql',
+        indent: '  '
+      })
+    } else {
+      additionalInfos += ' - ' + info.sql
+    }
+  }
+
   return `[${info.label}] ${toTimeFormat(info.timestamp)} ${info.level}: ${info.message}${additionalInfos}`
 })
 
 const logger = winston.createLogger({
   transports: [
     new winston.transports.Console({
-      level: program['level'] || 'debug',
+      level: options.level || 'debug',
       stderrLevels: [],
       format: winston.format.combine(
         winston.format.splat(),
@@ -62,7 +78,7 @@ run()
   .catch(err => console.error(err))
 
 function run () {
-  return new Promise(async res => {
+  return new Promise<void>(async res => {
     const files = await getFiles()
 
     for (const file of files) {
@@ -82,7 +98,7 @@ function run () {
 
           logLevels[log.level](log)
         } catch (err) {
-          console.error('Cannot parse line.', line)
+          console.error('Cannot parse line.', inspect(line))
           throw err
         }
       })
@@ -100,7 +116,7 @@ async function getNewestFile (files: string[], basePath: string) {
 }
 
 async function getFiles () {
-  if (program['files']) return program['files']
+  if (options.files) return options.files
 
   const logFiles = await readdir(CONFIG.STORAGE.LOG_DIR)
 

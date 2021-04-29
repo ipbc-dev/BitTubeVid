@@ -107,11 +107,17 @@ const CONFIG = {
       MAX_FILE_SIZE: bytes.parse(config.get<string>('log.rotation.maxFileSize')),
       MAX_FILES: config.get<number>('log.rotation.maxFiles')
     },
-    ANONYMIZE_IP: config.get<boolean>('log.anonymizeIP')
+    ANONYMIZE_IP: config.get<boolean>('log.anonymizeIP'),
+    LOG_PING_REQUESTS: config.get<boolean>('log.log_ping_requests'),
+    PRETTIFY_SQL: config.get<boolean>('log.prettify_sql')
   },
   TRENDING: {
     VIDEOS: {
-      INTERVAL_DAYS: config.get<number>('trending.videos.interval_days')
+      INTERVAL_DAYS: config.get<number>('trending.videos.interval_days'),
+      ALGORITHMS: {
+        get ENABLED () { return config.get<string[]>('trending.videos.algorithms.enabled') },
+        get DEFAULT () { return config.get<string>('trending.videos.algorithms.default') }
+      }
     }
   },
   REDUNDANCY: {
@@ -156,7 +162,8 @@ const CONFIG = {
   },
   FEDERATION: {
     VIDEOS: {
-      FEDERATE_UNLISTED: config.get<boolean>('federation.videos.federate_unlisted')
+      FEDERATE_UNLISTED: config.get<boolean>('federation.videos.federate_unlisted'),
+      CLEANUP_REMOTE_INTERACTIONS: config.get<boolean>('federation.videos.cleanup_remote_interactions')
     }
   },
   ADMIN: {
@@ -185,6 +192,8 @@ const CONFIG = {
     get ALLOW_ADDITIONAL_EXTENSIONS () { return config.get<boolean>('transcoding.allow_additional_extensions') },
     get ALLOW_AUDIO_FILES () { return config.get<boolean>('transcoding.allow_audio_files') },
     get THREADS () { return config.get<number>('transcoding.threads') },
+    get CONCURRENCY () { return config.get<number>('transcoding.concurrency') },
+    get PROFILE () { return config.get<string>('transcoding.profile') },
     RESOLUTIONS: {
       get '0p' () { return config.get<boolean>('transcoding.resolutions.0p') },
       get '240p' () { return config.get<boolean>('transcoding.resolutions.240p') },
@@ -192,6 +201,7 @@ const CONFIG = {
       get '480p' () { return config.get<boolean>('transcoding.resolutions.480p') },
       get '720p' () { return config.get<boolean>('transcoding.resolutions.720p') },
       get '1080p' () { return config.get<boolean>('transcoding.resolutions.1080p') },
+      get '1440p' () { return config.get<boolean>('transcoding.resolutions.1440p') },
       get '2160p' () { return config.get<boolean>('transcoding.resolutions.2160p') }
     },
     HLS: {
@@ -217,6 +227,7 @@ const CONFIG = {
     TRANSCODING: {
       get ENABLED () { return config.get<boolean>('live.transcoding.enabled') },
       get THREADS () { return config.get<number>('live.transcoding.threads') },
+      get PROFILE () { return config.get<string>('live.transcoding.profile') },
 
       RESOLUTIONS: {
         get '240p' () { return config.get<boolean>('live.transcoding.resolutions.240p') },
@@ -224,12 +235,15 @@ const CONFIG = {
         get '480p' () { return config.get<boolean>('live.transcoding.resolutions.480p') },
         get '720p' () { return config.get<boolean>('live.transcoding.resolutions.720p') },
         get '1080p' () { return config.get<boolean>('live.transcoding.resolutions.1080p') },
+        get '1440p' () { return config.get<boolean>('live.transcoding.resolutions.1440p') },
         get '2160p' () { return config.get<boolean>('live.transcoding.resolutions.2160p') }
       }
     }
   },
   IMPORT: {
     VIDEOS: {
+      get CONCURRENCY () { return config.get<number>('import.videos.concurrency') },
+
       HTTP: {
         get ENABLED () { return config.get<boolean>('import.videos.http.enabled') },
         get FORCE_IPV4 () { return config.get<boolean>('import.videos.http.force_ipv4') },
@@ -256,6 +270,9 @@ const CONFIG = {
     },
     VIDEO_CAPTIONS: {
       get SIZE () { return config.get<number>('cache.captions.size') }
+    },
+    TORRENTS: {
+      get SIZE () { return config.get<number>('cache.torrents.size') }
     }
   },
   INSTANCE: {
@@ -277,8 +294,10 @@ const CONFIG = {
     get CATEGORIES () { return config.get<number[]>('instance.categories') || [] },
 
     get IS_NSFW () { return config.get<boolean>('instance.is_nsfw') },
-    get DEFAULT_CLIENT_ROUTE () { return config.get<string>('instance.default_client_route') },
     get DEFAULT_NSFW_POLICY () { return config.get<NSFWPolicyType>('instance.default_nsfw_policy') },
+
+    get DEFAULT_CLIENT_ROUTE () { return config.get<string>('instance.default_client_route') },
+
     CUSTOMIZATIONS: {
       get JAVASCRIPT () { return config.get<string>('instance.customizations.javascript') },
       get CSS () { return config.get<string>('instance.customizations.css') }
@@ -327,8 +346,8 @@ const CONFIG = {
   },
   SEARCH: {
     REMOTE_URI: {
-      USERS: config.get<boolean>('search.remote_uri.users'),
-      ANONYMOUS: config.get<boolean>('search.remote_uri.anonymous')
+      get USERS () { return config.get<boolean>('search.remote_uri.users') },
+      get ANONYMOUS () { return config.get<boolean>('search.remote_uri.anonymous') }
     },
     SEARCH_INDEX: {
       get ENABLED () { return config.get<boolean>('search.search_index.enabled') },
@@ -344,7 +363,11 @@ function registerConfigChangedHandler (fun: Function) {
 }
 
 function isEmailEnabled () {
-  return !!CONFIG.SMTP.HOSTNAME && !!CONFIG.SMTP.PORT
+  if (CONFIG.SMTP.TRANSPORT === 'sendmail' && CONFIG.SMTP.SENDMAIL) return true
+
+  if (CONFIG.SMTP.TRANSPORT === 'smtp' && CONFIG.SMTP.HOSTNAME && CONFIG.SMTP.PORT) return true
+
+  return false
 }
 
 // ---------------------------------------------------------------------------

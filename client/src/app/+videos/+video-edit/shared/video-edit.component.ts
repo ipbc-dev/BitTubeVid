@@ -1,5 +1,6 @@
 import { forkJoin } from 'rxjs'
 import { map } from 'rxjs/operators'
+import { SelectChannelItem } from 'src/types/select-options-item.model'
 import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewChild } from '@angular/core'
 import { FormArray, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms'
 import { HooksService, PluginService, ServerService } from '@app/core'
@@ -17,10 +18,10 @@ import {
   VIDEO_SUPPORT_VALIDATOR,
   VIDEO_TAGS_ARRAY_VALIDATOR
 } from '@app/shared/form-validators/video-validators'
-import { FormReactiveValidationMessages, FormValidatorService, SelectChannelItem } from '@app/shared/shared-forms'
+import { FormReactiveValidationMessages, FormValidatorService } from '@app/shared/shared-forms'
 import { InstanceService } from '@app/shared/shared-instance'
 import { VideoCaptionEdit, VideoEdit, VideoService } from '@app/shared/shared-main'
-import { ServerConfig, VideoConstant, LiveVideo, VideoPrivacy } from '@shared/models'
+import { LiveVideo, ServerConfig, VideoConstant, VideoPrivacy } from '@shared/models'
 import { RegisterClientFormFieldOptions, RegisterClientVideoFieldOptions } from '@shared/models/plugins/register-client-form-field.model'
 import { I18nPrimengCalendarService } from './i18n-primeng-calendar.service'
 import { VideoCaptionAddModalComponent } from './video-caption-add-modal.component'
@@ -94,22 +95,6 @@ export class VideoEditComponent implements OnInit, OnDestroy {
     this.calendarLocale = this.i18nPrimengCalendarService.getCalendarLocale()
     this.calendarTimezone = this.i18nPrimengCalendarService.getTimezone()
     this.calendarDateFormat = this.i18nPrimengCalendarService.getDateFormat()
-  }
-
-  get existingCaptions () {
-    return this.videoCaptions
-               .filter(c => c.action !== 'REMOVE')
-               .map(c => c.language.id)
-  }
-
-  isWaitTranscodingDisplayed () {
-    if (!this.waitTranscodingEnabled) return false
-
-    if (this.liveVideo) {
-      return this.form.value['saveReplay'] === true
-    }
-
-    return true
   }
 
   updateForm () {
@@ -215,6 +200,12 @@ export class VideoEditComponent implements OnInit, OnDestroy {
 
   ngOnDestroy () {
     if (this.schedulerInterval) clearInterval(this.schedulerInterval)
+  }
+
+  getExistingCaptions () {
+    return this.videoCaptions
+               .filter(c => c.action !== 'REMOVE')
+               .map(c => c.language.id)
   }
 
   onCaptionAdded (caption: VideoCaptionEdit) {

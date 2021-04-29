@@ -31,8 +31,7 @@ export class InstanceConfigWarningModalComponent {
   }
 
   isDefaultShortDescription (description: string) {
-    return description === 'BitTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly ' +
-      'in the web browser with WebTorrent and Angular.'
+    return description === 'BitTube, a federated (ActivityPub) video streaming platform using P2P (BitTorrent) directly in your web browser.'
   }
 
   private doNotOpenAgain () {

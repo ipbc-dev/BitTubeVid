@@ -99,13 +99,11 @@ async function createOrUpdateVideoPlaylist (playlistObject: PlaylistObject, byAc
     return Promise.resolve()
   })
 
-  logger.info('toto', { playlist, id: playlist.id })
-
   const refreshedPlaylist = await VideoPlaylistModel.loadWithAccountAndChannel(playlist.id, null)
 
   if (playlistObject.icon) {
     try {
-      const thumbnailModel = await createPlaylistMiniatureFromUrl(playlistObject.icon.url, refreshedPlaylist)
+      const thumbnailModel = await createPlaylistMiniatureFromUrl({ downloadUrl: playlistObject.icon.url, playlist: refreshedPlaylist })
       await refreshedPlaylist.setAndSaveThumbnail(thumbnailModel, undefined)
     } catch (err) {
       logger.warn('Cannot generate thumbnail of %s.', playlistObject.id, { err })

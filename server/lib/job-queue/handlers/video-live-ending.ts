@@ -7,7 +7,7 @@ import { LiveManager } from '@server/lib/live-manager'
 import { generateVideoMiniature } from '@server/lib/thumbnail'
 import { publishAndFederateIfNeeded } from '@server/lib/video'
 import { getHLSDirectory } from '@server/lib/video-paths'
-import { generateHlsPlaylistFromTS } from '@server/lib/video-transcoding'
+import { generateHlsPlaylistResolutionFromTS } from '@server/lib/video-transcoding'
 import { VideoModel } from '@server/models/video/video'
 import { VideoFileModel } from '@server/models/video/video-file'
 import { VideoLiveModel } from '@server/models/video/video-live'
@@ -85,7 +85,7 @@ async function saveLive (video: MVideo, live: MVideoLive) {
   await video.save()
 
   // Remove old HLS playlist video files
-  const videoWithFiles = await VideoModel.loadWithFiles(video.id)
+  const videoWithFiles = await VideoModel.loadAndPopulateAccountAndServerAndTags(video.id)
 
   const hlsPlaylist = videoWithFiles.getHLSPlaylist()
   await VideoFileModel.removeHLSFilesOfVideoId(hlsPlaylist.id)
@@ -102,7 +102,7 @@ async function saveLive (video: MVideo, live: MVideoLive) {
 
     const { videoFileResolution, isPortraitMode } = await getVideoFileResolution(concatenatedTsFilePath, probe)
 
-    const outputPath = await generateHlsPlaylistFromTS({
+    const outputPath = await generateHlsPlaylistResolutionFromTS({
       video: videoWithFiles,
       concatenatedTsFilePath,
       resolution: videoFileResolution,
@@ -122,11 +122,19 @@ async function saveLive (video: MVideo, live: MVideoLive) {
 
   // Regenerate the thumbnail & preview?
   if (videoWithFiles.getMiniature().automaticallyGenerated === true) {
-    await generateVideoMiniature(videoWithFiles, videoWithFiles.getMaxQualityFile(), ThumbnailType.MINIATURE)
+    await generateVideoMiniature({
+      video: videoWithFiles,
+      videoFile: videoWithFiles.getMaxQualityFile(),
+      type: ThumbnailType.MINIATURE
+    })
   }
 
   if (videoWithFiles.getPreview().automaticallyGenerated === true) {
-    await generateVideoMiniature(videoWithFiles, videoWithFiles.getMaxQualityFile(), ThumbnailType.PREVIEW)
+    await generateVideoMiniature({
+      video: videoWithFiles,
+      videoFile: videoWithFiles.getMaxQualityFile(),
+      type: ThumbnailType.PREVIEW
+    })
   }
 
   await publishAndFederateIfNeeded(videoWithFiles, true)
