@@ -1,5 +1,5 @@
 import { environment } from 'src/environments/environment'
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core'
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, NgZone } from '@angular/core'
 import { ActivatedRoute } from '@angular/router'
 import { AuthService, Notifier, RedirectService, UserService } from '@app/core'
 import { HooksService } from '@app/core/plugins/hooks.service'
@@ -47,7 +47,8 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
     private userService: UserService,
     private redirectService: RedirectService,
     private notifier: Notifier,
-    private hooks: HooksService
+    private hooks: HooksService,
+    private ngZone: NgZone
     ) {
     super()
   }
@@ -110,39 +111,41 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
   social_login (event: Event, network: string) {
     event.preventDefault()
 
-    let authProvider = null
+    this.ngZone.runOutsideAngular(() => {
+      let authProvider = null
 
-    switch (network) {
-      case 'facebook':
-        authProvider = new firebaseClass.auth.FacebookAuthProvider()
-        break
-      case 'google':
-        authProvider = new firebaseClass.auth.GoogleAuthProvider()
-        break
-      case 'twitter':
-        authProvider = new firebaseClass.auth.TwitterAuthProvider()
-        break
-      default:
-    }
+      switch (network) {
+        case 'facebook':
+          authProvider = new firebaseClass.auth.FacebookAuthProvider()
+          break
+        case 'google':
+          authProvider = new firebaseClass.auth.GoogleAuthProvider()
+          break
+        case 'twitter':
+          authProvider = new firebaseClass.auth.TwitterAuthProvider()
+          break
+        default:
+      }
 
-    firebaseAuth.signInWithPopup(authProvider).then(
-      async (result) => {
-        const username = result.user.email
-        const password = await getFirebaseToken()
-
-        this.authService.login(username, password)
-        .subscribe(
-          () => this.redirectService.redirectToPreviousRoute(),
-
-          err => {
-            if (err.message.indexOf('credentials are invalid') !== -1) this.error = $localize`Incorrect username or password.`
-            else if (err.message.indexOf('blocked') !== -1) this.error = $localize`You account is blocked.`
-            else this.error = err.message
-          }
+      firebaseAuth.signInWithPopup(authProvider).then(
+        async (result) => {
+          const username = result.user.email
+          const password = await getFirebaseToken()
+  
+          this.ngZone.run(
+            () => this.authService.login(username, password)
+            .subscribe(
+              () => this.redirectService.redirectToPreviousRoute(),
+    
+              err => this.handleError(err)
+            )
+          )
+        },
+        err => this.ngZone.run(
+          () => this.handleError(err)
         )
-      },
-      err => this.error = err.message
-    )
+      )
+    });
   }
 
   login () {
@@ -160,9 +163,7 @@ export class LoginComponent extends FormReactive implements OnInit, AfterViewIni
 
       this.authService.login(username, token || password)
       .subscribe(
-        () => {
-          return this.redirectService.redirectToPreviousRoute()
-        },
+        () => this.redirectService.redirectToPreviousRoute(),
 
         err => this.handleError(err)
       )
