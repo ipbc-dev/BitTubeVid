@@ -2,6 +2,7 @@
 ## v0.3.2 (BitTube)
   * Based on Peertube V3.1.1
   * Please, check Peertube V3.1.1 release important notes below before installing this package
+  * Don't forget to check your config file against the default production config file, we added several variables
   * Improving LiveStreams
 ## v0.3.1rc1 (BitTube)
   * Based on Peertube V3.1.0
