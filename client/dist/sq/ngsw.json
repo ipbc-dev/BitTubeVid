@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1619691293019,
+  "timestamp": 1620130743372,
   "index": "/client/sq/index.html",
   "assetGroups": [
     {
@@ -29,7 +29,7 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/client/sq/index.html": "533983888dc59838f3d6fca896e295662929c9d9",
+    "/client/sq/index.html": "add5c25e3fa410a147456428fb70316c347490ce",
     "/client/sq/manifest.webmanifest": "f37cd88d260bd80e97e341096ad5c27506320827"
   },
   "navigationUrls": [
